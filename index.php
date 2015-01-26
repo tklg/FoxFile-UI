@@ -1,17 +1,13 @@
 <?php
 session_start();
 require ('includes/config.php');
-
-if (!isset($_SESSION['mode'])) {
-	$_SESSION['mode'] = 'guest';
-}
 if(!isset($_SESSION['uid'])) {
 	$_SESSION['uid'] = 0;
 }
 if(!isset($_SESSION['access_level'])) {
 	$_SESSION['access_level'] = 0;
 }
-//error_reporting(0);//remove for debug
+error_reporting($show_errors);//remove for debug
 $time = microtime();
 $time = explode(' ', $time);
 $time = $time[1] + $time[0];
@@ -20,8 +16,13 @@ $starttime = $time;
 
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <title>FoxFile Άλφα</title>
+<!--
+ * index.php - FoxFile
+ * (C) Theodore Kluge 2014-2015
+ * villa7.github.io
+ -->
+<head>
+    <title>FoxFile Άλφα v1.0</title>
 	<link rel="stylesheet" href="css/fonts.css">
     <link rel="stylesheet" href="css/foxfile.css">
     <meta charset="utf-8">
@@ -34,20 +35,16 @@ $starttime = $time;
 
     </style>
 
-    <script type="text/javascript" src="js/jquery.min.js"></script>
-    <script type="text/javascript" src="js/foxfile.js"></script>
-    <script type="text/javascript" src="js/showlog.js"></script>
-
-  </head>
+</head>
 <body>
-	<div style="font-size:10px; position:fixed; top: 10px; right: 10px; padding: 10px; border-radius: 5px; background:rgba(255,255,255,.1)">
-		<p><span>DEBUG:</span><br>
-		SESSION_MODE: <?php echo $_SESSION['mode']; ?><br>
+<?php if ($show_debug) { ?>
+	<div style="z-index:100;color:#fff;font-size:9pt; position:fixed; bottom: 10px; right: 10px; padding: 10px; border-radius: 5px; background:rgba(255,255,255,.1)">
+		<span>DEBUG:</span><br><hr>
+		UUID: <?php echo $_SESSION['uid']; ?><br>
 		ACCESS_LEVEL: <?php echo $_SESSION['access_level']; ?><br>
-		UID: <?php echo $_SESSION['uid']; ?>
-		</p>
+		FOLDER: file.directory
 	</div>
-
+<?php } ?>
 	<div class="alertbox"></div>
 
 	<div id="wrapper">
@@ -56,36 +53,53 @@ $starttime = $time;
 	<div class="title menubar-title">FoxFile v1.0a</div>
 	<div class="menubar menubar-left">
 	<ul>
-		<li class="menubar-content menubar-content-user" onclick="d.success($(this).text())">user.name</li>
-		<li class="menubar-content menubar-content-main menubar-content-active" onclick="d.info($(this).text())">Home Directory Name</li>
-		<li class="menubar-content menubar-content-main" onclick="d.error($(this).text())">Shared</li>
-		<li class="menubar-content menubar-content-main" onclick="d.warning($(this).text())">Bookmarks</li>
-		<li class="menubar-content menubar-content-main" onclick="d.success($(this).text())">Account</li>
+		<li class="menubar-content menubar-content-user menubar-content-active" id="menubar-button-1" onclick="d.success($(this).text())">user.name</li>
+		<li class="menubar-content menubar-content-main menubar-content-active" id="menubar-button-files" onclick="d.info($(this).text())">My Files</li>
+		<?php if($allowsharing) {?><li class="menubar-content menubar-content-main" id="menubar-button-shared" onclick="d.error($(this).text())">Shared</li> <?php } ?>
+		<li class="menubar-content menubar-content-main" id="menubar-button-bookmarks" onclick="d.warning($(this).text())">Bookmarks</li>
+		<li class="menubar-content menubar-content-main" id="menubar-button-account" onclick="d.success($(this).text())">Account</li>
 	</ul>
 	</div>
 	</section>
 
-	<section class="bar bar-vertical bar-full bar-orig" id="bar-2">
-	<div class="menubar-title"><i class="fa fa-folder-open-o"></i> Home Directory Name</div>
+	<section class="bar bar-vertical bar-full bar-orig" id="bar-2" type="folder" state="closed">
+	<div class="menubar-title">My Files</div>
 	<div class="menubar menubar-left">
 	<ul>
-		<li class="menubar-content" type="file" onclick="d.info($(this).text())">
-		<div class="file file-name">File in home directory.txt</div>
-		<span class="file file-info" id="filetype">Text File</span> 
-		<span class="file-info file-info-divider">::</span>
-		<span class="file file-info" id="filesize">0.00 MB</span>
+		<li class="menubar-content" type="text" state="closed" id="id_hash" onclick="d.info($(this).text())">
+		<span class="file file-name">File in home directory.txt</span>
+		<div class="file-info">
+			<span class="file-info-item" id="filetype">Text File</span> 
+			<span class="file-info-item" id="filesize">0.00 MB</span>
+		</div>
 		</li>
-		<li class="menubar-content" type="folder" onclick="d.info($(this).text())">
-		<div class="folder file-name">Folder in home directory</div>
-		<span class="file file-info" id="filetype">Folder</span>
-		<span class="file-info file-info-divider">::</span>
-		<span class="folder file-info" id="foldersize">0 Items</span>
+		<li class="menubar-content" type="folder" state="closed" id="id_hash" onclick="d.info($(this).text())">
+		<span class="folder file-name">Folder in home directory</span>
+		<div class="file-info">
+			<span class="file-info-item" id="filetype">Folder</span> 
+			<span class="file-info-item" id="filesize">0 Items</span>
+		</div>
 		</li>
-		<li class="menubar-content" type="folder" onclick="d.info($(this).text())">
-		<div class="folder file-name">File in home directory.zip</div>
-		<span class="file file-info" id="filetype">Zip File</span>
-		<span class="file-info file-info-divider">::</span>
-		<span class="folder file-info" id="foldersize">0 Items</span>
+		<li class="menubar-content" type="zip" state="closed" id="id_hash" onclick="d.info($(this).text())">
+		<span class="folder file-name">File in home directory.zip</span>
+		<div class="file-info">
+			<span class="file-info-item" id="filetype">Zip File</span> 
+			<span class="file-info-item" id="filesize">0.00 MB</span>
+		</div>
+		</li>
+		<li class="menubar-content" type="pdf" state="closed" id="id_hash" onclick="d.info($(this).text())">
+		<span class="folder file-name">File in home directory.pdf</span>
+		<div class="file-info">
+			<span class="file-info-item" id="filetype">Adobe PDF File</span> 
+			<span class="file-info-item" id="filesize">0.00 MB</span>
+		</div>
+		</li>
+		<li class="menubar-content" type="UNDEF" state="closed" id="id_hash" onclick="d.info($(this).text())">
+		<span class="folder file-name">File in home directory.ttf</span>
+		<div class="file-info">
+			<span class="file-info-item" id="filetype">True Type Font</span> 
+			<span class="file-info-item" id="filesize">0.00 MB</span>
+		</div>
 		</li>
 	</ul>
 	</div>
@@ -107,6 +121,11 @@ $starttime = $time;
 	  ga('send', 'pageview');
 
 	</script> -->
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+    <script type="text/javascript" src="js/foxfile.js"></script>
+    <script type="text/javascript" src="js/showlog.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.7.0/underscore-min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/backbone.js/1.1.2/backbone-min.js"></script>
 	<script type="text/javascript">
 		if ($('.footer').height() > 0) {
 			$(".alertbox").css("bottom", 60);

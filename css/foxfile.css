@@ -1,16 +1,21 @@
+/*
+ * foxfile.css - FoxFile
+ * (C) Theodore Kluge 2014-2015
+ * villa7.github.io
+*/
+
 html,
 body {
 	height: 100%;
 	width: 100%;
 	margin: 0;
 	padding: 0;
-	background: #333;
 	color: #ccc;
-	font-family: 'quicksandlight', sans-serif;
+	font-family: sans-serif;
+	-webkit-font-smoothing: antialiased;
 }
-
 ::selection {
-	background: rgba(255,255,255,.1);
+	background: rgba(255,255,255,.1) !important;
 }
 #wrapper {
 	height: 100%;
@@ -25,11 +30,12 @@ hr {
 }
 ul {
 	list-style-type: none;
-	padding-left: 0;
+	padding: 0;
+	margin: 0;
 }
 a {
 	text-decoration: none;
-	color: #ccc;
+	color: #a50;
 }
 .alertbox {
 	position: fixed;
@@ -38,6 +44,7 @@ a {
 	width: auto;
 	color: #fff;
 	text-align: center;
+	z-index: 100;
 }
 .alert-item {
 	position: relative;
@@ -90,9 +97,13 @@ a {
 	margin-left: 20px;
 }
 .bar {
-	position: relative;
+	background: #222;
+	/*position: relative;*/
+	position: absolute;
 	float: left;
 	padding: 0px;
+	-webkit-transition: all .2s ease-in-out;
+          transition: all .2s ease-in-out;
 }
 .bar-main {
 	width: 25%;
@@ -101,29 +112,50 @@ a {
 }
 .bar-vertical {
 	min-height: 100%;
-	border-left: 1px solid #ccc;
-	margin-left: -1px;
+	border-left: 2px solid #333;
+	margin-left: -2px;
 }
 .bar-full {
 	width: 75%;
+	left: 25%;
+}
+.menubar {
+	border-top: solid 2px rgb(250, 101, 0);
 }
 .title,
 .menubar-title {
+	/*background: rgba(0,0,0,.2);*/
+	background: #222;
 	font-size: 20pt;
 	padding: 20px;
-	padding-bottom: 5px;
+	/*padding-bottom: 5px;*/
 	letter-spacing: 5px;
+	font-family: 'quicksandlight', sans-serif;
+}
+.menubar-title:not(.title) {
+	letter-spacing: 0 !important;
 }
 .menubar-content {
 	padding: 5px 20px;
-	border-bottom: 1px solid #444;
+	border-bottom: 1px solid #2c2c2c;
 	cursor: pointer;
+	-webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
 .menubar-content-main,
-.menubar-content-user {
+.menubar-content {
 	padding: 10px 20px;
+	font-size: 90%;
 }
-.menubar-content:hover {
+.menubar-content-user {
+	padding: 20px 20px;
+	font-size: 110%;
+}
+.menubar-content:not(.menubar-content-active):hover {
 	background: rgba(255,255,255,.08);
 	-webkit-transition: all .2s ease-in-out;
             transition: all .2s ease-in-out;
@@ -131,15 +163,69 @@ a {
 .menubar-content-active {
 	background: rgba(248, 114, 23, .3);
 }
-.menubar-content-active:hover {
+/*.menubar-content-active:hover {
 	background: rgba(248, 114, 23, .8);
+}*/
+.menubar-content:before { /*default to file icon*/
+	color: #666;
+	font-family: 'FontAwesome';
+	content: '\f016';
+	padding-right: 13px;
+	font-size: 120%;
+}
+.menubar-content-user:before,
+.menubar-content-main:before {
+	content: "" !important;
 }
 .menubar-content[type='file']:before {
-	/*font-family: 'FontAwesome';
-	content: '\f016';*/
+	color: #666;
+	font-family: 'FontAwesome';
+	content: '\f016';
+	padding-right: 13px;
 }
-.menubar-content[type='folder']:before {
-
+.menubar-content[type='folder'][state='closed']:before {
+	color: #666;
+	font-family: 'FontAwesome';
+	content: '\f07b';
+	padding-right: 10px;
+}
+.menubar-content[type='folder'][state='open']:before {
+	color: #666;
+	font-family: 'FontAwesome';
+	content: '\f07c';
+	padding-right: 10px;
+}
+.menubar-content[type='zip']:before {
+	color: #666;
+	font-family: 'FontAwesome';
+	content: '\f1c6';
+	padding-right: 13px;
+}
+.menubar-content[type='pdf']:before {
+	color: #666;
+	font-family: 'FontAwesome';
+	content: '\f1c1';
+	padding-right: 13px;
+}
+.menubar-content[type='text']:before {
+	color: #666;
+	font-family: 'FontAwesome';
+	content: '\f0f6';
+	padding-right: 13px;
+}
+.menubar-content .file-info:after {
+	content: ' '; /*1 character blank space character*/
+	float: right;
+	padding-left: 1px;
+	font-size: 15pt;
+}
+.menubar-content[type='folder'] .file-info:after {
+	font-family: 'FontAwesome';
+	content: '\f105';
+	float: right;
+	color: #ccc;
+	padding-left: 5px;
+	font-size: 15pt;
 }
 .menubar-content-main:after {
 	font-family: "FontAwesome";
@@ -147,31 +233,41 @@ a {
 	float: right;
 	color: #ccc;
 }
-.menubar-subcontent {
-	/*border-left: solid 1px #444;*/
-	width: 90%;
-	margin-left: 10%;
+.bar[type='folder'][state='closed'] .menubar-title:before {
+	color: #666;
+	font-family: 'FontAwesome';
+	content: '\f07b';
+	padding-right: 10px;
+}
+.bar[type='folder'][state='open'] .menubar-title:before {
+	color: #666;
+	font-family: 'FontAwesome';
+	content: '\f07c';
+	padding-right: 10px;
 }
 .file,
 .folder {
-	width: 100%;
 	position: relative;
 }
 .file-name {
 	position: relative;
-	float: left;
+/*	font-size: 90%;*/
 }
 .file-info {
-	font-size: 50%;
+	float: right;
+	font-size: 60%;
 	color: rgba(255,255,255,.3);
+	height: 40px;
+	line-height: 40px;
+	vertical-align: middle;
+	margin-top: -10px; /* move file info up 10px because its too low otherwise for some reason*/
 }
 .file-info:after {
-	/*content: " :: ";*/
+	/*content: " · ";*/
 }
-.file-info-divider {
-	padding: 0 2px;
-	margin: 0;
-	color: #fff;
+.file-info-item {
+	min-width: 50px;
+	padding: 0 20px;
 }
 .file-type-icon {
 	position: relative;

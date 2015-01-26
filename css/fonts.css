@@ -41,7 +41,7 @@
     font-style: normal;
 }
 @font-face {
-    font-family: 'oloron_tryoutregular';
+    font-family: 'oloron';
     src: url('../fonts/olort_-webfont.eot');
     src: url('../fonts/olort_-webfont.eot?#iefix') format('embedded-opentype'),
          url('../fonts/olort_-webfont.woff2') format('woff2'),
@@ -49,4 +49,11 @@
          url('../fonts/olort_-webfont.ttf') format('truetype');
     font-weight: normal;
     font-style: normal;
+}
+@font-face {
+    font-family: 'infinita';
+    src: url('../fonts/infinita-webfont.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+
 }
