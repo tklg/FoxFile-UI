@@ -54,7 +54,7 @@ $starttime = $time;
 	<div class="menubar menubar-left">
 	<ul>
 		<li class="menubar-content menubar-content-user menubar-content-active" id="menubar-button-1" onclick="d.success($(this).text())">user.name</li>
-		<li class="menubar-content menubar-content-main menubar-content-active" id="menubar-button-files" onclick="d.info($(this).text())">My Files</li>
+		<li class="menubar-content menubar-content-main menubar-content-active" container="1" id="menubar-button-files" onclick="files.open('backbonetest.json', 'example_hash_self', $(this).text(), $(this).attr('container'));">My Files</li>
 		<?php if($allowsharing) {?><li class="menubar-content menubar-content-main" id="menubar-button-shared" onclick="d.error($(this).text())">Shared</li> <?php } ?>
 		<li class="menubar-content menubar-content-main" id="menubar-button-bookmarks" onclick="d.warning($(this).text())">Bookmarks</li>
 		<li class="menubar-content menubar-content-main" id="menubar-button-account" onclick="d.success($(this).text())">Account</li>
@@ -66,44 +66,10 @@ $starttime = $time;
 	<div class="menubar-title">My Files</div>
 	<div class="menubar menubar-left">
 	<ul>
-		<li class="menubar-content" type="text" state="closed" id="id_hash" onclick="d.info($(this).text())">
-		<span class="file file-name">File in home directory.txt</span>
-		<div class="file-info">
-			<span class="file-info-item" id="filetype">Text File</span> 
-			<span class="file-info-item" id="filesize">0.00 MB</span>
-		</div>
-		</li>
-		<li class="menubar-content" type="folder" state="closed" id="id_hash" onclick="d.info($(this).text())">
-		<span class="folder file-name">Folder in home directory</span>
-		<div class="file-info">
-			<span class="file-info-item" id="filetype">Folder</span> 
-			<span class="file-info-item" id="filesize">0 Items</span>
-		</div>
-		</li>
-		<li class="menubar-content" type="zip" state="closed" id="id_hash" onclick="d.info($(this).text())">
-		<span class="folder file-name">File in home directory.zip</span>
-		<div class="file-info">
-			<span class="file-info-item" id="filetype">Zip File</span> 
-			<span class="file-info-item" id="filesize">0.00 MB</span>
-		</div>
-		</li>
-		<li class="menubar-content" type="pdf" state="closed" id="id_hash" onclick="d.info($(this).text())">
-		<span class="folder file-name">File in home directory.pdf</span>
-		<div class="file-info">
-			<span class="file-info-item" id="filetype">Adobe PDF File</span> 
-			<span class="file-info-item" id="filesize">0.00 MB</span>
-		</div>
-		</li>
-		<li class="menubar-content" type="UNDEF" state="closed" id="id_hash" onclick="d.info($(this).text())">
-		<span class="folder file-name">File in home directory.ttf</span>
-		<div class="file-info">
-			<span class="file-info-item" id="filetype">True Type Font</span> 
-			<span class="file-info-item" id="filesize">0.00 MB</span>
-		</div>
-		</li>
 	</ul>
 	</div>
 	</section>
+
 
 	</div>
 
@@ -111,6 +77,15 @@ $starttime = $time;
 	if ($showfooter) include('includes/footer.php');
   	?>
 
+	<script type="text/template" id="bar_template">
+    <li class="menubar-content" container="<%= model.get('container') %>" type="<%= model.get('basicFileType') %>" state="closed" id="<%= model.get('fileID') %>" name="<%= model.get('fileName') %>" onclick="<%= model.get('onclick') %>" pos="">
+		<span class="folder file-name"><%= model.get('fileName') %></span>
+		<div class="file-info">
+			<span class="file-info-item" id="filetype"><%= model.get('fileType') %></span> 
+			<span class="file-info-item" id="filesize"><%= model.get('fileSize') %></span>
+		</div>
+	</li>
+	</script>
 	<!--<script>
 	  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
 	  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
@@ -122,10 +97,10 @@ $starttime = $time;
 
 	</script> -->
 	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
-    <script type="text/javascript" src="js/foxfile.js"></script>
-    <script type="text/javascript" src="js/showlog.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.7.0/underscore-min.js"></script>
+    <script type="text/javascript" src="http://underscorejs.org/underscore-min.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/backbone.js/1.1.2/backbone-min.js"></script>
+    <script type="text/javascript" src="js/showlog.js"></script>
+    <script type="text/javascript" src="js/foxfile.js"></script>
 	<script type="text/javascript">
 		if ($('.footer').height() > 0) {
 			$(".alertbox").css("bottom", 60);
