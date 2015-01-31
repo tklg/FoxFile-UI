@@ -20,53 +20,24 @@ $(window).resize(function() {
 	}, 100);
 });
 
-var init = {
-	resize: function() {
-		var title = {
-			fontSize: 20,
-			fontSpacing: 5,
-			fontTotalWidth: $('.title').width(),
-			fontLetterWidth: $('.title').width() / $('.title').text().length
-		}
-		var width = {
-			titleBox: $('.title').width(),
-			titleText: title.fontTotalWidth,
-			titleLetterSpacing: $('.title').width() / (($('.title').text().length - 1) * 4.2)
-		}
-		$('.title, .menubar-title').css({
-			'font-size': title.fontLetterWidth + 'pt',
-			'letter-spacing': width.titleLetterSpacing + 'pt'
-		})
-		// console.log("Title box width: " + width.titleBox);
-		// console.log("Title font size: " + title.fontLetterWidth);
-		// console.log("Title font length: " + $('.title').text().length);
-		// console.log("Set title spacing to " + width.titleLetterSpacing);
-	},
-	loadFiles: function() {
-		BCL = new BarContentLoader();
-		BCL.start('backbonetest.json', 2, 'file_key', 'parent_key');
-	}
-}
-
 function resizeAll() {
-	//var width = getDispWidth();
-	//var bar = getActiveBar();
 	init.resize(); //temporary
 }
 
 var bar = {
 	active: 2,
-	maxActive: 4,
+	maxActive: 3,
 	currentOffset: 0,
-	add: function(title, moveBack, type) {
+	add: function(title, moveBack, type, onclick) {
 		bar.active++;
-		$('#wrapper').append('<section class="bar bar-vertical" id="bar-' + this.active + '" type="' + type + '" state="closed"> <div class="menubar-title">' + title + '</div> <div class="menubar menubar-left"> <ul> </ul> </div> </section>');
+		$('#wrapper').append('<section class="bar bar-vertical" id="bar-' + this.active + '" type="' + type + '" state="closed"> <div class="menubar-title"><span class="heightsettertext"></span><!--<i class="fa fa-caret-left"></i>--><span class="menubar-title-link" onclick="' + onclick + '">' + title + '</div> <div class="menubar menubar-left"> <ul> </ul> </div> </section>');
+		bar.move(this.active, 5);
 		bar.size(this.active - 1, 1);
 		if (this.active <= this.maxActive) {
 			bar.move(this.active, this.active);
 			switch(this.active) {
 				case 4: size = 2; break; 
-				case 5: size = 1; break;  
+				case 5: size = 2; break;  
 				default: size = 2; break;
 			}
 			bar.size(this.active, size);
@@ -80,7 +51,7 @@ var bar = {
 			}
 			console.log("--");
 			bar.move(this.active, this.maxActive);
-			bar.size(this.active, 1);
+			bar.size(this.active, 2);
 		}
 		d.info("active: " + this.active);
 		resizeAll();
@@ -124,7 +95,8 @@ var bar = {
 			case 1: lpos = 0; break; 
 			case 2: lpos = 25; break; 
 			case 3: lpos = 50; break; 
-			case 4: lpos = 75; break; 
+			case 4: lpos = 75; break;
+			case 5: lpos = 100; break;
 			case 0: lpos = -25; break; 
 			case -1: lpos = -50; break; 
 			case -2: lpos = -75; break; 
@@ -152,20 +124,29 @@ var bar = {
 	},
 	updatePos: function(bar) {
 		$('#bar-' + bar).attr("pos", bar);
+	},
+	home: function() {
+		for (i = 2; i < this.active; i++) {
+			bar.remove(i);
+		}
+		this.move(1, 1);
+		this.move(2, 2);
+		this.size(1, 1);
+		this.size(2, 3);
 	}
 }
 //to set the pos attribute on the original 2 bars
 bar.updatePos(1);
 bar.updatePos(2);
 var files = {
-			open: function (from_url, hash, title, bar_id) {
+			open: function (from_url, hash, title, bar_id, type, onclick) {
 				console.log("clicked on file in bar " + bar_id);
 				console.log("from_url: " + from_url);
 				console.log("hash: " + hash);
 				console.log("title: " + title);
 				if (bar_id == bar.active) { //user clicked on the active bar, make a new one to the right
 					console.log("Clicked on active bar");
-					bar.add(title, true);
+					bar.add(title, true, type, onclick);
 					bar.fill(from_url, bar.active, hash);
 					bar.setActive(bar.active);
 				} else { //user clicked on a bar back in the stack, remove all after it and remake the needed folder/file
@@ -182,7 +163,7 @@ var files = {
 						console.log("removing active bar: " + bar.active);
 						bar.remove(bar.active);
 					}
-					bar.add(title, false);
+					bar.add(title, false, type, onclick);
 					bar.fill(from_url, bar.active, hash);
 					bar.setActive(bar.active);
 				}
@@ -223,10 +204,12 @@ var BarContentList = Backbone.Collection.extend({
 	url: ''
 });
 var BCL, BCV;
+var barTypeToMake;
 
 var BarContentView = Backbone.View.extend({
 	barID: '',
-	barTemplate: _.template($('#bar_template').html()),
+	folderTemplate: _.template($('#folder_template').html()),
+	fileTemplate: _.template($('#file_template').html()),
 	initialize: function() {
 		//console.log('BarContentView initialized');
 		this.collection.on('reset', this.render, this);
@@ -248,32 +231,40 @@ var BarContentView = Backbone.View.extend({
 						'hash_self': files[i].hash_self,
 						'hash_child': files[i].hash_child,
 						'hash_parent': files[i].hash_parent,
-						'onclick': 'files.open(\'' + BCL.url + '\', \'' + files[i].hash_self + '\', $(this).attr(\'name\'), $(this).attr(\'container\'));$(this).attr(\'state\', \'open\');',
+						'onclick': 'files.open(\'' + BCL.url + '\', \'' + files[i].hash_self + '\', $(this).attr(\'name\'), $(this).attr(\'container\'), $(this).attr(\'type\'));state.update($(this).attr(\'container\'), this.id);$(\'#bar-' + (BCV.barID+1) + ' .menubar-title-link\').attr(\'onclick\')',
 						'container': BCV.barID
 					};
 					if (obj.fileType.toLowerCase() == 'folder') {
 						obj.basicFileType = 'folder';
+						barTypeToMake = 'folder';
 					} else {
 						switch (getExt(obj.fileName)) {
-							case 'txt': case 'log': case 'rtf': case 'js': case 'java': case 'c': case 'cs': case 'cpp': case 'lua': case 'md': case 'css': case 'html': case 'htm': case 'php': case 'json':
+							case 'txt': case 'log': case 'rtf':
 								obj.basicFileType = 'text'
 								break;
+							case 'js': case 'java': case 'c': case 'cs': case 'cpp': case 'lua': case 'md': case 'css': case 'html': case 'htm': case 'php': case 'json':
+								obj.basicFileType = 'code';
+								break;
 							case 'dat': case 'xml':
-							obj.basicFileType = 'data'
+								obj.basicFileType = 'data'
 								break;
 							case 'aif': case 'm4a': case 'mid': case 'mp3': case 'mpa': case 'wav': case 'wma':
-							obj.basicFileType = 'audio'
+								obj.basicFileType = 'audio'
 								break;
 							case 'avi': case 'm4v': case 'mov': case 'mp4': case 'mpg': case 'wmv':
-							obj.basicFileType = 'video'
+								obj.basicFileType = 'video'
 								break;
 							case 'bmp': case 'jpg': case 'png': case 'psd': case 'tga': case 'gif': case 'svg': case 'ai':
-							obj.basicFileType = 'image'
+								obj.basicFileType = 'image'
 								break;
 							case 'zip': case 'gz': case 'rar': case 'pkg': case '7z':
-							obj.basicFileType = 'zip'
+								obj.basicFileType = 'zip'
+								break;
+							case 'pdf':
+								obj.basicFileType = 'pdf'
 								break;
 						}
+						barTypeToMake = 'file';
 					}
 
 					arr.push(obj);
@@ -292,7 +283,10 @@ var BarContentView = Backbone.View.extend({
 	},
 	list: function(model) {
 		//console.log("Appending template to #bar-" + this.barID);
-		$('#bar-' + this.barID + ' .menubar ul').append(this.barTemplate({model: model}));
+		if (barTypeToMake == 'folder')
+			$('#bar-' + this.barID + ' .menubar ul').append(this.folderTemplate({model: model}));
+		else
+			$('#bar-' + this.barID + ' .menubar ul').append(this.fileTemplate({model: model}));
 	}
 });
 var BarContentLoader = Backbone.Router.extend({
@@ -312,6 +306,19 @@ var BarContentLoader = Backbone.Router.extend({
 		});
 		BCV.barID = target_element;
 	}
-})
+});
 
 init.loadFiles();
+
+var state = {
+	update: function(cont, id) {
+		$('.menubar-content[container="' + cont + '"]').removeClass('menubar-content-active');
+		$('#' + id + '.menubar-content[container="' + cont + '"]').addClass('menubar-content-active');
+	}, 
+	open: function(cont, id) {
+
+	},
+	close: function(cont, id) {
+
+	}
+}

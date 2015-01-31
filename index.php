@@ -38,7 +38,7 @@ $starttime = $time;
 </head>
 <body>
 <?php if ($show_debug) { ?>
-	<div style="z-index:100;color:#fff;font-size:9pt; position:fixed; bottom: 10px; right: 10px; padding: 10px; border-radius: 5px; background:rgba(255,255,255,.1)">
+	<div style="z-index:100;color:#fff;font-size:9pt; position:fixed; bottom: 10px; left: 10px; padding: 10px; border-radius: 5px; background:rgba(255,255,255,.1)">
 		<span>DEBUG:</span><br><hr>
 		UUID: <?php echo $_SESSION['uid']; ?><br>
 		ACCESS_LEVEL: <?php echo $_SESSION['access_level']; ?><br>
@@ -58,12 +58,13 @@ $starttime = $time;
 		<?php if($allowsharing) {?><li class="menubar-content menubar-content-main" id="menubar-button-shared" onclick="d.error($(this).text())">Shared</li> <?php } ?>
 		<li class="menubar-content menubar-content-main" id="menubar-button-bookmarks" onclick="d.warning($(this).text())">Bookmarks</li>
 		<li class="menubar-content menubar-content-main" id="menubar-button-account" onclick="d.success($(this).text())">Account</li>
+		<li class="menubar-content menubar-content-main" id="menubar-button-account" onclick="d.success($(this).text())">Settings</li>
 	</ul>
 	</div>
 	</section>
 
 	<section class="bar bar-vertical bar-full bar-orig" id="bar-2" type="folder" state="closed">
-	<div class="menubar-title">My Files</div>
+	<div class="menubar-title"><span class="heightsettertext"></span><!-- <i class="fa fa-caret-left"></i> --><span class="menubar-title-link">My Files</span></div>
 	<div class="menubar menubar-left">
 	<ul>
 	</ul>
@@ -77,8 +78,43 @@ $starttime = $time;
 	if ($showfooter) include('includes/footer.php');
   	?>
 
-	<script type="text/template" id="bar_template">
-    <li class="menubar-content" container="<%= model.get('container') %>" type="<%= model.get('basicFileType') %>" state="closed" id="<%= model.get('fileID') %>" name="<%= model.get('fileName') %>" onclick="<%= model.get('onclick') %>" pos="">
+	<script type="text/javascript">
+	var init = {
+		resize: function() {
+			var title = {
+				fontSize: 20,
+				fontSpacing: 5,
+				fontTotalWidth: $('.title').width(),
+				fontLetterWidth: $('.title').width() / $('.title').text().length
+			}
+			var width = {
+				titleBox: $('.title').width(),
+				titleText: title.fontTotalWidth,
+				titleLetterSpacing: $('.title').width() / (($('.title').text().length - 1) * 4.2)
+			}
+			$('.title, .heightsettertext').css({
+				'font-size': title.fontLetterWidth + 'pt',
+				'letter-spacing': width.titleLetterSpacing + 'pt'
+			})
+		},
+		loadFiles: function() {
+			BCL = new BarContentLoader();
+			BCL.start('backbonetest.json', 2, 'file_key', 'parent_key');
+		}
+	}
+	init.resize();
+	</script>
+	<script type="text/template" id="folder_template">
+    <li class="menubar-content" container="<%= model.get('container') %>" type="<%= model.get('basicFileType') %>" id="<%= model.get('fileID') %>" name="<%= model.get('fileName') %>" onclick="<%= model.get('onclick') %>" pos="">
+		<span class="folder file-name"><%= model.get('fileName') %></span>
+		<div class="file-info">
+			<span class="file-info-item" id="filetype"><%= model.get('fileType') %></span> 
+			<span class="file-info-item" id="filesize"><%= model.get('fileSize') %></span>
+		</div>
+	</li>
+	</script>
+	<script type="text/template" id="file_template">
+    <li class="menubar-content" container="<%= model.get('container') %>" type="<%= model.get('basicFileType') %>" id="<%= model.get('fileID') %>" name="<%= model.get('fileName') %>" onclick="<%= model.get('onclick') %>" pos="">
 		<span class="folder file-name"><%= model.get('fileName') %></span>
 		<div class="file-info">
 			<span class="file-info-item" id="filetype"><%= model.get('fileType') %></span> 

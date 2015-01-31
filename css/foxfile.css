@@ -27,6 +27,9 @@ body {
 	position: absolute;
 	color: #ccc;
 }
+.heightsettertext {
+	color: rgba(0,0,0,0);
+}
 hr {
 	border-top: rgba(255,255,255,.3);
 }
@@ -105,8 +108,8 @@ a {
 	position: absolute;
 	float: left;
 	padding: 0px;
-	-webkit-transition: all .2s ease-in-out;
-          transition: all .2s ease-in-out;
+	-webkit-transition: all .4s ease-in-out;
+          transition: all .4s ease-in-out;
 }
 .bar-main {
 	width: 25%;
@@ -129,7 +132,6 @@ a {
 .menubar-title {
 	/*background: rgba(0,0,0,.2);*/
 	background: #222;
-	font-size: 20pt;
 	padding: 20px;
 	/*padding-bottom: 5px;*/
 	letter-spacing: 5px;
@@ -137,6 +139,19 @@ a {
 }
 .menubar-title:not(.title) {
 	letter-spacing: 0 !important;
+	font-size: 25px;
+}
+.menubar-title-link {
+	cursor: pointer;
+	-webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+.menubar-title-link-home {
+	padding-right: 20px;
 }
 .menubar-content {
 	padding: 5px 20px;
@@ -203,18 +218,19 @@ a {
 	font-size: 15pt;
 }
 .menubar-content .file-info:after {
-	content: ' '; /*1 character blank space character*/
+	/*content: ' ';*/ /*1 character blank space character*/
+	content: " ";
 	float: right;
-	padding-left: 16px;
+	padding-left: 26px;
 	font-size: 15pt;
 }
-.menubar-content[type='folder'][state='closed']:before {
+.menubar-content[type='folder']:before {
 	color: #666;
 	font-family: 'FontAwesome';
 	content: '\f07b';
 	padding-right: 10px;
 }
-.menubar-content[type='folder'][state='open']:before {
+.menubar-content[type='folder'].menubar-content-active:before {
 	color: #666;
 	font-family: 'FontAwesome';
 	content: '\f07c';
@@ -238,11 +254,38 @@ a {
 	content: '\f0f6';
 	padding-right: 13px;
 }
+.menubar-content[type='audio']:before {
+	color: #666;
+	font-family: 'FontAwesome';
+	content: '\f1c7';
+	padding-right: 13px;
+}
+.menubar-content[type='video']:before {
+	color: #666;
+	font-family: 'FontAwesome';
+	content: '\f1c8';
+	padding-right: 13px;
+}
+.menubar-content[type='image']:before {
+	color: #666;
+	font-family: 'FontAwesome';
+	content: '\f1c5';
+	padding-right: 13px;
+}
+.menubar-content[type='code']:before {
+	color: #666;
+	font-family: 'FontAwesome';
+	content: '\f1c9';
+	padding-right: 13px;
+}
 .menubar-content-main:after {
 	font-family: "FontAwesome";
 	content: '\f105';
 	float: right;
 	color: #ccc;
+}
+.menubar-content-active {
+	background: rgba(248, 114, 23, .3);
 }
 /*.bar[type='folder'][state='closed'] .menubar-title:before {
 	color: #666;

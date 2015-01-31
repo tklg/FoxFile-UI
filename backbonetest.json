@@ -4,7 +4,7 @@
     "name": "7Zip.7z",
     "type": "Test File Type",
     "size": 0,
-    "id": 12345678,
+    "id": 1,
     "hash_self": "example_hash_self",
     "hash_child": "example_hash_child",
     "hash_parent": "example_hash_parent"
@@ -13,7 +13,7 @@
     "name": "TextFile.txt",
     "type": "Text File",
     "size": 0,
-    "id": 12345678,
+    "id": 2,
     "hash_self": "example_hash_self",
     "hash_child": "example_hash_child",
     "hash_parent": "example_hash_parent"
@@ -22,7 +22,7 @@
     "name": "http://fileinfo.com/filetypes/common",
     "type": "Folder",
     "size": 0,
-    "id": 12345678,
+    "id": 3,
     "hash_self": "example_hash_self",
     "hash_child": "example_hash_child",
     "hash_parent": "example_hash_parent"
@@ -31,7 +31,7 @@
     "name": "Image.png",
     "type": "Portable Network Graphic",
     "size": 0,
-    "id": 12345678,
+    "id": 4,
     "hash_self": "example_hash_self",
     "hash_child": "example_hash_child",
     "hash_parent": "example_hash_parent"
@@ -40,7 +40,7 @@
     "name": "Music.mp3",
     "type": "Audio File",
     "size": 0,
-    "id": 12345678,
+    "id": 5,
     "hash_self": "example_hash_self",
     "hash_child": "example_hash_child",
     "hash_parent": "example_hash_parent"
@@ -49,7 +49,25 @@
     "name": "Movie.wmv",
     "type": "Windows Video File",
     "size": 0,
-    "id": 12345678,
+    "id": 6,
+    "hash_self": "example_hash_self",
+    "hash_child": "example_hash_child",
+    "hash_parent": "example_hash_parent"
+  },
+  {
+    "name": "Filename.pdf",
+    "type": "Adobe PDF File",
+    "size": 0,
+    "id": 7,
+    "hash_self": "example_hash_self",
+    "hash_child": "example_hash_child",
+    "hash_parent": "example_hash_parent"
+  },
+  {
+    "name": "lua script.lua",
+    "type": "LUA Script",
+    "size": 0,
+    "id": 8,
     "hash_self": "example_hash_self",
     "hash_child": "example_hash_child",
     "hash_parent": "example_hash_parent"
