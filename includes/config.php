@@ -12,3 +12,9 @@
 			$useGroupPassword = true;
 			$group_password = 'foxfilealpha';
 			$allowsharing = true;
+			$database = [
+				"NAME" => 'FOXFILE',
+				"PREFIX" => null,
+				"TABLE_FILES" => "FILES",
+				"TABLE_USERS" => "USERS"
+			];

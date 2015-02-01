@@ -30,7 +30,7 @@ var bar = {
 	currentOffset: 0,
 	add: function(title, moveBack, type, onclick) {
 		bar.active++;
-		$('#wrapper').append('<section class="bar bar-vertical" id="bar-' + this.active + '" type="' + type + '" state="closed"> <div class="menubar-title"><span class="heightsettertext"></span><!--<i class="fa fa-caret-left"></i>--><span class="menubar-title-link" onclick="' + onclick + '">' + title + '</div> <div class="menubar menubar-left"> <ul> </ul> </div> </section>');
+		$('#wrapper').append('<section class="bar bar-vertical" id="bar-' + this.active + '" type="' + type + '" state="closed"> <div class="menubar-title"><span class="heightsettertext"></span><i class="bar-backbutton btn fa fa-caret-left"></i><span class="menubar-title-link btn" onclick="' + onclick + '">' + title + '</div> <div class="menubar menubar-left"> <ul> </ul> </div> </section>');
 		bar.move(this.active, 5);
 		bar.size(this.active - 1, 1);
 		if (this.active <= this.maxActive) {
@@ -53,7 +53,7 @@ var bar = {
 			bar.move(this.active, this.maxActive);
 			bar.size(this.active, 2);
 		}
-		d.info("active: " + this.active);
+		//d.info("active: " + this.active);
 		resizeAll();
 	},
 	fill: function(from_url, bar, file_key, parent_key) {
@@ -72,7 +72,7 @@ var bar = {
 		//this.active = bar;
 		$('.bar').attr('active', false);
 		$('#bar-' + bar).attr('active', true);
-		d.info("Set bar " + bar + " to active");
+		//d.info("Set bar " + bar + " to active");
 	},
 	size: function(bar, size) {
 		//change bar to size where size = percent

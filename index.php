@@ -22,15 +22,15 @@ $starttime = $time;
  * villa7.github.io
  -->
 <head>
-    <title>FoxFile Άλφα v1.0</title>
-	<link rel="stylesheet" href="css/fonts.css">
-    <link rel="stylesheet" href="css/foxfile.css">
+    <title><?php echo $title ?></title>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="initial-scale=1, width=device-width, maximum-scale=1, minimum-scale=1, user-scalable=no">
 
 	<!-- <link rel="stylesheet" href="css/bootstrap.min.css"> -->
 	<link rel="stylesheet" href="css/font-awesome.min.css">
+	<link rel="stylesheet" href="css/fonts.css">
+    <link rel="stylesheet" href="css/foxfile.css">
     <style type="text/css">
 
     </style>
@@ -64,7 +64,7 @@ $starttime = $time;
 	</section>
 
 	<section class="bar bar-vertical bar-full bar-orig" id="bar-2" type="folder" state="closed">
-	<div class="menubar-title"><span class="heightsettertext"></span><!-- <i class="fa fa-caret-left"></i> --><span class="menubar-title-link">My Files</span></div>
+	<div class="menubar-title"><span class="heightsettertext"></span><i class="bar-backbutton btn fa fa-caret-left"></i><span class="menubar-title-link btn">My Files</span></div>
 	<div class="menubar menubar-left">
 	<ul>
 	</ul>

@@ -7,7 +7,4 @@
             $dbhost = "localhost";
 
             $dbname = "dndcsm";
-
-            $installed = true;
-
             
