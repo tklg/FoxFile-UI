@@ -2,7 +2,7 @@
   "file": [
    {
     "name": "7Zip.7z",
-    "type": "Test File Type",
+    "type": "file",
     "size": 0,
     "id": 1,
     "hash_self": "example_hash_self",
@@ -11,7 +11,7 @@
   },
   {
     "name": "TextFile.txt",
-    "type": "Text File",
+    "type": "file",
     "size": 0,
     "id": 2,
     "hash_self": "example_hash_self",
@@ -19,8 +19,8 @@
     "hash_parent": "example_hash_parent"
   },
   {
-    "name": "http://fileinfo.com/filetypes/common",
-    "type": "Folder",
+    "name": "Folder Name",
+    "type": "folder",
     "size": 0,
     "id": 3,
     "hash_self": "example_hash_self",
@@ -29,7 +29,7 @@
   },
   {
     "name": "Image.png",
-    "type": "Portable Network Graphic",
+    "type": "file",
     "size": 0,
     "id": 4,
     "hash_self": "example_hash_self",
@@ -38,7 +38,7 @@
   },
   {
     "name": "Music.mp3",
-    "type": "Audio File",
+    "type": "file",
     "size": 0,
     "id": 5,
     "hash_self": "example_hash_self",
@@ -47,7 +47,7 @@
   },
   {
     "name": "Movie.wmv",
-    "type": "Windows Video File",
+    "type": "file",
     "size": 0,
     "id": 6,
     "hash_self": "example_hash_self",
@@ -56,7 +56,7 @@
   },
   {
     "name": "Filename.pdf",
-    "type": "Adobe PDF File",
+    "type": "file",
     "size": 0,
     "id": 7,
     "hash_self": "example_hash_self",
@@ -65,7 +65,7 @@
   },
   {
     "name": "lua script.lua",
-    "type": "LUA Script",
+    "type": "file",
     "size": 0,
     "id": 8,
     "hash_self": "example_hash_self",

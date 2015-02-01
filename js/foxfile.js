@@ -139,39 +139,95 @@ var bar = {
 bar.updatePos(1);
 bar.updatePos(2);
 var files = {
-			open: function (from_url, hash, title, bar_id, type, onclick) {
-				console.log("clicked on file in bar " + bar_id);
-				console.log("from_url: " + from_url);
-				console.log("hash: " + hash);
-				console.log("title: " + title);
-				if (bar_id == bar.active) { //user clicked on the active bar, make a new one to the right
-					console.log("Clicked on active bar");
-					bar.add(title, true, type, onclick);
-					bar.fill(from_url, bar.active, hash);
-					bar.setActive(bar.active);
-				} else { //user clicked on a bar back in the stack, remove all after it and remake the needed folder/file
-					console.log("Clicked on inactive bar");
-					var diff = bar.active - bar_id;
-					console.log("difference: " + diff);
-					if (bar.active > bar.maxActive && diff != 1) {
-						for (i = 1; i <= bar.active; i++) {
-							bar.moveRight(i);
-							console.log("Moved bar " + i + " right");
-						}
-					}
-					for (i = 0; i < diff; i++) {
-						console.log("removing active bar: " + bar.active);
-						bar.remove(bar.active);
-					}
-					bar.add(title, false, type, onclick);
-					bar.fill(from_url, bar.active, hash);
-					bar.setActive(bar.active);
-				}
-				if (bar_id == 1) {
-					bar.size(2, 3);
+	open: function (from_url, hash, title, bar_id, type, onclick) {
+		console.log("clicked on file in bar " + bar_id);
+		console.log("from_url: " + from_url);
+		console.log("hash: " + hash);
+		console.log("title: " + title);
+		if (bar_id == bar.active) { //user clicked on the active bar, make a new one to the right
+			console.log("Clicked on active bar");
+			bar.add(title, true, type, onclick);
+			bar.fill(from_url, bar.active, hash);
+			bar.setActive(bar.active);
+		} else { //user clicked on a bar back in the stack, remove all after it and remake the needed folder/file
+			console.log("Clicked on inactive bar");
+			var diff = bar.active - bar_id;
+			console.log("difference: " + diff);
+			if (bar.active > bar.maxActive && diff != 1) {
+				for (i = 1; i <= bar.active; i++) {
+					bar.moveRight(i);
+					console.log("Moved bar " + i + " right");
 				}
 			}
+			for (i = 0; i < diff; i++) {
+				console.log("removing active bar: " + bar.active);
+				bar.remove(bar.active);
+			}
+			bar.add(title, false, type, onclick);
+			bar.fill(from_url, bar.active, hash);
+			bar.setActive(bar.active);
 		}
+		if (bar_id == 1) {
+			bar.size(2, 3);
+		}
+	},
+	rename: function(file) {
+		$.post('dbquery.php',
+		{
+			action: 'rename',
+			file_id: file
+		},
+		function(result) {
+			d.info(result);
+		});
+	},
+	copy: function(file) {
+		//open copyTo modal
+		//get location to copy to
+		$.post('dbquery.php',
+		{
+			action: 'copy',
+			copy_tp: target,
+			file_id: file
+		},
+		function(result) {
+			d.info(result);
+		});
+	},
+	delete: function(file) {
+		$.post('dbquery.php',
+		{
+			action: 'delete',
+			file_id: file
+		},
+		function(result) {
+			d.info(result);
+		});
+	},
+	download: function(file) {
+		$.post('dbquery.php',
+		{
+			action: 'download',
+			file_id: file
+		},
+		function(result) {
+			d.info(result);
+		});
+	},
+	share: function(file) {
+		$.post('dbquery.php',
+		{
+			action: 'share',
+			file_id: file
+		},
+		function(result) {
+			//open fileshare modal
+			//get file url from db
+
+			d.info(result);
+		});
+	}
+}
 
 function getExt(filename) {
 	var a = filename.split(".");
@@ -237,6 +293,7 @@ var BarContentView = Backbone.View.extend({
 					if (obj.fileType.toLowerCase() == 'folder') {
 						obj.basicFileType = 'folder';
 						barTypeToMake = 'folder';
+						obj.fileType = 'Folder';
 					} else {
 						switch (getExt(obj.fileName)) {
 							case 'txt': case 'log': case 'rtf':
@@ -264,6 +321,100 @@ var BarContentView = Backbone.View.extend({
 								obj.basicFileType = 'pdf'
 								break;
 						}
+						switch(getExt(obj.fileName)) {
+							/* text files */
+							case 'txt':
+								obj.fileType = "Text File";
+								break;
+							case 'log':
+								obj.fileType = 'Log File';
+								break;
+							case 'rtf':
+								obj.fileType = 'Rich Text Format';
+								break;
+							case 'md':
+								obj.fileType = 'Markdown File';
+								break;
+								/* data files */
+							case 'dat':
+								obj.fileType = 'Data File';
+								break;
+							case 'xml':
+								obj.fileType = 'DEFINE PLS';
+								break;
+							case 'dat':
+								obj.fileType = 'Data File';
+								break;
+							case 'json':
+								obj.fileType = 'JSON File';
+								break;
+							/* Image files */
+							case 'bmp':
+								obj.fileType = 'Bitmap Image';
+								break;
+							case 'jpg':
+								obj.fileType = 'JPEG Image';
+								break;
+							case 'png':
+								obj.fileType = 'Portable Network Graphic';
+								break;
+							case 'psd':
+								obj.fileType = 'Adobe Photoshop Document';
+								break;
+							case 'tga':
+								obj.fileType = 'TARGA Image';
+								break;
+							case 'gif':
+								obj.fileType = 'Animated GIF';
+								break;
+							case 'svg':
+								obj.fileType = 'Scalable Vector Graphic';
+								break;
+							case 'ai':
+								obj.fileType = 'Adobe Illustrator Image';
+								break;
+							/* video files */
+							case 'wmv':
+								obj.fileType = 'Windows Movie';
+								break;
+							/* archives */
+							case 'zip':
+								obj.fileType = 'ZIP Archive';
+								break;
+							case '7z':
+								obj.fileType = '7zip Archive';
+								break;
+							case 'gz':
+								obj.fileType = 'GZ Archive';
+								break;
+							case 'rar':
+								obj.fileType = 'RAR Archive';
+								break;
+							/* scripts and code files */
+							case 'js':
+								obj.fileType = 'Javascript File';
+								break;
+							case 'rb':
+								obj.fileType = 'Ruby Script';
+								break;
+							case 'py':
+								obj.fileType = 'Python Script';
+								break;
+							case 'bat':
+								obj.fileType = 'Batch File';
+								break;
+							case 'vbs':
+								obj.fileType = 'Visual Basic Script';
+								break;
+							/* other */
+							case 'pdf':
+								obj.fileType = 'Adobe PDF';
+								break;
+							default: 
+								obj.fileType = getExt(obj.fileName).toUpperCase() + ' File';
+								break;
+						}
+						//obj.fileType += ' File';
 						barTypeToMake = 'file';
 					}
 
@@ -320,5 +471,47 @@ var state = {
 	},
 	close: function(cont, id) {
 
+	}
+}
+
+var clickMenu = {
+	fn: 'd.info("unadded clickmenu item");',
+	isOpen: false,
+	open: function(posX, posY, bar, file) {
+		d.info('Opening clickmenu at (' + posX + ', ' + posY + ") in bar " + bar + " at file " + file);
+		if (this.isOpen) this.close();
+		$('body').append('<div class="clickmenu" bar="' + bar + '" file="' + file + '"><ul></ul><div>');
+		items = ['Delete','Rename','Copy','Download','Share'];
+
+		for(i = 0; i < items.length; i++) {
+			switch(items[i].toLowerCase()) {
+				case 'delete':
+					fn = 'files.delete(this.file);';
+					break;
+				case 'rename':
+					fn = 'files.rename(this.file);';
+					break;
+				case 'copy':
+					fn = 'files.copy(this.file);';
+					break;
+				case 'download':
+					fn = 'files.download(this.file);';
+					break;
+				case 'share':
+					fn = 'files.share(this.file);';
+					break;
+			}
+			$('.clickmenu ul').append('<li class="btn" onclick="clickMenu.close();' + fn + '" bar="' + bar + '" file="' + file + '">' + items[i] + '</li>');
+		}
+
+		$('.clickmenu').css({
+			'left': posX + 'px',
+			'top': posY + 'px'
+		});
+		this.isOpen = true;
+	},
+	close: function() {
+		$('.clickmenu').remove();
+		this.isOpen = false;
 	}
 }

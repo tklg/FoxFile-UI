@@ -32,9 +32,60 @@ $starttime = $time;
   <!-- <link rel="stylesheet" href="css/bootstrap.min.css"> -->
   <link rel="stylesheet" href="../css/font-awesome.min.css">
     <style type="text/css">
-
+    	#wrapper {
+        width: 300px;
+        height: auto;
+        position: absolute;
+        left: 0;right: 0;margin: auto;
+        font-family: 'quicksandlight', sans-serif;
+    }
+    .install-content-title,
+    .install-content,
+    .btn-submit {
+        width: 100%;
+        margin-top: 3px;
+        color: #bcc6cc;
+        -webkit-transition: all .2s ease-in-out;
+          transition: all .2s ease-in-out;
+    }
+    .install-content-title-desc {
+    	font-size: 45%;
+    	color: #aaa;
+    	padding-top: -10px;
+    }
+    .install-content {
+        background: rgba(255,255,255,.1);
+        border: none;
+        padding: 4px 0;
+        text-indent: 2px;
+    }
+    .btn-submit {
+        background: rgba(255,255,255,.2);
+        border: none;
+        padding: 5px;
+        margin-top: 10px;
+    }
+    .btn-submit:hover {
+        background: rgba(255,255,255,.6);
+        cursor: pointer;
+    }
+    input:active,
+    input:focus,
+    button:active,
+    button:focus {
+	    outline: 0 none;
+	    background: rgba(255,255,255,.3);
+	}
+	.btn-moresettings {
+		margin-top: -10px;
+	}
+	.moresettings {
+		display: none;
+	}
     </style>
-
+    <script type="text/javascript" src="../js/jquery.min.js"></script>
+    <script type="text/javascript" src="../js/underscore.min.js"></script>
+    <script type="text/javascript" src="../js/backbone.min.js"></script>
 </head>
 <body>
 
@@ -133,7 +184,7 @@ $starttime = $time;
 
             $dbname = "' . $_POST['dbname'] . '";
 
-            $installed = true;
+            //$installed = true;
 
             ';
 
@@ -187,11 +238,24 @@ $starttime = $time;
       <label class="install-content-title" for="dbname"><i class="fa fa-cog"></i> Enter the database name.</label>
       <input class="install-content" name="dbname" type="text" id="dbname" required> 
   </p>
+  <div class="moresettings">
+  <p>
+  	<label class="install-content-title" for="dbprefix"><i class="fa fa-circle-o"></i> Set a database table prefix.</label><br>
+  	<label class="install-content-title install-content-title-desc" for="dbprefix"> Just in case you want to install 2 instances of FoxFile to the same database</label>
+    <input class="install-content" name="dbprefix" type="text" id="dbprefix">
+  </p>
+  <p>
+  	<label class="install-content-title" for="dbgrouppass"><i class="fa fa-circle-o"></i> Set a group password.</label><br>
+  	<label class="install-content-title install-content-title-desc" for="dbgrouppass"> Leave this blank for no group password</label>
+    <input class="install-content" name="dbgrouppass" type="text" id="dbgrouppass" placeholder="">
+  </p>
+
+  </div>
   <p>
       <button class="btn btn-submit" type="submit" name="install" value="Install"><b>Install</b></button>
-      <button class="btn btn-submit" name="moar" value="Moar"><b>Moar</b></button>
   </p>
   </form>
+  <button class="btn btn-submit btn-moresettings" onclick="$('.moresettings').css('display', 'inline');$('.btn-moresettings').css('display','none')">More Settings</button>
 
   <?php } else { ?>
   <h1>FoxFile is already installed.</h1>
