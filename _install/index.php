@@ -7,7 +7,7 @@ if(!isset($_SESSION['uid'])) {
 if(!isset($_SESSION['access_level'])) {
   $_SESSION['access_level'] = 0;
 }
-error_reporting($show_errors);//remove for debug
+//error_reporting($show_errors);//remove for debug
 $time = microtime();
 $time = explode(' ', $time);
 $time = $time[1] + $time[0];
@@ -23,14 +23,13 @@ $starttime = $time;
  -->
 <head>
     <title><?php echo $title ?> Install</title>
-  <link rel="stylesheet" href="../css/fonts.css">
-    <link rel="stylesheet" href="../css/foxfile.css">
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="initial-scale=1, width=device-width, maximum-scale=1, minimum-scale=1, user-scalable=no">
-
-  <!-- <link rel="stylesheet" href="css/bootstrap.min.css"> -->
-  <link rel="stylesheet" href="../css/font-awesome.min.css">
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="initial-scale=1, width=device-width, maximum-scale=1, minimum-scale=1, user-scalable=no">
+	<!-- <link rel="stylesheet" href="../css/bootstrap.min.css"> -->
+	<link rel="stylesheet" href="../css/font-awesome.min.css">
+	<link rel="stylesheet" href="../css/fonts.css">
+	<link rel="stylesheet" href="../css/foxfile.css">
     <style type="text/css">
     	#wrapper {
         width: 300px;
@@ -93,6 +92,59 @@ $starttime = $time;
 
   <?php
 
+  function strip_tags_attributes( $str, 
+        $allowedTags = array('<a>','<b>','<blockquote>','<br>','<cite>','<code>','<del>','<div>','<em>','<ul>','<ol>','<li>','<dl>','<dt>','<dd>','<img>','<video>','<iframe>','<ins>','<u>','<q>','<h3>','<h4>','<h5>','<h6>','<samp>','<strong>','<sub>','<sup>','<p>','<table>','<tr>','<td>','<th>','<pre>','<span>'), 
+        $disabledEvents = array('onclick','ondblclick','onkeydown','onkeypress','onkeyup','onload','onmousedown','onmousemove','onmouseout','onmouseover','onmouseup','onunload') )
+    {       
+        if( empty($disabledEvents) ) {
+            return strip_tags($str, implode('', $allowedTags));
+        }
+        return preg_replace('/<(.*?)>/ies', "'<' . preg_replace(array('/javascript:[^\"\']*/i', '/(" . implode('|', $disabledEvents) . ")=[\"\'][^\"\']*[\"\']/i', '/\s+/'), array('', '', ' '), stripslashes('\\1')) . '>'", strip_tags($str, implode('', $allowedTags)));
+    }
+	function getOwner($c) {
+	      global $db;
+	      $c = mysqli_real_escape_string($db, $c);
+	      $result = mysqli_query($db, "SELECT * from CHARACTERS where PID = '$c'");
+	      $row = mysqli_fetch_array($result);
+	      return $row['owner_uid'];
+	    }
+	function getOwnerItem($i) {
+	  global $db;
+	  $i = mysqli_real_escape_string($db, $i);
+	  $result = mysqli_query($db, "SELECT * from ITEMS where PID = '$i'");
+	  $row = mysqli_fetch_array($result);
+	  return $row['owner_uid'];
+	}
+	function getCharacterFromID($id) {
+	  global $db;
+	  $i = mysqli_real_escape_string($db, $id);
+	  $result = mysqli_query($db, "SELECT * from CHARACTERS where PID = '$id'");
+	  $row = mysqli_fetch_array($result);
+	  return $row['character_name'];
+	}
+	function sanitize($s) {
+	  global $db;
+	  // return htmlentities(br2nl(addslashes(mysqli_real_escape_string($db, $s))), ENT_QUOTES);
+	  return htmlentities(br2nl(mysqli_real_escape_string($db, $s)), ENT_QUOTES);
+	}
+	function msqle($s) {
+	  global $db;
+	  mysqli_real_escape_string($db, $s);
+	}
+	function htmlencode($s) {
+	  return br2nl(htmlentities($s, ENT_QUOTES));
+	}
+	function desanitize($s) {
+	  //return nlTobr(html_entity_decode($s));
+	  return nlTobr($s);
+	}
+	function br2nl($s) {
+	    return preg_replace('/\<br(\s*)?\/?\>/i', "\n", $s);
+	}
+	function nlTobr($s) {
+	  return str_replace( "\n", '<br>', $s);
+	}
+
     require('../includes/user.php');
 
     if (isset($_POST["install"])) {
@@ -123,34 +175,40 @@ $starttime = $time;
         echo "<script type='text/javascript'>d.error('MySQL conn failed: " . mysqli_connect_error() . "')</script>";
         } else {
             //Create MySQL table for users
-            $sql = 'CREATE TABLE Users(
+            $sql = 'CREATE TABLE USERS (
                 PID INT NOT NULL AUTO_INCREMENT, 
                 PRIMARY KEY(PID),
-                uName VARCHAR(50), 
-                pass VARCHAR(512), 
+                name VARCHAR(50), 
+                pass VARCHAR(512),
+                display_name VARCHAR(128),
+                email VARCHAR(128),
                 access_level INT
                 )';
 
             //$upass = sha2($_POST['upass'], 512);
             $default = "not set";
+            $defName = "Teh Admin";
             $options = [
                 'cost' => 11,
             ];
             
-            $uname = addslashes($_POST['uname']);
-            $upass = password_hash(addslashes($_POST['upass']), PASSWORD_BCRYPT, $options);
+            $uname = sanitize($_POST['uname']);
+            $upass = password_hash(sanitize($_POST['upass']), PASSWORD_BCRYPT, $options);
+            $email = sanitize($_POST['email']);
 
             // Execute query
             if (mysqli_query($db,$sql)) {
-              echo "<script type='text/javascript'>d.success('Table \'Users\' Created successfully')</script>";
+              echo "<script type='text/javascript'>d.success('Table \"Users\" Created successfully')</script>";
             } else {
               echo "<script type='text/javascript'>d.error('MySQL Query failed: " . mysqli_error($db) . "')</script>";
             }
 
-            $sql = "INSERT INTO Users (uName, pass, access_level)
+            $sql = "INSERT INTO USERS (name, pass, display_name, email, access_level)
                     VALUES ('$uname', 
                     '$upass',
-                    '2')";
+                    '$defName',
+                    '$email',
+                    '5')";
 
             if (mysqli_query($db,$sql)) {
               echo "<script type='text/javascript'>d.success('User \'". $uname ."\' created successfully')</script>";
@@ -158,20 +216,22 @@ $starttime = $time;
               echo "<script type='text/javascript'>d.error('MySQL Query failed: " . mysqli_error($db) . "')</script>";
             }
 
-            $sql = 'CREATE TABLE Items(
+            $sql = 'CREATE TABLE FILES (
                 PID INT NOT NULL AUTO_INCREMENT, 
                 PRIMARY KEY(PID),
                 owner VARCHAR(50),
-                item_name VARCHAR(100),
-                item_amount INT,
-                item_value INT,
-                item_value_unit VARCHAR(4)
+                file_name VARCHAR(100),
+                file_type VARCHAR(50),
+                file_size DOUBLE(100, 2),
+                file_self VARCHAR(512),
+                file_parent VARCHAR(512),
+                file_child VARCHAR(512)
                 )';
 
             if (mysqli_query($db,$sql)) {
-              echo "<script type='text/javascript'>d.success('Table \'Items\' Created successfully')</script>";
+              echo "<script type='text/javascript'>d.success('Table \"Files\" Created successfully')</script>";
             } else {
-              echo "<script type='text/javascript'>d.error('MySQL Query failed: " . mysqli_error() . "')</script>";
+              echo "<script type='text/javascript'>d.error('MySQL Query failed: " . mysqli_error($db) . "')</script>";
             }
 
             $string = '<?php 
@@ -184,7 +244,7 @@ $starttime = $time;
 
             $dbname = "' . $_POST['dbname'] . '";
 
-            //$installed = true;
+            $installed = true;
 
             ';
 
@@ -194,12 +254,12 @@ $starttime = $time;
 
             fclose($fp);
 
-            header("Location: index.php");
+            header("Location: ../index.php");
 
         } 
 
     } else {
-        echo "<script type='text/javascript'>d.error('FoxFile is already installed.')</script>";
+        echo "<script type='text/javascript'>d.error(" . $name . " is already installed.')</script>";
     }
 
     
@@ -210,7 +270,7 @@ $starttime = $time;
   <div id="wrapper">
   <?php if (!isset($installed)) { ?>
 
-  <h1>FoxFile Setup</h1>
+  <h1><?php echo $name . ' ' . $ver ?> Setup</h1>
   <hr>
 
   <form action="" method="post" name="install" id="install">
@@ -223,12 +283,16 @@ $starttime = $time;
       <input class="install-content" name="upass" type="password" id="upass" required> 
   </p>
   <p>
+      <label class="install-content-title" for="email"><i class="fa fa-envelope"></i> Set an Admin email address.</label>
+      <input class="install-content" name="email" type="email" id="email" required> 
+  </p>
+  <p>
       <label class="install-content-title" for="dbuname"><i class="fa fa-cog"></i> Enter the database username.</label>
       <input class="install-content" name="dbuname" type="text" id="dbuname" value="" required> 
   </p>
   <p>
       <label class="install-content-title" for="dbupass"><i class="fa fa-cog"></i> Enter the database password.</label>
-      <input class="install-content" name="dbupass" type="password" id="dbupass" required> 
+      <input class="install-content" name="dbupass" type="password" id="dbupass"> 
   </p>
   <p>
       <label class="install-content-title" for="dbhost"><i class="fa fa-cog"></i> Enter the database host url.</label>
@@ -258,7 +322,7 @@ $starttime = $time;
   <button class="btn btn-submit btn-moresettings" onclick="$('.moresettings').css('display', 'inline');$('.btn-moresettings').css('display','none')">More Settings</button>
 
   <?php } else { ?>
-  <h1>FoxFile is already installed.</h1>
+  <h1><?php echo $name ?> is already installed.</h1>
   <h3><button class="btn btn-submit" onclick="document.location = '../';">Return to Index</button></h3>
   <?php } ?>
   </div>

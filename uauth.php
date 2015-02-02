@@ -15,7 +15,28 @@ function strip_tags_attributes( $str,
 		    }
 		    return preg_replace('/<(.*?)>/ies', "'<' . preg_replace(array('/javascript:[^\"\']*/i', '/(" . implode('|', $disabledEvents) . ")=[\"\'][^\"\']*[\"\']/i', '/\s+/'), array('', '', ' '), stripslashes('\\1')) . '>'", strip_tags($str, implode('', $allowedTags)));
 		}
-
+function sanitize($s) {
+	global $db;
+	// return htmlentities(br2nl(addslashes(mysqli_real_escape_string($db, $s))), ENT_QUOTES);
+	return htmlentities(br2nl(mysqli_real_escape_string($db, $s)), ENT_QUOTES);
+}
+function msqle($s) {
+	global $db;
+	return mysqli_real_escape_string($db, $s);
+}
+function htmlencode($s) {
+	return br2nl(htmlentities($s, ENT_QUOTES));
+}
+function desanitize($s) {
+	//return nlTobr(html_entity_decode($s));
+	return nlTobr($s);
+}
+function br2nl($s) {
+    return preg_replace('/\<br(\s*)?\/?\>/i', "\n", $s);
+}
+function nlTobr($s) {
+	return str_replace( "\n", '<br>', $s);
+}
 if(isset($_POST['check_username'])) {
 
 	$username = addslashes(strip_tags_attributes($_POST['username']));  

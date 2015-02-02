@@ -1,7 +1,9 @@
 <?php
-			$show_errors = 1;
+			$show_errors = 2;
 			$show_debug = true;
 			$title = "FoxFile Άλφα";
+			$name = '<span style="color: rgb(248, 114, 23);">Fox</span>File';
+			$ver = '1.0a';
 			$theme = "fancy";
 			$localcode = "";
 			$grav_default = "retro";
@@ -9,7 +11,7 @@
 			$grav_custom = "";
 			$showfooter = false;
 			$showpageloadtime = false;
-			$useGroupPassword = true;
+			$useGroupPassword = false;
 			$group_password = 'foxfilealpha';
 			$allowsharing = false;
 			$database = [

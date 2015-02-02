@@ -2,12 +2,19 @@
 session_start();
 require('includes/user.php');
 require('includes/config.php');
+if(!isset($_SESSION['uid'])) {
+	$_SESSION['uid'] = 0;
+}
+if(!isset($_SESSION['access_level'])) {
+	$_SESSION['access_level'] = 0;
+}
 //connect to database  
 $db = mysqli_connect($dbhost,$dbuname,$dbupass,$dbname);
-$sessionMode = $_SESSION['mode'];
-$sessionUser = $_SESSION['user'];
+$usertable = $database['TABLE_USERS'];
+$filetable = $database['TABLE_FILES'];
+$uid = $_SESSION['uid'];
+$alvl = $_SESSION['access_level'];
 date_default_timezone_set('America/New_York');
-error_reporting(0); //messing up my replies
 
 function strip_tags_attributes( $str, 
 		    $allowedTags = array('<a>','<b>','<blockquote>','<br>','<cite>','<code>','<del>','<div>','<em>','<ul>','<ol>','<li>','<dl>','<dt>','<dd>','<img>','<video>','<iframe>','<ins>','<u>','<q>','<h3>','<h4>','<h5>','<h6>','<samp>','<strong>','<sub>','<sup>','<p>','<table>','<tr>','<td>','<th>','<pre>','<span>'), 
@@ -18,140 +25,88 @@ function strip_tags_attributes( $str,
 		    }
 		    return preg_replace('/<(.*?)>/ies', "'<' . preg_replace(array('/javascript:[^\"\']*/i', '/(" . implode('|', $disabledEvents) . ")=[\"\'][^\"\']*[\"\']/i', '/\s+/'), array('', '', ' '), stripslashes('\\1')) . '>'", strip_tags($str, implode('', $allowedTags)));
 		}
-
-if(isset($_POST['username'])) {
-
-	$username = addslashes(strip_tags_attributes($_POST['username']));  
-	 
-	$result = mysqli_query($db, "SELECT NAME from USERS where NAME = '". $username . "'");  
-	  
-	//if number of rows fields is bigger them 0 that means it's NOT available '  
-	if(mysqli_num_rows($result)>0){  
-	    echo 0;  
-	}else{  
-	    echo 1;  
-	}
-}
-
-if(isset($_POST['udname'])) {
-	$udname = addslashes(strip_tags_attributes($_POST['udname']));
-	$userToSet = addslashes(strip_tags_attributes($_POST['user']));
-	$user = $sessionUser;
-	if ($userToSet === $user || $sessionMode === 'admin') {
-		if (mysqli_query($db, "UPDATE USERS SET disname='$udname' WHERE name='$userToSet'")) {
-			echo 1;
-		} else {
-			echo 0;
+function getOwner($c) {
+			global $db;
+			$c = mysqli_real_escape_string($db, $c);
+			$result = mysqli_query($db, "SELECT * from $filetable where PID = '$c'");
+			$row = mysqli_fetch_array($result);
+			return $row['owner'];
 		}
-	}
+function sanitize($s) {
+	global $db;
+	// return htmlentities(br2nl(addslashes(mysqli_real_escape_string($db, $s))), ENT_QUOTES);
+	return htmlentities(br2nl(mysqli_real_escape_string($db, $s)), ENT_QUOTES);
 }
-
-if(isset($_POST['udbio'])) {
-	$udbio = addslashes(strip_tags_attributes($_POST['udbio']));
-	$userToSet = addslashes(strip_tags_attributes($_POST['user']));
-	$user = $sessionUser;
-	if ($userToSet === $user || $sessionMode === 'admin') {
-		$sql = "UPDATE Users SET bio='$udbio' WHERE name='$userToSet'";
-
-		if (mysqli_query($db, $sql)) {
-			echo 1;
-		} else {
-			echo 0;
-		}
-	}
+function msqle($s) {
+	global $db;
+	return mysqli_real_escape_string($db, $s);
 }
-
-if(isset($_POST['deletepost'])) {
-	if(isset($sessionMode)) {
-		if($sessionMode === 'admin') {
-			$pid = $_POST['postid'];
-			$sql = "DELETE FROM Posts WHERE PID=$pid";
-			mysqli_query($db, $sql);
-			echo 'hello';
-			header('Location: ' . dirname($_SERVER['REQUEST_URI']) . '/index.php');
-		}
-	}
+function htmlencode($s) {
+	return br2nl(htmlentities($s, ENT_QUOTES));
 }
-
-if(isset($_POST['newpass'])) {
-	$newpass = addslashes(strip_tags_attributes($_POST['newpass']));
-	$newpassconf = addslashes(strip_tags_attributes($_POST['newpassconf']));
-	$userToSet = addslashes(strip_tags_attributes($_POST['user']));
-	$user = $sessionUser;
-	if ($newpass === $newpassconf) {
-		if ($userToSet === $user || $sessionMode === 'admin') {
-			$options = [
-		                'cost' => 11,
-		            ];
-			$passtoset = password_hash($newpass, PASSWORD_BCRYPT, $options);
-			$sql = "UPDATE users SET pass='$passtoset' WHERE name='$userToSet'";
-			if (mysqli_query($db, $sql)) {
-				echo 1;
-			} else {
-				echo 0;
-			}
-		}
-	} else {
-		echo 0;
-	}
+function desanitize($s) {
+	//return nlTobr(html_entity_decode($s));
+	return nlTobr($s);
 }
-
-if(isset($_POST['newemail'])) {
-	$newemail = addslashes(strip_tags_attributes($_POST['newemail']));
-	$userToSet = addslashes(strip_tags_attributes($_POST['user']));
-	$user = $sessionUser;
-	if ($userToSet === $user || $sessionMode === 'admin') {
-		$sql = "UPDATE users SET email='$newemail' WHERE name='$userToSet'";
-		if (mysqli_query($db, $sql)) {
-			echo 1;
-		} else {
-			echo 0;
-		}
-	} else {
-		echo 'user does not match userSet';
-	}
+function br2nl($s) {
+    return preg_replace('/\<br(\s*)?\/?\>/i', "\n", $s);
 }
-
-if(isset($_POST['userlist'])) {
-	if ($_POST['userlist'] == 'all') {
-		if(isset($sessionMode)) {
-			if($sessionMode === 'admin') {
-				$sql="SELECT * FROM Users";
-				$users = mysqli_query($db, $sql);
-				//echo '<table class="table-userlist">';
-				echo '<tr><td></td><td>Name</td><td>Email</td><td>Display name</td><td>Birthday</td><td>isAdmin</td><td>filterPref</td></tr>';
-				while($row = mysqli_fetch_array($users)) {
-					$email = $row['email'];
-					$size = 50;
-					if ($grav_default === 'custom') {
-						$grav_default = $grav_custom;
-					}
-					$grav_url = "http://www.gravatar.com/avatar/" . md5( strtolower( trim( $email ) ) ) . "?d=" . $grav_default . "&s=" . $size . "r=" . $grav_rating;
-
-					try {
-						$date1 = new DateTime($row['age']); //compare age from database with current time
-						$date2 = new DateTime();
-						$interval = $date1->diff($date2);
-						$age = $interval->y;
-						//echo "difference " . $interval->y . " years, " . $interval->m." months, ".$interval->d." days ";
-					} catch (Exception $e){
-						//do nothing :D
-					}
-
-					echo '<tr>
-					<td><a href="../user.php?u=' . $row["name"] . '"  target="_blank"><img src="' . $grav_url . '" /></a></td>
-					<td>' . $row['name'] . '</td> 
-					<td>' . $row['email'] . '</td> 
-					<td>' . $row['disname'] . '</td>
-					<td>' . $row['age'] . ' (' . $age . ' yrs)</td>
-					<td>' . $row['isAdmin'] . '</td>
-					<td>' . $row['filterPref'] . '</td>
-					</tr>';
+function nlTobr($s) {
+	return str_replace( "\n", '<br>', $s);
+}
+if(isset($_GET['dir'])) {
+	$dir = sanitize($_GET['dir']);
+	$type = sanitize($_GET['type']);
+	if ($type === 'folder') {
+		$dirOwner = mysqli_query($db, "SELECT owner from $filetable WHERE file_parent='$dir'");
+		$resultDir = mysqli_query($db, "SELECT * from $filetable WHERE file_parent='$dir'");
+		$giveResult = false;
+		if (mysqli_num_rows($resultDir) > 0) {
+			while($row = mysqli_fetch_array($dirOwner)) {
+				if ($row['owner'] === $uid) {
+					$giveResult = true;
 				}
-				//echo '</table>';
 			}
+		}
+
+		if(mysqli_num_rows($resultDir) > 0) {
+				$r = array();
+				while($row = mysqli_fetch_assoc($resultDir)) {
+					$r[] = $row;
+				}
+				if ($giveResult) {
+					echo json_encode($r);
+				} else {
+					//echo '[{"PID": "0","owner":"0","file_name":"File Access Denied","file_size":"0","file_type":"text","file_self":"test_hash","file_parent":"home_dir","file_child":""}]';
+					echo json_encode($r);
+				}
+		} else {  
+		    echo '[{"PID": "0","owner":"0","file_name":"File Does Not Exist","file_size":"0","file_type":"text","file_self":"test_hash","file_parent":"home_dir","file_child":""}]';  
+		}
+	} else {
+		$dirOwner = mysqli_query($db, "SELECT owner from $filetable WHERE file_self='$dir'");
+		$resultFileData = mysqli_query($db, "SELECT * from $filetable WHERE file_self='$dir'");
+		$giveResult = false;
+		if (mysqli_num_rows($resultFileData) > 0) {
+			while($row = mysqli_fetch_array($dirOwner)) {
+				if ($row['owner'] === $uid) {
+					$giveResult = true;
+				}
+			}
+		}
+		if(mysqli_num_rows($resultFileData) > 0) {
+				$r = array();
+				while($row = mysqli_fetch_assoc($resultFileData)) {
+					$r[] = $row;
+				}
+				if ($giveResult) {
+					echo json_encode($r);
+				} else {
+					//echo '[{"PID": "0","owner":"0","file_name":"File Access Denied","file_size":"0","file_type":"text","file_self":"test_hash","file_parent":"home_dir","file_child":""}]';
+					echo json_encode($r);
+				}
+		} else {  
+		   	echo '[{"PID": "0","owner":"0","file_name":"File Does Not Exist","file_size":"0","file_type":"text","file_self":"test_hash","file_parent":"home_dir","file_child":""}]';
 		}
 	}
 }
-
-//echo $sessionMode;

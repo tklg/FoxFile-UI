@@ -1,10 +1,13 @@
 <?php 
 
-            $dbuname = "dndcsm";
+            $dbuname = "foxfile";
 
-            $dbupass = "dndcsm";
+            $dbupass = "G2KMMQFvcw9Tcnsb";
 
             $dbhost = "localhost";
 
-            $dbname = "dndcsm";
+            $dbname = "foxfile";
+
+            $installed = true;
+
             

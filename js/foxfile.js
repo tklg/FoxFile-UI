@@ -28,9 +28,9 @@ var bar = {
 	active: 2,
 	maxActive: 3,
 	currentOffset: 0,
-	add: function(title, moveBack, type, onclick) {
+	add: function(title, moveBack, type, onclick, hash) {
 		bar.active++;
-		$('#wrapper').append('<section class="bar bar-vertical" id="bar-' + this.active + '" type="' + type + '" state="closed"> <div class="menubar-title"><span class="heightsettertext"></span><i class="bar-backbutton btn fa fa-caret-left"></i><span class="menubar-title-link btn" onclick="' + onclick + '">' + title + '</div> <div class="menubar menubar-left"> <ul> </ul> </div> </section>');
+		$('#wrapper').append('<section class="bar bar-vertical" id="bar-' + this.active + '" type="' + type + '" state="closed" filename="' + hash + '"> <div class="menubar-title"><span class="heightsettertext"></span><i class="bar-backbutton btn fa fa-angle-left"></i><span class="menubar-title-link btn" onclick="' + onclick + '">' + title + '</div> <div class="menubar menubar-left"> <ul> </ul> </div> </section>');
 		bar.move(this.active, 5);
 		bar.size(this.active - 1, 1);
 		if (this.active <= this.maxActive) {
@@ -56,9 +56,10 @@ var bar = {
 		//d.info("active: " + this.active);
 		resizeAll();
 	},
-	fill: function(from_url, bar, file_key, parent_key) {
+	fill: function(bar, file_key, type) {
+		//parent_key = '',
 		BCL = new BarContentLoader();
-		BCL.start(from_url, bar, file_key, parent_key);
+		BCL.start(bar, file_key, type);
 	},
 	clear: function(bar) {
 		$('#bar-' + bar + ' ul').empty();
@@ -139,15 +140,14 @@ var bar = {
 bar.updatePos(1);
 bar.updatePos(2);
 var files = {
-	open: function (from_url, hash, title, bar_id, type, onclick) {
+	open: function (hash, title, bar_id, type, onclick) {
 		console.log("clicked on file in bar " + bar_id);
-		console.log("from_url: " + from_url);
 		console.log("hash: " + hash);
 		console.log("title: " + title);
 		if (bar_id == bar.active) { //user clicked on the active bar, make a new one to the right
 			console.log("Clicked on active bar");
-			bar.add(title, true, type, onclick);
-			bar.fill(from_url, bar.active, hash);
+			bar.add(title, true, type, onclick, hash);
+			bar.fill(bar.active, hash, type);
 			bar.setActive(bar.active);
 		} else { //user clicked on a bar back in the stack, remove all after it and remake the needed folder/file
 			console.log("Clicked on inactive bar");
@@ -163,31 +163,19 @@ var files = {
 				console.log("removing active bar: " + bar.active);
 				bar.remove(bar.active);
 			}
-			bar.add(title, false, type, onclick);
-			bar.fill(from_url, bar.active, hash);
+			bar.add(title, false, type, onclick, hash);
+			bar.fill(bar.active, hash, type);
 			bar.setActive(bar.active);
 		}
 		if (bar_id == 1) {
 			bar.size(2, 3);
 		}
+		clickMenu.rebind();
 	},
 	rename: function(file) {
 		$.post('dbquery.php',
 		{
 			action: 'rename',
-			file_id: file
-		},
-		function(result) {
-			d.info(result);
-		});
-	},
-	copy: function(file) {
-		//open copyTo modal
-		//get location to copy to
-		$.post('dbquery.php',
-		{
-			action: 'copy',
-			copy_tp: target,
 			file_id: file
 		},
 		function(result) {
@@ -213,6 +201,12 @@ var files = {
 		function(result) {
 			d.info(result);
 		});
+	},
+	uploadGUI: function(target) {
+
+	},
+	upload: function(target, files) {
+
 	},
 	share: function(file) {
 		$.post('dbquery.php',
@@ -253,11 +247,13 @@ var BarContentModel = Backbone.Model.extend({
 });
 
 var BarContentList = Backbone.Collection.extend({
-	parent_key: '',
-	file_key: '',
 	model: BarContentModel,
-	//url: 'dbquery.php?parent=' + this.parent_key + '&key=' + this.file_key
-	url: ''
+	parent_key: '',
+	type: '',
+	url: function() {
+		return 'dbquery.php?dir=' + this.parent_key + '&type=' + this.type;
+	}
+	//url: 'dbquery.php?dir=home_dir'
 });
 var BCL, BCV;
 var barTypeToMake;
@@ -266,33 +262,35 @@ var BarContentView = Backbone.View.extend({
 	barID: '',
 	folderTemplate: _.template($('#folder_template').html()),
 	fileTemplate: _.template($('#file_template').html()),
+	barTypeToMake: '',
 	initialize: function() {
 		//console.log('BarContentView initialized');
 		this.collection.on('reset', this.render, this);
 		c = this.collection;
 		//fade in loading spinny
+		d.success("GET from " + c.url());
 		this.collection.fetch({
 			success: function(model, response) {
 				//console.info("Loaded model");
-				var files = response['file'];
+				var files = response;
 				//console.log(files[0].name);
 				var arr = [];
 				for (var i = 0; i < files.length; i++) {
 					obj = {
-						'fileName': files[i].name,
-						'fileType': files[i].type,
+						'fileID': files[i].PID,
+						'fileName': files[i].file_name,
+						'fileType': files[i].file_type,
 						'basicFileType': '',
-						'fileSize': files[i].size,
-						'fileID': files[i].id,
-						'hash_self': files[i].hash_self,
-						'hash_child': files[i].hash_child,
-						'hash_parent': files[i].hash_parent,
-						'onclick': 'files.open(\'' + BCL.url + '\', \'' + files[i].hash_self + '\', $(this).attr(\'name\'), $(this).attr(\'container\'), $(this).attr(\'type\'));state.update($(this).attr(\'container\'), this.id);$(\'#bar-' + (BCV.barID+1) + ' .menubar-title-link\').attr(\'onclick\')',
+						'fileSize': files[i].file_size,
+						'hash_self': files[i].file_self,
+						'hash_child': files[i].file_child,
+						'hash_parent': files[i].file_parent,
+						'onclick': 'files.open(\'' + files[i].file_self + '\', $(this).attr(\'name\'), $(this).attr(\'container\'), $(this).attr(\'type\'));state.update($(this).attr(\'container\'), this.id);$(\'#bar-' + (BCV.barID+1) + ' .menubar-title-link\').attr(\'onclick\')',
 						'container': BCV.barID
 					};
 					if (obj.fileType.toLowerCase() == 'folder') {
 						obj.basicFileType = 'folder';
-						barTypeToMake = 'folder';
+						//this.barTypeToMake = 'folder';
 						obj.fileType = 'Folder';
 					} else {
 						switch (getExt(obj.fileName)) {
@@ -415,7 +413,7 @@ var BarContentView = Backbone.View.extend({
 								break;
 						}
 						//obj.fileType += ' File';
-						barTypeToMake = 'file';
+						this.barTypeToMake = 'file'; //usually overridden by a file after this - if this is the only thing opened (file was opened to view) this will stay
 					}
 
 					arr.push(obj);
@@ -434,28 +432,34 @@ var BarContentView = Backbone.View.extend({
 	},
 	list: function(model) {
 		//console.log("Appending template to #bar-" + this.barID);
-		if (barTypeToMake == 'folder')
-			$('#bar-' + this.barID + ' .menubar ul').append(this.folderTemplate({model: model}));
-		else
+		if (this.barTypeToMake != 'folder') {
 			$('#bar-' + this.barID + ' .menubar ul').append(this.fileTemplate({model: model}));
+		} else {
+			$('#bar-' + this.barID + ' .menubar ul').append(this.folderTemplate({model: model}));
+		}
 	}
 });
 var BarContentLoader = Backbone.Router.extend({
 	routes: {
 		'': 'start'
 	},
-	start: function(src_url, target_element, file_key, parent_key) {
+	start: function(target_element, file_key, type) {
 		//console.log("BarcontentLoader");
 		BCL = null;
 		BCV = null;
-		BCL = new BarContentList();
-		BCL.parent_key = parent_key;
-		BCL.file_key = file_key;
-		BCL.url = src_url;
+		BCL = new BarContentList({
+			//parent_key: file_key
+		});
+		BCL.parent_key = file_key;
+		BCL.type = type;
+		//BCL.parent_key = parent_key;
+		//BCL.parent_key = file_key;
+		//BCL.url = src_url; //not needed, all queries are sent to dbquery.php
 		BCV = new BarContentView({
 			collection: BCL
 		});
 		BCV.barID = target_element;
+		BCV.barTypeToMake = type;
 	}
 });
 
@@ -475,33 +479,48 @@ var state = {
 }
 
 var clickMenu = {
-	fn: 'd.info("unadded clickmenu item");',
+	fn: 'd.info(\'unadded clickmenu item\');',
 	isOpen: false,
-	open: function(posX, posY, bar, file) {
-		d.info('Opening clickmenu at (' + posX + ', ' + posY + ") in bar " + bar + " at file " + file);
+	open: function(posX, posY, bar, file, type) {
+		//d.info('Opening clickmenu at (' + posX + ', ' + posY + ") in bar " + bar + " at file " + file + " of type " + type);
 		if (this.isOpen) this.close();
 		$('body').append('<div class="clickmenu" bar="' + bar + '" file="' + file + '"><ul></ul><div>');
-		items = ['Delete','Rename','Copy','Download','Share'];
+		if (type == 'folder') {
+			items = ['<i class="fa fa-trash-o"></i> Delete',
+			'<i class="fa fa-pencil-square-o"></i> Rename',
+			'<i class="fa fa-upload"></i> Upload',
+			'<i class="fa fa-download"></i> Download',
+			'<i class="fa fa-plus-circle"></i> New Folder',
+			'<i class="fa fa-share-square-o"></i> Share'];
+		} else {
+			items = ['<i class="fa fa-trash-o"></i> Delete',
+			'<i class="fa fa-pencil-square-o"></i> Rename',
+			'<i class="fa fa-download"></i> Download',
+			'<i class="fa fa-share-square-o"></i> Share'];
+		}
 
 		for(i = 0; i < items.length; i++) {
-			switch(items[i].toLowerCase()) {
+			switch(items[i].toLowerCase().split('</i>')[1].trim()) {
 				case 'delete':
-					fn = 'files.delete(this.file);';
+					this.fn = 'files.delete(this.file);clickMenu.close();';
 					break;
 				case 'rename':
-					fn = 'files.rename(this.file);';
-					break;
-				case 'copy':
-					fn = 'files.copy(this.file);';
+					this.fn = 'files.rename(this.file);clickMenu.close();';
 					break;
 				case 'download':
-					fn = 'files.download(this.file);';
+					this.fn = 'files.download(this.file);clickMenu.close();';
+					break;
+				case 'upload':
+					this.fn = 'files.uploadGUI(this.file);clickMenu.close();';
+					break;
+				case 'new folder':
+					this.fn = 'files.newFolderGUI(this.file);clickMenu.close();';
 					break;
 				case 'share':
-					fn = 'files.share(this.file);';
+					this.fn = 'files.share(this.file);clickMenu.close();';
 					break;
 			}
-			$('.clickmenu ul').append('<li class="btn" onclick="clickMenu.close();' + fn + '" bar="' + bar + '" file="' + file + '">' + items[i] + '</li>');
+			$('.clickmenu ul').append('<li class="btn" onclick="' + this.fn + '" bar="' + bar + '" file="' + file + '">' + items[i] + '</li>');
 		}
 
 		$('.clickmenu').css({
@@ -513,5 +532,42 @@ var clickMenu = {
 	close: function() {
 		$('.clickmenu').remove();
 		this.isOpen = false;
+	},
+	rebind: function() {
+		$('.bar:not(.bar-main)').bind("contextmenu", function(e) {
+			e.preventDefault();
+			//d.info($(e.target).attr("class"));
+			if ($(e.target).is('li')) { //is a file bar
+				var bar = $(e.target).attr('container');
+				var file = $(e.target).attr('onclick').split(',')[1].trim().replace(/'/g, '');
+				var type = $(e.target).attr('type');
+			} else {
+				if (!$(e.target).is('section')) { //is within a file bar
+					var bar = $(e.target).parents('li').attr('container');
+					var file = $(e.target).parents('li').attr('onclick').split(',')[1].trim().replace(/'/g, '');
+					var type = $(e.target).parents('li').attr('type');
+				} else { //is the empty space under the bar
+					var bar = $(e.target).attr('id').split('-')[1];
+					var file = $(e.target).attr('filename');
+					var type = $(e.target).attr('type');
+				}
+			}
+			if (e.pageY > winHeight - 183) {
+				if (e.pageX > winWidth - 204)
+					clickMenu.open(e.pageX - 204, e.pageY - 183, bar, file, type);
+				else
+					clickMenu.open(e.pageX, e.pageY - 183, bar, file, type);
+			} else {
+				if (e.pageX > winWidth - 204)
+					clickMenu.open(e.pageX - 204, e.pageY, bar, file, type);
+				else
+					clickMenu.open(e.pageX, e.pageY, bar, file, type);
+			}
+		});
+		$(document).bind("click", function(e) {
+			if (!$(e.target).parents('.clickmenu').length > 0) {
+				clickMenu.close();
+			}
+		});
 	}
 }

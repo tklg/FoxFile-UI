@@ -192,7 +192,7 @@ a {
 	font-size: 110%;
 }
 .menubar-content:not(.menubar-content-active):hover {
-	background: rgba(255,255,255,.08);
+	background: rgba(255,255,255,.02);
 	-webkit-transition: all .2s ease-in-out;
             transition: all .2s ease-in-out;
 }
@@ -225,7 +225,11 @@ a {
 }
 .menubar-content[type='folder'] .file-info #filesize:after {
 	color: #666;
-	content: " Items";
+	content: " --";
+}
+.menubar-content[type='folder'] .file-info #filesize span:not(span.filetype) {
+	color: #666;
+	display: none;
 }
 /*.menubar-content[type='folder'] .file-info:after {
 	font-family: 'FontAwesome';
@@ -354,7 +358,7 @@ a {
 	padding: 0;
 	margin: 0;
 	font-size: 80%;
-	border: 2px solid #444;
+	border: 2px solid #292929;
 }
 .clickmenu ul {
 	margin: 0;
@@ -362,12 +366,31 @@ a {
 }
 .clickmenu li {
 	padding: 10px 15px;
-	background: #555;
-	border-bottom: 1px solid #444;
+	background: #333;
+	border-bottom: 1px solid #292929;
 }
 .clickmenu li:last-child {
 	border-bottom: none;
 }
 .clickmenu li:hover {
-	background: #666;
+	background: #444;
+}
+.clickmenu li i {
+	margin-right: 10px;
+	font-size: 150%;
+	color: rgb(248, 114, 23);
+	-webkit-transition: all .2s ease-in-out;
+            transition: all .2s ease-in-out;
+}
+.clickmenu li:hover i {
+	color: rgb(255,165,0);
+}
+.menubar-content-view .file-name {
+	font-size: 200%;
+}
+.menubar-content-view[type='text'] .file-view {
+	color: #666;
+	font-family: 'FontAwesome';
+	content: '\f0f6';
+	padding-right: 13px; 
 }

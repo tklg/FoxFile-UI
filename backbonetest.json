@@ -55,10 +55,19 @@
     "hash_parent": "example_hash_parent"
   },
   {
+    "name": "Folder 2",
+    "type": "folder",
+    "size": 0,
+    "id": 37,
+    "hash_self": "example_hash_self",
+    "hash_child": "example_hash_child",
+    "hash_parent": "example_hash_parent"
+  },
+  {
     "name": "Filename.pdf",
     "type": "file",
     "size": 0,
-    "id": 7,
+    "id": 8,
     "hash_self": "example_hash_self",
     "hash_child": "example_hash_child",
     "hash_parent": "example_hash_parent"
@@ -67,7 +76,7 @@
     "name": "lua script.lua",
     "type": "file",
     "size": 0,
-    "id": 8,
+    "id": 9,
     "hash_self": "example_hash_self",
     "hash_child": "example_hash_child",
     "hash_parent": "example_hash_parent"

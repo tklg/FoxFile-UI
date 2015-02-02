@@ -7,13 +7,12 @@ if(!isset($_SESSION['uid'])) {
 if(!isset($_SESSION['access_level'])) {
 	$_SESSION['access_level'] = 0;
 }
-error_reporting($show_errors);//remove for debug
+//error_reporting($show_errors);//remove for debug
 $time = microtime();
 $time = explode(' ', $time);
 $time = $time[1] + $time[0];
 $starttime = $time;
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <!--
@@ -23,14 +22,7 @@ $starttime = $time;
  -->
 <head>
     <title><?php echo $title ?></title>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="initial-scale=1, width=device-width, maximum-scale=1, minimum-scale=1, user-scalable=no">
-
-	<!-- <link rel="stylesheet" href="css/bootstrap.min.css"> -->
-	<link rel="stylesheet" href="css/font-awesome.min.css">
-	<link rel="stylesheet" href="css/fonts.css">
-    <link rel="stylesheet" href="css/foxfile.css">
+    <?php require('includes/header.php'); ?>
     <style type="text/css">
 
     </style>
@@ -50,11 +42,11 @@ $starttime = $time;
 	<div id="wrapper">
 
 	<section class="bar bar-vertical bar-main tabs" id="bar-1">
-	<div class="title menubar-title"><span style="color: rgb(248, 114, 23);">Fox</span>File v1.0a</div>
+	<div class="title menubar-title"><?php echo $name . ' ' . $ver ?></div>
 	<div class="menubar menubar-left tab-links">
 	<ul>
 		<li class="menubar-content menubar-content-user menubar-content-active" id="menubar-button-1" onclick="d.success($(this).text())">user.name</li>
-		<li class="menubar-content menubar-content-main menubar-content-active" container="1" id="menubar-button-files" onclick="files.open('backbonetest.json', 'example_hash_self', $(this).text(), $(this).attr('container'));" href="#my-files">My Files</li>
+		<li class="menubar-content menubar-content-main menubar-content-active" container="1" id="menubar-button-files" type="folder" onclick="files.open('home_dir', $(this).text(), $(this).attr('container'), $(this).attr('type'));" href="#my-files">My Files</li>
 		<?php if($allowsharing) {?><li class="menubar-content menubar-content-main" id="menubar-button-shared" href="#shared-files">Shared</li> <?php } ?>
 		<li class="menubar-content menubar-content-main" id="menubar-button-bookmarks" href="#bookmarks">Bookmarks</li>
 		<li class="menubar-content menubar-content-main" id="menubar-button-account" href="#account">Account</li>
@@ -63,16 +55,12 @@ $starttime = $time;
 	</div>
 	</section>
 
-	<section class="tabs">
-	<section class="tab active" id="my-files">
-	<section class="bar bar-vertical bar-full bar-orig" id="bar-2" type="folder" state="closed">
-	<div class="menubar-title"><span class="heightsettertext"></span><i class="bar-backbutton btn fa fa-caret-left"></i><span class="menubar-title-link btn">My Files</span></div>
+	<section class="bar bar-vertical bar-full bar-orig" id="bar-2" type="folder" state="closed" filename="home_directory">
+	<div class="menubar-title"><span class="heightsettertext"></span><i class="bar-backbutton btn fa fa-angle-left"></i><span class="menubar-title-link btn">My Files</span></div>
 	<div class="menubar menubar-left">
 	<ul>
 	</ul>
 	</div>
-	</section>
-	</section>
 	</section>
 
 	</div>
@@ -85,15 +73,16 @@ $starttime = $time;
     <li class="menubar-content" container="<%= model.get('container') %>" type="<%= model.get('basicFileType') %>" id="<%= model.get('fileID') %>" name="<%= model.get('fileName') %>" onclick="<%= model.get('onclick') %>" pos="">
 		<span class="folder file-name"><%= model.get('fileName') %></span>
 		<div class="file-info">
-			<span class="file-info-item" id="filesize"><%= model.get('fileSize') %></span>
+			<span class="file-info-item" id="filesize"><span class="filetype"><%= model.get('fileType') %></span><br><%= model.get('fileSize') %></span>
 		</div>
 	</li>
 	</script>
 	<script type="text/template" id="file_template">
-    <li class="menubar-content" container="<%= model.get('container') %>" type="<%= model.get('basicFileType') %>" id="<%= model.get('fileID') %>" name="<%= model.get('fileName') %>" onclick="<%= model.get('onclick') %>" pos="">
+    <li class="menubar-content-view" container="<%= model.get('container') %>" type="<%= model.get('basicFileType') %>" id="<%= model.get('fileID') %>" name="<%= model.get('fileName') %>" pos="">
 		<span class="folder file-name"><%= model.get('fileName') %></span>
+		<div class="file-view"></div>
 		<div class="file-info">
-			<span class="file-info-item" id="filesize"><%= model.get('fileType') %><br><%= model.get('fileSize') %></span>
+			<span class="file-info-item" id="filesize"><span class="filetype"><%= model.get('fileType') %></span><br><%= model.get('fileSize') %></span>
 		</div>
 	</li>
 	</script>
@@ -131,10 +120,9 @@ $starttime = $time;
 		},
 		loadFiles: function() {
 			BCL = new BarContentLoader();
-			BCL.start('backbonetest.json', 2, 'file_key', 'parent_key');
+			BCL.start(2, 'home_dir', 'folder');
 		}
 	}
-	init.resize();
 
 	if ($('.footer').height() > 0) {
 		$(".alertbox").css("bottom", 60);
@@ -151,6 +139,8 @@ $starttime = $time;
 	        $(this).parent('li').addClass('active').siblings().removeClass('active');
 	        e.preventDefault();
 	    });
+	    init.resize();
+		clickMenu.rebind();
 	});
 	</script>
     <script type="text/javascript" src="js/showlog.js"></script>

@@ -21,21 +21,18 @@ $starttime = $time;
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>D&amp;D 1e CSM - Login</title>
-	<link rel="stylesheet" href="css/fonts.css">
-    <link rel="stylesheet" href="css/dndcsm.css">
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="initial-scale=1, width=device-width, maximum-scale=1, minimum-scale=1, user-scalable=no">
-
-	<!-- <link rel="stylesheet" href="css/bootstrap.min.css"> -->
-	<link rel="stylesheet" href="css/font-awesome.min.css">
+    <title><?php echo $title ?></title>
+    <?php require('includes/header.php'); ?>
     <style type="text/css">
 	#wrapper {
-        width: 250px;
-        height: 600px;
+        width: 300px;
+        height: auto;
         position: absolute;
-        left: 0;right: 0;top:0;bottom:0;margin: auto;
+        left: 0;right: 0;margin: auto;
+        font-family: 'quicksandlight', sans-serif;
+    }
+    .loginpage-title {
+    	font-size: 200%;
     }
     .login-content-title,
     .login-content,
@@ -49,7 +46,7 @@ $starttime = $time;
     .login-content {
         background: rgba(255,255,255,.1);
         border: none;
-        padding: 2px 0;
+        padding: 4px 0;
         text-indent: 2px;
     }
     .btn-submit {
@@ -87,7 +84,7 @@ $starttime = $time;
 
 	<div id="wrapper">
 	
-		<p class="loginpage-title" style="margin-top: 40px"><?php echo $title; ?></p>
+		<p class="loginpage-title" style="margin-top: 40px"><?php echo $name; ?> Login</p>
 		<p>
 			<label class="login-content-title" for="uname"><i class="fa fa-user"></i> Username</label>
 			<input class="login-content" name="unamesub" type="text" id="uname" value="" placeholder="Username"  required onBlur="check_availability()">
@@ -160,11 +157,18 @@ $starttime = $time;
 			d.warning("Please fill in both fields.");
 		}
 	}
+	if ($('.footer').height() > 0) {
+		$(".alertbox").css("bottom", 60);
+	} else {
+		$(".alertbox").css("bottom", 20);
+	}
 	</script>
 
 	<?php
-    	include('includes/footer.php');
+	if ($showfooter) include('includes/footer.php');
   	?>
+  	<script type="text/javascript" src="js/showlog.js"></script>
+    <script type="text/javascript" src="js/foxfile.js"></script>
 
 	<?php
 	$time = microtime();

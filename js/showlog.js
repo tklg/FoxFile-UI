@@ -15,22 +15,26 @@ var d = {
 	errNum: 0,
 	error: function(msg) {
 		d.errNum++;
+		if (msg == null) msg="undef";
 		$('.alertbox').append('<p class="alert-item alert-error" id="alert-' + d.errNum + '">' + msg + '</p>');
 		var debO = new debugObject('error', msg);
 		d.show(d.errNum, 5000);
 	},
 	warning: function(msg) {
 		d.errNum++;
+		if (msg == null) msg="undef";
 		$('.alertbox').append('<p class="alert-item alert-warning" id="alert-' + d.errNum + '">' + msg + '</p>');
 		d.show(d.errNum, 5000);
 	},
 	info: function(msg) {
 		d.errNum++;
+		if (msg == null) msg="undef";
 		$('.alertbox').append('<p class="alert-item alert-info" id="alert-' + d.errNum + '">' + msg + '</p>');
 		d.show(d.errNum, 5000);
 	},
 	success: function(msg) {
 		d.errNum++;
+		if (msg == null) msg="undef";
 		$('.alertbox').append('<p class="alert-item alert-success" id="alert-' + d.errNum + '">' + msg + '</p>');
 		d.show(d.errNum, 5000);
 	},
