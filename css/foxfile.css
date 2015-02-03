@@ -387,10 +387,47 @@ a {
 }
 .menubar-content-view .file-name {
 	font-size: 200%;
+	position: absolute;
 }
-.menubar-content-view[type='text'] .file-view {
-	color: #666;
+.menubar-content-view .file-view {
+	position: absolute;
+	width: 100%;
+	margin-top: 15%;
+	text-align: center;
+	font-size: 1000%;
+}
+.menubar-content-view .file-view:before {
 	font-family: 'FontAwesome';
+	color: #666;
+	content: '\f016';
+}
+.menubar-content-view .file-info {
+	margin-top: 50%;
+	float: left;
+	font-size: 100%;
+	display: none;
+}
+.menubar-content-view[type="text"] .file-view:before {
 	content: '\f0f6';
-	padding-right: 13px; 
+}
+.menubar-content-view[type='zip'] .file-view:before {
+	content: '\f1c6';
+}
+.menubar-content-view[type='pdf'] .file-view:before {
+	content: '\f1c1';
+}
+.menubar-content-view[type='text'] .file-view:before {
+	content: '\f0f6';
+}
+.menubar-content-view[type='audio'] .file-view:before {
+	content: '\f1c7';
+}
+.menubar-content-view[type='video'] .file-view:before {
+	content: '\f1c8';
+}
+.menubar-content-view[type='image'] .file-view:before {
+	content: '\f1c5';
+}
+.menubar-content-view[type='code'] .file-view:before {
+	content: '\f1c9';
 }

@@ -3,7 +3,6 @@
  * (C) Theodore Kluge 2014-2015
  * villa7.github.io
 */
-//any from_url variable is not needed and is just for testing with static json files
 
 var winHeight = $(window).height();
 var winWidth = $(window).width();
@@ -171,6 +170,7 @@ var files = {
 			bar.size(2, 3);
 		}
 		clickMenu.rebind();
+		$('.debug#dir').text(title);
 	},
 	rename: function(file) {
 		$.post('dbquery.php',
@@ -206,6 +206,12 @@ var files = {
 
 	},
 	upload: function(target, files) {
+
+	},
+	newFolderGUI: function(target) {
+
+	},
+	newFolder: function(target, files) {
 
 	},
 	share: function(file) {
@@ -552,14 +558,16 @@ var clickMenu = {
 					var type = $(e.target).attr('type');
 				}
 			}
-			if (e.pageY > winHeight - 183) {
-				if (e.pageX > winWidth - 204)
-					clickMenu.open(e.pageX - 204, e.pageY - 183, bar, file, type);
+			cmWidth = 200;
+			cmHeight = 239;
+			if (e.pageY > winHeight - cmHeight) {
+				if (e.pageX > winWidth - cmWidth)
+					clickMenu.open(e.pageX - cmWidth, e.pageY - cmHeight, bar, file, type);
 				else
-					clickMenu.open(e.pageX, e.pageY - 183, bar, file, type);
+					clickMenu.open(e.pageX, e.pageY - cmHeight, bar, file, type);
 			} else {
-				if (e.pageX > winWidth - 204)
-					clickMenu.open(e.pageX - 204, e.pageY, bar, file, type);
+				if (e.pageX > winWidth - cmWidth)
+					clickMenu.open(e.pageX - cmWidth, e.pageY, bar, file, type);
 				else
 					clickMenu.open(e.pageX, e.pageY, bar, file, type);
 			}

@@ -24,7 +24,11 @@ $starttime = $time;
     <title><?php echo $title ?></title>
     <?php require('includes/header.php'); ?>
     <style type="text/css">
-
+    <?php if (!$allowsharing) { ?>
+    	.clickmenu li:last-of-type {
+    		display: none;
+    	}
+    <?php } ?>
     </style>
 
 </head>
@@ -34,7 +38,7 @@ $starttime = $time;
 		<span>DEBUG:</span><br><hr>
 		UUID: <?php echo $_SESSION['uid']; ?><br>
 		ACCESS_LEVEL: <?php echo $_SESSION['access_level']; ?><br>
-		FOLDER: file.directory
+		DIR: <span class="debug" id="dir">My Files</span>
 	</div>
 <?php } ?>
 	<div class="alertbox"></div>
@@ -79,8 +83,8 @@ $starttime = $time;
 	</script>
 	<script type="text/template" id="file_template">
     <li class="menubar-content-view" container="<%= model.get('container') %>" type="<%= model.get('basicFileType') %>" id="<%= model.get('fileID') %>" name="<%= model.get('fileName') %>" pos="">
-		<span class="folder file-name"><%= model.get('fileName') %></span>
 		<div class="file-view"></div>
+		<!--<span class="folder file-name"><%= model.get('fileName') %></span>-->
 		<div class="file-info">
 			<span class="file-info-item" id="filesize"><span class="filetype"><%= model.get('fileType') %></span><br><%= model.get('fileSize') %></span>
 		</div>
