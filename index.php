@@ -7,6 +7,12 @@ if(!isset($_SESSION['uid'])) {
 if(!isset($_SESSION['access_level'])) {
 	$_SESSION['access_level'] = 0;
 }
+if(!isset($_SESSION['username'])) {
+	$_SESSION['username'] = 'Default_User';
+}
+$uid = $_SESSION['uid'];
+$alvl = $_SESSION['access_level'];
+$uname = $_SESSION['username'];
 //error_reporting($show_errors);//remove for debug
 $time = microtime();
 $time = explode(' ', $time);
@@ -36,7 +42,7 @@ $starttime = $time;
 <?php if ($show_debug) { ?>
 	<div style="z-index:100;color:#fff;font-size:9pt; position:fixed; bottom: 10px; left: 10px; padding: 10px; border-radius: 5px; background:rgba(255,255,255,.1)">
 		<span>DEBUG:</span><br><hr>
-		UUID: <?php echo $_SESSION['uid']; ?><br>
+		UUID: <?php echo $_SESSION['uid']; ?> (<?php echo $uname ?>)<br>
 		ACCESS_LEVEL: <?php echo $_SESSION['access_level']; ?><br>
 		DIR: <span class="debug" id="dir">My Files</span>
 	</div>
@@ -49,7 +55,7 @@ $starttime = $time;
 	<div class="title menubar-title"><?php echo $name . ' ' . $ver ?></div>
 	<div class="menubar menubar-left tab-links">
 	<ul>
-		<li class="menubar-content menubar-content-user menubar-content-active" id="menubar-button-1" onclick="d.success($(this).text())">user.name</li>
+		<li class="menubar-content menubar-content-user menubar-content-user-name menubar-content-active" id="menubar-button-1"><span id="display_name"><?php echo $uname ?></span><a href="uauth.php?logout" class="btn btn-logout"><i class="fa fa-sign-out"></i></a></li>
 		<li class="menubar-content menubar-content-main menubar-content-active" container="1" id="menubar-button-files" type="folder" onclick="files.open('home_dir', $(this).text(), $(this).attr('container'), $(this).attr('type'));" href="#my-files">My Files</li>
 		<?php if($allowsharing) {?><li class="menubar-content menubar-content-main" id="menubar-button-shared" href="#shared-files">Shared</li> <?php } ?>
 		<li class="menubar-content menubar-content-main" id="menubar-button-bookmarks" href="#bookmarks">Bookmarks</li>
@@ -141,10 +147,14 @@ $starttime = $time;
 	        $('.tabs ' + currentAttrValue).show().siblings().hide();
 	        // Change/remove current tab to active
 	        $(this).parent('li').addClass('active').siblings().removeClass('active');
-	        e.preventDefault();
+	        //e.preventDefault();
 	    });
+
+
 	    init.resize();
 		clickMenu.rebind();
+		names.get(<?php echo $_SESSION['uid']; ?>);
+
 	});
 	</script>
     <script type="text/javascript" src="js/showlog.js"></script>

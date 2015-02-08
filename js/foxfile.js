@@ -274,7 +274,7 @@ var BarContentView = Backbone.View.extend({
 		this.collection.on('reset', this.render, this);
 		c = this.collection;
 		//fade in loading spinny
-		d.success("GET from " + c.url());
+		//d.success("GET from " + c.url());
 		this.collection.fetch({
 			success: function(model, response) {
 				//console.info("Loaded model");
@@ -576,6 +576,19 @@ var clickMenu = {
 			if (!$(e.target).parents('.clickmenu').length > 0) {
 				clickMenu.close();
 			}
+		});
+	}
+}
+var names = {
+	res: '',
+	get: function(id) {
+		var res = 'unset';
+		$.post('dbquery.php',
+		{
+			fullNameFromID: id
+		},
+		function(result) {
+			if(result != '') $('#display_name').text(result);
 		});
 	}
 }

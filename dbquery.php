@@ -1,4 +1,9 @@
 <?php
+/*
+* dbquery.php - FoxFile
+* (c) Theodore Kluge 2015
+* http://kluge.ninja
+*/
 session_start();
 require('includes/user.php');
 require('includes/config.php');
@@ -16,7 +21,7 @@ $uid = $_SESSION['uid'];
 $alvl = $_SESSION['access_level'];
 date_default_timezone_set('America/New_York');
 
-function strip_tags_attributes( $str, 
+function striptagattr( $str, 
 		    $allowedTags = array('<a>','<b>','<blockquote>','<br>','<cite>','<code>','<del>','<div>','<em>','<ul>','<ol>','<li>','<dl>','<dt>','<dd>','<img>','<video>','<iframe>','<ins>','<u>','<q>','<h3>','<h4>','<h5>','<h6>','<samp>','<strong>','<sub>','<sup>','<p>','<table>','<tr>','<td>','<th>','<pre>','<span>'), 
 		    $disabledEvents = array('onclick','ondblclick','onkeydown','onkeypress','onkeyup','onload','onmousedown','onmousemove','onmouseout','onmouseover','onmouseup','onunload') )
 		{       
@@ -54,6 +59,16 @@ function br2nl($s) {
 function nlTobr($s) {
 	return str_replace( "\n", '<br>', $s);
 }
+if(isset($_POST['fullNameFromID'])) {
+	$id = sanitize($_POST['fullNameFromID']);
+	$res = mysqli_query($db, "SELECT display_name from $usertable WHERE PID = '$id'");
+	if (mysqli_num_rows($res) > 0) {
+		while($row = mysqli_fetch_array($res)) {
+			echo $row['display_name'];
+		}
+	}
+}
+//GET FILES FROM DATABASE INSTEAD OF FILESYSTEM BECAUSE REDUNDANCY AND STUFF
 if(isset($_GET['dir'])) {
 	$dir = sanitize($_GET['dir']);
 	$type = sanitize($_GET['type']);
@@ -81,7 +96,7 @@ if(isset($_GET['dir'])) {
 					echo json_encode($r);
 				}
 		} else {  
-		    echo '[{"PID": "0","owner":"0","file_name":"File Does Not Exist","file_size":"0","file_type":"text","file_self":"test_hash","file_parent":"home_dir","file_child":""}]';  
+		    echo '[{"PID": "0","owner":"0","file_name":"Folder is Empty","file_size":"0","file_type":"text","file_self":"test_hash","file_parent":"home_dir","file_child":""}]';  
 		}
 	} else {
 		$dirOwner = mysqli_query($db, "SELECT owner from $filetable WHERE file_self='$dir'");
@@ -110,3 +125,4 @@ if(isset($_GET['dir'])) {
 		}
 	}
 }
+mysqli_close($db);

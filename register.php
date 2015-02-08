@@ -25,7 +25,8 @@ $starttime = $time;
     <?php require('includes/header.php'); ?>
     <style type="text/css">
 	#wrapper {
-        width: 300px;
+        width: 320px;
+        top: 50px;
         height: auto;
         position: absolute;
         left: 0;right: 0;margin: auto;
@@ -47,7 +48,7 @@ $starttime = $time;
         background: rgba(255,255,255,.1);
         border: none;
         padding: 4px 0;
-        text-indent: 2px;
+        text-indent: 5px;
     }
     .btn-submit {
         background: rgba(255,255,255,.2);
@@ -84,7 +85,7 @@ $starttime = $time;
 
 	<div id="wrapper">
 	
-		<p class="loginpage-title" style="margin-top: 40px">Welcome to <?php echo $name; ?></p>
+		<p class="loginpage-title">Welcome to <?php echo $name; ?></p>
 		<p>
 			<label class="login-content-title" for="uname"><i class="fa fa-user"></i> Username</label>
 			<input class="login-content" name="unamesub" type="text" id="uname" value="" placeholder="Username" required onBlur="check_availability()">
@@ -108,6 +109,11 @@ $starttime = $time;
 		<?php } else { ?>
 			<input type="hidden" id="gpass">
 		<?php } ?>
+		<p>
+			<label class="login-content-title" for="uemail"><i class="fa fa-envelope"></i> Email</label>
+			<input class="login-content" name="uemailsub" type="text" id="uemail" value="" placeholder="Email" required onBlur="check_email()">
+			<i class="fa fa-check-square uname-val" id="emailvalid"></i>
+		</p>
 
 		<button type="submit" name="login" class="btn btn-submit" onclick="check_validity()"><b>Register</b></button>
 		<button class="btn btn-submit" onclick="document.location = 'login.php'">or Log In</button>
@@ -115,6 +121,7 @@ $starttime = $time;
 	</div>
 
 	<script type="text/javascript">
+	var uavail = false;
 	function check_availability() {  
 
         var username = $('#uname').val(); 
@@ -127,44 +134,33 @@ $starttime = $time;
 	        	},  
 	            function(result) {  
 	                if (result == 1) {  
-	                    $('#namevalid').css('color','#99c68e') //light green
-						.removeClass('fa-exclamation-triangle')
-						.addClass('fa-check-square'); 
+	                    $('#uname').css('border','#99c68e solid 1px');
+						uavail = true;
 	                } else {  
-	                    $('#namevalid').css('color','#e77471') //light red
-						.removeClass('fa-check-square')
-						.addClass('fa-exclamation-triangle');
+	                    $('#uname').css('border','#e77471 solid 1px');
+						uavail = false;
+						if (result != 0) {
+							d.warning(result);
+						}
 	                }  
 	        });  
 	    }
 	}
-	var uavail = false;
 	var pavail = false;
 
 	$('#upass, #upass2').on('input', function checkPass() {
 		
 		if ($('#upass').val().length >= 8) {
-			$('#passvalid').css('color','#99c68e') //light green
-					.removeClass('fa-exclamation-triangle')
-					.addClass('fa-check-square');
+			$('#upass').css('border','#99c68e solid 1px');;
 			if ($('#upass').val() == $('#upass2').val()) {
-				$('#passvalid, #passvalid2').css('color','#99c68e') //light green
-					.removeClass('fa-exclamation-triangle')
-					.addClass('fa-check-square'); 
-				d.info("Passwords match.");
+				$('#upass2').css('border','#99c68e solid 1px');
 				pavail = true;
 			} else {
-				$('#passvalid2').css('color','#e77471') //light red
-					.removeClass('fa-check-square')
-					.addClass('fa-exclamation-triangle');
-				d.warning('Passwords do not match.');
+				$('#upass2').css('border','#e77471 solid 1px');
 				pavail = false;
 			}
 		} else {
-			$('#passvalid').css('color','#e77471') //light red
-					.removeClass('fa-check-square')
-					.addClass('fa-exclamation-triangle');
-			d.warning("Password must be at least 8 characters.");
+			$('#upass').css('border','#e77471 solid 1px');
 			pavail = false;
 		}
 	});
@@ -173,35 +169,47 @@ $starttime = $time;
 			password = $('#upass').val(),
 			gPass = $('#gpass').val();
 
-		if (username.length > 0 && pavail) {
-		d.info("Checking validity...");
-			$.post("uauth.php", {
-				register: 'yes',
-				username: username,
-				password: password,
-				group_password: gPass
-			},
-			function (result) {
-				if (result == 'valid') {
-					$('#namevalid').css('color','#99c68e') //light green
-						.removeClass('fa-exclamation-triangle')
-						.addClass('fa-check-square');
-					$('#passvalid').css('color','#99c68e') //light green
-						.removeClass('fa-exclamation-triangle')
-						.addClass('fa-check-square');
-					d.success("Creating account...");
-					setTimeout(function() {
-						document.location = 'login.php';
-					}, 1000);
-				} else {
-					console.log(result);
-					d.error(result);
-				}
-			});
+		if (!(username.length > 0)) {
+			d.warning("Username cannot be blank.");
+		} else if (!pavail) {
+			if (!($('#upass').val().length >= 8)) {
+				d.warning("Password must be at least 8 characters.");
+			} else if ($('#upass').val() != $('#upass2').val()) {
+				d.warning('Passwords do not match.');
+			} else {
+				d.warning("Please fill in all fields.");
+			}
+		} else if (!uavail) {
+			d.warning("Username is not available.");
 		} else {
-			d.warning("Please fill in all fields.");
+			d.info("Checking validity...");
+				$.post("uauth.php", {
+					register: 'yes',
+					username: username,
+					password: password,
+					group_password: gPass
+				},
+				function (result) {
+					if (result == 'valid') {
+						$('#uname').css('border','#99c68e solid 1px');
+						$('#upass, #upass2, #gpass').css('border','#99c68e solid 1px');
+						d.success("Creating account...");
+						setTimeout(function() {
+							document.location = 'login.php';
+						}, 1000);
+					} else if (result == "Username is not available") {
+						d.error(result);
+						$('#uname').css('border','#e77471 solid 1px');
+					} else if (result.indexOf("Invalid group password") >= 1) {
+						d.error(result);
+						$('#gpass').css('border','#e77471 solid 1px');
+					} else {
+						d.error(result);
+						$('#uname').css('border','#e77471 solid 1px');
+					}
+				});
+			}
 		}
-	}
 	if ($('.footer').height() > 0) {
 		$(".alertbox").css("bottom", 60);
 	} else {

@@ -47,7 +47,7 @@ $starttime = $time;
         background: rgba(255,255,255,.1);
         border: none;
         padding: 4px 0;
-        text-indent: 2px;
+        text-indent: 5px;
     }
     .btn-submit {
         background: rgba(255,255,255,.2);
@@ -102,9 +102,10 @@ $starttime = $time;
 	</div>
 
 	<script type="text/javascript">
+	var uexists = false; 
 	function check_availability() {  
 
-        var username = $('#uname').val(); 
+        var username = $('#uname').val();
 
         if(username.length > 0)  {
   
@@ -114,13 +115,11 @@ $starttime = $time;
 	        	},  
 	            function(result) {  
 	                if (result == 0) {  
-	                    $('#namevalid').css('color','#99c68e') //light green
-						.removeClass('fa-exclamation-triangle')
-						.addClass('fa-check-square'); 
+	                    $('#uname').css('border','#99c68e solid 1px'); //light green
+	                    uexists = true;
 	                } else {  
-	                    $('#namevalid').css('color','#e77471') //light red
-						.removeClass('fa-check-square')
-						.addClass('fa-exclamation-triangle');
+	                    $('#uname').css('border','#e77471 solid 1px'); //light red
+	                    uexists = false;
 	                }  
 	        });  
 	    }
@@ -128,33 +127,34 @@ $starttime = $time;
 	function check_validity() {
 		var username = $('#uname').val(),
 			password = $('#upass').val();
-
-		if (username.length > 0 && password.length > 0) {
-			d.info("Checking validity...");
-			$.post("uauth.php", {
-				login: 'yes',
-				username: username,
-				password: password
-			},
-			function (result) {
-				if (result == 'valid') {
-					$('#namevalid').css('color','#99c68e') //light green
-						.removeClass('fa-exclamation-triangle')
-						.addClass('fa-check-square');
-					$('#passvalid').css('color','#99c68e') //light green
-						.removeClass('fa-exclamation-triangle')
-						.addClass('fa-check-square');
-					d.success("Logging in...");
-					setTimeout(function() {
-						document.location = 'index.php';
-					}, 1000);
-				} else {
-					console.log(result);
-					d.error(result);
-				}
-			});
-		} else {
+		if (username.length < 1 || password.length < 1) {
 			d.warning("Please fill in both fields.");
+		} else {
+			if (uexists) {
+				d.info("Checking validity...");
+				$.post("uauth.php", {
+					login: 'yes',
+					username: username,
+					password: password
+				},
+				function (result) {
+					if (result == 'valid') {
+						$('#uname').css('border','#99c68e solid 1px');
+						$('#upass').css('border','#99c68e solid 1px');
+						//d.info("Valid!");
+						d.success("Logging in...");
+						setTimeout(function() {
+							document.location = '<?php if(isset($_GET["target"])) {echo $_GET["target"];} else {echo "index.php";}?>';
+						}, 1000);
+					} else {
+						$('#pass').css('border','#e77471 solid 1px')
+						console.info(result);
+						d.error(result);
+					}
+				});
+			} else {
+				d.error("Username not found.");
+			}
 		}
 	}
 	if ($('.footer').height() > 0) {

@@ -4,9 +4,13 @@ require('includes/user.php');
 require('includes/config.php');
 //connect to database  
 $db = mysqli_connect($dbhost,$dbuname,$dbupass,$dbname);
+$usertable = $database['TABLE_USERS'];
+$filetable = $database['TABLE_FILES'];
+$uid = $_SESSION['uid'];
+$alvl = $_SESSION['access_level'];
 date_default_timezone_set('America/New_York');
 
-function strip_tags_attributes( $str, 
+function striptagattr( $str, 
 		    $allowedTags = array('<a>','<b>','<blockquote>','<br>','<cite>','<code>','<del>','<div>','<em>','<ul>','<ol>','<li>','<dl>','<dt>','<dd>','<img>','<video>','<iframe>','<ins>','<u>','<q>','<h3>','<h4>','<h5>','<h6>','<samp>','<strong>','<sub>','<sup>','<p>','<table>','<tr>','<td>','<th>','<pre>','<span>'), 
 		    $disabledEvents = array('onclick','ondblclick','onkeydown','onkeypress','onkeyup','onload','onmousedown','onmousemove','onmouseout','onmouseover','onmouseup','onunload') )
 		{       
@@ -37,11 +41,21 @@ function br2nl($s) {
 function nlTobr($s) {
 	return str_replace( "\n", '<br>', $s);
 }
+function validate_username($s) {
+
+  $allowed = array(".", "-", "_");
+
+  if (ctype_alnum( str_replace($allowed, '', $s))) {
+    return true;
+  } else {
+    return false;
+  }
+}
 if(isset($_POST['check_username'])) {
 
-	$username = addslashes(strip_tags_attributes($_POST['username']));  
+	$username = sanitize($_POST['username']);  
 	 
-	$result = mysqli_query($db, "SELECT UNAME from USERS where UNAME = '". $username . "'");  
+	$result = mysqli_query($db, "SELECT name from $usertable where name = '". $username . "'");  
 	  
 	//if number of rows fields is bigger them 0 that means it's NOT available '  
 	if(mysqli_num_rows($result)>0){  
@@ -52,27 +66,17 @@ if(isset($_POST['check_username'])) {
 }
 
 if(isset($_POST['login'])) {
-	$username = addslashes(strip_tags_attributes($_POST['username']));
-	$user = mysqli_query($db, "SELECT * from USERS where UNAME = '". $username . "'");
+	$username = sanitize($_POST['username']);
+	$user = mysqli_query($db, "SELECT * from $usertable where name = '". $username . "'");
 	$row = mysqli_fetch_array($user);
-	$password = addslashes(strip_tags_attributes($_POST['password']));
+	$password = sanitize($_POST['password']);
 	$passToMatch = $row['pass'];
 
 	if (password_verify($password, $passToMatch)) {
-		$uidToSet = $row['PID'];
 		$access_level = $row['access_level'];
-		if ($access_level == 0) {
-			$_SESSION['mode'] = 'guest';
-		} else if ($access_level == 1) {
-			$_SESSION['mode'] = 'user';
-		} else if ($access_level == 2) {
-			$_SESSION['mode'] = 'admin';
-		} else {
-			$_SESSION['mode'] = 'INVALID_ACCESS_LEVEL';
-		}
-		$_SESSION['uid'] = $uidToSet;
+		$_SESSION['uid'] = $row['PID'];
 		$_SESSION['access_level'] = $access_level;
-		$_SESSION['username'] = $username; //try not to use this, instead query for UID to get username in case uname changes
+		$_SESSION['username'] = $username;
 		echo 'valid';
 	} else {
 		echo 'Invalid username or password';
@@ -81,27 +85,53 @@ if(isset($_POST['login'])) {
 
 if(isset($_GET['logout'])) {
 	session_destroy();
-	header('Location: index.php');
+	$access_level = 0;
+	header('Location: login.php');
 }
 
 if(isset($_POST['register'])) {
-	if ($_POST['group_password'] == $group_password) {
-		$options = [
-                'cost' => 11,
-            ];
-		$uname = $_POST['username'];
-		$upass = password_hash(addslashes($_POST['password']), PASSWORD_BCRYPT, $options);
-		$sql = "INSERT INTO Users (uName, pass, access_level)
-                    VALUES ('$uname', 
-                    '$upass',
-                    '1')";
-		if (mysqli_query($db,$sql)) {
-              //echo 'User \''. $uname .'\' created successfully';
-        } else {
-              echo 'MySQL Query failed: ' . mysqli_error($db);
-        }
-        echo 'valid';
+	if ($useGroupPassword) {
+		$gp = true;
+		if ($_POST['group_password'] == $group_password) {
+			$v = true;
+		} else {
+			$v = false;
+			echo 'Invalid group password';
+			die();
+		}
 	} else {
-		echo 'Invalid group password';
+		$gp = false;
+	}
+	if (validate_username($_POST['username'])) {
+		if (!$gp || $v) {
+		/*$options = [
+	        	'cost' => 11,
+	        ];*/
+	        
+	        $username = sanitize($_POST['username']);  
+			$result = mysqli_query($db, "SELECT name from $usertable where name = '$username'");  
+			//if number of rows fields is bigger them 0 that means it's NOT available '  
+			if(mysqli_num_rows($result) > 0){  
+			    echo "Username is not available";
+			} else {  
+				$uname = sanitize($_POST['username']);
+				$upass = password_hash(sanitize($_POST['password']), PASSWORD_BCRYPT/*, $options*/);
+				$sql = "INSERT INTO $usertable (name, pass, access_level)
+		                VALUES ('$uname', 
+		                '$upass',
+		                '1')";
+				if (mysqli_query($db,$sql)) {
+		            //echo 'User \''. $uname .'\' created successfully';
+		        } else {
+		            echo 'MySQL Query failed: ' . mysqli_error($db);
+		        }
+		        echo 'valid';
+		    }
+		} else {
+			echo 'Invalid group password,<br>or something is broken.';
+		}
+	} else {
+		echo "Username can only contain alphanumeric characters.";
 	}
 }
+mysqli_close($db);
