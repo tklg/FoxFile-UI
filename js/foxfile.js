@@ -29,7 +29,7 @@ var bar = {
 	currentOffset: 0,
 	add: function(title, moveBack, type, onclick, hash) {
 		bar.active++;
-		$('#wrapper').append('<section class="bar bar-vertical" id="bar-' + this.active + '" type="' + type + '" state="closed" filename="' + hash + '"> <div class="menubar-title"><span class="heightsettertext"></span><i class="bar-backbutton btn fa fa-angle-left"></i><span class="menubar-title-link btn" onclick="' + onclick + '">' + title + '</div> <div class="menubar menubar-left"> <ul> </ul> </div> </section>');
+		$('#wrapper').append('<section class="bar bar-vertical" fileHash="' + hash + '" id="bar-' + this.active + '" type="' + type + '" state="closed" filename="' + title + '"> <div class="menubar-title"><span class="heightsettertext"></span><i class="bar-backbutton btn fa fa-angle-left"></i><span class="menubar-title-link btn" onclick="' + onclick + '">' + title + '</div> <div class="menubar menubar-left"> <ul> </ul> </div> </section>');
 		bar.move(this.active, 5);
 		bar.size(this.active - 1, 1);
 		if (this.active <= this.maxActive) {
@@ -172,53 +172,68 @@ var files = {
 		clickMenu.rebind();
 		$('.debug#dir').text(title);
 	},
-	rename: function(file) {
+	rename: function(file, id) {
 		$.post('dbquery.php',
 		{
 			action: 'rename',
-			file_id: file
+			file_id: id
 		},
 		function(result) {
 			d.info(result);
 		});
 	},
-	delete: function(file) {
+	delete: function(file, id) {
 		$.post('dbquery.php',
 		{
 			action: 'delete',
-			file_id: file
+			file_id: id
 		},
 		function(result) {
 			d.info(result);
 		});
 	},
-	download: function(file) {
+	download: function(file, id) {
 		$.post('dbquery.php',
 		{
 			action: 'download',
-			file_id: file
+			file_id: id
 		},
 		function(result) {
 			d.info(result);
 		});
 	},
-	uploadGUI: function(target) {
+	uploadGUI: function(target, file, id) {
 
 	},
-	upload: function(target, files) {
+	upload: function(target, file, id) {
 
 	},
-	newFolderGUI: function(target) {
-
+	newFolderGUI: {
+		show: function(file, id) {
+			$('.modal-new-folder .modal-header #modal-header-name').text(file);
+			$('#modal-file-id').val(id);
+			$('.modal-new-folder').fadeIn();
+		},
+		hide: function() {
+			$('.modal-new-folder .modal-header #modal-header-name').text('FOLDER');
+			$('#modal-file-id').val(0);
+			$('#modal-content-input').val();
+			$('.modal-new-folder').fadeOut();
+		}
 	},
-	newFolder: function(target, files) {
-
+	newFolder: function(title, id) {
+		//show creation spinny
+		//send ajax
+		//recieve response
+		//hide spinny
+		this.newFolderGUI.hide();
+		d.info("Create new folder in " + id + " called " + title);
 	},
-	share: function(file) {
+	share: function(file, id) {
 		$.post('dbquery.php',
 		{
 			action: 'share',
-			file_id: file
+			file_id: id
 		},
 		function(result) {
 			//open fileshare modal
@@ -291,7 +306,7 @@ var BarContentView = Backbone.View.extend({
 						'hash_self': files[i].file_self,
 						'hash_child': files[i].file_child,
 						'hash_parent': files[i].file_parent,
-						'onclick': 'files.open(\'' + files[i].file_self + '\', $(this).attr(\'name\'), $(this).attr(\'container\'), $(this).attr(\'type\'));state.update($(this).attr(\'container\'), this.id);$(\'#bar-' + (BCV.barID+1) + ' .menubar-title-link\').attr(\'onclick\')',
+						'onclick': 'files.open(\'' + files[i].file_self + '\', $(this).attr(\'name\'), $(this).attr(\'container\'), $(this).attr(\'type\'), this.id);state.update($(this).attr(\'container\'), this.id);$(\'#bar-' + (BCV.barID+1) + ' .menubar-title-link\').attr(\'onclick\')',
 						'container': BCV.barID
 					};
 					if (obj.fileType.toLowerCase() == 'folder') {
@@ -487,10 +502,10 @@ var state = {
 var clickMenu = {
 	fn: 'd.info(\'unadded clickmenu item\');',
 	isOpen: false,
-	open: function(posX, posY, bar, file, type) {
+	open: function(posX, posY, bar, file, type, id) {
 		//d.info('Opening clickmenu at (' + posX + ', ' + posY + ") in bar " + bar + " at file " + file + " of type " + type);
 		if (this.isOpen) this.close();
-		$('body').append('<div class="clickmenu" bar="' + bar + '" file="' + file + '"><ul></ul><div>');
+		$('body').append('<div class="clickmenu" bar="' + bar + '" file="' + file + '" id="' + id + '"><ul></ul><div>');
 		if (type == 'folder') {
 			items = ['<i class="fa fa-trash-o"></i> Delete',
 			'<i class="fa fa-pencil-square-o"></i> Rename',
@@ -508,25 +523,25 @@ var clickMenu = {
 		for(i = 0; i < items.length; i++) {
 			switch(items[i].toLowerCase().split('</i>')[1].trim()) {
 				case 'delete':
-					this.fn = 'files.delete(this.file);clickMenu.close();';
+					this.fn = 'files.delete($(this).attr(\'file\'), $(this).attr(\'id\'));clickMenu.close();';
 					break;
 				case 'rename':
-					this.fn = 'files.rename(this.file);clickMenu.close();';
+					this.fn = 'files.rename($(this).attr(\'file\'), $(this).attr(\'id\'));clickMenu.close();';
 					break;
 				case 'download':
-					this.fn = 'files.download(this.file);clickMenu.close();';
+					this.fn = 'files.download($(this).attr(\'file\'), $(this).attr(\'id\'));clickMenu.close();';
 					break;
 				case 'upload':
-					this.fn = 'files.uploadGUI(this.file);clickMenu.close();';
+					this.fn = 'files.uploadGUI.show($(this).attr(\'file\'), $(this).attr(\'id\'));clickMenu.close();';
 					break;
 				case 'new folder':
-					this.fn = 'files.newFolderGUI(this.file);clickMenu.close();';
+					this.fn = 'files.newFolderGUI.show($(this).attr(\'file\'), $(this).attr(\'id\'));clickMenu.close();';
 					break;
 				case 'share':
-					this.fn = 'files.share(this.file);clickMenu.close();';
+					this.fn = 'files.share($(this).attr(\'file\'), $(this).attr(\'id\'));clickMenu.close();';
 					break;
 			}
-			$('.clickmenu ul').append('<li class="btn" onclick="' + this.fn + '" bar="' + bar + '" file="' + file + '">' + items[i] + '</li>');
+			$('.clickmenu ul').append('<li class="btn" onclick="' + this.fn + '" bar="' + bar + '" file="' + file + '" id="' + id + '">' + items[i] + '</li>');
 		}
 
 		$('.clickmenu').css({
@@ -547,34 +562,43 @@ var clickMenu = {
 				var bar = $(e.target).attr('container');
 				var file = $(e.target).attr('onclick').split(',')[1].trim().replace(/'/g, '');
 				var type = $(e.target).attr('type');
+				var id = $(e.target).attr('id');
 			} else {
 				if (!$(e.target).is('section')) { //is within a file bar
 					var bar = $(e.target).parents('li').attr('container');
 					var file = $(e.target).parents('li').attr('onclick').split(',')[1].trim().replace(/'/g, '');
 					var type = $(e.target).parents('li').attr('type');
+					var id = $(e.target).parents('li').attr('id');
 				} else { //is the empty space under the bar
 					var bar = $(e.target).attr('id').split('-')[1];
 					var file = $(e.target).attr('filename');
 					var type = $(e.target).attr('type');
+					var id = $(e.target).attr('filehash');
 				}
 			}
 			cmWidth = 200;
 			cmHeight = 239;
 			if (e.pageY > winHeight - cmHeight) {
 				if (e.pageX > winWidth - cmWidth)
-					clickMenu.open(e.pageX - cmWidth, e.pageY - cmHeight, bar, file, type);
+					clickMenu.open(e.pageX - cmWidth, e.pageY - cmHeight, bar, file, type, id);
 				else
-					clickMenu.open(e.pageX, e.pageY - cmHeight, bar, file, type);
+					clickMenu.open(e.pageX, e.pageY - cmHeight, bar, file, type, id);
 			} else {
 				if (e.pageX > winWidth - cmWidth)
-					clickMenu.open(e.pageX - cmWidth, e.pageY, bar, file, type);
+					clickMenu.open(e.pageX - cmWidth, e.pageY, bar, file, type, id);
 				else
-					clickMenu.open(e.pageX, e.pageY, bar, file, type);
+					clickMenu.open(e.pageX, e.pageY, bar, file, type, id);
 			}
+			files.newFolderGUI.hide();
 		});
 		$(document).bind("click", function(e) {
 			if (!$(e.target).parents('.clickmenu').length > 0) {
 				clickMenu.close();
+			}
+		});
+		$('.modal-new-folder').on('click', function(e) {
+			if (!$(e.target).parents('.modal').length > 0) {
+				files.newFolderGUI.hide();
 			}
 		});
 	}

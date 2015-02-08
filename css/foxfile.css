@@ -15,6 +15,13 @@ body {
 	-webkit-font-smoothing: antialiased;
 	background: #222;
 }
+ input:active,
+    input:focus,
+    button:active,
+    button:focus {
+    outline: 0 none;
+    background: rgba(255,255,255,.3);
+	}
 ::selection {
 	background: rgba(255,255,255,.1) !important;
 }
@@ -438,4 +445,57 @@ a:hover {
 }
 .menubar-content-view[type='code'] .file-view:before {
 	content: '\f1c9';
+}
+.modal-background {
+	width: 100%;
+	height: 100%;
+	position: absolute;
+	cursor: pointer;
+	display: none;
+	background: rgba(0,0,0,.5);
+	z-index: 199;
+}
+.modal {
+	position: absolute;
+	top: 15%;
+	width: 400px;
+	left: 0;right: 0;margin: auto;padding: auto;
+	background: #333;
+	color: #ccc;
+	font-family: 'quicksandlight', sans-serif;
+	z-index: 200;
+}
+.modal-header {
+	padding: 10px;
+	background: #222;
+	border-bottom: 2px solid rgb(250, 101, 0);
+}
+.modal-content {
+	padding: 10px;
+}
+.modal-content-input {
+	padding: 5px;
+	margin: 10px 0;
+	border: none;
+	background: rgba(255,255,255,.05);
+	color: #aaa;
+	-webkit-transition: all .2s ease-in-out;
+            transition: all .2s ease-in-out;
+    width: 97%;
+}
+.modal-footer {
+	padding: 10px;
+	background: rgba(255,255,255,.03);
+	text-align: center;
+}
+.modal-footer .btn {
+	background: rgba(255,255,255,.1);
+	padding: 5px 40px;
+	margin: 0 10px;
+	border: none;
+	font-size: 10pt;
+	color: #aaa;
+}
+.modal-footer .btn:hover {
+	background: rgba(250,101,0,.5);
 }

@@ -24,7 +24,7 @@ $starttime = $time;
 <!--
  * index.php - FoxFile
  * (C) Theodore Kluge 2014-2015
- * villa7.github.io
+ * http://kluge.ninja
  -->
 <head>
     <title><?php echo $title ?></title>
@@ -65,14 +65,6 @@ $starttime = $time;
 	</div>
 	</section>
 
-	<section class="bar bar-vertical bar-full bar-orig" id="bar-2" type="folder" state="closed" filename="home_directory">
-	<div class="menubar-title"><span class="heightsettertext"></span><i class="bar-backbutton btn fa fa-angle-left"></i><span class="menubar-title-link btn">My Files</span></div>
-	<div class="menubar menubar-left">
-	<ul>
-	</ul>
-	</div>
-	</section>
-
 	</div>
 
 	<?php
@@ -90,12 +82,28 @@ $starttime = $time;
 	<script type="text/template" id="file_template">
     <li class="menubar-content-view" container="<%= model.get('container') %>" type="<%= model.get('basicFileType') %>" id="<%= model.get('fileID') %>" name="<%= model.get('fileName') %>" pos="">
 		<div class="file-view"></div>
-		<!--<span class="folder file-name"><%= model.get('fileName') %></span>-->
 		<div class="file-info">
 			<span class="file-info-item" id="filesize"><span class="filetype"><%= model.get('fileType') %></span><br><%= model.get('fileSize') %></span>
 		</div>
 	</li>
 	</script>
+
+	<section class="modal-background modal-new-folder">
+	<div class="modal">
+		<div class="modal-header">
+			Create new folder in <span id="modal-header-name">FOLDER</span>
+		</div>
+		<div class="modal-content">
+			Folder name:<br>
+			<input class="modal-content-input" type="text" name="newfoldername">
+			<input id="modal-file-id" type="hidden">
+		</div>
+		<div class="modal-footer">
+			<button class="btn btn-cancel" onclick="files.newFolderGUI.hide()">Cancel</button>
+			<button class="btn btn-submit" onclick="files.newFolder($('.modal-content-input').val(), $('#modal-file-id').val())">Create</button>
+		</div>
+	</div>
+	</section>
 	<!--<script>
 	  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
 	  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
@@ -130,7 +138,7 @@ $starttime = $time;
 		},
 		loadFiles: function() {
 			BCL = new BarContentLoader();
-			BCL.start(2, 'home_dir', 'folder');
+			//BCL.start(2, 'home_dir', 'folder');
 		}
 	}
 
@@ -154,8 +162,11 @@ $starttime = $time;
 	    init.resize();
 		clickMenu.rebind();
 		names.get(<?php echo $_SESSION['uid']; ?>);
+		files.open('home_dir', 'My Files', 1, 'folder');
 
 	});
+
+	//files.open('home_dir', 'My Files', 1, 'folder');
 	</script>
     <script type="text/javascript" src="js/showlog.js"></script>
     <script type="text/javascript" src="js/foxfile.js"></script>
