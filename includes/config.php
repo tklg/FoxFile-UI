@@ -13,7 +13,7 @@
 			$showpageloadtime = false;
 			$useGroupPassword = false;
 			$group_password = 'foxfilealpha';
-			$allowsharing = false;
+			$allowsharing = true;
 			$database = [
 				"NAME" => 'FOXFILE',
 				"PREFIX" => null,

@@ -55,7 +55,7 @@ li {
 	width: auto;
 	color: #fff;
 	text-align: center;
-	z-index: 100;
+	z-index: 1000;
 }
 .alert-item {
 	position: relative;
@@ -226,7 +226,8 @@ a:hover {
 }
 .menubar-content-user:before,
 .menubar-content-main:before {
-	content: "" !important;
+	content: none !important;
+	width: 0;
 }
 .menubar-content[type='file']:before {
 	color: #666;
@@ -485,7 +486,7 @@ a:hover {
 }
 .modal-footer {
 	padding: 10px;
-	background: rgba(255,255,255,.03);
+/*	background: rgba(255,255,255,.03);*/
 	text-align: center;
 }
 .modal-footer .btn {
@@ -498,4 +499,8 @@ a:hover {
 }
 .modal-footer .btn:hover {
 	background: rgba(250,101,0,.5);
+}
+.modal-header #modal-header-name {
+	color: rgb(250,101,0);
+	font-family: sans-serif;
 }

@@ -225,7 +225,7 @@ $starttime = $time;
                 file_size DOUBLE(100, 2),
                 file_self VARCHAR(512),
                 file_parent VARCHAR(512),
-                file_child VARCHAR(512)
+                last_modified VARCHAR(50)
                 )';
 
             if (mysqli_query($db,$sql)) {

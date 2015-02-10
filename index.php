@@ -18,6 +18,10 @@ $time = microtime();
 $time = explode(' ', $time);
 $time = $time[1] + $time[0];
 $starttime = $time;
+if ($uid < 1 && !isset($_GET['nouser'])) {
+	header("Location: login.php");
+	die();
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -72,7 +76,7 @@ $starttime = $time;
   	?>
 
 	<script type="text/template" id="folder_template">
-    <li class="menubar-content" container="<%= model.get('container') %>" type="<%= model.get('basicFileType') %>" id="<%= model.get('fileID') %>" name="<%= model.get('fileName') %>" onclick="<%= model.get('onclick') %>" pos="">
+    <li class="menubar-content" container="<%= model.get('container') %>" type="<%= model.get('basicFileType') %>" filehash="<%= model.get('hash_self') %>" id="<%= model.get('fileID') %>" name="<%= model.get('fileName') %>" onclick="<%= model.get('onclick') %>" pos="">
 		<span class="folder file-name"><%= model.get('fileName') %></span>
 		<div class="file-info">
 			<span class="file-info-item" id="filesize"><span class="filetype"><%= model.get('fileType') %></span><br><%= model.get('fileSize') %></span>
@@ -80,7 +84,7 @@ $starttime = $time;
 	</li>
 	</script>
 	<script type="text/template" id="file_template">
-    <li class="menubar-content-view" container="<%= model.get('container') %>" type="<%= model.get('basicFileType') %>" id="<%= model.get('fileID') %>" name="<%= model.get('fileName') %>" pos="">
+    <li class="menubar-content-view" container="<%= model.get('container') %>" type="<%= model.get('basicFileType') %>" filehash="<%= model.get('hash_self') %>" id="<%= model.get('fileID') %>" name="<%= model.get('fileName') %>" pos="">
 		<div class="file-view"></div>
 		<div class="file-info">
 			<span class="file-info-item" id="filesize"><span class="filetype"><%= model.get('fileType') %></span><br><%= model.get('fileSize') %></span>
@@ -97,10 +101,44 @@ $starttime = $time;
 			Folder name:<br>
 			<input class="modal-content-input" type="text" name="newfoldername">
 			<input id="modal-file-id" type="hidden">
+			<input id="modal-bar-id" type="hidden">
 		</div>
 		<div class="modal-footer">
 			<button class="btn btn-cancel" onclick="files.newFolderGUI.hide()">Cancel</button>
-			<button class="btn btn-submit" onclick="files.newFolder($('.modal-content-input').val(), $('#modal-file-id').val())">Create</button>
+			<button class="btn btn-submit" onclick="files.newFolder($('.modal-content-input').val(), $('.modal-new-folder #modal-file-id').val(), $('.modal-new-folder #modal-bar-id').val())">Create</button>
+		</div>
+	</div>
+	</section>
+	<section class="modal-background modal-rename">
+	<div class="modal">
+		<div class="modal-header">
+			Rename <span id="modal-header-name">FOLDER</span>
+		</div>
+		<div class="modal-content">
+			New name:<br>
+			<input class="modal-content-input" type="text" name="newfoldername">
+			<input id="modal-file-id" type="hidden">
+			<input id="modal-bar-id" type="hidden">
+		</div>
+		<div class="modal-footer">
+			<button class="btn btn-cancel" onclick="files.renameGUI.hide()">Cancel</button>
+			<button class="btn btn-submit" onclick="files.rename($('.modal-content-input').val(), $('.modal-rename #modal-file-id').val(), $('.modal-rename #modal-bar-id').val())">Rename</button>
+		</div>
+	</div>
+	</section>
+	<section class="modal-background modal-delete">
+	<div class="modal">
+		<div class="modal-header">
+			Are you sure you want to delete <span id="modal-header-name">FOLDER</span>?
+		</div>
+		<div class="modal-content">
+			You can't undo this.
+			<input id="modal-file-id" type="hidden">
+			<input id="modal-bar-id" type="hidden">
+		</div>
+		<div class="modal-footer">
+			<button class="btn btn-cancel" onclick="files.deleteGUI.hide()">Cancel</button>
+			<button class="btn btn-submit" onclick="files.delete($('.modal-content-input').val(), $('.modal-delete #modal-file-id').val(), $('.modal-delete #modal-bar-id').val())">Delete</button>
 		</div>
 	</div>
 	</section>

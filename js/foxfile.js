@@ -140,26 +140,27 @@ bar.updatePos(1);
 bar.updatePos(2);
 var files = {
 	open: function (hash, title, bar_id, type, onclick) {
-		console.log("clicked on file in bar " + bar_id);
-		console.log("hash: " + hash);
-		console.log("title: " + title);
+		//console.log("clicked on file in bar " + bar_id);
+		//console.log("hash: " + hash);
+		//console.log("title: " + title);
 		if (bar_id == bar.active) { //user clicked on the active bar, make a new one to the right
-			console.log("Clicked on active bar");
+			//console.log("Clicked on active bar");
 			bar.add(title, true, type, onclick, hash);
 			bar.fill(bar.active, hash, type);
 			bar.setActive(bar.active);
 		} else { //user clicked on a bar back in the stack, remove all after it and remake the needed folder/file
-			console.log("Clicked on inactive bar");
+/* possibly make it so that it removes all that it needs to and leaves the one directly to the right */
+			//console.log("Clicked on inactive bar");
 			var diff = bar.active - bar_id;
-			console.log("difference: " + diff);
+			//console.log("difference: " + diff);
 			if (bar.active > bar.maxActive && diff != 1) {
 				for (i = 1; i <= bar.active; i++) {
 					bar.moveRight(i);
-					console.log("Moved bar " + i + " right");
+					//console.log("Moved bar " + i + " right");
 				}
 			}
 			for (i = 0; i < diff; i++) {
-				console.log("removing active bar: " + bar.active);
+				//console.log("removing active bar: " + bar.active);
 				bar.remove(bar.active);
 			}
 			bar.add(title, false, type, onclick, hash);
@@ -172,30 +173,76 @@ var files = {
 		clickMenu.rebind();
 		$('.debug#dir').text(title);
 	},
-	rename: function(file, id) {
+	refresh: function(bar_id, hash) {
+		bar.clear(bar_id);
+		bar.fill(bar_id, hash, $('.bar#bar-' + bar_id).attr('type'));
+		clickMenu.rebind();
+	},
+	renameGUI: {
+		show: function(file, id, bar) {
+			if (bar > 2) {
+				$('.modal-rename .modal-header #modal-header-name').text(file);
+				$('.modal-rename #modal-file-id').val(id);
+				$('.modal-rename #modal-bar-id').val(bar);
+				$('.modal-rename').fadeIn();
+			} else {
+				d.error("Cannot rename the home directory!");
+			}
+		},
+		hide: function() {
+			$('.modal-rename').fadeOut();
+			setTimeout(function () {
+				$('.modal-rename .modal-header #modal-header-name').text('FOLDER');
+				$('.modal-rename #modal-file-id').val('');
+				$('.modal-rename .modal-content-input').val('');
+			}, 500);
+		}
+	},
+	rename: function(file, id, bar) {
 		$.post('dbquery.php',
 		{
-			action: 'rename',
+			rename: 'rename',
 			file_id: id
 		},
 		function(result) {
 			d.info(result);
+			files.refresh(bar, id);
 		});
 	},
-	delete: function(file, id) {
+	deleteGUI: {
+		show: function(file, id, bar) {
+			if (bar > 2) {
+				$('.modal-delete .modal-header #modal-header-name').text(file);
+				$('.modal-delete #modal-file-id').val(id);
+				$('.modal-delete #modal-bar-id').val(bar);
+				$('.modal-delete').fadeIn();
+			} else {
+				d.error("Cannot delete the home directory!");
+			}
+		},
+		hide: function() {
+			$('.modal-delete').fadeOut();
+			setTimeout(function () {
+				$('.modal-delete .modal-header #modal-header-name').text('FOLDER');
+				$('.modal-delete #modal-file-id').val('');
+			}, 500);
+		}
+	},
+	delete: function(file, id, bar) {
 		$.post('dbquery.php',
 		{
-			action: 'delete',
+			delete: 'delete',
 			file_id: id
 		},
 		function(result) {
 			d.info(result);
+			files.refresh(bar, id);
 		});
 	},
 	download: function(file, id) {
 		$.post('dbquery.php',
 		{
-			action: 'download',
+			download: 'download',
 			file_id: id
 		},
 		function(result) {
@@ -209,30 +256,61 @@ var files = {
 
 	},
 	newFolderGUI: {
-		show: function(file, id) {
+		show: function(file, id, bar) {
 			$('.modal-new-folder .modal-header #modal-header-name').text(file);
-			$('#modal-file-id').val(id);
+			$('.modal-new-folder #modal-file-id').val(id);
+			$('.modal-new-folder #modal-bar-id').val(bar);
 			$('.modal-new-folder').fadeIn();
 		},
 		hide: function() {
-			$('.modal-new-folder .modal-header #modal-header-name').text('FOLDER');
-			$('#modal-file-id').val(0);
-			$('#modal-content-input').val();
 			$('.modal-new-folder').fadeOut();
+			setTimeout(function () {
+				$('.modal-new-folder .modal-header #modal-header-name').text('FOLDER');
+				$('.modal-new-folder #modal-file-id').val('');
+				$('.modal-new-folder .modal-content-input').val('');
+			}, 500);
 		}
 	},
-	newFolder: function(title, id) {
-		//show creation spinny
-		//send ajax
-		//recieve response
-		//hide spinny
-		this.newFolderGUI.hide();
-		d.info("Create new folder in " + id + " called " + title);
+	newFolder: function(title, id, bar) {
+		if (title == "") {
+			d.warning("Folder name cannot be blank.");
+		} else {
+			//show creation spinny
+			$.post('dbquery.php',
+			{
+				new_folder: 'new_folder',
+				title: title,
+				file_id: id
+			},
+			function(result) {
+				//hide spinny
+				d.info(result);
+				if (result == 'success') { //worked
+					d.success("Created new folder in " + id + " called " + title);
+					//refresh folder bar
+					d.info('refreshing bar ' + bar + ' with id ' + id);
+					files.refresh(bar, id);
+				} else {
+					switch(result) {
+
+					}
+				}
+				files.newFolderGUI.hide();
+			});
+		}
+	},
+	shareGUI: {
+		show: function(file, id) {
+
+		},
+		hide: function() {
+			
+		}
 	},
 	share: function(file, id) {
 		$.post('dbquery.php',
 		{
-			action: 'share',
+			share: 'share',
 			file_id: id
 		},
 		function(result) {
@@ -484,8 +562,6 @@ var BarContentLoader = Backbone.Router.extend({
 	}
 });
 
-init.loadFiles();
-
 var state = {
 	update: function(cont, id) {
 		$('.menubar-content[container="' + cont + '"]').removeClass('menubar-content-active');
@@ -523,10 +599,10 @@ var clickMenu = {
 		for(i = 0; i < items.length; i++) {
 			switch(items[i].toLowerCase().split('</i>')[1].trim()) {
 				case 'delete':
-					this.fn = 'files.delete($(this).attr(\'file\'), $(this).attr(\'id\'));clickMenu.close();';
+					this.fn = 'files.deleteGUI.show($(this).attr(\'file\'), $(this).attr(\'id\'), $(this).attr(\'bar\'));clickMenu.close();';
 					break;
 				case 'rename':
-					this.fn = 'files.rename($(this).attr(\'file\'), $(this).attr(\'id\'));clickMenu.close();';
+					this.fn = 'files.renameGUI.show($(this).attr(\'file\'), $(this).attr(\'id\'), $(this).attr(\'bar\'));clickMenu.close();';
 					break;
 				case 'download':
 					this.fn = 'files.download($(this).attr(\'file\'), $(this).attr(\'id\'));clickMenu.close();';
@@ -535,10 +611,10 @@ var clickMenu = {
 					this.fn = 'files.uploadGUI.show($(this).attr(\'file\'), $(this).attr(\'id\'));clickMenu.close();';
 					break;
 				case 'new folder':
-					this.fn = 'files.newFolderGUI.show($(this).attr(\'file\'), $(this).attr(\'id\'));clickMenu.close();';
+					this.fn = 'files.newFolderGUI.show($(this).attr(\'file\'), $(this).attr(\'id\'), $(this).attr(\'bar\'));clickMenu.close();';
 					break;
 				case 'share':
-					this.fn = 'files.share($(this).attr(\'file\'), $(this).attr(\'id\'));clickMenu.close();';
+					this.fn = 'files.shareGUI.show($(this).attr(\'file\'), $(this).attr(\'id\'));clickMenu.close();';
 					break;
 			}
 			$('.clickmenu ul').append('<li class="btn" onclick="' + this.fn + '" bar="' + bar + '" file="' + file + '" id="' + id + '">' + items[i] + '</li>');
@@ -560,15 +636,15 @@ var clickMenu = {
 			//d.info($(e.target).attr("class"));
 			if ($(e.target).is('li')) { //is a file bar
 				var bar = $(e.target).attr('container');
-				var file = $(e.target).attr('onclick').split(',')[1].trim().replace(/'/g, '');
+				var file = $(e.target).attr('name');/*onclick').split(',')[1].trim().replace(/'/g, '');*/
 				var type = $(e.target).attr('type');
-				var id = $(e.target).attr('id');
+				var id = $(e.target).attr('filehash');
 			} else {
 				if (!$(e.target).is('section')) { //is within a file bar
 					var bar = $(e.target).parents('li').attr('container');
-					var file = $(e.target).parents('li').attr('onclick').split(',')[1].trim().replace(/'/g, '');
+					var file = $(e.target).parents('li').attr('name');/*onclick').split(',')[1].trim().replace(/'/g, '');*/
 					var type = $(e.target).parents('li').attr('type');
-					var id = $(e.target).parents('li').attr('id');
+					var id = $(e.target).parents('li').attr('filehash');
 				} else { //is the empty space under the bar
 					var bar = $(e.target).attr('id').split('-')[1];
 					var file = $(e.target).attr('filename');
@@ -596,9 +672,11 @@ var clickMenu = {
 				clickMenu.close();
 			}
 		});
-		$('.modal-new-folder').on('click', function(e) {
+		$('.modal-background').on('click', function(e) {
 			if (!$(e.target).parents('.modal').length > 0) {
 				files.newFolderGUI.hide();
+				files.deleteGUI.hide();
+				files.renameGUI.hide();
 			}
 		});
 	}
