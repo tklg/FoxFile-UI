@@ -70,142 +70,133 @@ if(isset($_POST['fullNameFromID'])) {
 }
 //GET FILES FROM DATABASE INSTEAD OF FILESYSTEM BECAUSE REDUNDANCY AND STUFF
 if(isset($_GET['dir'])) {
-	$dir = sanitize($_GET['dir']);
-	$type = sanitize($_GET['type']);
-	if ($type === 'folder') {
-		$dirOwner = mysqli_query($db, "SELECT owner from $filetable WHERE file_parent='$dir'");
-		$resultDir = mysqli_query($db, "SELECT * from $filetable WHERE file_parent='$dir' AND owner='$uid'");
-		$giveResult = false;
-		if (mysqli_num_rows($resultDir) > 0) {
-			while($row = mysqli_fetch_array($dirOwner)) {
-				if ($row['owner'] === $uid) {
-					$giveResult = true;
+	if ($alvl > 0) {
+		$dir = sanitize($_GET['dir']);
+		$type = sanitize($_GET['type']);
+		if ($type === 'folder') {
+			$dirOwner = mysqli_query($db, "SELECT owner from $filetable WHERE file_parent='$dir'");
+			$resultDir = mysqli_query($db, "SELECT * from $filetable WHERE file_parent='$dir' AND owner='$uid'");
+			$giveResult = false;
+			if (mysqli_num_rows($resultDir) > 0) {
+				while($row = mysqli_fetch_array($dirOwner)) {
+					if ($row['owner'] === $uid) {
+						$giveResult = true;
+					}
 				}
 			}
-		}
 
-		if(mysqli_num_rows($resultDir) > 0) {
-				$r = array();
-				while($row = mysqli_fetch_assoc($resultDir)) {
-					$r[] = $row;
-				}
-				if ($giveResult) {
-					echo json_encode($r);
-				} else {
-					echo '[{"PID": "0","owner":"0","file_name":"File Access Denied","file_size":"0","file_type":"text","file_self":"test_hash","file_parent":"home_dir","file_child":""}]';
-					//echo json_encode($r);
-				}
-		} else {  
-		    echo '[{"PID": "0","owner":"0","file_name":"Folder is Empty","file_size":"0","file_type":"text","file_self":"test_hash","file_parent":"home_dir","file_child":""}]';  
-		}
-	} else {
-		$dirOwner = mysqli_query($db, "SELECT owner from $filetable WHERE file_self='$dir'");
-		$resultFileData = mysqli_query($db, "SELECT * from $filetable WHERE file_self='$dir' AND owner='$uid'");
-		$giveResult = false;
-		if (mysqli_num_rows($resultFileData) > 0) {
-			while($row = mysqli_fetch_array($dirOwner)) {
-				if ($row['owner'] === $uid) {
-					$giveResult = true;
+			if(mysqli_num_rows($resultDir) > 0) {
+					$r = array();
+					while($row = mysqli_fetch_assoc($resultDir)) {
+						$r[] = $row;
+					}
+					if ($giveResult) {
+						echo json_encode($r);
+					} else {
+						echo '[{"PID": "0","owner":"0","file_name":"File Access Denied","file_size":"0","file_type":"text","file_self":"test_hash","file_parent":"home_dir","file_child":""}]';
+						//echo json_encode($r);
+					}
+			} else {  
+			    echo '[{"PID": "0","owner":"0","file_name":"Folder is Empty","file_size":"0","file_type":"text","file_self":"test_hash","file_parent":"home_dir","file_child":""}]';  
+			}
+		} else {
+			$dirOwner = mysqli_query($db, "SELECT owner from $filetable WHERE file_self='$dir'");
+			$resultFileData = mysqli_query($db, "SELECT * from $filetable WHERE file_self='$dir' AND owner='$uid'");
+			$giveResult = false;
+			if (mysqli_num_rows($resultFileData) > 0) {
+				while($row = mysqli_fetch_array($dirOwner)) {
+					if ($row['owner'] === $uid) {
+						$giveResult = true;
+					}
 				}
 			}
-		}
-		if(mysqli_num_rows($resultFileData) > 0) {
-				$r = array();
-				while($row = mysqli_fetch_assoc($resultFileData)) {
-					$r[] = $row;
-				}
-				if ($giveResult) {
-					echo json_encode($r);
-				} else {
-					echo '[{"PID": "0","owner":"0","file_name":"File Access Denied","file_size":"0","file_type":"text","file_self":"test_hash","file_parent":"home_dir","file_child":""}]';
-					//echo json_encode($r);
-				}
-		} else {  
-		   	echo '[{"PID": "0","owner":"0","file_name":"File Does Not Exist","file_size":"0","file_type":"text","file_self":"test_hash","file_parent":"home_dir","file_child":""}]';
+			if(mysqli_num_rows($resultFileData) > 0) {
+					$r = array();
+					while($row = mysqli_fetch_assoc($resultFileData)) {
+						$r[] = $row;
+					}
+					if ($giveResult) {
+						echo json_encode($r);
+					} else {
+						echo '[{"PID": "0","owner":"0","file_name":"File Access Denied","file_size":"0","file_type":"text","file_self":"test_hash","file_parent":"home_dir","file_child":""}]';
+						//echo json_encode($r);
+					}
+			} else {  
+			   	echo '[{"PID": "0","owner":"0","file_name":"File Does Not Exist","file_size":"0","file_type":"text","file_self":"test_hash","file_parent":"home_dir","file_child":""}]';
+			}
 		}
 	}
 }
 if (isset($_POST['new_folder'])) {
-	$folder_name = sanitize($_POST['title']);
-	$parent_id = sanitize($_POST['file_id']);
-	$fileType = 'folder';
-	$date = [
-		'last_modified' => date("F j, Y, g:i a"),
-		'today' => date("Y-m-d H:i:s")
-	];
-	$self_hash = md5($folder_name . $date['today']);
-	$lmdf = $date['last_modified'];
+	if ($alvl > 0) {
+		$folder_name = sanitize($_POST['title']);
+		$parent_id = sanitize($_POST['file_id']);
+		$fileType = 'folder';
+		$date = [
+			'last_modified' => date("F j, Y, g:i a"),
+			'today' => date("Y-m-d H:i:s")
+		];
+		$self_hash = md5($folder_name . $date['today']);
+		$lmdf = $date['last_modified'];
 
-	$sql = "INSERT INTO $filetable (owner, file_name, file_type, file_self, file_parent, last_modified) VALUES
-			('$uid', '$folder_name', '$fileType', '$self_hash', '$parent_id', '$lmdf')";
+		$sql = "INSERT INTO $filetable (owner, file_name, file_type, file_self, file_parent, last_modified) VALUES
+				('$uid', '$folder_name', '$fileType', '$self_hash', '$parent_id', '$lmdf')";
 
-	if (mysqli_query($db, $sql)) {
-		//create actual folder here
-		echo 'success';
-	} else {
-		echo 0;
+		if (mysqli_query($db, $sql)) {
+			//create actual folder here
+			echo 'success';
+		} else {
+			echo 0;
+		}
 	}
 }
 if(isset($_POST['delete'])) {
-	$target_id = sanitize($_POST['file_id']);
-	$hash_self = $target_id;
-	$hash_children = '';
-	$cur_children = array();
-	$num_children = 0;
-	//recursionnnnnn
+	if ($alvl > 0) {
+		$target_id = sanitize($_POST['file_id']);
+		$hash_self = $target_id;
+		if ($hash_self == 'home_dir') {
+			echo 'Cannot delete the home directory!';
+		} else {
+			$delItems = '';
 
-	$nodeList = array();
-	$tree = array();
+			$delTree = [$hash_self];
+			$pointer = 0;
+			function recursiveDelete($self) {
+				global $db, $filetable, $delTree, $pointer;
+				$curPos = array();
+				$query = mysqli_query($db, "SELECT * FROM $filetable WHERE file_parent='$self'");
 
-	$query = mysqli_query($db, "SELECT * FROM $filetable WHERE file_self = '$hash_self'");
-	while($row = mysqli_fetch_assoc($query)){
-	    $nodeList[$row['file_self']] = array_merge($row, array('children' => array()));
+				while($row = mysqli_fetch_array($query)) {
+					$delTree[] = $row['file_self']; //get self ids from all files within target
+					$curPos[] = $row['file_self'];
+				}
+
+				foreach ($curPos as $key => $value) {
+					recursiveDelete($value);
+					//echo $pointer . ' - ' . $value . '<br>';
+					$pointer++;
+				}
+			}
+			recursiveDelete($hash_self);
+			//echo '<br>';
+			$pointer = 0;
+			foreach ($delTree as $key => $value) {
+				//echo 'deleting - ' . $value . '<br>';
+				if ($pointer != sizeof($delTree) - 1) {
+					$delItems .= '\'' . $value . '\', ';
+				} else {
+					$delItems .= '\'' . $value . '\''; //add the last thing to remove: the original selected directory
+				}
+				$pointer++;
+			}
+			//echo 'with src directory - ' . $hash_self . '<br>';
+			//echo $delItems . '<br>';
+			if(mysqli_query($db, "DELETE FROM $filetable WHERE file_self IN ($delItems)")) {
+				echo 1;
+			} else {
+				echo "Deletion failed!";
+			}
+		}
 	}
-	mysqli_free_result($query);
-
-	foreach ($nodeList as $nodeId => &$node) {
-	    if (!$node['file_parent'] || !array_key_exists($node['file_parent'], $nodeList)) {
-	        $tree[] = &$node;
-	    } else {
-	        $nodeList[$node['file_parent']]['children'][] = &$node;
-	    }
-	}
-	unset($node);
-	unset($nodeList);
-	for($i = 0; $i < sizeof($tree); $i++) {
-		$item = $tree[$i];
-		$query = mysqli_query($db, "DELETE FROM '$filetable' WHERE file_self = '$item'");
-		//echo $t;
-	}
-	/*function recursiveDelete($self, $parent) {
-		$query = "SELECT * FROM $filetable WHERE file_self='$self'";
-	}*/
-
-	/*$items = Array();
-	$sql_check_self = mysqli_query($db, "SELECT * FROM $filetable WHERE file_self = '$hash_self'");
-	$sql_check_parent = mysqli_query($db, "SELECT * FROM $filetable WHERE file_parent = '$hash_self'");
-
-	while($line = mysqli_fetch_assoc($sql_check_self)) {
-		$items[] = $line;
-	}
-
-	$hierarchy = Array();
-
-	foreach($items as $item) {
-	    $parentID = empty($item['file_parent']) ? 0 : $item['file_parent'];
-
-	    if(!isset($hierarchy[$parentID])) {
-	        $hierarchy[$parentID] = Array();
-	    }
-
-	    $hierarchy[$parentID][] = $item;
-	    echo 'b';
-	}
-
-	foreach($hierarchy as $h) {
-		$query = mysqli_query($db, "DELETE FROM '$filetable' WHERE file_self = '$h'");
-		echo 'a';
-	}*/
-	echo $hash_self;
 }
 mysqli_close($db);

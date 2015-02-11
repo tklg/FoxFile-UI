@@ -173,21 +173,20 @@ var files = {
 		clickMenu.rebind();
 		$('.debug#dir').text(title);
 	},
-	refresh: function(bar_id, hash) {
+	refresh: function(bar_id) {
 		bar.clear(bar_id);
-		bar.fill(bar_id, hash, $('.bar#bar-' + bar_id).attr('type'));
 		clickMenu.rebind();
+		//show spinny to give time for query
+		setTimeout(function() {
+			bar.fill(bar_id, $('.bar#bar-' + bar_id).attr('filehash'), $('.bar#bar-' + bar_id).attr('type'));
+		}, 500);
 	},
 	renameGUI: {
 		show: function(file, id, bar) {
-			if (bar > 2) {
-				$('.modal-rename .modal-header #modal-header-name').text(file);
-				$('.modal-rename #modal-file-id').val(id);
-				$('.modal-rename #modal-bar-id').val(bar);
-				$('.modal-rename').fadeIn();
-			} else {
-				d.error("Cannot rename the home directory!");
-			}
+			$('.modal-rename .modal-header #modal-header-name').text(file);
+			$('.modal-rename #modal-file-id').val(id);
+			$('.modal-rename #modal-bar-id').val(bar);
+			$('.modal-rename').fadeIn();
 		},
 		hide: function() {
 			$('.modal-rename').fadeOut();
@@ -206,19 +205,15 @@ var files = {
 		},
 		function(result) {
 			d.info(result);
-			files.refresh(bar, id);
+			files.refresh(bar);
 		});
 	},
 	deleteGUI: {
 		show: function(file, id, bar) {
-			if (bar > 2) {
-				$('.modal-delete .modal-header #modal-header-name').text(file);
-				$('.modal-delete #modal-file-id').val(id);
-				$('.modal-delete #modal-bar-id').val(bar);
-				$('.modal-delete').fadeIn();
-			} else {
-				d.error("Cannot delete the home directory!");
-			}
+			$('.modal-delete .modal-header #modal-header-name').text(file);
+			$('.modal-delete #modal-file-id').val(id);
+			$('.modal-delete #modal-bar-id').val(bar);
+			$('.modal-delete').fadeIn();
 		},
 		hide: function() {
 			$('.modal-delete').fadeOut();
@@ -235,8 +230,13 @@ var files = {
 			file_id: id
 		},
 		function(result) {
-			d.info(result);
+			if (result == 1) {
+				//worked
+			} else {
+				d.error(result);
+			}
 			files.refresh(bar, id);
+			files.deleteGUI.hide();
 		});
 	},
 	download: function(file, id) {
@@ -289,7 +289,7 @@ var files = {
 					d.success("Created new folder in " + id + " called " + title);
 					//refresh folder bar
 					d.info('refreshing bar ' + bar + ' with id ' + id);
-					files.refresh(bar, id);
+					files.refresh(bar);
 				} else {
 					switch(result) {
 
