@@ -152,8 +152,7 @@ if (isset($_POST['new_folder'])) {
 }
 if(isset($_POST['delete'])) {
 	if ($alvl > 0) {
-		$target_id = sanitize($_POST['file_id']);
-		$hash_self = $target_id;
+		$hash_self = sanitize($_POST['file_id']);
 		if ($hash_self == 'home_dir') {
 			echo 'Cannot delete the home directory!';
 		} else {
@@ -161,14 +160,18 @@ if(isset($_POST['delete'])) {
 
 			$delTree = [$hash_self];
 			$pointer = 0;
+			$isOwner = true;
 			function recursiveDelete($self) {
-				global $db, $filetable, $delTree, $pointer;
+				global $db, $filetable, $delTree, $pointer, $isOwner, $uid;
 				$curPos = array();
 				$query = mysqli_query($db, "SELECT * FROM $filetable WHERE file_parent='$self'");
 
 				while($row = mysqli_fetch_array($query)) {
 					$delTree[] = $row['file_self']; //get self ids from all files within target
 					$curPos[] = $row['file_self'];
+					if ($row['owner'] !== $uid) {
+						$isOwner = false;
+					}
 				}
 
 				foreach ($curPos as $key => $value) {
@@ -191,12 +194,40 @@ if(isset($_POST['delete'])) {
 			}
 			//echo 'with src directory - ' . $hash_self . '<br>';
 			//echo $delItems . '<br>';
-			if(mysqli_query($db, "DELETE FROM $filetable WHERE file_self IN ($delItems)")) {
-				echo 1;
+			if ($isOwner) {
+				if(mysqli_query($db, "DELETE FROM $filetable WHERE file_self IN ($delItems)")) {
+					echo 1;
+				} else {
+					echo "Deletion failed!";
+				}
 			} else {
-				echo "Deletion failed!";
+				echo "You do not own this file.";
 			}
 		}
+	}
+}
+if (isset($_POST['rename'])) {
+	$hash_self = sanitize($_POST['file_id']);
+	$newName = sanitize($_POST['name']);
+	$date = date("F j, Y, g:i a");
+	$isOwner = true;
+
+	$query = mysqli_query($db, "SELECT * FROM $filetable WHERE file_self='$hash_self'");
+
+	while($row = mysqli_fetch_array($query)) {
+		if ($row['owner'] !== $uid) {
+			$isOwner = false;
+		}
+	}
+
+	if ($isOwner) {
+		if(mysqli_query($db, "UPDATE $filetable SET file_name = '$newName', last_modified = '$date' WHERE file_self = '$hash_self'")) {
+			echo 1;
+		} else {
+			echo "Rename failed!";
+		}
+	} else {
+		echo "You do not own this file.";
 	}
 }
 mysqli_close($db);

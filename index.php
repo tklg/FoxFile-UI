@@ -95,34 +95,34 @@ if ($uid < 1 && !isset($_GET['nouser'])) {
 	<section class="modal-background modal-new-folder">
 	<div class="modal">
 		<div class="modal-header">
-			Create new folder in <span id="modal-header-name">FOLDER</span>
+			Create new folder in <span id="modal-header-name">FOLDER</span>?
 		</div>
 		<div class="modal-content">
 			Folder name:<br>
-			<input class="modal-content-input" type="text" name="newfoldername">
-			<input id="modal-file-id" type="hidden">
-			<input id="modal-bar-id" type="hidden">
+			<input class="modal-content-input" id="modal-file-name-new" type="text" name="newfoldername">
+			<input id="modal-file-id-new" type="hidden">
+			<input id="modal-bar-id-new" type="hidden">
 		</div>
 		<div class="modal-footer">
 			<button class="btn btn-cancel" onclick="files.newFolderGUI.hide()">Cancel</button>
-			<button class="btn btn-submit" onclick="files.newFolder($('.modal-content-input').val(), $('.modal-new-folder #modal-file-id').val(), $('.modal-new-folder #modal-bar-id').val())">Create</button>
+			<button class="btn btn-submit" onclick="files.newFolder($('#modal-file-name-new').val(), $('.modal-new-folder #modal-file-id-new').val(), $('.modal-new-folder #modal-bar-id-new').val())">Create</button>
 		</div>
 	</div>
 	</section>
 	<section class="modal-background modal-rename">
 	<div class="modal">
 		<div class="modal-header">
-			Rename <span id="modal-header-name">FOLDER</span>
+			Rename <span id="modal-header-name">FOLDER</span>?
 		</div>
 		<div class="modal-content">
 			New name:<br>
-			<input class="modal-content-input" type="text" name="newfoldername">
-			<input id="modal-file-id" type="hidden">
-			<input id="modal-bar-id" type="hidden">
+			<input class="modal-content-input" id="modal-file-name-rename" type="text" name="newfoldername">
+			<input id="modal-file-id-rename" type="hidden">
+			<input id="modal-bar-id-rename" type="hidden">
 		</div>
 		<div class="modal-footer">
 			<button class="btn btn-cancel" onclick="files.renameGUI.hide()">Cancel</button>
-			<button class="btn btn-submit" onclick="files.rename($('.modal-content-input').val(), $('.modal-rename #modal-file-id').val(), $('.modal-rename #modal-bar-id').val())">Rename</button>
+			<button class="btn btn-submit" onclick="files.rename($('#modal-file-name-rename').val(), $('.modal-rename #modal-file-id-rename').val(), $('.modal-rename #modal-bar-id-rename').val())">Rename</button>
 		</div>
 	</div>
 	</section>
@@ -133,12 +133,12 @@ if ($uid < 1 && !isset($_GET['nouser'])) {
 		</div>
 		<div class="modal-content">
 			You can't undo this.
-			<input id="modal-file-id" type="hidden">
-			<input id="modal-bar-id" type="hidden">
+			<input id="modal-file-id-delete" type="hidden">
+			<input id="modal-bar-id-delete" type="hidden">
 		</div>
 		<div class="modal-footer">
 			<button class="btn btn-cancel" onclick="files.deleteGUI.hide()">Cancel</button>
-			<button class="btn btn-submit" onclick="files.delete($('.modal-content-input').val(), $('.modal-delete #modal-file-id').val(), $('.modal-delete #modal-bar-id').val())">Delete</button>
+			<button class="btn btn-submit" onclick="files.delete($('#modal-file-name-delete').val(), $('.modal-delete #modal-file-id-delete').val(), $('.modal-delete #modal-bar-id-delete').val())">Delete</button>
 		</div>
 	</div>
 	</section>

@@ -225,7 +225,8 @@ $starttime = $time;
                 file_size DOUBLE(100, 2),
                 file_self VARCHAR(512),
                 file_parent VARCHAR(512),
-                last_modified VARCHAR(50)
+                last_modified VARCHAR(50),
+                is_shared BOOLEAN
                 )';
 
             if (mysqli_query($db,$sql)) {

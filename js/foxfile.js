@@ -184,16 +184,17 @@ var files = {
 	renameGUI: {
 		show: function(file, id, bar) {
 			$('.modal-rename .modal-header #modal-header-name').text(file);
-			$('.modal-rename #modal-file-id').val(id);
-			$('.modal-rename #modal-bar-id').val(bar);
+			$('.modal-rename #modal-file-id-rename').val(id);
+			$('.modal-rename #modal-bar-id-rename').val(bar);
+			$('.modal-rename #modal-file-name-rename').val(file);
 			$('.modal-rename').fadeIn();
 		},
 		hide: function() {
 			$('.modal-rename').fadeOut();
 			setTimeout(function () {
 				$('.modal-rename .modal-header #modal-header-name').text('FOLDER');
-				$('.modal-rename #modal-file-id').val('');
-				$('.modal-rename .modal-content-input').val('');
+				$('.modal-rename #modal-file-id-rename').val('');
+				$('.modal-rename #modal-file-name-rename').val('');
 			}, 500);
 		}
 	},
@@ -201,25 +202,31 @@ var files = {
 		$.post('dbquery.php',
 		{
 			rename: 'rename',
-			file_id: id
+			file_id: id,
+			name: file
 		},
 		function(result) {
-			d.info(result);
+			if (result == 1) {
+				//worked
+			} else {
+				d.error(result);
+			}
 			files.refresh(bar);
+			files.renameGUI.hide();
 		});
 	},
 	deleteGUI: {
 		show: function(file, id, bar) {
 			$('.modal-delete .modal-header #modal-header-name').text(file);
-			$('.modal-delete #modal-file-id').val(id);
-			$('.modal-delete #modal-bar-id').val(bar);
+			$('.modal-delete #modal-file-id-delete').val(id);
+			$('.modal-delete #modal-bar-id-delete').val(bar);
 			$('.modal-delete').fadeIn();
 		},
 		hide: function() {
 			$('.modal-delete').fadeOut();
 			setTimeout(function () {
 				$('.modal-delete .modal-header #modal-header-name').text('FOLDER');
-				$('.modal-delete #modal-file-id').val('');
+				$('.modal-delete #modal-file-id-delete').val('');
 			}, 500);
 		}
 	},
@@ -235,7 +242,7 @@ var files = {
 			} else {
 				d.error(result);
 			}
-			files.refresh(bar, id);
+			files.refresh(bar);
 			files.deleteGUI.hide();
 		});
 	},
@@ -258,16 +265,17 @@ var files = {
 	newFolderGUI: {
 		show: function(file, id, bar) {
 			$('.modal-new-folder .modal-header #modal-header-name').text(file);
-			$('.modal-new-folder #modal-file-id').val(id);
-			$('.modal-new-folder #modal-bar-id').val(bar);
+			$('.modal-new-folder #modal-file-id-new').val(id);
+			$('.modal-new-folder #modal-bar-id-new').val(bar);
+			$('.modal-new-folder #modal-file-name-new').val(file);
 			$('.modal-new-folder').fadeIn();
 		},
 		hide: function() {
 			$('.modal-new-folder').fadeOut();
 			setTimeout(function () {
 				$('.modal-new-folder .modal-header #modal-header-name').text('FOLDER');
-				$('.modal-new-folder #modal-file-id').val('');
-				$('.modal-new-folder .modal-content-input').val('');
+				$('.modal-new-folder #modal-file-id-new').val('');
+				$('.modal-new-folder #modal-file-name-new').val('');
 			}, 500);
 		}
 	},
@@ -284,7 +292,6 @@ var files = {
 			},
 			function(result) {
 				//hide spinny
-				d.info(result);
 				if (result == 'success') { //worked
 					d.success("Created new folder in " + id + " called " + title);
 					//refresh folder bar
