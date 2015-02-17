@@ -357,6 +357,7 @@
               _results.push(node.value = progress);
             } else {
               _results.push(node.style.width = "" + progress + "%");
+              _results.push(node.setAttribute('widthval', "" + progress + "%"));
             }
           }
           return _results;

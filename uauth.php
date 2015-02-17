@@ -77,6 +77,7 @@ if(isset($_POST['login'])) {
 		$_SESSION['uid'] = $row['PID'];
 		$_SESSION['access_level'] = $access_level;
 		$_SESSION['username'] = $username;
+		$_SESSION['uhd'] = $row['root_folder'];
 		echo 'valid';
 	} else {
 		echo 'Invalid username or password';
@@ -116,10 +117,13 @@ if(isset($_POST['register'])) {
 			} else {  
 				$uname = sanitize($_POST['username']);
 				$upass = password_hash(sanitize($_POST['password']), PASSWORD_BCRYPT/*, $options*/);
-				$sql = "INSERT INTO $usertable (name, pass, access_level)
+				$email = sanitize($_POST['email']);
+				$sql = "INSERT INTO $usertable (name, pass, email, access_level, root_folder)
 		                VALUES ('$uname', 
 		                '$upass',
-		                '1')";
+		                '$email',
+		                '1',
+		                '$uname')";
 				if (mysqli_query($db,$sql)) {
 		            //echo 'User \''. $uname .'\' created successfully';
 		        } else {

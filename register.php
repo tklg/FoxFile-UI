@@ -35,6 +35,11 @@ $starttime = $time;
     .loginpage-title {
     	font-size: 200%;
     }
+    .login-content-title-desc {
+    	font-size: 45%;
+    	color: #aaa;
+    	padding-top: -10px;
+    }
     .login-content-title,
     .login-content,
     .btn-submit {
@@ -87,19 +92,17 @@ $starttime = $time;
 	
 		<p class="loginpage-title">Welcome to <?php echo $name; ?></p>
 		<p>
-			<label class="login-content-title" for="uname"><i class="fa fa-user"></i> Username</label>
+			<label class="login-content-title" for="uname"><i class="fa fa-user"></i> Username</label><!-- <br>
+			<label class="login-content-title login-content-title-desc" for="uname"> The name you will use to log in.</label> -->
 			<input class="login-content" name="unamesub" type="text" id="uname" value="" placeholder="Username" required onBlur="check_availability()">
-			<i class="fa fa-check-square uname-val" id="namevalid"></i>
 		</p>
 		<p>				
 			<label class="login-content-title" for="upass"><i class="fa fa-unlock-alt"></i> Password</label>
 			<input class="login-content" name="upasssub" type="password" id="upass" placeholder="Password" required>
-			<i class="fa fa-check-square uname-val" id="passvalid"></i>
 		</p>
 		<p>
 			<label class="login-content-title" for="upass2" id="passlab2"><i class="fa fa-unlock-alt"></i> Repeat password</label>
 			<input class="login-content" name="upasssub2" type="password" id="upass2" placeholder="Password" required >
-			<i class="fa fa-check-square uname-val" id="passvalid2"></i>
 		</p>
 		<?php if($useGroupPassword) { ?>
 		<p>				
@@ -112,7 +115,6 @@ $starttime = $time;
 		<p>
 			<label class="login-content-title" for="uemail"><i class="fa fa-envelope"></i> Email</label>
 			<input class="login-content" name="uemailsub" type="text" id="uemail" value="" placeholder="Email" required onBlur="check_email()">
-			<i class="fa fa-check-square uname-val" id="emailvalid"></i>
 		</p>
 
 		<button type="submit" name="login" class="btn btn-submit" onclick="check_validity()"><b>Register</b></button>
@@ -167,7 +169,8 @@ $starttime = $time;
 	function check_validity() {
 		var username = $('#uname').val(),
 			password = $('#upass').val(),
-			gPass = $('#gpass').val();
+			gPass = $('#gpass').val(),
+			email = $('#uemail').val();
 
 		if (!(username.length > 0)) {
 			d.warning("Username cannot be blank.");
@@ -187,6 +190,7 @@ $starttime = $time;
 					register: 'yes',
 					username: username,
 					password: password,
+					email: email,
 					group_password: gPass
 				},
 				function (result) {

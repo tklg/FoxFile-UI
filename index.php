@@ -40,6 +40,7 @@ if ($uid < 1 && !isset($_GET['nouser'])) {
     	}
     <?php } ?>
     </style>
+    <link href="css/dropzone.css" rel="stylesheet" />
 
 </head>
 <body>
@@ -48,7 +49,8 @@ if ($uid < 1 && !isset($_GET['nouser'])) {
 		<span>DEBUG:</span><br><hr>
 		UUID: <?php echo $_SESSION['uid']; ?> (<?php echo $uname ?>)<br>
 		ACCESS_LEVEL: <?php echo $_SESSION['access_level']; ?><br>
-		DIR: <span class="debug" id="dir">My Files</span>
+		DIR: <span class="debug" id="dir">My Files</span> (bar <span class="debug" id="barid"></span>)<br>
+		ACTIVE DZs: <span class="debug" id="dropzones-count">%NUM%</span>
 	</div>
 <?php } ?>
 	<div class="alertbox"></div>
@@ -60,7 +62,7 @@ if ($uid < 1 && !isset($_GET['nouser'])) {
 	<div class="menubar menubar-left tab-links">
 	<ul>
 		<li class="menubar-content menubar-content-user menubar-content-user-name menubar-content-active" id="menubar-button-1"><span id="display_name"><?php echo $uname ?></span><a href="uauth.php?logout" class="btn btn-logout"><i class="fa fa-sign-out"></i></a></li>
-		<li class="menubar-content menubar-content-main menubar-content-active" container="1" id="menubar-button-files" type="folder" onclick="files.open('home_dir', $(this).text(), $(this).attr('container'), $(this).attr('type'));" href="#my-files">My Files</li>
+		<li class="menubar-content menubar-content-main menubar-content-active" container="1" id="menubar-button-files" type="folder" onclick="files.open('<?php echo $_SESSION["uhd"] ?>', $(this).text(), $(this).attr('container'), $(this).attr('type'));" href="#my-files">My Files</li>
 		<?php if($allowsharing) {?><li class="menubar-content menubar-content-main" id="menubar-button-shared" href="#shared-files">Shared</li> <?php } ?>
 		<li class="menubar-content menubar-content-main" id="menubar-button-bookmarks" href="#bookmarks">Bookmarks</li>
 		<li class="menubar-content menubar-content-main" id="menubar-button-account" href="#account">Account</li>
@@ -77,9 +79,10 @@ if ($uid < 1 && !isset($_GET['nouser'])) {
 
 	<script type="text/template" id="folder_template">
     <li class="menubar-content" container="<%= model.get('container') %>" type="<%= model.get('basicFileType') %>" filehash="<%= model.get('hash_self') %>" id="<%= model.get('fileID') %>" name="<%= model.get('fileName') %>" onclick="<%= model.get('onclick') %>" pos="">
+		<!-- <img src="//placehold.it/40x40" /> -->
 		<span class="folder file-name"><%= model.get('fileName') %></span>
 		<div class="file-info">
-			<span class="file-info-item" id="filesize"><span class="filetype"><%= model.get('fileType') %></span><br><%= model.get('fileSize') %></span>
+			<span class="file-info-item"><span class="filetype"><%= model.get('fileType') %></span><br><span id="filesize" unit="<%= model.get('units') %>"><%= model.get('fileSize') %></span></span>
 		</div>
 	</li>
 	</script>
@@ -91,6 +94,17 @@ if ($uid < 1 && !isset($_GET['nouser'])) {
 		</div>
 	</li>
 	</script>
+	<div id="preview-template" style="display: none;">
+		<li class="menubar-content">
+		<div class="dz-uploadprogress" data-dz-uploadprogress></div>
+		<!-- <img data-dz-thumbnail src="//placehold.it/40x40" /> -->
+		<span class="folder file-name"><span data-dz-name></span></span>
+		<div class="file-info">
+			<span class="file-info-item"><span data-dz-size></span><br><!-- <span data-dz-uploadprogress style="content: attr(widthval) !important" widthval=""></span> --></span>
+		</div>
+		<span data-dz-errormessage></span>
+		</li>
+	</div>
 
 	<section class="modal-background modal-new-folder">
 	<div class="modal">
@@ -172,7 +186,11 @@ if ($uid < 1 && !isset($_GET['nouser'])) {
 			$('.title, .heightsettertext').css({
 				'font-size': title.fontLetterWidth + 'pt',
 				'letter-spacing': width.titleLetterSpacing + 'pt'
-			})
+			});
+			$('.menubar').css({
+				'top': (parseInt($('.title').height()) + (parseInt($('.title').css('padding')) * 2)) + 'px'
+			});
+			//d.info($('.menubar').css('top'));
 		},
 		loadFiles: function() {
 			BCL = new BarContentLoader();
@@ -200,13 +218,14 @@ if ($uid < 1 && !isset($_GET['nouser'])) {
 	    init.resize();
 		clickMenu.rebind();
 		names.get(<?php echo $_SESSION['uid']; ?>);
-		files.open('home_dir', 'My Files', 1, 'folder');
+		files.open('<?php echo $_SESSION["uhd"] ?>', 'My Files', 1, 'folder');
 
 	});
 
 	//files.open('home_dir', 'My Files', 1, 'folder');
 	</script>
     <script type="text/javascript" src="js/showlog.js"></script>
+    <script type="text/javascript" src="js/dropzone.js"></script>
     <script type="text/javascript" src="js/foxfile.js"></script>
 	<?php
 	$time = microtime();

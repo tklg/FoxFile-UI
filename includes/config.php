@@ -11,7 +11,7 @@
 			$grav_custom = "";
 			$showfooter = false;
 			$showpageloadtime = false;
-			$useGroupPassword = false;
+			$useGroupPassword = true;
 			$group_password = 'foxfilealpha';
 			$allowsharing = true;
 			$database = [
@@ -19,4 +19,8 @@
 				"PREFIX" => null,
 				"TABLE_FILES" => "FILES",
 				"TABLE_USERS" => "USERS"
+			];
+			$files = [
+				"ROOT" => 'files',
+				"PREFIX" => 'foxfile_'
 			];

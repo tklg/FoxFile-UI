@@ -7,18 +7,25 @@
 session_start();
 require('includes/user.php');
 require('includes/config.php');
+ini_set('upload_max_filesize', '40M');
+ini_set('post_max_size', '40M');
 if(!isset($_SESSION['uid'])) {
 	$_SESSION['uid'] = 0;
 }
 if(!isset($_SESSION['access_level'])) {
 	$_SESSION['access_level'] = 0;
 }
+ini_set('display_errors',1);
+error_reporting(E_ALL);
 //connect to database  
 $db = mysqli_connect($dbhost,$dbuname,$dbupass,$dbname);
 $usertable = $database['TABLE_USERS'];
 $filetable = $database['TABLE_FILES'];
+$file_root = $files['ROOT'];
+$file_prefix = $files['PREFIX'];
 $uid = $_SESSION['uid'];
 $alvl = $_SESSION['access_level'];
+$uhd = $_SESSION['uhd'];
 date_default_timezone_set('America/New_York');
 
 function striptagattr( $str, 
@@ -59,6 +66,75 @@ function br2nl($s) {
 function nlTobr($s) {
 	return str_replace( "\n", '<br>', $s);
 }
+if(isset($_GET['getpath'])) {
+	 echo getPath($_GET['getpath']);
+}
+if (isset($_GET['phpinfo'])) {
+	phpinfo();
+	die();
+}
+function getPath($file) {
+	global $file_root, $file_prefix, $uhd, $file_root;
+	$pointer = 0;
+	$path = array();
+	function recursivePath($file) {
+		global $db, $filetable, $pointer, $path;
+		$curPos = array();
+		$query = mysqli_query($db, "SELECT * FROM $filetable WHERE file_self='$file'");
+		while($row = mysqli_fetch_array($query)) {
+			$path[] = $row['file_parent'];
+			$curPos[] = $row['file_parent'];
+		}
+		foreach ($curPos as $key => $value) {
+			$pointer++;
+			recursivePath($value);
+		}
+		return $path;
+	}
+	if ($file === $uhd) {
+		return $file_root . '/' .  $file;
+	}
+	$pointer = 1;
+	$files = array_reverse(recursivePath($file));
+	$path = $file_root;
+	foreach ($files as $key => $value) {
+		if ($pointer !== sizeof($files)) {
+			$path .= '/' . $value;
+		} else {
+			$path .= '/' . $value . '/' . $file;
+		}
+		$pointer++;
+	}
+	//echo $path;
+	return $path;
+}
+function deleteDir($path) {
+	foreach(glob("{$path}/*") as $file) {
+        if(is_dir($file)) { 
+            deleteDir($file);
+        } else {
+            unlink($file);
+            //echo 'removing ' . $file . '<br>';
+        }
+    }
+    rmdir($path);
+    //echo 'removing ' . $path . '<br>';
+}
+function createFolder($file) {
+	$path = getPath($file);
+	if (mkdir($path, 0777, true)) return true;
+}
+function createFile($filePath) {
+	return true;
+}
+function deleteFolder($folder) {
+	$path = getPath($folder);
+	deleteDir($path);
+}
+function deleteFile($file) {
+	$path = getPath($file);
+	unlink($path);
+}
 if(isset($_POST['fullNameFromID'])) {
 	$id = sanitize($_POST['fullNameFromID']);
 	$res = mysqli_query($db, "SELECT display_name from $usertable WHERE PID = '$id'");
@@ -75,7 +151,7 @@ if(isset($_GET['dir'])) {
 		$type = sanitize($_GET['type']);
 		if ($type === 'folder') {
 			$dirOwner = mysqli_query($db, "SELECT owner from $filetable WHERE file_parent='$dir'");
-			$resultDir = mysqli_query($db, "SELECT * from $filetable WHERE file_parent='$dir' AND owner='$uid'");
+			$resultDir = mysqli_query($db, "SELECT * from $filetable WHERE file_parent='$dir' AND owner='$uid' ORDER BY file_type");
 			$giveResult = false;
 			if (mysqli_num_rows($resultDir) > 0) {
 				while($row = mysqli_fetch_array($dirOwner)) {
@@ -142,7 +218,7 @@ if (isset($_POST['new_folder'])) {
 		$sql = "INSERT INTO $filetable (owner, file_name, file_type, file_self, file_parent, last_modified) VALUES
 				('$uid', '$folder_name', '$fileType', '$self_hash', '$parent_id', '$lmdf')";
 
-		if (mysqli_query($db, $sql)) {
+		if (mysqli_query($db, $sql) && createFolder($self_hash)) {
 			//create actual folder here
 			echo 'success';
 		} else {
@@ -153,11 +229,11 @@ if (isset($_POST['new_folder'])) {
 if(isset($_POST['delete'])) {
 	if ($alvl > 0) {
 		$hash_self = sanitize($_POST['file_id']);
-		if ($hash_self == 'home_dir') {
+		if ($hash_self == $uhd) {
 			echo 'Cannot delete the home directory!';
 		} else {
 			$delItems = '';
-
+			$type = '';
 			$delTree = [$hash_self];
 			$pointer = 0;
 			$isOwner = true;
@@ -169,6 +245,7 @@ if(isset($_POST['delete'])) {
 				while($row = mysqli_fetch_array($query)) {
 					$delTree[] = $row['file_self']; //get self ids from all files within target
 					$curPos[] = $row['file_self'];
+					$type = $row['file_type'];
 					if ($row['owner'] !== $uid) {
 						$isOwner = false;
 					}
@@ -188,13 +265,18 @@ if(isset($_POST['delete'])) {
 				if ($pointer != sizeof($delTree) - 1) {
 					$delItems .= '\'' . $value . '\', ';
 				} else {
-					$delItems .= '\'' . $value . '\''; //add the last thing to remove: the original selected directory
+					$delItems .= '\'' . $value . '\'';
 				}
 				$pointer++;
 			}
 			//echo 'with src directory - ' . $hash_self . '<br>';
 			//echo $delItems . '<br>';
 			if ($isOwner) {
+				if ($type === 'folder') {
+					deleteFolder($hash_self);
+				} else {
+					deleteFile($hash_self);
+				}
 				if(mysqli_query($db, "DELETE FROM $filetable WHERE file_self IN ($delItems)")) {
 					echo 1;
 				} else {
@@ -209,25 +291,64 @@ if(isset($_POST['delete'])) {
 if (isset($_POST['rename'])) {
 	$hash_self = sanitize($_POST['file_id']);
 	$newName = sanitize($_POST['name']);
-	$date = date("F j, Y, g:i a");
-	$isOwner = true;
-
-	$query = mysqli_query($db, "SELECT * FROM $filetable WHERE file_self='$hash_self'");
-
-	while($row = mysqli_fetch_array($query)) {
-		if ($row['owner'] !== $uid) {
-			$isOwner = false;
-		}
-	}
-
-	if ($isOwner) {
-		if(mysqli_query($db, "UPDATE $filetable SET file_name = '$newName', last_modified = '$date' WHERE file_self = '$hash_self'")) {
-			echo 1;
-		} else {
-			echo "Rename failed!";
-		}
+	if ($hash_self == $uhd) {
+		echo 'Cannot rename the home directory!';
 	} else {
-		echo "You do not own this file.";
+		$date = date("F j, Y, g:i a");
+		$isOwner = true;
+
+		$query = mysqli_query($db, "SELECT * FROM $filetable WHERE file_self='$hash_self'");
+
+		while($row = mysqli_fetch_array($query)) {
+			if ($row['owner'] !== $uid) {
+				$isOwner = false;
+			}
+		}
+
+		if ($isOwner) {
+			if(mysqli_query($db, "UPDATE $filetable SET file_name = '$newName', last_modified = '$date' WHERE file_self = '$hash_self'")) {
+				echo 1;
+			} else {
+				echo "Rename failed!";
+			}
+		} else {
+			echo "You do not own this file.";
+		}
 	}
 }
+if(isset($_GET['upload_target'])) {
+	$target = sanitize($_GET['upload_target']);
+	$path = getPath($target);
+	//echo $path;
+
+	//no security at all! :D
+	if (!empty($_FILES)) {
+		$tFile = $_FILES['file']['tmp_name'];
+		$fExt = pathinfo($_FILES['file']['name'], PATHINFO_EXTENSION);
+		$fName = $_FILES['file']['name']; //this file will be replaced if a matching file is uploaded
+		$self_hash = md5($_FILES['file']['name']); //this file will be replaced if a matching file is uploaded
+		$targetPath = $path . '/' . $self_hash;; //this file will be replaced if a matching file is uploaded
+		$fType = $_FILES['file']['type'];
+		$fSize = $_FILES['file']['size'];
+		$date = [
+			'last_modified' => date("F j, Y, g:i a"),
+			'today' => date("Y-m-d H:i:s")
+		];
+		$lmdf = $date['last_modified'];
+
+		if (move_uploaded_file($tFile, $targetPath)) {
+			$sql = "INSERT INTO $filetable (owner, file_name, file_size, file_type, file_self, file_parent, last_modified) VALUES
+				('$uid', '$fName', '$fSize', '$fType', '$self_hash', '$target', '$lmdf')";
+
+			if (mysqli_query($db, $sql)) {
+				echo 1;
+			} else {
+				echo 'SQL Failed';
+			}
+		} else {
+			echo 'Upload failed';
+		}
+	}
+}
+
 mysqli_close($db);

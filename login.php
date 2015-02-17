@@ -25,6 +25,7 @@ $starttime = $time;
     <?php require('includes/header.php'); ?>
     <style type="text/css">
 	#wrapper {
+		top: 50px;
         width: 300px;
         height: auto;
         position: absolute;

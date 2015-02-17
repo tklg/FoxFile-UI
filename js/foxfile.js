@@ -4,10 +4,11 @@
  * villa7.github.io
 */
 
+Dropzone.autoDiscover = false;
+
 var winHeight = $(window).height();
 var winWidth = $(window).width();
 var res;
-var total_bars = 2;
 
 $(window).resize(function() {
 	clearTimeout(res);
@@ -15,7 +16,6 @@ $(window).resize(function() {
     winHeight = $(window).height();
     winWidth = $(window).width();
     resizeAll();
-    console.log('resized');
 	}, 100);
 });
 
@@ -25,11 +25,57 @@ function resizeAll() {
 
 var bar = {
 	active: 2,
-	maxActive: 3,
+	maxActive: 3, //rewrite sizing stuff for smaller screens (2 and 1 across configurations)
 	currentOffset: 0,
 	add: function(title, moveBack, type, onclick, hash) {
 		bar.active++;
-		$('#wrapper').append('<section class="bar bar-vertical" fileHash="' + hash + '" id="bar-' + this.active + '" type="' + type + '" state="closed" filename="' + title + '"> <div class="menubar-title"><span class="heightsettertext"></span><i class="bar-backbutton btn fa fa-angle-left"></i><span class="menubar-title-link btn" onclick="' + onclick + '">' + title + '</div> <div class="menubar menubar-left"> <ul> </ul> </div> </section>');
+		var aT = this.active; //temp thing for dz
+		$('#wrapper').append('<section class="bar bar-vertical" fileHash="' + hash + '" id="bar-' + this.active + '" type="' + type + '" state="closed" filename="' + title + '"> <div class="menubar-title"><span class="heightsettertext"></span><i class="bar-backbutton btn fa fa-angle-left"></i><span class="menubar-title-link btn" onclick="' + onclick + '">' + title + '</div> <div class="menubar menubar-left dropzone" id="dropzone-' + this.active + '"> <ul id="file-target"> </ul> <ul id="dz-preview-target-' + this.active + '"></ul></div> </section>');
+		if (type === 'folder') {
+			$("#dropzone-" + this.active).dropzone({
+				url: "dbquery.php?upload_target=" + hash,
+				clickable: false,
+				createImageThunbnails: false,
+				dictDefaultMessage: '',
+				previewsContainer: '#dz-preview-target-' + aT,
+				previewTemplate: $("#preview-template").html(),
+				uploadMultiple: false,
+				init: function() {
+					var num = 0;
+					var first = '';
+					var isFirst = true;
+					this.on('addedfile', function(file) {
+						num++;
+						if (isFirst) {
+							first = file.name;
+							isFirst = false;
+						}
+					});
+					this.on('removedfile', function(file) {
+						num--;
+						if (num === 0) {
+							isFirst = true;
+							first = '';
+						}
+					});
+					this.on('queuecomplete', function(file) {
+						d.success("Uploaded " + first + ((num != 1) ? " and " + (num-1) + " others to " + title : ' to ' + title));
+						num = 0;
+						first = '';
+						isFirst = true;
+						setTimeout(function() {
+							files.refresh(aT);
+						}, 2000)
+					});
+					this.on('sending', function(file) {
+						//d.info('Sending file ' + file.name);
+					});
+					this.on('success', function(file, response) {
+						//d.info(response);
+					});
+				}
+			});
+		}
 		bar.move(this.active, 5);
 		bar.size(this.active - 1, 1);
 		if (this.active <= this.maxActive) {
@@ -172,6 +218,8 @@ var files = {
 		}
 		clickMenu.rebind();
 		$('.debug#dir').text(title);
+		$('.debug#dropzones-count').text($('.dropzone').length);
+		$('.debug#barid').text(bar.active);
 	},
 	refresh: function(bar_id) {
 		bar.clear(bar_id);
@@ -267,7 +315,6 @@ var files = {
 			$('.modal-new-folder .modal-header #modal-header-name').text(file);
 			$('.modal-new-folder #modal-file-id-new').val(id);
 			$('.modal-new-folder #modal-bar-id-new').val(bar);
-			$('.modal-new-folder #modal-file-name-new').val(file);
 			$('.modal-new-folder').fadeIn();
 		},
 		hide: function() {
@@ -293,9 +340,9 @@ var files = {
 			function(result) {
 				//hide spinny
 				if (result == 'success') { //worked
-					d.success("Created new folder in " + id + " called " + title);
+					//d.success("Created new folder in " + id + " called " + title);
 					//refresh folder bar
-					d.info('refreshing bar ' + bar + ' with id ' + id);
+					//d.info('refreshing bar ' + bar + ' with id ' + id);
 					files.refresh(bar);
 				} else {
 					switch(result) {
@@ -392,8 +439,18 @@ var BarContentView = Backbone.View.extend({
 						'hash_child': files[i].file_child,
 						'hash_parent': files[i].file_parent,
 						'onclick': 'files.open(\'' + files[i].file_self + '\', $(this).attr(\'name\'), $(this).attr(\'container\'), $(this).attr(\'type\'), this.id);state.update($(this).attr(\'container\'), this.id);$(\'#bar-' + (BCV.barID+1) + ' .menubar-title-link\').attr(\'onclick\')',
-						'container': BCV.barID
+						'container': BCV.barID,
+						'units': 'bytes'
 					};
+					if (files[i].file_size > 1000) {
+						if (files[i].file_size > 1000000) {
+							obj.units = 'megabytes';
+							obj.fileSize = (obj.fileSize / 1000000).toFixed(2);
+						} else {
+							obj.units = 'kilobytes';
+							obj.fileSize = (obj.fileSize / 1000).toFixed(2);
+						}
+					}
 					if (obj.fileType.toLowerCase() == 'folder') {
 						obj.basicFileType = 'folder';
 						//this.barTypeToMake = 'folder';
@@ -539,9 +596,9 @@ var BarContentView = Backbone.View.extend({
 	list: function(model) {
 		//console.log("Appending template to #bar-" + this.barID);
 		if (this.barTypeToMake != 'folder') {
-			$('#bar-' + this.barID + ' .menubar ul').append(this.fileTemplate({model: model}));
+			$('#bar-' + this.barID + ' .menubar ul#file-target').append(this.fileTemplate({model: model}));
 		} else {
-			$('#bar-' + this.barID + ' .menubar ul').append(this.folderTemplate({model: model}));
+			$('#bar-' + this.barID + ' .menubar ul#file-target').append(this.folderTemplate({model: model}));
 		}
 	}
 });
@@ -647,16 +704,18 @@ var clickMenu = {
 				var type = $(e.target).attr('type');
 				var id = $(e.target).attr('filehash');
 			} else {
-				if (!$(e.target).is('section')) { //is within a file bar
+				if (!$(e.target).is('div')) { //is within a file bar
 					var bar = $(e.target).parents('li').attr('container');
 					var file = $(e.target).parents('li').attr('name');/*onclick').split(',')[1].trim().replace(/'/g, '');*/
 					var type = $(e.target).parents('li').attr('type');
 					var id = $(e.target).parents('li').attr('filehash');
+					//d.info('in');
 				} else { //is the empty space under the bar
-					var bar = $(e.target).attr('id').split('-')[1];
-					var file = $(e.target).attr('filename');
-					var type = $(e.target).attr('type');
-					var id = $(e.target).attr('filehash');
+					var bar = $(e.target).parents('section').attr('id').split('-')[1];
+					var file = $(e.target).parents('section').attr('filename');
+					var type = $(e.target).parents('section').attr('type');
+					var id = $(e.target).parents('section').attr('filehash');
+					//d.info("under");
 				}
 			}
 			cmWidth = 200;

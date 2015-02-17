@@ -14,6 +14,7 @@ body {
 	font-family: sans-serif;
 	-webkit-font-smoothing: antialiased;
 	background: #222;
+	overflow: hidden;
 }
  input:active,
     input:focus,
@@ -38,6 +39,12 @@ body {
 }
 hr {
 	border-top: rgba(255,255,255,.3);
+}
+.menubar {
+	overflow-y: auto;
+	position: absolute;
+	width: 100%;
+	top:89px;left:0;right:0;bottom:0;
 }
 ul {
 	list-style-type: none;
@@ -160,6 +167,8 @@ a:hover {
 }
 .menubar {
 	border-top: solid 2px rgb(250, 101, 0);
+	-webkit-transition: all .2s ease-in-out;
+          transition: all .2s ease-in-out;
 }
 .title,
 .menubar-title {
@@ -182,6 +191,11 @@ a:hover {
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
+    white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: 100%; 
+	display: inline-block;
 }
 .menubar-title-link-home {
 	padding-right: 20px;
@@ -224,6 +238,9 @@ a:hover {
 	padding-right: 13px;
 	font-size: 120%;
 }
+.menubar-content img {
+	display: none;
+}
 .menubar-content-user:before,
 .menubar-content-main:before {
 	content: none !important;
@@ -235,7 +252,15 @@ a:hover {
 	content: '\f016';
 	padding-right: 13px;
 }
-.menubar-content .file-info #filesize:after {
+.menubar-content .file-info #filesize[unit="bytes"]:after {
+	color: #666;
+	content: " B";
+}
+.menubar-content .file-info #filesize[unit="kilobytes"]:after {
+	color: #666;
+	content: " KB";
+}
+.menubar-content .file-info #filesize[unit="megabytes"]:after {
 	color: #666;
 	content: " MB";
 }
@@ -304,11 +329,20 @@ a:hover {
 	content: '\f1c8';
 	padding-right: 13px;
 }
+.menubar-content[type='image'] {
+	/*padding-left: 7px !important;
+	padding-bottom: 0px !important;
+	padding-top: 0px !important;*/
+}
 .menubar-content[type='image']:before {
 	color: #666;
 	font-family: 'FontAwesome';
 	content: '\f1c5';
 	padding-right: 13px;
+	/*content: url(//placehold.it/40x40);*/
+}
+.menubar-content[type='image'] img {
+	display: inline;
 }
 .menubar-content[type='code']:before {
 	color: #666;
@@ -344,6 +378,11 @@ a:hover {
 .file-name {
 	position: relative;
 /*	font-size: 90%;*/
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: 70%; 
+	display: inline-block;
 }
 .file-info {
 	float: right;
@@ -503,4 +542,12 @@ a:hover {
 .modal-header #modal-header-name {
 	color: rgb(250,101,0);
 	font-family: sans-serif;
+}
+.dz-uploadprogress {
+	background: rgba(248, 114, 23, .3);
+	position: absolute;
+	height: 39px;
+	display: inline;
+	margin-top: -10px;
+	margin-left: -52px;
 }

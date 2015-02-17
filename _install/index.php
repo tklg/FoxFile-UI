@@ -101,27 +101,6 @@ $starttime = $time;
         }
         return preg_replace('/<(.*?)>/ies', "'<' . preg_replace(array('/javascript:[^\"\']*/i', '/(" . implode('|', $disabledEvents) . ")=[\"\'][^\"\']*[\"\']/i', '/\s+/'), array('', '', ' '), stripslashes('\\1')) . '>'", strip_tags($str, implode('', $allowedTags)));
     }
-	function getOwner($c) {
-	      global $db;
-	      $c = mysqli_real_escape_string($db, $c);
-	      $result = mysqli_query($db, "SELECT * from CHARACTERS where PID = '$c'");
-	      $row = mysqli_fetch_array($result);
-	      return $row['owner_uid'];
-	    }
-	function getOwnerItem($i) {
-	  global $db;
-	  $i = mysqli_real_escape_string($db, $i);
-	  $result = mysqli_query($db, "SELECT * from ITEMS where PID = '$i'");
-	  $row = mysqli_fetch_array($result);
-	  return $row['owner_uid'];
-	}
-	function getCharacterFromID($id) {
-	  global $db;
-	  $i = mysqli_real_escape_string($db, $id);
-	  $result = mysqli_query($db, "SELECT * from CHARACTERS where PID = '$id'");
-	  $row = mysqli_fetch_array($result);
-	  return $row['character_name'];
-	}
 	function sanitize($s) {
 	  global $db;
 	  // return htmlentities(br2nl(addslashes(mysqli_real_escape_string($db, $s))), ENT_QUOTES);
@@ -182,6 +161,7 @@ $starttime = $time;
                 pass VARCHAR(512),
                 display_name VARCHAR(128),
                 email VARCHAR(128),
+                root_folder VARCHAR(50),
                 access_level INT
                 )';
 
@@ -203,11 +183,12 @@ $starttime = $time;
               echo "<script type='text/javascript'>d.error('MySQL Query failed: " . mysqli_error($db) . "')</script>";
             }
 
-            $sql = "INSERT INTO USERS (name, pass, display_name, email, access_level)
+            $sql = "INSERT INTO USERS (name, pass, display_name, email, root_folder, access_level)
                     VALUES ('$uname', 
                     '$upass',
                     '$defName',
                     '$email',
+                    '$uname',
                     '5')";
 
             if (mysqli_query($db,$sql)) {
@@ -222,7 +203,7 @@ $starttime = $time;
                 owner VARCHAR(50),
                 file_name VARCHAR(100),
                 file_type VARCHAR(50),
-                file_size DOUBLE(100, 2),
+                file_size DOUBLE(30, 2),
                 file_self VARCHAR(512),
                 file_parent VARCHAR(512),
                 last_modified VARCHAR(50),
