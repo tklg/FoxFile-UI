@@ -30,11 +30,20 @@ var bar = {
 	add: function(title, moveBack, type, onclick, hash) {
 		bar.active++;
 		var aT = this.active; //temp thing for dz
-		$('#wrapper').append('<section class="bar bar-vertical" fileHash="' + hash + '" id="bar-' + this.active + '" type="' + type + '" state="closed" filename="' + title + '"> <div class="menubar-title"><span class="heightsettertext"></span><i class="bar-backbutton btn fa fa-angle-left"></i><span class="menubar-title-link btn" onclick="' + onclick + '">' + title + '</div> <div class="menubar menubar-left dropzone" id="dropzone-' + this.active + '"> <ul id="file-target"> </ul> <ul id="dz-preview-target-' + this.active + '"></ul></div> </section>');
+		$('#wrapper').append('<section class="bar bar-vertical" fileHash="' + hash + '" id="bar-' + this.active + '" type="' + type + '" state="closed" filename="' + title + '">' +
+			'<div class="menubar-title">'+
+			'<span class="heightsettertext"></span>'+
+			'<span class="menubar-title-link btn" onclick="' + onclick + '">' + title + '</span>'+
+			'<div class="menubar-action-btn"><button class="btn" id="menubar-action-btn-' + this.active + '">Upload</button></div>'+
+			'</div>'+
+			'<div class="menubar menubar-left dropzone" id="dropzone-' + this.active + '">'+
+			'<ul id="file-target"></ul>'+
+			'<ul id="dz-preview-target-' + this.active + '"></ul>'+
+			'</div></section>');
 		if (type === 'folder') {
 			$("#dropzone-" + this.active).dropzone({
 				url: "dbquery.php?upload_target=" + hash,
-				clickable: false,
+				clickable: '#menubar-action-btn-' + aT,
 				createImageThunbnails: false,
 				dictDefaultMessage: '',
 				previewsContainer: '#dz-preview-target-' + aT,
@@ -65,7 +74,7 @@ var bar = {
 						isFirst = true;
 						setTimeout(function() {
 							files.refresh(aT);
-						}, 2000)
+						}, 700)
 					});
 					this.on('sending', function(file) {
 						//d.info('Sending file ' + file.name);
@@ -295,14 +304,11 @@ var files = {
 		});
 	},
 	download: function(file, id) {
-		$.post('dbquery.php',
-		{
-			download: 'download',
-			file_id: id
-		},
-		function(result) {
-			d.info(result);
-		});
+		var frame = $("<iframe></iframe>").attr('src', 'dbquery.php?download&file_id='+id+"&file_name="+file).css('display', 'none');
+		frame.appendTo('body');
+		setTimeout(function() {
+			$('body > iframe, body > input[type="file"]').remove();
+		}, 100);
 	},
 	uploadGUI: function(target, file, id) {
 
@@ -639,6 +645,11 @@ var state = {
 	}
 }
 
+//meh
+function clickButton(btn, id) {
+	$(btn + id).click();
+}
+
 var clickMenu = {
 	fn: 'd.info(\'unadded clickmenu item\');',
 	isOpen: false,
@@ -672,7 +683,7 @@ var clickMenu = {
 					this.fn = 'files.download($(this).attr(\'file\'), $(this).attr(\'id\'));clickMenu.close();';
 					break;
 				case 'upload':
-					this.fn = 'files.uploadGUI.show($(this).attr(\'file\'), $(this).attr(\'id\'));clickMenu.close();';
+					this.fn = 'clickButton(\'#menubar-action-btn-\', $(this).attr(\'bar\'))';
 					break;
 				case 'new folder':
 					this.fn = 'files.newFolderGUI.show($(this).attr(\'file\'), $(this).attr(\'id\'), $(this).attr(\'bar\'));clickMenu.close();';
@@ -695,7 +706,7 @@ var clickMenu = {
 		this.isOpen = false;
 	},
 	rebind: function() {
-		$('.bar:not(.bar-main)').bind("contextmenu", function(e) {
+		$('.menubar:not(.menubar-main)').bind("contextmenu", function(e) {
 			e.preventDefault();
 			//d.info($(e.target).attr("class"));
 			if ($(e.target).is('li')) { //is a file bar

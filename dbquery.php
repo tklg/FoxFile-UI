@@ -7,8 +7,8 @@
 session_start();
 require('includes/user.php');
 require('includes/config.php');
-ini_set('upload_max_filesize', '40M');
-ini_set('post_max_size', '40M');
+/*ini_set('upload_max_filesize', '40M');
+ini_set('post_max_size', '40M');*/
 if(!isset($_SESSION['uid'])) {
 	$_SESSION['uid'] = 0;
 }
@@ -234,18 +234,21 @@ if(isset($_POST['delete'])) {
 		} else {
 			$delItems = '';
 			$type = '';
+			$query = mysqli_query($db, "SELECT file_type FROM $filetable WHERE file_self='$hash_self'");
+			while($row = mysqli_fetch_array($query)) {
+				$type = $row['file_type'];
+			}
 			$delTree = [$hash_self];
 			$pointer = 0;
 			$isOwner = true;
 			function recursiveDelete($self) {
 				global $db, $filetable, $delTree, $pointer, $isOwner, $uid;
 				$curPos = array();
-				$query = mysqli_query($db, "SELECT * FROM $filetable WHERE file_parent='$self'");
+				$query = mysqli_query($db, "SELECT file_self FROM $filetable WHERE file_parent='$self'");
 
 				while($row = mysqli_fetch_array($query)) {
 					$delTree[] = $row['file_self']; //get self ids from all files within target
 					$curPos[] = $row['file_self'];
-					$type = $row['file_type'];
 					if ($row['owner'] !== $uid) {
 						$isOwner = false;
 					}
@@ -272,7 +275,7 @@ if(isset($_POST['delete'])) {
 			//echo 'with src directory - ' . $hash_self . '<br>';
 			//echo $delItems . '<br>';
 			if ($isOwner) {
-				if ($type === 'folder') {
+				if ($type == 'folder') {
 					deleteFolder($hash_self);
 				} else {
 					deleteFile($hash_self);
@@ -349,6 +352,30 @@ if(isset($_GET['upload_target'])) {
 			echo 'Upload failed';
 		}
 	}
+}
+if(isset($_GET['download'])){
+	$fileName = sanitize($_GET['file_id']);
+	$n = sanitize($_GET['file_name']);
+
+	$filePath = getPath($fileName);
+
+    if(is_readable($filePath)) {
+        $fileSize = filesize($filePath);
+
+        header('Content-Description: File Transfer');
+	    header('Content-Type: application/octet-stream');
+	    header('Content-Disposition: attachment; filename='.$n);
+	    header('Expires: 0');
+	    header('Cache-Control: must-revalidate');
+	    header('Pragma: public');
+	    header('Content-Length: ' . filesize($filePath));
+	    readfile($filePath);
+
+        exit();
+    }
+    else {
+        echo ('The provided file path is not valid.');
+    }
 }
 
 mysqli_close($db);
