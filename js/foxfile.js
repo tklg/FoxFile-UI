@@ -34,11 +34,18 @@ var bar = {
 			'<div class="menubar-title">'+
 			'<span class="heightsettertext"></span>'+
 			'<span class="menubar-title-link btn" onclick="' + onclick + '">' + title + '</span>'+
-			'<div class="menubar-action-btn"><button class="btn" id="menubar-action-btn-' + this.active + '">Upload</button></div>'+
+			'<div class="menubar-action-btn">'+
+			'<button class="btn btn-rename" id="menubar-action-btn"><i class="fa fa-pencil-square-o"></i></button>'+
+			'<button class="btn btn-upload" id="menubar-action-btn-' + this.active + '"><i class="fa fa-upload"></i></button>'+
+			'<button class="btn btn-download" id="menubar-action-btn"><i class="fa fa-download"></i></button>'+
+			'<button class="btn btn-new-folder" id="menubar-action-btn"><i class="fa fa-plus-circle"></i></button>'+
+			'<button class="btn btn-share" id="menubar-action-btn"><i class="fa fa-share-square-o"></i></button>'+
+			'</div>'+
 			'</div>'+
 			'<div class="menubar menubar-left dropzone" id="dropzone-' + this.active + '">'+
 			'<ul id="file-target"></ul>'+
 			'<ul id="dz-preview-target-' + this.active + '"></ul>'+
+			'<div class="spinner" id="' + this.active + '"></div>'+
 			'</div></section>');
 		if (type === 'folder') {
 			$("#dropzone-" + this.active).dropzone({
@@ -114,6 +121,7 @@ var bar = {
 		//parent_key = '',
 		BCL = new BarContentLoader();
 		BCL.start(bar, file_key, type);
+		spinners.show(bar);
 	},
 	clear: function(bar) {
 		$('#bar-' + bar + ' ul').empty();
@@ -166,14 +174,14 @@ var bar = {
 	moveLeft: function(bar) {
 		var barpos = parseInt($('#bar-' + bar).attr("pos"));
 		//if (barpos > 0) {
-			console.log("moving bar " + bar + " left");
+			//console.log("moving bar " + bar + " left");
 			this.move(bar, barpos - 1);
 		//}
 	},
 	moveRight: function(bar) {
 		var barpos = parseInt($('#bar-' + bar).attr("pos"));
 		//if (barpos < bar.maxActive) {
-			console.log("moving bar " + bar + " right");
+			//console.log("moving bar " + bar + " right");
 			this.move(bar, barpos + 1);
 		//}
 	},
@@ -232,6 +240,7 @@ var files = {
 	},
 	refresh: function(bar_id) {
 		bar.clear(bar_id);
+		spinners.show(bar_id);
 		clickMenu.rebind();
 		//show spinny to give time for query
 		setTimeout(function() {
@@ -418,15 +427,12 @@ var BCL, BCV;
 var barTypeToMake;
 
 var BarContentView = Backbone.View.extend({
-	barID: '',
 	folderTemplate: _.template($('#folder_template').html()),
 	fileTemplate: _.template($('#file_template').html()),
 	barTypeToMake: '',
 	initialize: function() {
-		//console.log('BarContentView initialized');
 		this.collection.on('reset', this.render, this);
 		c = this.collection;
-		//fade in loading spinny
 		//d.success("GET from " + c.url());
 		this.collection.fetch({
 			success: function(model, response) {
@@ -450,8 +456,13 @@ var BarContentView = Backbone.View.extend({
 					};
 					if (files[i].file_size > 1000) {
 						if (files[i].file_size > 1000000) {
-							obj.units = 'megabytes';
-							obj.fileSize = (obj.fileSize / 1000000).toFixed(2);
+							if (files[i].file_size > 1000000000) {
+								obj.units = 'gigabytes';
+								obj.fileSize = (obj.fileSize / 1000000000).toFixed(2);
+							} else {
+								obj.units = 'megabytes';
+								obj.fileSize = (obj.fileSize / 1000000).toFixed(2);
+							}
 						} else {
 							obj.units = 'kilobytes';
 							obj.fileSize = (obj.fileSize / 1000).toFixed(2);
@@ -462,7 +473,7 @@ var BarContentView = Backbone.View.extend({
 						//this.barTypeToMake = 'folder';
 						obj.fileType = 'Folder';
 					} else {
-						switch (getExt(obj.fileName)) {
+						switch (getExt(obj.fileName).toLowerCase()) {
 							case 'txt': case 'log': case 'rtf':
 								obj.basicFileType = 'text'
 								break;
@@ -488,7 +499,7 @@ var BarContentView = Backbone.View.extend({
 								obj.basicFileType = 'pdf'
 								break;
 						}
-						switch(getExt(obj.fileName)) {
+						switch(getExt(obj.fileName).toLowerCase()) {
 							/* text files */
 							case 'txt':
 								obj.fileType = "Text File";
@@ -523,10 +534,10 @@ var BarContentView = Backbone.View.extend({
 								obj.fileType = 'JPEG Image';
 								break;
 							case 'png':
-								obj.fileType = 'Portable Network Graphic';
+								obj.fileType = 'PNG Image';
 								break;
 							case 'psd':
-								obj.fileType = 'Adobe Photoshop Document';
+								obj.fileType = 'Photoshop Document';
 								break;
 							case 'tga':
 								obj.fileType = 'TARGA Image';
@@ -535,10 +546,10 @@ var BarContentView = Backbone.View.extend({
 								obj.fileType = 'Animated GIF';
 								break;
 							case 'svg':
-								obj.fileType = 'Scalable Vector Graphic';
+								obj.fileType = 'Scalable Vector';
 								break;
 							case 'ai':
-								obj.fileType = 'Adobe Illustrator Image';
+								obj.fileType = 'Illistrator Image';
 								break;
 							/* video files */
 							case 'wmv':
@@ -588,7 +599,7 @@ var BarContentView = Backbone.View.extend({
 					arr.push(obj);
 					//console.log(obj);
 				}
-				//fade out loading spinny
+				//spinners.hide(this.barID);
 				c.reset(arr);
 			},
 			error: function() {
@@ -598,6 +609,7 @@ var BarContentView = Backbone.View.extend({
 	},
 	render: function() {
 		this.collection.each(this.list, this);
+		spinners.hide(this.barID);
 	},
 	list: function(model) {
 		//console.log("Appending template to #bar-" + this.barID);
@@ -625,7 +637,9 @@ var BarContentLoader = Backbone.Router.extend({
 		//BCL.parent_key = file_key;
 		//BCL.url = src_url; //not needed, all queries are sent to dbquery.php
 		BCV = new BarContentView({
-			collection: BCL
+			collection: BCL,
+			barID: target_element,
+			barTypeToMake: type
 		});
 		BCV.barID = target_element;
 		BCV.barTypeToMake = type;
@@ -769,5 +783,58 @@ var names = {
 		function(result) {
 			if(result != '') $('#display_name').text(result);
 		});
+	}
+}
+var previews = {
+	getPreviewImage: function(hash, target, type) {
+		$.post('dbquery.php',
+		{
+			getpath: hash
+		},
+		function(result) {
+			if (type == 'image') {
+				$('.menubar-content-view#' + target + ' .img-preview').attr('src', result);
+			} else if (type == 'text' || type == 'code') {
+				spinners.text.show();
+				$.ajax({
+		            url : result,
+		            dataType: "text",
+		            success : function (data) {
+		               	spinners.text.hide();
+		               	$('.menubar-content-view#' + target + ' .text-preview').html(data.replace(/(?:\r\n|\r|\n)/g, '<br />'));
+		            }
+		        });
+			} else if (type == 'audio') {
+				var ext = getExt(hash);
+				switch(ext) {
+					case 'mp3': 
+						type = 'audio/mpeg';
+						break;
+					case 'wav': 
+						type='audio/wav';
+						break;
+					case 'ogg': 
+						type='audio/ogg';
+						break;
+				}
+				$('.menubar-content-view#' + target + ' .audio-preview').attr('src', result).attr('type', type);
+			}
+		});
+	}
+}
+var spinners = {
+	show: function(bar) {
+		$('.spinner#' + bar).fadeIn();
+	},
+	hide: function(bar) {
+		$('.spinner#' + bar).fadeOut();
+	},
+	text: {
+		show: function() {
+			$('.text-preview .spinner').fadeIn();
+		},
+		hide: function() {
+			$('.text-preview .spinner').fadeOut();
+		}
 	}
 }

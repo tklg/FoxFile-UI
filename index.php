@@ -18,8 +18,8 @@ $time = microtime();
 $time = explode(' ', $time);
 $time = $time[1] + $time[0];
 $starttime = $time;
-if ($uid < 1 && !isset($_GET['nouser'])) {
-	header("Location: login.php");
+if ($uid < 1) {
+	header("Location: login");
 	die();
 }
 ?>
@@ -68,6 +68,7 @@ if ($uid < 1 && !isset($_GET['nouser'])) {
 		<li class="menubar-content menubar-content-main" id="menubar-button-account" href="#account">Account</li>
 		<li class="menubar-content menubar-content-main" id="menubar-button-account" href="#settings">Settings</li>
 	</ul>
+	<div class="spinner"></div>
 	</div>
 	</section>
 
@@ -79,7 +80,6 @@ if ($uid < 1 && !isset($_GET['nouser'])) {
 
 	<script type="text/template" id="folder_template">
     <li class="menubar-content" container="<%= model.get('container') %>" type="<%= model.get('basicFileType') %>" filehash="<%= model.get('hash_self') %>" id="<%= model.get('fileID') %>" name="<%= model.get('fileName') %>" onclick="<%= model.get('onclick') %>" pos="">
-		<!-- <img src="//placehold.it/40x40" /> -->
 		<span class="folder file-name"><%= model.get('fileName') %></span>
 		<div class="file-info">
 			<span class="file-info-item"><span class="filetype"><%= model.get('fileType') %></span><br><span id="filesize" unit="<%= model.get('units') %>"><%= model.get('fileSize') %></span></span>
@@ -88,19 +88,22 @@ if ($uid < 1 && !isset($_GET['nouser'])) {
 	</script>
 	<script type="text/template" id="file_template">
     <li class="menubar-content-view" container="<%= model.get('container') %>" type="<%= model.get('basicFileType') %>" filehash="<%= model.get('hash_self') %>" id="<%= model.get('fileID') %>" name="<%= model.get('fileName') %>" pos="">
+		<img class="img-preview" />
+		<div class="text-preview"><div class="spinner"></div></div>
+		<audio controls class="audio-preview">Audio tags are not supported by your browser.</audio>
+		<script type="text/javascript">previews.getPreviewImage('<%= model.get('hash_self') %>', <%= model.get('fileID') %>, '<%= model.get('basicFileType') %>')</script>
 		<div class="file-view"></div>
 		<div class="file-info">
 			<span class="file-info-item" id="filesize"><span class="filetype"><%= model.get('fileType') %></span><br><%= model.get('fileSize') %></span>
 		</div>
 	</li>
 	</script>
-	<div id="preview-template" style="display: none;">
+	<div type="text/template" id="preview-template" style="display: none;">
 		<li class="menubar-content">
 		<div class="dz-uploadprogress" data-dz-uploadprogress></div>
-		<!-- <img data-dz-thumbnail src="//placehold.it/40x40" /> -->
 		<span class="folder file-name"><span data-dz-name></span></span>
 		<div class="file-info">
-			<span class="file-info-item"><span data-dz-size></span><br><!-- <span data-dz-uploadprogress style="content: attr(widthval) !important" widthval=""></span> --></span>
+			<span class="file-info-item"><span data-dz-size></span><br></span>
 		</div>
 		<span data-dz-errormessage></span>
 		</li>

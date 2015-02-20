@@ -69,6 +69,9 @@ function nlTobr($s) {
 if(isset($_GET['getpath'])) {
 	 echo getPath($_GET['getpath']);
 }
+if(isset($_POST['getpath'])) {
+	 echo getPath($_POST['getpath']);
+}
 if (isset($_GET['phpinfo'])) {
 	phpinfo();
 	die();
@@ -244,7 +247,7 @@ if(isset($_POST['delete'])) {
 			function recursiveDelete($self) {
 				global $db, $filetable, $delTree, $pointer, $isOwner, $uid;
 				$curPos = array();
-				$query = mysqli_query($db, "SELECT file_self FROM $filetable WHERE file_parent='$self'");
+				$query = mysqli_query($db, "SELECT * FROM $filetable WHERE file_parent='$self'");
 
 				while($row = mysqli_fetch_array($query)) {
 					$delTree[] = $row['file_self']; //get self ids from all files within target
@@ -329,7 +332,7 @@ if(isset($_GET['upload_target'])) {
 		$tFile = $_FILES['file']['tmp_name'];
 		$fExt = pathinfo($_FILES['file']['name'], PATHINFO_EXTENSION);
 		$fName = $_FILES['file']['name']; //this file will be replaced if a matching file is uploaded
-		$self_hash = md5($_FILES['file']['name']); //this file will be replaced if a matching file is uploaded
+		$self_hash = md5($uhd . $_FILES['file']['name']) . '.' . $fExt; //this file will be replaced if a matching file is uploaded
 		$targetPath = $path . '/' . $self_hash;; //this file will be replaced if a matching file is uploaded
 		$fType = $_FILES['file']['type'];
 		$fSize = $_FILES['file']['size'];

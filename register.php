@@ -118,7 +118,7 @@ $starttime = $time;
 		</p>
 
 		<button type="submit" name="login" class="btn btn-submit" onclick="check_validity()"><b>Register</b></button>
-		<button class="btn btn-submit" onclick="document.location = 'login.php'">or Log In</button>
+		<button class="btn btn-submit" onclick="document.location = 'login'">or Log In</button>
 
 	</div>
 

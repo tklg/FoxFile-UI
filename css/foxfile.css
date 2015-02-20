@@ -55,6 +55,9 @@ li {
 	-webkit-transition: all .2s ease-in-out;
             transition: all .2s ease-in-out;
 }
+div[type="text/template"] {
+	display: none;
+}
 .alertbox {
 	position: fixed;
 	bottom: 60px;
@@ -264,6 +267,10 @@ a:hover {
 	color: #666;
 	content: " MB";
 }
+.menubar-content .file-info #filesize[unit="gigabytes"]:after {
+	color: #666;
+	content: " GB";
+}
 .menubar-content[type='folder'] .file-info #filesize:after {
 	color: #666;
 	content: " --";
@@ -444,14 +451,14 @@ a:hover {
 	font-size: 200%;
 	position: absolute;
 }
-.menubar-content-view .file-view {
+.menubar-content-view:not([type='text']):not([type='code']) .text-preview {
 	position: absolute;
 	width: 100%;
 	margin-top: 15%;
 	text-align: center;
 	font-size: 1000%;
 }
-.menubar-content-view .file-view:before {
+.menubar-content-view .text-preview:before {
 	font-family: 'FontAwesome';
 	color: #666;
 	content: '\f016';
@@ -462,29 +469,87 @@ a:hover {
 	font-size: 100%;
 	display: none;
 }
-.menubar-content-view[type="text"] .file-view:before {
+.menubar-content-view[type="text"] .text-preview:before {
 	content: '\f0f6';
 }
-.menubar-content-view[type='zip'] .file-view:before {
+.menubar-content-view[type='zip'] .text-preview:before {
 	content: '\f1c6';
 }
-.menubar-content-view[type='pdf'] .file-view:before {
+.menubar-content-view[type='pdf'] .text-preview:before {
 	content: '\f1c1';
 }
-.menubar-content-view[type='text'] .file-view:before {
-	content: '\f0f6';
+.menubar-content-view[type='text'] .text-preview:before {
+	content: none;
 }
-.menubar-content-view[type='audio'] .file-view:before {
-	content: '\f1c7';
+.menubar-content-view[type='audio'] .text-preview:before {
+	content: none;
 }
-.menubar-content-view[type='video'] .file-view:before {
+.menubar-content-view[type='video'] .text-preview:before {
 	content: '\f1c8';
 }
-.menubar-content-view[type='image'] .file-view:before {
-	content: '\f1c5';
+.menubar-content-view[type='image'] .text-preview:before {
+	/*content: '\f1c5';*/
+	content: none;
 }
-.menubar-content-view[type='code'] .file-view:before {
-	content: '\f1c9';
+.menubar-content-view[type='code'] .text-preview:before {
+	/*content: '\f1c9';*/
+	content: none;
+}
+.menubar-content-view .img-preview {
+	display: none;
+}
+.menubar-content-view[type='image'] .img-preview {
+	display: inline;
+	max-height: 90%;
+	width: auto;
+	max-width: 98%;
+	margin: auto;
+	position: absolute;
+	left: 0;right:0;
+	/*top:0;bottom:0;*/
+	top: 10px;
+}
+.menubar-content-view[type='text'] .text-preview::selection {
+	background: rgba(248, 114, 23, .3);
+}
+.menubar-content-view[type='text'] .text-preview {
+	position: absolute;
+	left: 0;right:0;
+	margin: auto;
+	top: 30px;
+	width: 80%;
+	min-height: 80%;
+	padding: 40px;
+	background: white;
+	color: black;
+	font-family: monospace;
+    user-select: all;
+}
+.menubar-content-view[type='code'] .text-preview::selection {
+	background: rgba(248, 114, 23, .3);
+}
+.menubar-content-view[type='code'] .text-preview {
+	position: absolute;
+	left: 0;right:0;
+	margin: auto;
+	top: 30px;
+	width: 80%;
+	min-height: 80%;
+	padding: 40px;
+	background: white;
+	color: black;
+	font-family: monospace;
+    user-select: all;
+}
+.audio-preview {
+	display: none;
+}
+.menubar-content-view[type='audio'] .audio-preview {
+	display: inline;
+	position: absolute;
+	left: 0;right:0;
+	margin: auto;
+	top: 80px;
 }
 .modal-background {
 	width: 100%;
@@ -545,6 +610,11 @@ a:hover {
 .modal-header #modal-header-name {
 	color: rgb(250,101,0);
 	font-family: sans-serif;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: 90%; 
+	display: inline;
 }
 .dz-uploadprogress {
 	background: rgba(248, 114, 23, .3);
@@ -555,34 +625,66 @@ a:hover {
 	margin-left: -52px;
 }
 .spinner {
-  width: 30px;
-  height: 30px;
-  background-color: #333;
+  width: 50px;
+  height: 50px;
+  background-color: rgb(250,101,0);
+  /*margin: 100px auto;*/
+  display: none;
+  position: absolute;
+  top: 50%;
+  left: 0;right: 0;
+  margin: auto;
+  margin-top: -25px;
+  z-index: 1002;
 
-  margin: 100px auto;
-  -webkit-animation: rotateplane 1.2s infinite ease-in-out;
-  animation: rotateplane 1.2s infinite ease-in-out;
+  -webkit-animation: rotateplane 2.4s infinite ease-in-out;
+  animation: rotateplane 2.4s infinite ease-in-out;
 }
-
 @-webkit-keyframes rotateplane {
   0% { -webkit-transform: perspective(120px) }
-  50% { -webkit-transform: perspective(120px) rotateY(180deg) }
-  100% { -webkit-transform: perspective(120px) rotateY(180deg)  rotateX(180deg) }
+  25% { -webkit-transform: perspective(120px) rotateY(180deg) }
+  50% { -webkit-transform: perspective(120px) rotateY(180deg)  rotateX(180deg) }
+  75% { -webkit-transform: perspective(120px) rotateY(360deg)  rotateX(180deg) }
+  100% { -webkit-transform: perspective(120px) rotateY(360deg)  rotateX(0deg) }
 }
-
 @keyframes rotateplane {
-  0% { 
-    transform: perspective(120px) rotateX(0deg) rotateY(0deg);
-    -webkit-transform: perspective(120px) rotateX(0deg) rotateY(0deg) 
-  } 50% { 
-    transform: perspective(120px) rotateX(-180.1deg) rotateY(0deg);
-    -webkit-transform: perspective(120px) rotateX(-180.1deg) rotateY(0deg) 
-  } 100% { 
-    transform: perspective(120px) rotateX(-180deg) rotateY(-179.9deg);
-    -webkit-transform: perspective(120px) rotateX(-180deg) rotateY(-179.9deg);
-  }
+  0% { transform: perspective(120px) }
+  25% { transform: perspective(120px) rotateY(180deg) }
+  50% { transform: perspective(120px) rotateY(180deg)  rotateX(180deg) }
+  75% { transform: perspective(120px) rotateY(360deg)  rotateX(180deg) }
+  100% { transform: perspective(120px) rotateY(360deg)  rotateX(0deg) }
 }
 .menubar-action-btn {
 	position: relative;
 	float: right;
+	margin-bottom: 0;
+	margin-top: 8px;
+	/*margin-right: -16px;*/
+	/*border: 1px solid rgb(250, 101, 0);
+	border-radius: 5px;*/
+	display: none; /* because I dont like them */
+}
+.menubar-action-btn .btn {
+	width: 36px;
+	height: 36px;
+	background: transparent;
+	border: none;
+	color: rgb(250, 101, 0);
+	font-size: 22px;
+	padding: 5px;
+	border-radius: 5px;
+}
+.menubar-action-btn .btn:hover {
+	/*background: rgba(255,255,255,.2);*/
+	color: #eee;
+}
+.menubar-action-btn .btn:active {
+	background: rgba(248, 114, 23, .3);
+}
+.btn-upload {
+	
+}
+.bar:not([type="folder"]) .menubar-title .menubar-action-btn .btn-upload,
+.bar:not([type="folder"]) .menubar-title .menubar-action-btn .btn-new-folder {
+	display: none;
 }
