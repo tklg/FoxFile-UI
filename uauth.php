@@ -89,7 +89,6 @@ if(isset($_GET['logout'])) {
 	$access_level = 0;
 	header('Location: login.php');
 }
-
 if(isset($_POST['register'])) {
 	if ($useGroupPassword) {
 		$gp = true;
@@ -136,6 +135,25 @@ if(isset($_POST['register'])) {
 		}
 	} else {
 		echo "Username can only contain alphanumeric characters.";
+	}
+}
+if(isset($_POST['checkpass'])) {
+	$passC = sanitize($_POST['checkpass']);
+	$passN = sanitize($_POST['newpass']);
+	$passNCrypt = password_hash($passN, PASSWORD_BCRYPT);
+
+	$user = mysqli_query($db, "SELECT pass from $usertable where PID = '$uid'");
+	$row = mysqli_fetch_array($user);
+	$passToMatch = $row['pass'];
+
+	if (password_verify($passC, $passToMatch)) {
+		if (mysqli_query($db, "UPDATE $usertable SET pass = '$passNCrypt' WHERE PID = '$uid'")) {
+			echo "Password changed.";
+		} else {
+			echo "Password change failed.";
+		}
+	} else {
+		echo "Current password is incorrect.";
 	}
 }
 mysqli_close($db);

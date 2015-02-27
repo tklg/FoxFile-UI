@@ -82,7 +82,7 @@ $starttime = $time;
     </style>
 
     <script type="text/javascript" src="js/jquery.min.js"></script>
-    <script type="text/javascript" src="js/app.js"></script>
+
   </head>
 <body>
 
@@ -237,6 +237,7 @@ $starttime = $time;
 		echo '<script type="text/javascript">$("#loadtime").html("page generated in ' . $total_time . ' seconds.");</script>';
 	}
 	?>
+	<a style="" href="blackhole/" rel="nofollow">Do NOT follow this link or you will be banned from the site!</a>
 
 </body>
 </html>

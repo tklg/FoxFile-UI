@@ -26,20 +26,19 @@ function resizeAll() {
 var bar = {
 	active: 2,
 	maxActive: 3, //rewrite sizing stuff for smaller screens (2 and 1 across configurations)
+	minActive: 2,
 	currentOffset: 0,
+	fullscreen: false,
 	add: function(title, moveBack, type, onclick, hash) {
 		bar.active++;
 		var aT = this.active; //temp thing for dz
 		$('#wrapper').append('<section class="bar bar-vertical" fileHash="' + hash + '" id="bar-' + this.active + '" type="' + type + '" state="closed" filename="' + title + '">' +
 			'<div class="menubar-title">'+
 			'<span class="heightsettertext"></span>'+
-			'<span class="menubar-title-link btn" onclick="' + onclick + '">' + title + '</span>'+
+			'<span class="menubar-title-link" onclick="">' + title + '</span>'+
 			'<div class="menubar-action-btn">'+
-			'<button class="btn btn-rename" id="menubar-action-btn"><i class="fa fa-pencil-square-o"></i></button>'+
 			'<button class="btn btn-upload" id="menubar-action-btn-' + this.active + '"><i class="fa fa-upload"></i></button>'+
-			'<button class="btn btn-download" id="menubar-action-btn"><i class="fa fa-download"></i></button>'+
-			'<button class="btn btn-new-folder" id="menubar-action-btn"><i class="fa fa-plus-circle"></i></button>'+
-			'<button class="btn btn-share" id="menubar-action-btn"><i class="fa fa-share-square-o"></i></button>'+
+			'<button class="btn btn-fullscreen" id="menubar-action-btn"><i class="fa fa-expand"></i></button>'+
 			'</div>'+
 			'</div>'+
 			'<div class="menubar menubar-left dropzone" id="dropzone-' + this.active + '">'+
@@ -189,20 +188,50 @@ var bar = {
 		$('#bar-' + bar).attr("pos", bar);
 	},
 	home: function() {
-		for (i = 2; i < this.active; i++) {
-			bar.remove(i);
+		for (i = 3; i <= this.active; i++) {
+			this.remove(i);
 		}
 		this.move(1, 1);
 		this.move(2, 2);
 		this.size(1, 1);
 		this.size(2, 3);
+	},
+	toggleFullScreen: function() {
+		if (this.fullscreen) {
+			if (this.active == this.minActive) {
+				this.move(this.active, 2);
+				this.size(this.active, 3);
+			} else {
+				this.move(this.active, 3);
+				this.size(this.active, 2);
+			}
+			this.fullscreen = false;
+		} else {
+			this.move(this.active, 1);
+			this.size(this.active, 4);
+			this.fullscreen = true;
+		}
+	},
+	exitFullScreen: function() {
+		if (this.fullscreen) {
+			if (this.active == this.minActive) {
+				this.move(this.active, 2);
+				this.size(this.active, 3);
+			} else {
+				this.move(this.active, 3);
+				this.size(this.active, 2);
+			}
+			this.fullscreen = false;
+		}
 	}
 }
 //to set the pos attribute on the original 2 bars
 bar.updatePos(1);
 bar.updatePos(2);
+var modalActive = false;
 var files = {
 	open: function (hash, title, bar_id, type, onclick) {
+		bar.exitFullScreen();
 		//console.log("clicked on file in bar " + bar_id);
 		//console.log("hash: " + hash);
 		//console.log("title: " + title);
@@ -222,6 +251,9 @@ var files = {
 					//console.log("Moved bar " + i + " right");
 				}
 			}
+			/*setTimeout(function() {
+
+			}, 400)*/
 			for (i = 0; i < diff; i++) {
 				//console.log("removing active bar: " + bar.active);
 				bar.remove(bar.active);
@@ -254,6 +286,7 @@ var files = {
 			$('.modal-rename #modal-bar-id-rename').val(bar);
 			$('.modal-rename #modal-file-name-rename').val(file);
 			$('.modal-rename').fadeIn();
+			modalActive = true;
 		},
 		hide: function() {
 			$('.modal-rename').fadeOut();
@@ -262,6 +295,7 @@ var files = {
 				$('.modal-rename #modal-file-id-rename').val('');
 				$('.modal-rename #modal-file-name-rename').val('');
 			}, 500);
+			modalActive = false;
 		}
 	},
 	rename: function(file, id, bar) {
@@ -287,6 +321,7 @@ var files = {
 			$('.modal-delete #modal-file-id-delete').val(id);
 			$('.modal-delete #modal-bar-id-delete').val(bar);
 			$('.modal-delete').fadeIn();
+			modalActive = true;
 		},
 		hide: function() {
 			$('.modal-delete').fadeOut();
@@ -294,6 +329,7 @@ var files = {
 				$('.modal-delete .modal-header #modal-header-name').text('FOLDER');
 				$('.modal-delete #modal-file-id-delete').val('');
 			}, 500);
+			modalActive = false;
 		}
 	},
 	delete: function(file, id, bar) {
@@ -317,7 +353,7 @@ var files = {
 		frame.appendTo('body');
 		setTimeout(function() {
 			$('body > iframe, body > input[type="file"]').remove();
-		}, 100);
+		}, 30000); //let it attempt to download for 30 seconds
 	},
 	uploadGUI: function(target, file, id) {
 
@@ -331,6 +367,7 @@ var files = {
 			$('.modal-new-folder #modal-file-id-new').val(id);
 			$('.modal-new-folder #modal-bar-id-new').val(bar);
 			$('.modal-new-folder').fadeIn();
+			modalActive = true;
 		},
 		hide: function() {
 			$('.modal-new-folder').fadeOut();
@@ -339,6 +376,7 @@ var files = {
 				$('.modal-new-folder #modal-file-id-new').val('');
 				$('.modal-new-folder #modal-file-name-new').val('');
 			}, 500);
+			modalActive = false;
 		}
 	},
 	newFolder: function(title, id, bar) {
@@ -477,7 +515,7 @@ var BarContentView = Backbone.View.extend({
 							case 'txt': case 'log': case 'rtf':
 								obj.basicFileType = 'text'
 								break;
-							case 'js': case 'java': case 'c': case 'cs': case 'cpp': case 'lua': case 'md': case 'css': case 'html': case 'htm': case 'php': case 'json':
+							case 'js': case 'java': case 'bat': case 'c': case 'cs': case 'cpp': case 'lua': case 'md': case 'css': case 'html': case 'htm': case 'php': case 'json':
 								obj.basicFileType = 'code';
 								break;
 							case 'dat': case 'xml':
@@ -594,6 +632,7 @@ var BarContentView = Backbone.View.extend({
 						}
 						//obj.fileType += ' File';
 						this.barTypeToMake = 'file'; //usually overridden by a file after this - if this is the only thing opened (file was opened to view) this will stay
+						obj.script = "<script type=\"text/javascript\">previews.getPreviewImage('" + obj.hash_self + "', " + obj.fileID + ", '" + obj.basicFileType + "')</script>";
 					}
 
 					arr.push(obj);
@@ -667,23 +706,29 @@ function clickButton(btn, id) {
 var clickMenu = {
 	fn: 'd.info(\'unadded clickmenu item\');',
 	isOpen: false,
+	height: 380,
+	width: 200,
 	open: function(posX, posY, bar, file, type, id) {
 		//d.info('Opening clickmenu at (' + posX + ', ' + posY + ") in bar " + bar + " at file " + file + " of type " + type);
 		if (this.isOpen) this.close();
-		$('body').append('<div class="clickmenu" bar="' + bar + '" file="' + file + '" id="' + id + '"><ul></ul><div>');
+		$('body').append('<div class="clickmenu" type="' + type + '" bar="' + bar + '" file="' + file + '" id="' + id + '"><ul></ul><div>');
 		if (type == 'folder') {
 			items = ['<i class="fa fa-trash-o"></i> Delete',
 			'<i class="fa fa-pencil-square-o"></i> Rename',
 			'<i class="fa fa-upload"></i> Upload',
-			'<i class="fa fa-download"></i> Download',
+			'<i class="fa fa-download cm-btn-download"></i> Download',
 			'<i class="fa fa-plus-circle"></i> New Folder',
-			'<i class="fa fa-share-square-o"></i> Share'];
+			'<i class="fa fa-share-square-o cm-btn-share"></i> Share',
+			'<i class="fa fa-refresh"></i> Refresh'];
 		} else {
 			items = ['<i class="fa fa-trash-o"></i> Delete',
 			'<i class="fa fa-pencil-square-o"></i> Rename',
-			'<i class="fa fa-download"></i> Download',
-			'<i class="fa fa-share-square-o"></i> Share'];
+			'<i class="fa fa-download cm-btn-download"></i> Download',
+			'<i class="fa fa-share-square-o cm-btn-share"></i> Share',
+			'<i class="fa fa-refresh"></i> Refresh'];
 		}
+
+		this.height = 40 * items.length;
 
 		for(i = 0; i < items.length; i++) {
 			switch(items[i].toLowerCase().split('</i>')[1].trim()) {
@@ -703,7 +748,10 @@ var clickMenu = {
 					this.fn = 'files.newFolderGUI.show($(this).attr(\'file\'), $(this).attr(\'id\'), $(this).attr(\'bar\'));clickMenu.close();';
 					break;
 				case 'share':
-					this.fn = 'files.shareGUI.show($(this).attr(\'file\'), $(this).attr(\'id\'));clickMenu.close();';
+					this.fn = 'files.shareGUI.show($(this).attr(\'file\'), $(this).attr(\'id\'));clickMenu.close();" cmm="share'; //not hacky at all
+					break;
+				case 'refresh':
+					this.fn = 'files.refresh($(this).attr(\'bar\'));clickMenu.close();';
 					break;
 			}
 			$('.clickmenu ul').append('<li class="btn" onclick="' + this.fn + '" bar="' + bar + '" file="' + file + '" id="' + id + '">' + items[i] + '</li>');
@@ -744,7 +792,7 @@ var clickMenu = {
 				}
 			}
 			cmWidth = 200;
-			cmHeight = 239;
+			cmHeight = clickMenu.height;
 			if (e.pageY > winHeight - cmHeight) {
 				if (e.pageX > winWidth - cmWidth)
 					clickMenu.open(e.pageX - cmWidth, e.pageY - cmHeight, bar, file, type, id);
@@ -787,39 +835,50 @@ var names = {
 }
 var previews = {
 	getPreviewImage: function(hash, target, type) {
-		$.post('dbquery.php',
-		{
-			getpath: hash
-		},
-		function(result) {
-			if (type == 'image') {
-				$('.menubar-content-view#' + target + ' .img-preview').attr('src', result);
-			} else if (type == 'text' || type == 'code') {
-				spinners.text.show();
-				$.ajax({
-		            url : result,
-		            dataType: "text",
-		            success : function (data) {
-		               	spinners.text.hide();
-		               	$('.menubar-content-view#' + target + ' .text-preview').html(data.replace(/(?:\r\n|\r|\n)/g, '<br />'));
-		            }
-		        });
-			} else if (type == 'audio') {
-				var ext = getExt(hash);
-				switch(ext) {
-					case 'mp3': 
-						type = 'audio/mpeg';
-						break;
-					case 'wav': 
-						type='audio/wav';
-						break;
-					case 'ogg': 
-						type='audio/ogg';
-						break;
-				}
-				$('.menubar-content-view#' + target + ' .audio-preview').attr('src', result).attr('type', type);
-			}
-		});
+		if (type == 'image' ||
+			type == 'text' ||
+			type == 'code' ||
+			type == 'audio' ||
+			type == 'video') {
+			setTimeout(function() {
+				$.post('dbquery.php',
+				{
+					getpath: hash
+				},
+				function(result) {
+					if (type == 'image') {
+						$('.menubar-content-view#' + target + ' .img-preview').attr('src', result);
+					} else if (type == 'text' || type == 'code') {
+						spinners.text.show();
+						$.post('dbquery.php',
+						{
+							read_file: hash,
+							file_path: result
+						},
+						function(data) {
+							$('.menubar-content-view#' + target + ' .text-preview').html(data.replace(/(?:\r\n|\r|\n)/g, '<br />')
+																							 .replace(/\t/g, '&nbsp;&nbsp;'));
+						});
+					} else if (type == 'audio') {
+						var ext = getExt(hash);
+						switch(ext) {
+							case 'mp3': 
+								type = 'audio/mpeg';
+								break;
+							case 'wav': 
+								type='audio/wav';
+								break;
+							case 'ogg': 
+								type='audio/ogg';
+								break;
+						}
+						$('.menubar-content-view#' + target + ' .audio-preview').attr('src', result).attr('type', type);
+					} else if (type == 'video') {
+						$('.menubar-content-view#' + target + ' .video-preview').attr('src', result);
+					}
+				});
+			}, 500);
+		}
 	}
 }
 var spinners = {
@@ -838,3 +897,24 @@ var spinners = {
 		}
 	}
 }
+function setContent(stuff) {
+	$('.bar-alt .spinner').fadeIn();
+	$.post('dbquery.php',
+		{
+			getContent: stuff
+		},
+		function(result) {
+			//hide spinny
+			if (result != "") { //worked
+				$('.bar-alt .menubar').append(result);
+				$('.bar-alt .spinner').fadeOut();
+			} else {
+				//failed to retrieve alt pages
+			}
+	});
+}
+$(document).keydown(function(e) {
+	if (e.keyCode == 32) {//spacebar
+		if (!modalActive) bar.toggleFullScreen();
+	}
+});

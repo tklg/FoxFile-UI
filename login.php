@@ -1,10 +1,6 @@
 <?php
 session_start();
 require ('includes/config.php');
-
-if (!isset($_SESSION['mode'])) {
-	$_SESSION['mode'] = 'guest';
-}
 if(!isset($_SESSION['uid'])) {
 	$_SESSION['uid'] = 0;
 }
@@ -77,7 +73,6 @@ $starttime = $time;
     </style>
 
     <script type="text/javascript" src="js/jquery.min.js"></script>
-    <script type="text/javascript" src="js/app.js"></script>
   </head>
 <body>
 
@@ -145,7 +140,7 @@ $starttime = $time;
 						//d.info("Valid!");
 						d.success("Logging in...");
 						setTimeout(function() {
-							document.location = '<?php if(isset($_GET["target"])) {echo $_GET["target"];} else {echo "index.php";}?>';
+							document.location = '<?php if(isset($_GET["target"])) {echo $_GET["target"];} else {echo "browse";}?>';
 						}, 1000);
 					} else {
 						$('#pass').css('border','#e77471 solid 1px')
@@ -181,6 +176,7 @@ $starttime = $time;
 		echo '<script type="text/javascript">$("#loadtime").html("page generated in ' . $total_time . ' seconds.");</script>';
 	}
 	?>
+	<a style="display:none;" href="blackhole/" rel="nofollow">Do NOT follow this link or you will be banned from the site!</a>
 
 </body>
 </html>

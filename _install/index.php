@@ -162,6 +162,7 @@ $starttime = $time;
                 display_name VARCHAR(128),
                 email VARCHAR(128),
                 root_folder VARCHAR(50),
+                total_storage DOUBLE(100, 2),
                 access_level INT
                 )';
 
@@ -183,12 +184,13 @@ $starttime = $time;
               echo "<script type='text/javascript'>d.error('MySQL Query failed: " . mysqli_error($db) . "')</script>";
             }
 
-            $sql = "INSERT INTO USERS (name, pass, display_name, email, root_folder, access_level)
+            $sql = "INSERT INTO USERS (name, pass, display_name, email, root_folder, total_storage, access_level)
                     VALUES ('$uname', 
                     '$upass',
                     '$defName',
                     '$email',
                     '$uname',
+                    '40000000000',
                     '5')";
 
             if (mysqli_query($db,$sql)) {

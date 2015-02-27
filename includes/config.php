@@ -4,16 +4,16 @@
 			$title = "FoxFile Άλφα";
 			$name = '<span style="color: rgb(248, 114, 23);">Fox</span>File';
 			$ver = '1.0a';
-			$theme = "fancy";
-			$localcode = "";
 			$grav_default = "retro";
 			$grav_rating = "g";
-			$grav_custom = "";
 			$showfooter = false;
 			$showpageloadtime = false;
 			$useGroupPassword = true;
 			$group_password = 'foxfilealpha';
-			$allowsharing = true;
+			$allowsharing = false;
+			$alvl_admin = 5;
+			$alvl_user = 1;
+			$ini_max_upload = 40;
 			$database = [
 				"NAME" => 'FOXFILE',
 				"PREFIX" => null,
