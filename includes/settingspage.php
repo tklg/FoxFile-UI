@@ -193,13 +193,13 @@
 	</div>
 	<div class="col col-3-2">
 		<p>
-			<label>Default Gravatar<br>
+			<label>Default Gravatar [404 | mm | identicon | monsterid | wavatar | retro | blank]<br>
 			<input type="text" class="user-setting less fade" value="{{gravatar-default}}" />
 			</label>
 			<button type="submit" class="btn btn-submit fade">Save</button>
 		</p>
 		<p>
-			<label>Gravatar Rating<br>
+			<label>Gravatar Rating [g | pg | r | x]<br>
 			<input type="text" class="user-setting less fade" value="{{gravatar-rating}}" />
 			</label>
 			<button type="submit" class="btn btn-submit fade">Save</button>

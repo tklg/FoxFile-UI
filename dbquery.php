@@ -397,7 +397,7 @@ if(isset($_GET['upload_target'])) {
 }
 if(isset($_POST['read_file'])) {
 	$fileName = sanitize($_POST['read_file']);
-	$filePath = sanitize($_POST['file_path']);
+	$filePath = getPath($fileName);
 	if (getOwner($fileName) == $uid) {
 		if (is_readable($filePath)) {
 			echo str_replace('<', '&lt;', str_replace('>', '&gt;', file_get_contents($filePath)));
@@ -408,7 +408,35 @@ if(isset($_POST['read_file'])) {
 		echo 'No permissions.';
 	}
 }
-if(isset($_GET['download'])){
+if(isset($_GET['preview'])) {
+	$fileName = sanitize($_GET['preview']);
+	$filePath = getPath($fileName);
+
+	if (!extension_loaded('fileinfo')) {
+		if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+	        dl('php_fileinfo.dll');
+	    } else {
+	        dl('fileinfo.so');
+	    }
+	}
+
+	if (is_readable($filePath)) {
+		if(getOwner($fileName) == $uid) {
+			$finfo = finfo_open(FILEINFO_MIME_TYPE);
+			$fileType = finfo_file($finfo, $filePath);
+			finfo_close($finfo);
+
+			header('Content-Type: ' . $fileType);
+			readfile($filePath);
+			exit();
+		} else {
+			header("HTTP/1.0 404 Not Found");
+		}
+	} else {
+		echo 'Invalid file path.';
+	}
+}
+if(isset($_GET['download'])) {
 	$fileName = sanitize($_GET['file_id']);
 	$n = sanitize($_GET['file_name']);
 

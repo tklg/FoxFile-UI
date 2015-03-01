@@ -1,15 +1,9 @@
 <?php
 session_start();
 require ('includes/config.php');
-if(!isset($_SESSION['uid'])) {
-	$_SESSION['uid'] = 0;
-}
-if(!isset($_SESSION['access_level'])) {
-	$_SESSION['access_level'] = 0;
-}
-if(!isset($_SESSION['username'])) {
-	$_SESSION['username'] = 'Default_User';
-}
+if(!isset($_SESSION['uid'])) $_SESSION['uid'] = 0;
+if(!isset($_SESSION['access_level'])) $_SESSION['access_level'] = 0;
+if(!isset($_SESSION['access_level'])) $_SESSION['access_level'] = 0;
 $uid = $_SESSION['uid'];
 $alvl = $_SESSION['access_level'];
 $uname = $_SESSION['username'];
@@ -35,9 +29,6 @@ if ($uid < 1) {
     <?php require('includes/header.php'); ?>
     <style type="text/css">
     <?php if (!$allowsharing) { ?>
-    	li! > .cm-btn-share {
-    		display: none;
-    	}
     	li[cmm='share'] {
     		display: none;
     	}
@@ -64,7 +55,7 @@ if ($uid < 1) {
 	<div class="title menubar-title"><?php echo $name . ' ' . $ver ?></div>
 	<div class="menubar menubar-left menubar-main tab-links">
 	<ul>
-		<li class="menubar-content menubar-content-user menubar-content-user-name menubar-content-active" id="menubar-button-1"><span id="display_name"><?php echo $uname ?></span><a href="uauth.php?logout" class="btn btn-logout"><i class="fa fa-sign-out"></i></a></li>
+		<li class="menubar-content menubar-content-user menubar-content-user-name menubar-content-active" id="menubar-button-1"><span id="display_name"><?php echo $uname ?></span><a href="uauth.php?logout" class="btn btn-logout"><span style="font-size: 70%;"></span><i class="fa fa-sign-out"></i></a></li>
 		<li class="menubar-content menubar-content-main menubar-content-active" container="1" id="menubar-button-files" type="folder" onclick="files.open('<?php echo $_SESSION["uhd"] ?>', $(this).text(), $(this).attr('container'), $(this).attr('type'));" href="#files">My Files</li>
 		<?php if($allowsharing) {?><li class="menubar-content menubar-content-main" id="menubar-button-shared" href="#shared">Shared</li> <?php } ?>
 		<!-- <li class="menubar-content menubar-content-main" id="menubar-button-bookmarks" href="#bookmarks">Bookmarks</li> -->

@@ -835,50 +835,39 @@ var names = {
 }
 var previews = {
 	getPreviewImage: function(hash, target, type) {
-		if (type == 'image' ||
-			type == 'text' ||
-			type == 'code' ||
-			type == 'audio' ||
-			type == 'video') {
-			setTimeout(function() {
+		setTimeout(function() {
+			if (type == 'text' || type == 'code') {
+				spinners.text.show();
 				$.post('dbquery.php',
 				{
-					getpath: hash
+					read_file: hash
 				},
-				function(result) {
-					if (type == 'image') {
-						$('.menubar-content-view#' + target + ' .img-preview').attr('src', result);
-					} else if (type == 'text' || type == 'code') {
-						spinners.text.show();
-						$.post('dbquery.php',
-						{
-							read_file: hash,
-							file_path: result
-						},
-						function(data) {
-							$('.menubar-content-view#' + target + ' .text-preview').html(data.replace(/(?:\r\n|\r|\n)/g, '<br />')
-																							 .replace(/\t/g, '&nbsp;&nbsp;'));
-						});
-					} else if (type == 'audio') {
-						var ext = getExt(hash);
-						switch(ext) {
-							case 'mp3': 
-								type = 'audio/mpeg';
-								break;
-							case 'wav': 
-								type='audio/wav';
-								break;
-							case 'ogg': 
-								type='audio/ogg';
-								break;
-						}
-						$('.menubar-content-view#' + target + ' .audio-preview').attr('src', result).attr('type', type);
-					} else if (type == 'video') {
-						$('.menubar-content-view#' + target + ' .video-preview').attr('src', result);
-					}
+				function(data) {
+					$('.menubar-content-view#' + target + ' .text-preview').html(data.replace(/(?:\r\n|\r|\n)/g, '<br />')
+																					 .replace(/\t/g, '&nbsp;&nbsp;'));
 				});
-			}, 500);
-		}
+			} else if (type == 'audio') {
+				var ext = getExt(hash);
+				switch(ext) {
+					case 'mp3': 
+						type = 'audio/mpeg';
+						break;
+					case 'wav': 
+						type='audio/wav';
+						break;
+					case 'ogg': 
+						type='audio/ogg';
+						break;
+				}
+				$('.menubar-content-view#' + target + ' .audio-preview').attr('src', 'dbquery.php?preview=' + hash).attr('type', type);
+			} else if (type == 'video') {
+				$('.menubar-content-view#' + target + ' .video-preview').attr('src', 'dbquery.php?preview=' + hash);
+			} else if (type == 'image') {
+				setTimeout(function() {
+					$('.menubar-content-view#' + target + ' .img-preview').attr('src', 'dbquery.php?preview=' + hash);
+				}, 500);
+			}
+		}, 500);
 	}
 }
 var spinners = {

@@ -39,7 +39,7 @@ body {
     button:focus {
     outline: 0 none;
     background: rgba(255,255,255,.3);
-	}
+}
 ::selection {
 	background: rgba(255,255,255,.1);
 }
@@ -150,6 +150,8 @@ li {
 a {
 	text-decoration: none;
 	color: rgb(250, 101, 0);
+	-webkit-transition: all .1s ease-in-out;
+            transition: all .1s ease-in-out;
 }
 a:hover {
 	color: #ccc;
