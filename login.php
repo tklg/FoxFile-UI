@@ -42,7 +42,7 @@ $starttime = $time;
     }
     .login-content {
         background: rgba(255,255,255,.1);
-        border: none;
+        border: 1px solid transparent;
         padding: 4px 0;
         text-indent: 5px;
     }

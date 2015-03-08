@@ -448,7 +448,10 @@ var BarContentModel = Backbone.Model.extend({
 		hash_child: '',
 		hash_parent: '',
 		onclick: '',
-		container: ''
+		container: '',
+		units: '',
+		last_modified_date: '',
+		last_modified_time: ''
 	}
 });
 
@@ -490,7 +493,9 @@ var BarContentView = Backbone.View.extend({
 						'hash_parent': files[i].file_parent,
 						'onclick': 'files.open(\'' + files[i].file_self + '\', $(this).attr(\'name\'), $(this).attr(\'container\'), $(this).attr(\'type\'), this.id);state.update($(this).attr(\'container\'), this.id);$(\'#bar-' + (BCV.barID+1) + ' .menubar-title-link\').attr(\'onclick\')',
 						'container': BCV.barID,
-						'units': 'bytes'
+						'units': 'bytes',
+						'last_modified_date': files[i].last_modified.split(', ')[0] + ', ' + files[i].last_modified.split(', ')[1],
+						'last_modified_time': files[i].last_modified.split(', ')[2]
 					};
 					if (files[i].file_size > 1000) {
 						if (files[i].file_size > 1000000) {

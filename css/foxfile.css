@@ -394,6 +394,13 @@ a:hover {
 	float: right;
 	color: #ccc;
 }
+/*.menubar-content[type='folder']:after {
+	font-family: "FontAwesome";
+	content: '\f105';
+	float: right;
+	margin-left: 10px;
+	color: #ccc;
+}*/
 .menubar-content-active {
 	background: rgba(248, 114, 23, .3);
 }
@@ -419,7 +426,7 @@ a:hover {
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
-	max-width: 70%; 
+	max-width: 65%; 
 	display: inline-block;
 }
 .file-info {
@@ -435,9 +442,16 @@ a:hover {
 .file-info:after {
 	/*content: " · ";*/
 }
-.file-info-item {
-	min-width: 50px;
-	/*padding: 0 20px;*/
+.file-info-item#filedet {
+	position: absolute;
+	right: 20px;
+}
+.bar[active='true'] .file-info-item#filemod {
+	position: absolute;
+	right: 150px;
+}
+.bar[active='false'] .file-info-item#filemod {
+	display: none;
 }
 .file-type-icon {
 	position: relative;

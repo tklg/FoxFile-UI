@@ -192,7 +192,7 @@ if(isset($_GET['dir'])) {
 						//echo json_encode($r);
 					}
 			} else {  
-			    echo '[{"PID": "0","owner":"0","file_name":"Folder is Empty","file_size":"0","file_type":"text","file_self":"test_hash","file_parent":"home_dir","file_child":""}]';  
+			    echo '[{"PID": "0","owner":"0","file_name":"Folder is Empty","file_size":"0","file_type":"text","file_self":"test_hash","file_parent":"home_dir","file_child":"","last_modified":"' . date("F j, Y, g:i a") . '"}]';  
 			}
 		} else {
 			$dirOwner = mysqli_query($db, "SELECT owner from $filetable WHERE file_self='$dir'");
@@ -217,7 +217,7 @@ if(isset($_GET['dir'])) {
 						//echo json_encode($r);
 					}
 			} else {  
-			   	echo '[{"PID": "0","owner":"0","file_name":"File Does Not Exist","file_size":"0","file_type":"text","file_self":"test_hash","file_parent":"home_dir","file_child":""}]';
+			   	echo '[{"PID": "0","owner":"0","file_name":"File Does Not Exist","file_size":"0","file_type":"text","file_self":"test_hash","file_parent":"home_dir","file_child":"","last_modified":"' . date("F j, Y, g:i a") . '"}]'; 
 			}
 		}
 	}
@@ -474,7 +474,11 @@ if(isset($_POST['getContent'])) {
 	$userEmail = $row['email'];
 	$gtarhash = md5($userEmail) . '?r=' . $grav_rating . '&d=' . $grav_default;
 	$storage = getUsedStorage($uid);
-	$storage_percent = number_format((($storage[0] / $storage[1]) * 100), 2, '.', '');
+	if ($storage[1] != 0) {
+		$storage_percent = number_format((($storage[0] / $storage[1]) * 100), 2, '.', '');
+	} else {
+		$storage_percent = '0.00';
+	}
 	$title = sanitize($title);
 	$name = sanitize($name);
 	//$sr = array($allowsharing, $showfooter, $showpageloadtime, $show_debug, $show_errors);

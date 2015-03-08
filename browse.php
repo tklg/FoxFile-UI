@@ -76,7 +76,8 @@ if ($uid < 1) {
     <li class="menubar-content" container="<%= model.get('container') %>" type="<%= model.get('basicFileType') %>" filehash="<%= model.get('hash_self') %>" id="<%= model.get('fileID') %>" name="<%= model.get('fileName') %>" onclick="<%= model.get('onclick') %>" pos="">
 		<span class="folder file-name"><%= model.get('fileName') %></span>
 		<div class="file-info">
-			<span class="file-info-item"><span class="filetype"><%= model.get('fileType') %></span><br><span id="filesize" unit="<%= model.get('units') %>"><%= model.get('fileSize') %></span></span>
+			<span class="file-info-item" id="filemod"><span class="filemod"><%= model.get('last_modified_date') %></span><br><span class="filemod"><%= model.get('last_modified_time') %></span></span>
+			<span class="file-info-item" id="filedet"><span class="filetype"><%= model.get('fileType') %></span><br><span id="filesize" unit="<%= model.get('units') %>"><%= model.get('fileSize') %></span></span>
 		</div>
 	</li>
 	</script>
@@ -231,8 +232,6 @@ if ($uid < 1) {
 		files.open('<?php echo $_SESSION["uhd"] ?>', 'My Files', 1, 'folder');
 
 	});
-
-	//files.open('home_dir', 'My Files', 1, 'folder');
 	</script>
     <script type="text/javascript" src="js/showlog.js"></script>
     <script type="text/javascript" src="js/dropzone.js"></script>
