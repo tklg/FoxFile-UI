@@ -117,12 +117,13 @@ if(isset($_POST['register'])) {
 				$uname = sanitize($_POST['username']);
 				$upass = password_hash(sanitize($_POST['password']), PASSWORD_BCRYPT/*, $options*/);
 				$email = sanitize($_POST['email']);
-				$sql = "INSERT INTO $usertable (name, pass, email, access_level, root_folder)
+				$sql = "INSERT INTO $usertable (name, pass, email, access_level, root_folder, total_storage)
 		                VALUES ('$uname', 
 		                '$upass',
 		                '$email',
 		                '1',
-		                '$uname')";
+		                '$uname',
+		                '5000000000')";
 				if (mysqli_query($db,$sql)) {
 		            //echo 'User \''. $uname .'\' created successfully';
 		        } else {

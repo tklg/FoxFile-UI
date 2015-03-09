@@ -37,8 +37,13 @@ var bar = {
 			'<span class="heightsettertext"></span>'+
 			'<span class="menubar-title-link" onclick="">' + title + '</span>'+
 			'<div class="menubar-action-btn">'+
+			'<button class="btn btn-new-folder" id="menubar-action-btn"><i class="fa fa-plus-circle"></i></button>'+
+			'<button class="btn btn-download" id="menubar-action-btn" filename="' + title + '" fileHash="' + hash + '" onclick="files.download($(this).attr(\'filename\'), $(this).attr(\'fileHash\'));"><i class="fa fa-download"></i></button>'+
 			'<button class="btn btn-upload" id="menubar-action-btn-' + this.active + '"><i class="fa fa-upload"></i></button>'+
+			'<button class="btn btn-rename" id="menubar-action-btn" filename="' + title + '" fileHash="' + hash + '" bar="' + this.active + '" onclick="files.renameGUI.show($(this).attr(\'filename\'), $(this).attr(\'fileHash\'), $(this).attr(\'bar\'));"><i class="fa fa-pencil-square-o"></i></button>'+
+			'<button class="btn btn-delete" id="menubar-action-btn" filename="' + title + '" fileHash="' + hash + '" bar="' + this.active + '" onclick="files.deleteGUI.show($(this).attr(\'filename\'), $(this).attr(\'fileHash\'), $(this).attr(\'bar\'));"><i class="fa fa-trash"></i></button>'+
 			'<button class="btn btn-fullscreen" id="menubar-action-btn"><i class="fa fa-expand"></i></button>'+
+			'<button class="btn btn-dropdown" id="menubar-action-btn" fileHash="' + hash + '" fileid="' + this.active + '" type="' + type + '" state="closed" filename="' + title + '"><i class="fa fa-bars"></i></button>'+
 			'</div>'+
 			'</div>'+
 			'<div class="menubar menubar-left dropzone" id="dropzone-' + this.active + '">'+
@@ -281,6 +286,7 @@ var files = {
 	},
 	renameGUI: {
 		show: function(file, id, bar) {
+			$('.modal-rename').addClass('modal-active');
 			$('.modal-rename .modal-header #modal-header-name').text(file);
 			$('.modal-rename #modal-file-id-rename').val(id);
 			$('.modal-rename #modal-bar-id-rename').val(bar);
@@ -290,6 +296,7 @@ var files = {
 		},
 		hide: function() {
 			$('.modal-rename').fadeOut();
+			$('.modal-rename').removeClass('modal-active');
 			setTimeout(function () {
 				$('.modal-rename .modal-header #modal-header-name').text('FOLDER');
 				$('.modal-rename #modal-file-id-rename').val('');
@@ -317,6 +324,7 @@ var files = {
 	},
 	deleteGUI: {
 		show: function(file, id, bar) {
+			$('.modal-delete').addClass('modal-active');
 			$('.modal-delete .modal-header #modal-header-name').text(file);
 			$('.modal-delete #modal-file-id-delete').val(id);
 			$('.modal-delete #modal-bar-id-delete').val(bar);
@@ -325,6 +333,7 @@ var files = {
 		},
 		hide: function() {
 			$('.modal-delete').fadeOut();
+			$('.modal-delete').removeClass('modal-active');
 			setTimeout(function () {
 				$('.modal-delete .modal-header #modal-header-name').text('FOLDER');
 				$('.modal-delete #modal-file-id-delete').val('');
@@ -363,6 +372,7 @@ var files = {
 	},
 	newFolderGUI: {
 		show: function(file, id, bar) {
+			$('.modal-new-folder').addClass('modal-active');
 			$('.modal-new-folder .modal-header #modal-header-name').text(file);
 			$('.modal-new-folder #modal-file-id-new').val(id);
 			$('.modal-new-folder #modal-bar-id-new').val(bar);
@@ -371,6 +381,7 @@ var files = {
 		},
 		hide: function() {
 			$('.modal-new-folder').fadeOut();
+			$('.modal-new-folder').removeClass('modal-active');
 			setTimeout(function () {
 				$('.modal-new-folder .modal-header #modal-header-name').text('FOLDER');
 				$('.modal-new-folder #modal-file-id-new').val('');
@@ -451,7 +462,8 @@ var BarContentModel = Backbone.Model.extend({
 		container: '',
 		units: '',
 		last_modified_date: '',
-		last_modified_time: ''
+		last_modified_time: '',
+		is_checked: ''
 	}
 });
 
@@ -491,7 +503,7 @@ var BarContentView = Backbone.View.extend({
 						'hash_self': files[i].file_self,
 						'hash_child': files[i].file_child,
 						'hash_parent': files[i].file_parent,
-						'onclick': 'files.open(\'' + files[i].file_self + '\', $(this).attr(\'name\'), $(this).attr(\'container\'), $(this).attr(\'type\'), this.id);state.update($(this).attr(\'container\'), this.id);$(\'#bar-' + (BCV.barID+1) + ' .menubar-title-link\').attr(\'onclick\')',
+						'onclick': 'files.open($(this).attr(\'filehash\'), $(this).attr(\'name\'), $(this).attr(\'container\'), $(this).attr(\'type\'), this.id);state.update($(this).attr(\'container\'), this.id);$(\'#bar-\' + ($(this).attr(\'container\') + 1) + \' .menubar-title-link\').attr(\'onclick\')',
 						'container': BCV.barID,
 						'units': 'bytes',
 						'last_modified_date': files[i].last_modified.split(', ')[0] + ', ' + files[i].last_modified.split(', ')[1],
@@ -638,6 +650,7 @@ var BarContentView = Backbone.View.extend({
 						//obj.fileType += ' File';
 						this.barTypeToMake = 'file'; //usually overridden by a file after this - if this is the only thing opened (file was opened to view) this will stay
 						obj.script = "<script type=\"text/javascript\">previews.getPreviewImage('" + obj.hash_self + "', " + obj.fileID + ", '" + obj.basicFileType + "')</script>";
+						obj.is_checked = (_.contains(multiSelect.selected, obj.hash_self) ? "checked" : "");
 					}
 
 					arr.push(obj);
@@ -738,13 +751,13 @@ var clickMenu = {
 		for(i = 0; i < items.length; i++) {
 			switch(items[i].toLowerCase().split('</i>')[1].trim()) {
 				case 'delete':
-					this.fn = 'files.deleteGUI.show($(this).attr(\'file\'), $(this).attr(\'id\'), $(this).attr(\'bar\'));clickMenu.close();';
+					this.fn = 'files.deleteGUI.show($(this).attr(\'file\'), $(this).attr(\'id\'), $(this).attr(\'bar\'));clickMenu.close();" cmm="delete';
 					break;
 				case 'rename':
-					this.fn = 'files.renameGUI.show($(this).attr(\'file\'), $(this).attr(\'id\'), $(this).attr(\'bar\'));clickMenu.close();';
+					this.fn = 'files.renameGUI.show($(this).attr(\'file\'), $(this).attr(\'id\'), $(this).attr(\'bar\'));clickMenu.close();" cmm="rename';
 					break;
 				case 'download':
-					this.fn = 'files.download($(this).attr(\'file\'), $(this).attr(\'id\'));clickMenu.close();';
+					this.fn = 'files.download($(this).attr(\'file\'), $(this).attr(\'id\'));clickMenu.close();" cmm="download';
 					break;
 				case 'upload':
 					this.fn = 'clickButton(\'#menubar-action-btn-\', $(this).attr(\'bar\'))';
@@ -800,9 +813,9 @@ var clickMenu = {
 			cmHeight = clickMenu.height;
 			if (e.pageY > winHeight - cmHeight) {
 				if (e.pageX > winWidth - cmWidth)
-					clickMenu.open(e.pageX - cmWidth, e.pageY - cmHeight, bar, file, type, id);
+					clickMenu.open(e.pageX - cmWidth, e.pageY - (cmHeight / 2), bar, file, type, id);
 				else
-					clickMenu.open(e.pageX, e.pageY - cmHeight, bar, file, type, id);
+					clickMenu.open(e.pageX, e.pageY - (cmHeight / 2), bar, file, type, id);
 			} else {
 				if (e.pageX > winWidth - cmWidth)
 					clickMenu.open(e.pageX - cmWidth, e.pageY, bar, file, type, id);
@@ -811,8 +824,8 @@ var clickMenu = {
 			}
 			files.newFolderGUI.hide();
 		});
-		$(document).bind("click", function(e) {
-			if (!$(e.target).parents('.clickmenu').length > 0) {
+		$('.menubar').bind("click", function(e) {
+			if (!$(e.target).parents('.clickmenu').length > 0/* && !$(e.target).parents('.menubar-action-btn') > 0*/) {
 				clickMenu.close();
 			}
 		});
@@ -907,8 +920,45 @@ function setContent(stuff) {
 			}
 	});
 }
+var multiSelect = {
+	selected: [],
+	numSelected: 0,
+	add: function(hash) {
+		this.selected[this.selected.length] = hash;
+		numSelected = this.selected.length;
+		d.info(this.selected.toString());
+	},
+	remove: function(hash) {
+		this.selected = _.without(this.selected, hash);
+		this.numSelected = this.selected.length;
+		d.info(this.selected.toString());
+	}
+}
 $(document).keydown(function(e) {
-	if (e.keyCode == 32) {//spacebar
+	if (e.keyCode == 32) { //spacebar
 		if (!modalActive) bar.toggleFullScreen();
+	}
+	if (e.keyCode == 13) { //enter
+		if (modalActive) $('.modal-active .modal-footer .btn-submit').click();
+	}
+});
+$(document).on('click', "li.menubar-content:not(.menubar-content-main)", function(e) {
+	//if ($(e.target).parents('.menubar-content').length > 0) {
+	if ($(e.target).text() == '') { //hacky way for detecting of the checkbox was clicked
+
+	} else {
+		files.open($(this).attr('filehash'), $(this).attr('name'), $(this).attr('container'), $(this).attr('type'), this.id);
+		state.update($(this).attr('container'), this.id);
+		$('#bar-' + ($(this).attr('container') + 1) + ' .menubar-title-link').attr('onclick');
+	}
+});
+$(document).on('click', '#menubar-action-btn.btn-dropdown', function(e) {
+	clickMenu.open(e.pageX - 180, 60, $(this).attr('fileid'), $(this).attr('filename'), $(this).attr('type'), $(this).attr('filehash'));
+});
+$(document).on('change', '.file-multiselect-checkbox-container input', function() {
+	if (this.checked) {
+		multiSelect.add($(this).parents('.menubar-content').attr('filehash'));
+	} else {
+		multiSelect.remove($(this).parents('.menubar-content').attr('filehash'));
 	}
 });

@@ -1,3 +1,7 @@
+ErrorDocument 404 /foxfile/error.php?404
+ErrorDocument 500 /foxfile/error.php?500
+ErrorDocument 403 /foxfile/error.php?403
+ErrorDocument 502 /foxfile/error.php?502
 RedirectMatch 404 /\..*$
 
 #Set php init values
@@ -9,9 +13,6 @@ RewriteEngine On
 RewriteCond %{SCRIPT_FILENAME} !-d
 RewriteRule ^([^.]+)$ $1.php [NC,L]
 
-ErrorDocument 404 /foxfile/error.php?404
-ErrorDocument 500 /foxfile/error.php?500
-ErrorDocument 301 /foxfile/error.php?301
 
 <IfModule mod_deflate.c>
 

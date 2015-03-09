@@ -65,7 +65,6 @@ if ($uid < 1) {
 	<div class="spinner"></div>
 	</div>
 	</section>
-	
 	</div>
 
 	<?php
@@ -73,7 +72,11 @@ if ($uid < 1) {
   	?>
 
 	<script type="text/template" id="folder_template">
-    <li class="menubar-content" container="<%= model.get('container') %>" type="<%= model.get('basicFileType') %>" filehash="<%= model.get('hash_self') %>" id="<%= model.get('fileID') %>" name="<%= model.get('fileName') %>" onclick="<%= model.get('onclick') %>" pos="">
+    <li class="menubar-content" container="<%= model.get('container') %>" type="<%= model.get('basicFileType') %>" filehash="<%= model.get('hash_self') %>" id="<%= model.get('fileID') %>" name="<%= model.get('fileName') %>" pos="">
+		<span class="file-multiselect-checkbox-container">
+			<input type="checkbox" id="cb-<%= model.get('fileID') %>" value="<%= model.get('hash_self') %>" <%= model.get('is_checked') %>/>
+			<label class="file-multiselect-label" for="cb-<%= model.get('fileID') %>"><span class="file-multiselect-checkbox"></span></label>
+		</span>
 		<span class="folder file-name"><%= model.get('fileName') %></span>
 		<div class="file-info">
 			<span class="file-info-item" id="filemod"><span class="filemod"><%= model.get('last_modified_date') %></span><br><span class="filemod"><%= model.get('last_modified_time') %></span></span>
@@ -236,6 +239,9 @@ if ($uid < 1) {
     <script type="text/javascript" src="js/showlog.js"></script>
     <script type="text/javascript" src="js/dropzone.js"></script>
     <script type="text/javascript" src="js/foxfile.js"></script>
+    <script type="text/javascript">
+
+    </script>
 	<?php
 	$time = microtime();
 	$time = explode(' ', $time);
@@ -246,7 +252,6 @@ if ($uid < 1) {
 		echo '<script type="text/javascript">$("#loadtime").html("page generated in ' . $total_time . ' seconds.");</script>';
 	}
 	?>
-	<a style="display:none;" href="blackhole/" rel="nofollow">Do NOT follow this link or you will be banned from the site!</a>
 
 </body>
 </html>
