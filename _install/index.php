@@ -163,7 +163,8 @@ $starttime = $time;
                 email VARCHAR(128),
                 root_folder VARCHAR(50),
                 total_storage DOUBLE(100, 2),
-                access_level INT
+                access_level INT,
+                join_date VARCHAR(50)
                 )';
 
             //$upass = sha2($_POST['upass'], 512);
@@ -176,6 +177,7 @@ $starttime = $time;
             $uname = sanitize($_POST['uname']);
             $upass = password_hash(sanitize($_POST['upass']), PASSWORD_BCRYPT, $options);
             $email = sanitize($_POST['email']);
+            $date = date("F j, Y");
 
             // Execute query
             if (mysqli_query($db,$sql)) {
@@ -184,14 +186,15 @@ $starttime = $time;
               echo "<script type='text/javascript'>d.error('MySQL Query failed: " . mysqli_error($db) . "')</script>";
             }
 
-            $sql = "INSERT INTO USERS (name, pass, display_name, email, root_folder, total_storage, access_level)
+            $sql = "INSERT INTO USERS (name, pass, display_name, email, root_folder, total_storage, access_level, join_date)
                     VALUES ('$uname', 
                     '$upass',
                     '$defName',
                     '$email',
                     '$uname',
                     '40000000000',
-                    '5')";
+                    '5',
+                    '$date')";
 
             if (mysqli_query($db,$sql)) {
               echo "<script type='text/javascript'>d.success('User \'". $uname ."\' created successfully')</script>";

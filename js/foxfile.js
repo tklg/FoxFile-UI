@@ -47,7 +47,7 @@ var bar = {
 			'</div>'+
 			'</div>'+
 			'<div class="menubar menubar-left dropzone" id="dropzone-' + this.active + '">'+
-			'<ul id="file-target"></ul>'+
+			'<ul id="file-target" class="file-target"></ul>'+
 			'<ul id="dz-preview-target-' + this.active + '"></ul>'+
 			'<div class="spinner" id="' + this.active + '"></div>'+
 			'</div></section>');
@@ -437,6 +437,18 @@ var files = {
 
 			d.info(result);
 		});
+	},
+	multiMove: function(file) {
+		var hashes = _.uniq(file);
+	},
+	multiDeleteGUI: function(file) {
+		var hashes = _.uniq(file);
+	},
+	multiDelete: function(file) {
+		var hashes = _.uniq(file);
+	},
+	multiDownload: function(file) {
+		var hashes = _.uniq(file);
 	}
 }
 
@@ -478,7 +490,7 @@ var BarContentList = Backbone.Collection.extend({
 });
 var BCL, BCV;
 var barTypeToMake;
-
+var draggingFile = false;
 var BarContentView = Backbone.View.extend({
 	folderTemplate: _.template($('#folder_template').html()),
 	fileTemplate: _.template($('#file_template').html()),
@@ -667,6 +679,75 @@ var BarContentView = Backbone.View.extend({
 	render: function() {
 		this.collection.each(this.list, this);
 		spinners.hide(this.barID);
+		//bind draggable to each thing
+		$("li.menubar-content:not(.menubar-content-main)").draggable({
+			opacity: 0.9,
+			helper: "clone",
+			revert: 'invalid',
+			cursorAt: {
+				top: 15,
+				left: 100
+			},
+			appendTo: 'body',
+			distance: 6,
+			scroll: false,
+			//connectToSortable: ".menubar .file-target",
+			start: function() {
+				$("li.menubar-content:not(.menubar-content-main)").css({
+					'-webkit-transition': 'none',
+	            	'transition': 'none'
+				});
+				draggingFile = true;
+				currentDraggingFolder = '';
+			},
+			stop: function(e, ui) {
+				$("li.menubar-content:not(.menubar-content-main)").css({
+					'-webkit-transition': 'all .2s ease-in-out',
+	            	'transition': 'all .2s ease-in-out'
+				});
+				draggingFile = false;
+				/*$('.bar').css({
+					'background': '#222'
+				});*/
+			}
+		});
+		$('.menubar:not(.menubar-main)').droppable({
+			hoverClass: 'dz-drag-hover',
+			drop: function(event, ui) {
+				currentTargetFolder = $(this).parents('.bar').attr('filehash');
+				currentDraggingFolder = _.clone(multiSelect.selected);
+				currentDraggingFolder[multiSelect.selected.length] = $(ui.helper).attr('filehash');
+				currentDraggingFolder = _.uniq(currentDraggingFolder);
+				//if (currentDraggingFolder[currentDraggingFolder.length - 1] != currentTargetFolder) {
+					d.info("dropped " + currentDraggingFolder.toString() + " on " + currentTargetFolder);
+				//}
+				/*if (currentDraggingFolder == currentTargetFolder) {
+					this.toAccept = false;
+				} else {
+					this.toAccept = true;
+				}*/
+				currentDraggingFolder = null;
+			},
+			toAccept: true,
+			/*accept: function(ui) {
+				//d.info($(ui.helper));
+				//d.info($(ui.helper).attr('fileparent'));
+				//d.info($(ui.helper).attr('fileparent') == currentTargetFolder);
+					return this.toAccept;
+			},*/
+			over: function(event, ui) {
+				//d.info("A-" + this.id);
+				//d.info($(this).parents('.bar').attr('filehash'));
+				currentTargetFolder = $(this).parents('.bar').attr('filehash');
+				//d.info("set currentTargetFolder to " + $(this).parents('.bar').attr('filehash'));
+			}
+		});
+		/*$('li.menubar-content[type="folder"]').droppable({
+			hoverClass: 'dz-drag-hover',
+			drop: function(e, ui) {
+				d.info("dropped " + $(ui.helper).attr('filehash') + " on " + currentTargetFolder);
+			}
+		});*/
 	},
 	list: function(model) {
 		//console.log("Appending template to #bar-" + this.barID);
@@ -925,13 +1006,13 @@ var multiSelect = {
 	numSelected: 0,
 	add: function(hash) {
 		this.selected[this.selected.length] = hash;
-		numSelected = this.selected.length;
-		d.info(this.selected.toString());
+		this.numSelected++;
+		//d.info(this.selected.toString());
 	},
 	remove: function(hash) {
 		this.selected = _.without(this.selected, hash);
-		this.numSelected = this.selected.length;
-		d.info(this.selected.toString());
+		this.numSelected--;
+		//d.info(this.selected.toString());
 	}
 }
 $(document).keydown(function(e) {
@@ -942,16 +1023,65 @@ $(document).keydown(function(e) {
 		if (modalActive) $('.modal-active .modal-footer .btn-submit').click();
 	}
 });
-$(document).on('click', "li.menubar-content:not(.menubar-content-main)", function(e) {
-	//if ($(e.target).parents('.menubar-content').length > 0) {
-	if ($(e.target).text() == '') { //hacky way for detecting of the checkbox was clicked
+var dragging = false;
+$(document).on('mousedown', "li.menubar-content:not(.menubar-content-main)", function(e) {
+	var posX = e.pageX,
+		posY = e.pageY;
+    $(window).mousemove(function(m) {
+    	if (Math.abs(m.pageX - posX) > 5 || Math.abs(m.pageY - posY) > 5) {
+        	dragging = true;
+        	if (multiSelect.numSelected > 0) {
+        		if (_.contains(multiSelect.selected, $('.ui-draggable-dragging').attr("filehash"))) {
+        			if (multiSelect.numSelected > 1) {
+        				$('.ui-draggable-dragging .file-name').text($('.ui-draggable-dragging .file-name').text() + " and " + (multiSelect.numSelected - 1) + " others");
+        			} else {
+        				$('.ui-draggable-dragging .file-name').text($('.ui-draggable-dragging .file-name').text());
+        			}
+        		} else {
+        			$('.ui-draggable-dragging .file-name').text($('.ui-draggable-dragging .file-name').text() + " and " + (multiSelect.numSelected) + " others");
+        		}
+        	} else {
+        		$('.ui-draggable-dragging .file-name').text($('.ui-draggable-dragging .file-name').text());
+        	}
+        	//d.info("Dragging");
+        	/*var fDragY = $('.file-dragger').height();
+    		var fDragX = $('.file-dragger').width();
+    		$('.file-dragger').css('display','block');
+    		$('.file-dragger').css({
+    			top: m.pageY - (fDragY / 2),
+    			left: m.pageX - (fDragX / 5)
+    		});*/
+        	$(window).unbind("mousemove");
+    	}
+    });
+}).on('mouseup', "li.menubar-content:not(.menubar-content-main)", function(e) {
+    var wasDragging = dragging;
+    dragging = false;
+    $(window).unbind("mousemove");
+    if (!wasDragging) { //was clicking
+		//if ($(e.target).parents('.menubar-content').length > 0) {
+		if ($(e.target).text() == '') { //hacky way for detecting of the checkbox was clicked
 
-	} else {
-		files.open($(this).attr('filehash'), $(this).attr('name'), $(this).attr('container'), $(this).attr('type'), this.id);
-		state.update($(this).attr('container'), this.id);
-		$('#bar-' + ($(this).attr('container') + 1) + ' .menubar-title-link').attr('onclick');
+		} else {
+			files.open($(this).attr('filehash'), $(this).attr('name'), $(this).attr('container'), $(this).attr('type'), this.id);
+			state.update($(this).attr('container'), this.id);
+			$('#bar-' + ($(this).attr('container') + 1) + ' .menubar-title-link').attr('onclick');
+		}
+    } else {
+    	//d.info("end dragging");
+    	//$('.file-dragger').css('display','none');
+    }
+});
+$(document).mouseup(function() { //in case user unclicks not over the list
+    if (dragging) {
+	    dragging = false;
+	    $(window).unbind("mousemove");
+	    //d.info("end dragging");
+	    //$('.file-dragger').css('display','none');
 	}
 });
+/*$(document).on('click', "li.menubar-content:not(.menubar-content-main)", function(e) {
+});*/
 $(document).on('click', '#menubar-action-btn.btn-dropdown', function(e) {
 	clickMenu.open(e.pageX - 180, 60, $(this).attr('fileid'), $(this).attr('filename'), $(this).attr('type'), $(this).attr('filehash'));
 });
@@ -962,3 +1092,29 @@ $(document).on('change', '.file-multiselect-checkbox-container input', function(
 		multiSelect.remove($(this).parents('.menubar-content').attr('filehash'));
 	}
 });
+//extremely laggy
+/*$(document).on('mouseenter', '.menubar:not(.menubar-main)', function(e) {
+	if (draggingFile) {
+		d.info('mouseover');
+		$(e.target).parents('.bar').css({
+			//'background': '#282828'
+			'background': 'blue'
+		}).siblings().css({
+			'background': '#222'
+		});
+	}
+	//$(window).unbind('mousemove');
+}).on('mouseleave', '.menubar:not(.menubar-main)', function(e) {
+	if (draggingFile) {
+		d.info('mouseout');
+		$(e.target).parents('.bar').css({
+			'background': '#222'
+		});
+	}
+});*/
+var currentTargetFolder = '';
+var currentDraggingFolder = [];
+/*$(document).on('mouseenter', '.menubar:not(.menubar-main)', function(e) { //replace with mouseover instead of mouseenter for update on all child elements
+	//d.info($(e.target).parents('.bar').attr('filehash'));
+	currentTargetFolder = $(e.target).parents('.bar').attr('filehash');
+});*/

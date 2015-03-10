@@ -70,6 +70,10 @@ $starttime = $time;
 	    font-size: 14px;
 	    color: rgba(0,0,0,0);
 	}
+	.sulink {
+		margin-top: 10px;
+		font-size: 70%;
+	}
     </style>
 
     <script type="text/javascript" src="js/jquery.min.js"></script>
@@ -83,7 +87,7 @@ $starttime = $time;
 		<p class="loginpage-title" style="margin-top: 40px"><?php echo $name; ?> Login</p>
 		<p>
 			<label class="login-content-title" for="uname"><i class="fa fa-user"></i> Username</label>
-			<input class="login-content" name="unamesub" type="text" id="uname" value="" placeholder="Username"  required onBlur="check_availability()">
+			<input class="login-content" name="unamesub" type="text" id="uname" value="" placeholder="Username" required onBlur="check_availability()">
 			<i class="fa fa-check-square uname-val" id="namevalid"></i>
 		</p>
 		<p>				
@@ -93,7 +97,7 @@ $starttime = $time;
 		</p>
 
 		<button type="submit" name="login" class="btn btn-submit" onclick="check_validity()"><b>Login</b></button>
-		<button class="btn btn-submit" onclick="document.location = 'register'">or Register</button>
+		<div class="sulink">Need an account? <a href="register">Sign Up!</a></div>
 
 	</div>
 
@@ -158,6 +162,12 @@ $starttime = $time;
 	} else {
 		$(".alertbox").css("bottom", 20);
 	}
+	$('#uname').focus();
+	$(document).keydown(function(e) {
+		if (e.keyCode == 13) { //enter
+			$('.btn-submit').click();
+		}
+	});
 	</script>
 
 	<?php

@@ -56,8 +56,7 @@ if(isset($_POST['check_username'])) {
 	$username = sanitize($_POST['username']);  
 	 
 	$result = mysqli_query($db, "SELECT name from $usertable where name = '". $username . "'");  
-	  
-	//if number of rows fields is bigger them 0 that means it's NOT available '  
+	
 	if(mysqli_num_rows($result)>0){  
 	    echo 0;  
 	} else {  
@@ -110,20 +109,22 @@ if(isset($_POST['register'])) {
 	        
 	        $username = sanitize($_POST['username']);  
 			$result = mysqli_query($db, "SELECT name from $usertable where name = '$username'");  
-			//if number of rows fields is bigger them 0 that means it's NOT available '  
+			
 			if(mysqli_num_rows($result) > 0){  
 			    echo "Username is not available";
 			} else {  
 				$uname = sanitize($_POST['username']);
 				$upass = password_hash(sanitize($_POST['password']), PASSWORD_BCRYPT/*, $options*/);
 				$email = sanitize($_POST['email']);
-				$sql = "INSERT INTO $usertable (name, pass, email, access_level, root_folder, total_storage)
+				$date = date("F j, Y");
+				$sql = "INSERT INTO $usertable (name, pass, email, access_level, root_folder, total_storage, join_date)
 		                VALUES ('$uname', 
 		                '$upass',
 		                '$email',
 		                '1',
 		                '$uname',
-		                '5000000000')";
+		                '5000000000',
+		                '$date')";
 				if (mysqli_query($db,$sql)) {
 		            //echo 'User \''. $uname .'\' created successfully';
 		        } else {

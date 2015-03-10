@@ -38,6 +38,7 @@ if ($uid < 1) {
 
 </head>
 <body>
+<div class="spinner" id="spinner-pre" style="display:block"></div>
 <?php if ($show_debug && $alvl >= $alvl_admin) { ?>
 	<div style="z-index:100;color:#fff;font-size:9pt; position:fixed; bottom: 10px; left: 10px; padding: 10px; border-radius: 5px; background:rgba(255,255,255,.1)">
 		<span>DEBUG:</span><br><hr>
@@ -49,7 +50,7 @@ if ($uid < 1) {
 <?php } ?>
 	<div class="alertbox"></div>
 
-	<div id="wrapper">
+	<div id="wrapper" style="visibility:hidden">
 
 	<section class="bar bar-vertical bar-main tabs" id="bar-1">
 	<div class="title menubar-title"><?php echo $name . ' ' . $ver ?></div>
@@ -72,7 +73,7 @@ if ($uid < 1) {
   	?>
 
 	<script type="text/template" id="folder_template">
-    <li class="menubar-content" container="<%= model.get('container') %>" type="<%= model.get('basicFileType') %>" filehash="<%= model.get('hash_self') %>" id="<%= model.get('fileID') %>" name="<%= model.get('fileName') %>" pos="">
+    <li class="menubar-content" container="<%= model.get('container') %>" type="<%= model.get('basicFileType') %>" filehash="<%= model.get('hash_self') %>" id="<%= model.get('fileID') %>" name="<%= model.get('fileName') %>" pos="" fileparent="<%= model.get('hash_parent') %>">
 		<span class="file-multiselect-checkbox-container">
 			<input type="checkbox" id="cb-<%= model.get('fileID') %>" value="<%= model.get('hash_self') %>" <%= model.get('is_checked') %>/>
 			<label class="file-multiselect-label" for="cb-<%= model.get('fileID') %>"><span class="file-multiselect-checkbox"></span></label>
@@ -171,6 +172,7 @@ if ($uid < 1) {
 	<script type="text/javascript" src="js/jquery.min.js"></script>
     <script type="text/javascript" src="js/underscore.min.js"></script>
     <script type="text/javascript" src="js/backbone.min.js"></script>
+    <script type="text/javascript" src="https://code.jquery.com/ui/1.11.3/jquery-ui.min.js"></script>
 	<script type="text/javascript">
 	var init = {
 		resize: function() {
@@ -234,6 +236,8 @@ if ($uid < 1) {
 		names.get(<?php echo $_SESSION['uid']; ?>);
 		files.open('<?php echo $_SESSION["uhd"] ?>', 'My Files', 1, 'folder');
 
+		$('#wrapper').css('visibility','visible');
+		$('#spinner-pre').remove();
 	});
 	</script>
     <script type="text/javascript" src="js/showlog.js"></script>

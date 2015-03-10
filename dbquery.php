@@ -472,6 +472,8 @@ if(isset($_POST['getContent'])) {
 	$row = mysqli_fetch_array($result);
 	$userName = $row['display_name'];
 	$userEmail = $row['email'];
+	$userID = $row['PID'];
+	$userJoin = $row['join_date'];
 	$gtarhash = md5($userEmail) . '?r=' . $grav_rating . '&d=' . $grav_default;
 	$storage = getUsedStorage($uid);
 	if ($storage[1] != 0) {
@@ -491,7 +493,8 @@ if(isset($_POST['getContent'])) {
 
 	if ($cType == 'profile' && $alvl >= $alvl_user) {
 		$echo = str_replace("{{gravatar-avatar-hash}}", $gtarhash, str_replace("{{user-email}}", $userEmail, str_replace("{{user-name}}", $userName, file_get_contents('includes/profilepage.php'))));
-		echo str_replace("{{percent-storage-amount}}", $storage_percent, str_replace("{{total-storage-amount}}", number_format($storage[1]/1000000000, 2, '.', ''), str_replace("{{used-storage-amount}}", number_format($storage[0]/1000000000, 2, '.', ''), $echo)));
+		$echo = str_replace("{{percent-storage-amount}}", $storage_percent, str_replace("{{total-storage-amount}}", number_format($storage[1]/1000000000, 2, '.', ''), str_replace("{{used-storage-amount}}", number_format($storage[0]/1000000000, 2, '.', ''), $echo)));
+		echo str_replace("{{join-date}}", $userJoin, str_replace("{{user-id}}", $userID, $echo));
 	} else if ($cType == 'settings' && $alvl >= $alvl_admin) {
 		$echo = str_replace('\\', '', str_replace("{{site-title}}", $title, str_replace("{{site-name}}", $name, str_replace("{{group-password}}", $group_password, file_get_contents('includes/settingspage.php')))));
 		$echo = str_replace('{{sharing-false}}', $se['allow_sharing2'], str_replace("{{sharing-true}}", $se['allow_sharing'], str_replace("{{site-version}}", $ver, $echo)));

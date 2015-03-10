@@ -79,6 +79,10 @@ $starttime = $time;
 	    font-size: 14px;
 	    color: rgba(0,0,0,0);
 	}
+	.sulink {
+		margin-top: 10px;
+		font-size: 70%;
+	}
     </style>
 
     <script type="text/javascript" src="js/jquery.min.js"></script>
@@ -118,7 +122,7 @@ $starttime = $time;
 		</p>
 
 		<button type="submit" name="login" class="btn btn-submit" onclick="check_validity()"><b>Register</b></button>
-		<button class="btn btn-submit" onclick="document.location = 'login'">or Log In</button>
+		<div class="sulink">Already have an account? <a href="login">Log In!</a></div>
 
 	</div>
 
@@ -219,6 +223,12 @@ $starttime = $time;
 	} else {
 		$(".alertbox").css("bottom", 20);
 	}
+	$('#uname').focus();
+	$(document).keydown(function(e) {
+		if (e.keyCode == 13) { //enter
+			$('.btn-submit').click();
+		}
+	});
 	</script>
 	<script type="text/javascript" src="js/showlog.js"></script>
     <script type="text/javascript" src="js/foxfile.js"></script>

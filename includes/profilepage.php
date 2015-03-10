@@ -70,6 +70,9 @@
 	.btn:hover {
 		background: rgb(248, 114, 23);
 	}
+	.uinfo {
+		font-size: 90%;
+	}
 	.progressbar {
 		position: absolute;
 		height: 40px;
@@ -104,6 +107,11 @@
 			<input type="text" class="user-setting less fade" value="{{user-email}}" id="uemail" />
 			</label>
 			<button type="submit" class="btn btn-submit fade" onclick="update_email()">Save</button>
+		</p>
+		<p>
+			<span style="width:50%;"><label>FoxFile ID: </label><span class="uinfo">{{user-id}}</span></span>
+			<span style="left:40%;width:50%;position:absolute"><label>User Since: </label><span class="uinfo">{{join-date}}</span></span>
+			<!-- <br> -->
 		</p>
 	</div>
 </section>

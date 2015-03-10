@@ -1,8 +1,0 @@
-# Blackhole for Bad Bots
-
-Options All -Indexes
-
-<Files blackhole.dat>
-	Order Allow,Deny
-	Deny from all
-</Files>

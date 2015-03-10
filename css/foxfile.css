@@ -15,6 +15,7 @@ body {
 	-webkit-font-smoothing: antialiased;
 	background: #222;
 	overflow: hidden;
+	list-style-type: none;
 }
 ::-webkit-scrollbar {
     width: 6px;
@@ -828,4 +829,16 @@ a:hover {
 .clickmenu[file="My Files"] li[cmm="delete"],
 .clickmenu[file="My Files"] li[cmm="download"] {
 	display: none;
+}
+.ui-draggable-dragging {
+	background: rgba(248, 114, 23, .3);
+	width: 240pt;
+	z-index: 102;
+	/*border: 1px #aaa solid;*/
+}
+.ui-draggable-dragging .file-info {
+	display: none;
+}
+.ui-draggable-dragging .file-name {
+	max-width: 85%; 
 }
