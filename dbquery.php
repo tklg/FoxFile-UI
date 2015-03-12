@@ -527,6 +527,8 @@ if (isset($_POST['move'])) {
 	foreach ($file_multi_array as $hash_self) {
 		if ($hash_self == $uhd) {
 			echo 'Cannot move the home directory!';
+		} else if (strpos(getPath($hash_self), $target) !== false) {
+			echo 'Cannot move a folder into itself!';
 		} else {
 			$date = date("F j, Y, g:i a");
 
