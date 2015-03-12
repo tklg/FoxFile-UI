@@ -68,12 +68,17 @@ if ($uid < 1) {
 	</section>
 	</div>
 
+	<div class="return-to-main" onclick="bar.move(1,1);bar.move(2,2);bar.size(2,3);files.refresh(2);var a=bar.active;for(i=3;i<=a;i++){bar.remove(bar.active);console.log(bar.active)}$('.return-to-main').fadeOut();">
+	<i class="fa fa-angle-left"></i>
+	</div>
+
 	<?php
 	if ($showfooter) include('includes/footer.php');
   	?>
 
 	<script type="text/template" id="folder_template">
     <li class="menubar-content" container="<%= model.get('container') %>" type="<%= model.get('basicFileType') %>" filehash="<%= model.get('hash_self') %>" id="<%= model.get('fileID') %>" name="<%= model.get('fileName') %>" pos="" fileparent="<%= model.get('hash_parent') %>">
+		<div class="dragdrop-border"></div>
 		<span class="file-multiselect-checkbox-container">
 			<input type="checkbox" id="cb-<%= model.get('fileID') %>" value="<%= model.get('hash_self') %>" <%= model.get('is_checked') %>/>
 			<label class="file-multiselect-label" for="cb-<%= model.get('fileID') %>"><span class="file-multiselect-checkbox"></span></label>

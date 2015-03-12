@@ -160,7 +160,7 @@ a:hover {
 	/*display: none;*/
 	background: #222;
 	/*position: relative;*/
-	width: 25%;
+	width: 50%; /* bar 2 starts out as 75% wide */
 	position: absolute;
 	float: left;
 	padding: 0px;
@@ -243,6 +243,8 @@ a:hover {
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
+    -webkit-transition: all .2s ease-in-out;
+            transition: all .2s ease-in-out;
 }
 .menubar-content-main,
 .menubar-content {
@@ -841,4 +843,27 @@ a:hover {
 }
 .ui-draggable-dragging .file-name {
 	max-width: 85%; 
+}
+.dragdrop-hover {
+	/*outline: 2px solid #aaa;*/
+	background: rgba(248, 114, 23, .3);
+}
+.return-to-main {
+	height: 50px;
+	line-height: 50px;
+	text-align: center;
+	vertical-align: middle;
+	width: 50px;
+	position: absolute;
+	bottom: 10px;
+	left: 10px;
+	background: rgba(248, 114, 23, .3);
+	border-radius: 25px;
+	cursor: pointer;
+	display: none;
+	-webkit-transition: all .2s ease-in-out;
+            transition: all .2s ease-in-out;
+}
+.return-to-main:hover {
+	background: rgb(250, 101, 0);
 }

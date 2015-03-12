@@ -65,52 +65,148 @@ function nlTobr($s) {
 	return str_replace( "\n", '<br>', $s);
 }
 if(isset($_GET['getpath'])) {
-	 echo getPath($_GET['getpath']);
+	 echo '<br>'.getPath($_GET['getpath']);
 }
 if(isset($_POST['getpath'])) {
 	 echo getPath($_POST['getpath']);
 }
+if(isset($_GET['getpaths'])) {
+	echo $_GET['getpaths'];
+	$paths = explode(',', $_GET['getpaths']);
+	foreach ($paths as $value) {
+		echo'<br>'.getPath($value);
+	}
+}
 if(isset($_GET['getowner'])) {
 	 echo getOwner($_GET['getowner']);
+}
+if(isset($_GET['readable'])) {
+	echo is_readable(getPath($_GET['readable']));
 }
 if (isset($_GET['phpinfo'])) {
 	phpinfo();
 	die();
 }
-function getPath($file) {
-	global $file_root, $file_prefix, $uhd, $file_root;
+function getPath($file) { //this function was evil
+	global $file_root, $file_prefix, $uhd, $db, $filetable;
 	$pointer = 0;
+	unset($path);
 	$path = array();
-	function recursivePath($file) {
-		global $db, $filetable, $pointer, $path;
-		$curPos = array();
-		$query = mysqli_query($db, "SELECT * FROM $filetable WHERE file_self='$file'");
-		while($row = mysqli_fetch_array($query)) {
-			$path[] = $row['file_parent'];
-			$curPos[] = $row['file_parent'];
+	$root = $file_root;
+
+	$finalPathArray = array();
+	$isFirstTime = true;
+	//echo 'function recursivePath();';
+	if (!function_exists('recursivePath')) {
+		//$recursivePath = function($file) use ($db, $filetable, $pointer, $path, $isFirstTime) {
+		function recursivePath($file, $isFirstTime) {
+			global $db, $filetable, $uhd, $pointer, $path, $finalPathArray;
+			//if ($isFirstTime) unset($path);
+			//echo '<br>original value of $path: '; print_r($path);
+			if ($isFirstTime) {
+				//echo '<br> is first time - ';
+				$path = array();
+				//echo '<br>value of $path after reset: '; print_r($path);
+			}
+			$curPos = '';
+			$query = mysqli_query($db, "SELECT * FROM $filetable WHERE file_self='$file'");
+			while($row = mysqli_fetch_array($query)) {
+				$path[] = $row['file_parent'];
+				$curPos = $row['file_parent'];
+				//echo '<br>curPos: '; print_r($curPos);
+				//echo '<br>$path: '; print_r($path);echo'<br>';
+			}
+			/*foreach(mysqli_fetch_array($query) as $row) {
+				$path[] = $row['file_parent'];
+				$curPos[] = $row['file_parent'];
+				echo '<br>curPos: ' . $row['file_parent'].'';
+				echo '<br>$path: '; print_r($path);
+			}*/
+			$finalPathArray = array();
+			$hasSet = false;
+			/*foreach ($curPos as $value) {
+				$pointer++;*/
+				//echo '<br>curpos: ' . $curPos;
+				if ($curPos !== $uhd) {
+					//echo '<br>recursing...';
+					//echo '<br>path: ';print_r($path);
+					//$notdone = recursivePath($curPos, false);
+					//$finalPathArray = recursivePath($curPos, $path, false);
+					//$finalPathArray = $path;
+					//return 'notdone';
+					return recursivePath($curPos, false);
+				} else {
+					//echo '<br>setting final array...';
+					$ret = array();
+					$finalPathArray = $path;
+					//echo '<br>final path: ';print_r($finalPathArray);
+					return $finalPathArray;
+				}
+				/*if ($hasSet === false) {
+					$ret = $finalPathArray;
+					echo '<br>set ret to: ';print_r($ret);
+				}
+				$hasSet = true;
+			}*/
+			//echo '<br>pointerPre: '.$pointer;
+			//echo '<br>path: ';print_r($path);
+			//echo '<br>finalpatharray: ';print_r($finalPathArray);
+			//echo '<br>ret: ';print_r($ret);echo '<br>';
+			/*if ($pointer < sizeof($curPos)) {
+				$pointer++;
+				echo '<br>pointer: '.$pointer;
+				echo '<br>curpos: '.sizeof($curPos);
+				echo '<br>recursivePath in foreach: value ' .$curPos[$pointer];
+				return recursivePath($curPos[$pointer], $path, false, $pointer);
+			} else {
+				echo '<br>new value of $path: '; print_r($path);
+				return $path;
+			}*/
+			//unset($curPos);
+			
+			//return $path;
+			//return $ret;
+			//return $finalPathArray;
 		}
-		foreach ($curPos as $key => $value) {
-			$pointer++;
-			recursivePath($value);
-		}
-		return $path;
 	}
 	if ($file === $uhd) {
 		return $file_root . '/' .  $file;
 	}
+	//unset($files);
+	$fileArray = array();
+	$finalPathArray = recursivePath($file, $isFirstTime);
+	//fileArray = recursivePath($file, $path, $isFirstTime);
+	$fileArray = $finalPathArray;
+	//echo '<br>final-finalpatharray: ';print_r($fileArray);
+	//echo '<br>fileArray: ';print_r($fileArray);
+	$files = array_reverse($fileArray);
+	//echo '<br>unsetting $path: '; //unset $path after getting the returned filepath
+	//unset($path);
+	//$path = array();
+	//echo '<br>files: ';print_r($files);
+	//$root = $file_root;
 	$pointer = 1;
-	$files = array_reverse(recursivePath($file));
-	$path = $file_root;
-	foreach ($files as $key => $value) {
-		if ($pointer !== sizeof($files)) {
-			$path .= '/' . $value;
+	foreach ($files as $value) {
+		//echo 'a '. $value.'<br>';
+		//echo '<br>filelistsize: ' . sizeof($files);
+		//echo '<br>';print_r($files);
+		//echo '<br>preroot: '.$root;
+		if ($pointer < sizeof($files)) {
+			$root .= '/' . $value;
+			//echo '<br>-'.$root;
 		} else {
-			$path .= '/' . $value . '/' . $file;
+			$root .= '/' . $value . '/' . $file;
+			//echo '<br>-'.$root;
+			//echo '<br>';
+			return $root;
 		}
 		$pointer++;
 	}
+	//$pointer = 0;
 	//echo $path;
-	return $path;
+	$rootret = $root;
+	$root = null;
+	//return $rootret;
 }
 function getUsedStorage($user) {
 
@@ -264,16 +360,14 @@ if(isset($_POST['delete'])) {
 				global $db, $filetable, $delTree, $pointer, $isOwner, $uid;
 				$curPos = array();
 				$query = mysqli_query($db, "SELECT * FROM $filetable WHERE file_parent='$self'");
-
-				while($row = mysqli_fetch_array($query)) {
+					while($row = mysqli_fetch_array($query)) {
 					$delTree[] = $row['file_self']; //get self ids from all files within target
 					$curPos[] = $row['file_self'];
 					if ($row['owner'] !== $uid) {
 						$isOwner = false;
 					}
 				}
-
-				foreach ($curPos as $key => $value) {
+					foreach ($curPos as $key => $value) {
 					recursiveDelete($value);
 					//echo $pointer . ' - ' . $value . '<br>';
 					$pointer++;
@@ -310,6 +404,84 @@ if(isset($_POST['delete'])) {
 		}
 	}
 }
+//100% efficient not bad function that definitely doesnt pass 1 query per file to delete in the group
+if(isset($_POST['multi_delete'])) {
+	if ($alvl > 0) {
+		$hash_self_array = sanitize($_POST['file_multi']);
+		//echo 'hash '.$hash_self_array . '<br>';
+		if (strpos($hash_self_array, $uhd) !== false) { 
+			echo 'Cannot delete the home directory!';
+		} else {
+			foreach (explode(',', $hash_self_array) as $value) {
+				$hash_self = $value;
+				//echo 'foreach '.$hash_self.'<br>';
+				$delItems = '';
+				$type = '';
+				$query = mysqli_query($db, "SELECT file_type FROM $filetable WHERE file_self='$hash_self'");
+				while($row = mysqli_fetch_array($query)) {
+					$type = $row['file_type'];
+				}
+				$delTree = [$hash_self];
+				$pointer = 0;
+				$isOwner = true;
+				if (!function_exists('recursiveDelete')) { //only declare the function once
+					function recursiveDelete($self) {
+						global $db, $filetable, $delTree, $pointer, $isOwner, $uid;
+						$curPos = array();
+						$query = mysqli_query($db, "SELECT * FROM $filetable WHERE file_parent='$self'");
+							while($row = mysqli_fetch_array($query)) {
+								$delTree[] = $row['file_self']; //get self ids from all files within target
+								$curPos[] = $row['file_self'];
+								if ($row['owner'] !== $uid) {
+									$isOwner = false;
+								}
+							}
+							foreach ($curPos as $key => $value) {
+								recursiveDelete($value);
+								//echo $pointer . ' - ' . $value . '<br>';
+								$pointer++;
+						}
+					}
+				}
+				recursiveDelete($hash_self);
+				//echo '<br>';
+				$pointer = 0;
+				foreach ($delTree as $key => $value) {
+					//echo 'deleting - ' . $value . '<br>';
+					if ($pointer != sizeof($delTree) - 1) {
+						$delItems .= '\'' . $value . '\', ';
+					} else {
+						$delItems .= '\'' . $value . '\'';
+					}
+					$pointer++;
+				}
+				//echo 'with src directory - ' . $hash_self . '<br>';
+				//echo $delItems . '<br>';
+				if ($isOwner) {
+					if ($type == 'folder') {
+						//echo 'deleting folder ' . $hash_self.'<br>';
+						deleteFolder($hash_self);
+					} else {
+						//echo 'deleting file ' . $hash_self.'<br>';
+						deleteFile($hash_self);
+					}
+					$success = true;
+					$fails = 0;
+					if(mysqli_query($db, "DELETE FROM $filetable WHERE file_self IN ($delItems)")) {
+						
+					} else {
+						$success = false;
+						$fails++;
+					}
+						if ($success) echo '';
+						else echo "Failed to delete " . $fails . ' items.';
+				} else {
+					echo "You do not own this file.";
+				}
+			}
+		}
+	}
+}
 if (isset($_POST['rename'])) {
 	$hash_self = sanitize($_POST['file_id']);
 	$newName = sanitize($_POST['name']);
@@ -338,6 +510,42 @@ if (isset($_POST['rename'])) {
 		}
 	}
 }
+if (isset($_POST['move'])) {
+	$file_multi = sanitize($_POST['file_multi']);
+	$target = sanitize($_POST['file_target']);
+	$file_multi_array = explode(',', $file_multi);
+	$file_target_path = getPath($target);
+
+	$isOwner = true;
+	$query = mysqli_query($db, "SELECT * FROM $filetable WHERE file_self IN ('$file_multi')");
+	while($row = mysqli_fetch_array($query)) {
+		if ($row['owner'] !== $uid) {
+			$isOwner = false;
+		}
+	}
+
+	foreach ($file_multi_array as $hash_self) {
+		if ($hash_self == $uhd) {
+			echo 'Cannot move the home directory!';
+		} else {
+			$date = date("F j, Y, g:i a");
+
+			if ($isOwner) {
+				if (rename(getPath($hash_self), $file_target_path . '/' . $hash_self)) {
+					if(mysqli_query($db, "UPDATE $filetable SET file_parent = '$target', last_modified = '$date' WHERE file_self='$hash_self'")) {
+						echo '';
+					} else {
+						echo "DB move failed!";
+					}
+				} else {
+					echo 'Move failed!';
+				}
+			} else {
+				echo "You do not own this file.";
+			}
+		}
+	}
+}
 if(isset($_GET['upload_target'])) {
 	$target = sanitize($_GET['upload_target']);
 	$path = getPath($target);
@@ -351,7 +559,7 @@ if(isset($_GET['upload_target'])) {
 			$tFile = $_FILES['file']['tmp_name'];
 			$fExt = pathinfo($_FILES['file']['name'], PATHINFO_EXTENSION);
 			$fName = $_FILES['file']['name']; //this file will be replaced if a matching file is uploaded
-			$self_hash = md5($uhd . $_FILES['file']['name']) . '.' . $fExt; //this file will be replaced if a matching file is uploaded
+			$self_hash = md5($uhd . $path . $_FILES['file']['name']) . '.' . $fExt; //this file will be replaced if a matching file is uploaded
 			$targetPath = $path . '/' . $self_hash;; //this file will be replaced if a matching file is uploaded
 			$fType = $_FILES['file']['type'];
 			$fSize = $_FILES['file']['size'];

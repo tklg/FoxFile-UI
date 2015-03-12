@@ -3,7 +3,7 @@
 			$show_debug = false;
 			$title = "FoxFile Άλφα";
 			$name = '<span style="color: rgb(248, 114, 23);">Fox</span>File';
-			$ver = '1.0a';
+			$ver = '1.1a';
 			$grav_default = "retro";
 			$grav_rating = "g";
 			$showfooter = false;

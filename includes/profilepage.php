@@ -110,7 +110,7 @@
 		</p>
 		<p>
 			<span style="width:50%;"><label>FoxFile ID: </label><span class="uinfo">{{user-id}}</span></span>
-			<span style="left:40%;width:50%;position:absolute"><label>User Since: </label><span class="uinfo">{{join-date}}</span></span>
+			<span style="left:40%;width:50%;position:absolute"><label>Member Since: </label><span class="uinfo">{{join-date}}</span></span>
 			<!-- <br> -->
 		</p>
 	</div>
