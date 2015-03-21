@@ -107,7 +107,7 @@ $starttime = $time;
 
         var username = $('#uname').val();
 
-        if(username.length > 0)  {
+        if(username.length > 0) {
   
 	        $.post("uauth.php", { 
 	        	check_username: 'yes',
@@ -165,6 +165,7 @@ $starttime = $time;
 	$('#uname').focus();
 	$(document).keydown(function(e) {
 		if (e.keyCode == 13) { //enter
+            check_availability()
 			$('.btn-submit').click();
 		}
 	});
@@ -186,7 +187,6 @@ $starttime = $time;
 		echo '<script type="text/javascript">$("#loadtime").html("page generated in ' . $total_time . ' seconds.");</script>';
 	}
 	?>
-	<a style="display:none;" href="blackhole/" rel="nofollow">Do NOT follow this link or you will be banned from the site!</a>
 
 </body>
 </html>

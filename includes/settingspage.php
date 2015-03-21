@@ -1,5 +1,5 @@
 <style type="text/css">
-	.fade {
+	/*.fade {
 		-webkit-transition: all .2s ease-in-out;
             transition: all .2s ease-in-out;
 	}
@@ -46,7 +46,6 @@
 		padding: 10px;
 		background: rgba(255,255,255,.05);
 		border: none;
-		/*border: 1px solid rgb(250, 101, 0);*/
 		color: #aaa;
 		margin-top: 3px;
 	}
@@ -87,7 +86,7 @@
 	}
 	input[type='radio'].user-setting:checked + label {
 	    background: rgba(248, 114, 23, .3);
-	}
+	}*/
 </style>
 <section class="grid-box">
 	<div class="col col-3">
@@ -111,9 +110,8 @@
 		</p>
 		<p>
 			<label>Site Version<br>
-			<input type="text" class="user-setting less fade" value="{{site-version}}" />
+			<input type="text" disabled class="user-setting less fade" value="{{site-version}}" />
 			</label>
-			<button type="submit" class="btn btn-submit fade">Save</button>
 		</p>
 		<p>
 			<label>Allow sharing<br></label>

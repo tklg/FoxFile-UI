@@ -64,30 +64,32 @@ function br2nl($s) {
 function nlTobr($s) {
 	return str_replace( "\n", '<br>', $s);
 }
-if(isset($_GET['getpath'])) {
-	 echo '<br>'.getPath($_GET['getpath']);
-}
-if(isset($_POST['getpath'])) {
-	 echo getPath($_POST['getpath']);
-}
-if(isset($_GET['getpaths'])) {
-	echo $_GET['getpaths'];
-	$paths = explode(',', $_GET['getpaths']);
-	foreach ($paths as $value) {
-		echo'<br>'.getPath($value);
+if ($show_debug) {
+	if(isset($_GET['getpath'])) {
+		 echo '<br>'.getPath($_GET['getpath']);
+	}
+	if(isset($_POST['getpath'])) {
+		 echo getPath($_POST['getpath']);
+	}
+	if(isset($_GET['getpaths'])) {
+		echo $_GET['getpaths'];
+		$paths = explode(',', $_GET['getpaths']);
+		foreach ($paths as $value) {
+			echo'<br>'.getPath($value);
+		}
+	}
+	if(isset($_GET['getowner'])) {
+		 echo getOwner($_GET['getowner']);
+	}
+	if(isset($_GET['readable'])) {
+		echo is_readable(getPath($_GET['readable']));
+	}
+	if (isset($_GET['phpinfo'])) {
+		phpinfo();
+		die();
 	}
 }
-if(isset($_GET['getowner'])) {
-	 echo getOwner($_GET['getowner']);
-}
-if(isset($_GET['readable'])) {
-	echo is_readable(getPath($_GET['readable']));
-}
-if (isset($_GET['phpinfo'])) {
-	phpinfo();
-	die();
-}
-function getPath($file) { //this function was evil
+function getPath($file) { //this function was evil and still is - eats memory
 	global $file_root, $file_prefix, $uhd, $db, $filetable;
 	$pointer = 0;
 	unset($path);
@@ -284,7 +286,7 @@ if(isset($_GET['dir'])) {
 					if ($giveResult) {
 						echo json_encode($r);
 					} else {
-						echo '[{"PID": "0","owner":"0","file_name":"File Access Denied","file_size":"0","file_type":"text","file_self":"test_hash","file_parent":"home_dir","file_child":""}]';
+						echo '[{"PID": "0","owner":"0","file_name":"Folder Access Denied","file_size":"0","file_type":"text","file_self":"test_hash","file_parent":"home_dir","file_child":""}]';
 						//echo json_encode($r);
 					}
 			} else {  
@@ -527,9 +529,15 @@ if (isset($_POST['move'])) {
 	foreach ($file_multi_array as $hash_self) {
 		if ($hash_self == $uhd) {
 			echo 'Cannot move the home directory!';
-		} else if (strpos(getPath($hash_self), $target) !== false) {
-			echo 'Cannot move a folder into itself!';
+		//} else if (strpos(getPath($hash_self), $target) !== false) {
+			//echo 'Cannot move a folder into itself!';
 		} else {
+			if (sizeof(explode('/', $file_target_path)) > sizeof(explode('/', getPath($hash_self)))) { //doesnt actually work, but the rename() will prevent this anyway
+				if (strpos(getPath($hash_self), $target) !== false) {
+					echo 'Cannot move a folder into itself!';
+					die();
+				}
+			}
 			$date = date("F j, Y, g:i a");
 
 			if ($isOwner) {
@@ -650,9 +658,9 @@ if(isset($_GET['download'])) {
 	$fileName = sanitize($_GET['file_id']);
 	$n = sanitize($_GET['file_name']);
 
-	$filePath = getPath($fileName);
-
 	if (getOwner($fileName) == $uid) {
+
+		$filePath = getPath($fileName);
 
 	    if(is_readable($filePath)) {
 	        $fileSize = filesize($filePath);
@@ -672,47 +680,54 @@ if(isset($_GET['download'])) {
 	        echo ('The provided file path is not valid.');
 	    }
 	} else {
+		header("HTTP/1.1 403 Access Denied");
 		header("Location: error?404");
 	}
 }
 if(isset($_POST['getContent'])) {
 	$cType = sanitize($_POST['getContent']);
 
-	$result = mysqli_query($db, "SELECT * from $usertable where PID = '$uid'");
-	$row = mysqli_fetch_array($result);
-	$userName = $row['display_name'];
-	$userEmail = $row['email'];
-	$userID = $row['PID'];
-	$userJoin = $row['join_date'];
-	$gtarhash = md5($userEmail) . '?r=' . $grav_rating . '&d=' . $grav_default;
-	$storage = getUsedStorage($uid);
-	if ($storage[1] != 0) {
-		$storage_percent = number_format((($storage[0] / $storage[1]) * 100), 2, '.', '');
-	} else {
-		$storage_percent = '0.00';
-	}
 	$title = sanitize($title);
 	$name = sanitize($name);
 	//$sr = array($allowsharing, $showfooter, $showpageloadtime, $show_debug, $show_errors);
-	$se = array();
-	if ($allowsharing) { $se['allow_sharing'] = 'checked="checked"'; $se['allow_sharing2'] = ''; } else { $se['allow_sharing'] = ''; $se['allow_sharing2'] = 'checked="checked"'; }
-	if ($showfooter) { $se['show_footer'] = 'checked="checked"'; $se['show_footer2'] = ''; } else { $se['show_footer'] = ''; $se['show_footer2'] = 'checked="checked"'; }
-	if ($showpageloadtime) { $se['show_pageload'] = 'checked="checked"'; $se['show_pageload2'] = ''; } else { $se['show_pageload'] = ''; $se['show_pageload2'] = 'checked="checked"'; }
-	if ($show_debug) { $se['show_debug'] = 'checked="checked"'; $se['show_debug2'] = ''; } else { $se['show_debug'] = ''; $se['show_debug2'] = 'checked="checked"'; }
-	if ($show_errors) { $se['show_errors'] = 'checked="checked"'; $se['show_errors2'] = ''; } else { $se['show_errors'] = ''; $se['show_errors2'] = 'checked="checked"'; }
 
 	if ($cType == 'profile' && $alvl >= $alvl_user) {
+		$result = mysqli_query($db, "SELECT * from $usertable where PID = '$uid'");
+		$row = mysqli_fetch_array($result);
+		$userName = $row['display_name'];
+		$userEmail = $row['email'];
+		$userID = $row['PID'];
+		$userJoin = $row['join_date'];
+		$gtarhash = md5($userEmail) . '?r=' . $grav_rating . '&d=' . $grav_default;
+		$storage = getUsedStorage($uid);
+		if ($storage[1] != 0) {
+			$storage_percent = number_format((($storage[0] / $storage[1]) * 100), 2, '.', '');
+		} else {
+			$storage_percent = '0.00';
+		}
 		$echo = str_replace("{{gravatar-avatar-hash}}", $gtarhash, str_replace("{{user-email}}", $userEmail, str_replace("{{user-name}}", $userName, file_get_contents('includes/profilepage.php'))));
 		$echo = str_replace("{{percent-storage-amount}}", $storage_percent, str_replace("{{total-storage-amount}}", number_format($storage[1]/1000000000, 2, '.', ''), str_replace("{{used-storage-amount}}", number_format($storage[0]/1000000000, 2, '.', ''), $echo)));
 		echo str_replace("{{join-date}}", $userJoin, str_replace("{{user-id}}", $userID, $echo));
 	} else if ($cType == 'settings' && $alvl >= $alvl_admin) {
+		$se = array();
+		if ($allowsharing) { $se['allow_sharing'] = 'checked="checked"'; $se['allow_sharing2'] = ''; } else { $se['allow_sharing'] = ''; $se['allow_sharing2'] = 'checked="checked"'; }
+		if ($showfooter) { $se['show_footer'] = 'checked="checked"'; $se['show_footer2'] = ''; } else { $se['show_footer'] = ''; $se['show_footer2'] = 'checked="checked"'; }
+		if ($showpageloadtime) { $se['show_pageload'] = 'checked="checked"'; $se['show_pageload2'] = ''; } else { $se['show_pageload'] = ''; $se['show_pageload2'] = 'checked="checked"'; }
+		if ($show_debug) { $se['show_debug'] = 'checked="checked"'; $se['show_debug2'] = ''; } else { $se['show_debug'] = ''; $se['show_debug2'] = 'checked="checked"'; }
+		if ($show_errors) { $se['show_errors'] = 'checked="checked"'; $se['show_errors2'] = ''; } else { $se['show_errors'] = ''; $se['show_errors2'] = 'checked="checked"'; }
 		$echo = str_replace('\\', '', str_replace("{{site-title}}", $title, str_replace("{{site-name}}", $name, str_replace("{{group-password}}", $group_password, file_get_contents('includes/settingspage.php')))));
 		$echo = str_replace('{{sharing-false}}', $se['allow_sharing2'], str_replace("{{sharing-true}}", $se['allow_sharing'], str_replace("{{site-version}}", $ver, $echo)));
 		$echo = str_replace('{{pageloadtime-false}}', $se['show_pageload2'], str_replace('{{pageloadtime-true}}', $se['show_pageload'], str_replace('{{footer-false}}', $se['show_footer2'], str_replace('{{footer-true}}', $se['show_footer'], $echo))));
 		$echo = str_replace('{{errors-false}}', $se['show_errors2'], str_replace('{{errors-true}}', $se['show_errors'], str_replace('{{debug-false}}', $se['show_debug2'], str_replace('{{debug-true}}', $se['show_debug'], $echo))));
 		echo str_replace('{{ini-max-upload}}', $ini_max_upload, str_replace('{{gravatar-rating}}', $grav_rating, str_replace('{{gravatar-default}}', $grav_default, $echo)));
+	} else if ($cType == 'colors' && $alvl >= $alvl_admin) {
+		$echo = str_replace('{{color-4}}', $colors['VERT_DIV'], str_replace('{{color-3}}', $colors['TEXT'], str_replace('{{color-2}}', $colors['SECONDARY'], str_replace('{{color-1}}', $colors['PRIMARY'], file_get_contents('includes/colorspage.php')))));
+		$echo = str_replace('{{color-7}}', $colors['TEXT_SECONDARY'], str_replace('{{color-6}}', $colors['BACKGROUND'], str_replace('{{color-5}}', $colors['HORIZ_DIV'], $echo)));
+		$echo = str_replace('{{cust-color-4}}', $custom_colors['C_VERT_DIV'], str_replace('{{cust-color-3}}', $custom_colors['C_TEXT'], str_replace('{{cust-color-2}}', $custom_colors['C_SECONDARY'], str_replace('{{cust-color-1}}', $custom_colors['C_PRIMARY'], $echo))));
+		$echo = str_replace('{{cust-color-7}}', $custom_colors['C_TEXT_SECONDARY'], str_replace('{{cust-color-6}}', $custom_colors['C_BACKGROUND'], str_replace('{{cust-color-5}}', $custom_colors['C_HORIZ_DIV'], $echo)));
+		echo $echo;
 	} else {
-		//echo stuff for the fileviewer
+
 	}
 }
 if(isset($_POST['newname'])) {

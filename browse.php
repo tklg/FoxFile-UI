@@ -34,11 +34,14 @@ if ($uid < 1) {
     	}
     <?php } ?>
     </style>
-    <link href="css/dropzone.css" rel="stylesheet" />
 
 </head>
 <body>
-<div class="spinner" id="spinner-pre" style="display:block"></div>
+<!-- <div class="spinner" id="spinner-pre" style="display:block"></div> -->
+<div class="spinner" id="spinner-pre" style="display:block">
+  <div class="loading up"></div>
+  <div class="loading down"></div>
+</div>
 <?php if ($show_debug && $alvl >= $alvl_admin) { ?>
 	<div style="z-index:100;color:#fff;font-size:9pt; position:fixed; bottom: 10px; left: 10px; padding: 10px; border-radius: 5px; background:rgba(255,255,255,.1)">
 		<span>DEBUG:</span><br><hr>
@@ -56,14 +59,20 @@ if ($uid < 1) {
 	<div class="title menubar-title"><?php echo $name . ' ' . $ver ?></div>
 	<div class="menubar menubar-left menubar-main tab-links">
 	<ul>
-		<li class="menubar-content menubar-content-user menubar-content-user-name menubar-content-active" id="menubar-button-1"><span id="display_name"><?php echo $uname ?></span><a href="uauth.php?logout" class="btn btn-logout"><span style="font-size: 70%;"></span><i class="fa fa-sign-out"></i></a></li>
+		<li class="menubar-content menubar-content-user menubar-content-user-name menubar-content-active" id="menubar-button-1"><span id="display_name"><?php echo $uname ?></span><a href="uauth.php?logout" class="btn btn-logout"><i class="fa fa-sign-out"></i></a></li>
 		<li class="menubar-content menubar-content-main menubar-content-active" container="1" id="menubar-button-files" type="folder" onclick="files.open('<?php echo $_SESSION["uhd"] ?>', $(this).text(), $(this).attr('container'), $(this).attr('type'));" href="#files">My Files</li>
 		<?php if($allowsharing) {?><li class="menubar-content menubar-content-main" id="menubar-button-shared" href="#shared">Shared</li> <?php } ?>
 		<!-- <li class="menubar-content menubar-content-main" id="menubar-button-bookmarks" href="#bookmarks">Bookmarks</li> -->
 		<li class="menubar-content menubar-content-main" id="menubar-button-account" href="#profile">Profile</li>
-		<?php if ($alvl >= $alvl_admin) {?><li class="menubar-content menubar-content-main" id="menubar-button-account" href="#settings">Settings</li><?php } ?>
+		<?php if ($alvl >= $alvl_admin) {?>
+		<li class="menubar-content menubar-content-main" id="menubar-button-account" href="#settings">Settings</li>
+		<li class="menubar-content menubar-content-main" id="menubar-button-account" href="#colors">Colors</li>
+		<?php } ?>
 	</ul>
-	<div class="spinner"></div>
+	<div class="spinner">
+		<div class="loading up"></div>
+  		<div class="loading down"></div>
+	</div>
 	</div>
 	</section>
 	</div>
@@ -93,7 +102,7 @@ if ($uid < 1) {
 	<script type="text/template" id="file_template">
     <li class="menubar-content-view" container="<%= model.get('container') %>" type="<%= model.get('basicFileType') %>" filehash="<%= model.get('hash_self') %>" id="<%= model.get('fileID') %>" name="<%= model.get('fileName') %>" pos="">
 		<img class="img-preview" />
-		<div class="text-preview"><div class="spinner"></div></div>
+		<div class="text-preview"><div class="spinner"><div class="loading up"></div><div class="loading down"></div></div></div>
 		<audio controls class="audio-preview">Audio tags are not supported by your browser.</audio>
 		<video controls class="video-preview">Video tags are not supported by your browser.</video>
 		<%= model.get('script') %>
@@ -202,7 +211,7 @@ if ($uid < 1) {
 			//d.info($('.menubar').css('top'));
 		},
 		loadFiles: function() {
-			BCL = new BarContentLoader();
+			//BCL = new BarContentLoader();
 			//BCL.start(2, 'home_dir', 'folder');
 		}
 	}
@@ -215,6 +224,7 @@ if ($uid < 1) {
 
 	$(document).ready(function() {
 	   	$('.tabs .tab-links li:not(.menubar-content-user-name)').on('click', function(e)  {
+	   		$('.sp-container').remove();
 	        var currentAttrValue = $(this).attr('href').replace('#', '');
 	        $('.bar-alt').remove();
 	        if (currentAttrValue != 'files') {
@@ -222,10 +232,10 @@ if ($uid < 1) {
 		        $('#wrapper').append('<section class="bar bar-vertical bar-full bar-alt tabs" id="bar-' + currentAttrValue + '"></section>');
 		        $('#bar-' + currentAttrValue).append('<div class="menubar-title">'+
 					'<span class="heightsettertext"></span>'+
-					'<span class="menubar-title-link" onclick="">' + ((currentAttrValue != 'settings') ? 'My' : 'Foxfile') + ' ' + currentAttrValue + ((currentAttrValue == 'shared') ? ' Files' : '') + '</span>'+
+					'<span class="menubar-title-link" onclick="">' + ((currentAttrValue != 'settings' && currentAttrValue != 'colors') ? 'My' : 'Foxfile') + ' ' + currentAttrValue + ((currentAttrValue == 'shared') ? ' Files' : '') + '</span>'+
 					'</div>'+
 					'<div class="menubar menubar-left">'+
-					'<div class="spinner" id="' + this.active + '"></div>'+
+					'<div class="spinner" id="' + this.active + '"><div class="loading up"></div><div class="loading down"></div></div>'+
 					'</div>');
 	        	setContent(currentAttrValue);
 	        }
@@ -241,15 +251,17 @@ if ($uid < 1) {
 		names.get(<?php echo $_SESSION['uid']; ?>);
 		files.open('<?php echo $_SESSION["uhd"] ?>', 'My Files', 1, 'folder');
 
-		$('#wrapper').css('visibility','visible');
-		$('#spinner-pre').remove();
 	});
 	</script>
+	<link href="css/dropzone.css" rel="stylesheet" />
     <script type="text/javascript" src="js/showlog.js"></script>
     <script type="text/javascript" src="js/dropzone.js"></script>
     <script type="text/javascript" src="js/foxfile.js"></script>
     <script type="text/javascript">
-
+	    setTimeout(function() { //give time for the page to set itself up
+	    	$('#wrapper').css('visibility','visible');
+			$('#spinner-pre').remove();
+	    }, 700);
     </script>
 	<?php
 	$time = microtime();

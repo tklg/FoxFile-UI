@@ -149,8 +149,6 @@ li {
 	float:right;
 	font-size: 120%;
 	z-index: 100;
-	padding: 0 8px;
-	border-radius: 3px;
 }
 a {
 	text-decoration: none;

@@ -1,5 +1,5 @@
 <style type="text/css">
-	.fade {
+	/*.fade {
 		-webkit-transition: all .2s ease-in-out;
             transition: all .2s ease-in-out;
 	}
@@ -46,7 +46,6 @@
 		padding: 10px;
 		background: rgba(255,255,255,.05);
 		border: none;
-		/*border: 1px solid rgb(250, 101, 0);*/
 		color: #aaa;
 		margin-top: 3px;
 	}
@@ -86,7 +85,7 @@
 	#totalstorage {
 		background: rgba(255,255,255,.05);
 		width: 87%;
-	}
+	}*/
 </style>
 <section class="grid-box">
 	<div class="col col-3">
