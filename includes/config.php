@@ -1,19 +1,19 @@
 <?php
-			$show_errors = 2;
-			$show_debug = false;
-			$title = "FoxFile Άλφα";
-			$name = '<span id="redfox">Fox</span>File';
-			$ver = '1.2a';
+			$show_errors = 1;
+			$show_debug = 0;
+			$title = "FoxFile";
+			$name = "<span id='redfox'>Fox</span>File";
+			$ver = "1.2a";
 			$grav_default = "retro";
-			$grav_rating = "g";
-			$showfooter = false;
-			$showpageloadtime = false;
-			$useGroupPassword = true;
-			$group_password = 'foxfilealpha';
-			$allowsharing = true;
+			$grav_rating = "pg";
+			$showfooter = 0;
+			$showpageloadtime = 0;
+			$useGroupPassword = 1;
+			$group_password = "foxfilealpha";
+			$allowsharing = 0;
 			$alvl_admin = 5;
 			$alvl_user = 1;
-			$ini_max_upload = 40;
+			$ini_max_upload = 128;
 			$database = [
 				"NAME" => 'FOXFILE',
 				"PREFIX" => null,
@@ -35,8 +35,8 @@
 				"BACKGROUND" => "#222"
 			];
 			$custom_colors = [
-				"C_PRIMARY" => "#27cf40",
-				"C_SECONDARY" => "#334a31",
+				"C_PRIMARY" => "#6fcf27",
+				"C_SECONDARY" => "#212820",
 				"C_TEXT" => "#e0e0e0",
 				"C_TEXT_SECONDARY" => "#666666",
 				"C_VERT_DIV" => "#3b3b3b",

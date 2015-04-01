@@ -34,13 +34,6 @@ body {
 ::-webkit-scrollbar-thumb:window-inactive {
 	background: rgba(255,255,255,0); 
 }
- input:active,
-    input:focus,
-    button:active,
-    button:focus {
-    outline: 0 none;
-    background: #606060;
-}
 ::selection {
 	background: rgba(255,255,255,.1);
 }
@@ -231,7 +224,7 @@ a:hover {
     white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
-	max-width: 75%; 
+	max-width: 70%; 
 	display: inline-block;
 }
 .menubar-title-link-home {
@@ -350,6 +343,7 @@ a:hover {
 	font-family: 'FontAwesome';
 	content: '\f016';
 	font-size: 150%;
+	/*font-size: 160%;*/
 }
 .menubar-content img {
 	display: none;
@@ -438,14 +432,14 @@ a:hover {
 }
 .menubar-content .file-multiselect-checkbox-container input:not(:checked) + label:hover .file-multiselect-checkbox:before {
 	content: '\f096' !important;
-	margin-right: 2px;
+	margin-right: 1px;
 }
 .menubar-content[type="folder"] .file-multiselect-checkbox-container input:not(:checked) + label:hover .file-multiselect-checkbox:before {
 	content: '\f096' !important;
-	margin-right: 3px;
+	margin-right: 2px;
 }
 .menubar-content-active[type="Folder"] .file-multiselect-checkbox-container input:not(:checked) + label:hover .file-multiselect-checkbox:before{
-	margin-right: 6px;
+	margin-right: 5px;
 }
 .menubar-content .file-multiselect-checkbox-container input:checked + label .file-multiselect-checkbox:before {
 	content: '\f046' !important;
@@ -622,7 +616,7 @@ a:hover {
 	top: 10px;
 }
 .menubar-content-view[type='text'] .text-preview::selection {
-	background: #fa6500;
+	background: #0B74FF;
 }
 .menubar-content-view[type='text'] .text-preview {
 	position: absolute;
@@ -638,7 +632,7 @@ a:hover {
     user-select: all;
 }
 .menubar-content-view[type='code'] .text-preview::selection {
-	background: #fa6500;
+	background: #0B74FF;
 }
 .menubar-content-view[type='code'] .text-preview {
 	position: absolute;
@@ -693,6 +687,7 @@ a:hover {
 	color: #ccc;
 	font-family: 'quicksandlight', sans-serif;
 	z-index: 200;
+    cursor: default;
 }
 .modal-content-input::selection {
 	background: #fa6500;
@@ -720,7 +715,7 @@ a:hover {
 .modal-footer {
 /*	background: #606060;*/
 	text-align: center;
-	z-index: 201;
+	z-index: 203;
 }
 .modal-footer .btn {
 	background: rgba(255,255,255,.1);
@@ -737,6 +732,9 @@ a:hover {
 }
 .modal-footer .btn:hover {
 	background: #61391d;
+}
+.modal-footer .btn.btn-submit:hover {
+	background: #fa6500;
 }
 .modal-header #modal-header-name {
 	color: #fa6500;
@@ -872,13 +870,15 @@ a:hover {
 .bar[type="folder"] .menubar-title .menubar-action-btn .btn-delete,
 .bar[type="folder"] .menubar-title .menubar-action-btn .btn-download,
 .bar[type="folder"] .menubar-title .menubar-action-btn .btn-fullscreen,
-.bar[type="folder"] .menubar-title .menubar-action-btn .btn-refresh {
+.bar[type="folder"] .menubar-title .menubar-action-btn .btn-refresh,
+.bar[type="folder"] .menubar-title .menubar-action-btn .btn-move {
 	display: none;
 }
 .clickmenu[file="My Files"] li[cmm="rename"],
 .clickmenu[file="My Files"] li[cmm="delete"],
 .clickmenu[file="My Files"] li[cmm="download"],
-.clickmenu[file="My Files"] li[cmm="share"] {
+.clickmenu[file="My Files"] li[cmm="share"],
+.clickmenu[file="My Files"] li[cmm="move"] {
 	display: none;
 }
 .ui-draggable-dragging {
@@ -1025,3 +1025,76 @@ input[type="radio"].user-setting {
 	input[type='radio'].user-setting:checked + label {
 	    background: #61391d;
 	}
+input {
+	-webkit-transition: all .2s ease;
+	        transition: all .2s ease;
+}
+input:not([disabled]):active,
+input:not([disabled]):focus,
+button:active,
+button:focus {
+    outline: 0 none;
+    background: #606060;
+}
+.modal-move .modal-content {
+    padding-top: 0;
+    padding-bottom: 0;
+    position: absolute;
+    height: 80%;
+/*    width: 100%;*/
+    overflow-y: auto;
+    z-index: 200;
+}
+.minibar {
+/*    position: absolute;*/
+	width: 100%;
+	padding: 0px;
+	border-left: none;
+	-webkit-transition: all .4s ease-in-out;
+          transition: all .4s ease-in-out;
+}
+.minibar-control {
+    padding: 10px;
+    border-bottom: 1px #2c2c2c solid;
+    width: 100%;
+    left: -10px;
+    position: relative;
+}
+.minibar-control i {
+    padding: 0 2px;
+    font-size: 25px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+.minibar-control i:hover {
+    background: #fa6500;
+}
+.minibar-content:after {
+    font-family: 'FontAwesome';
+    content: '\f105';
+    font-size: 90%;
+    float: right;
+    color: #ccc;
+}
+.minibar-content:first-of-type {
+    background: #61391d;
+}
+.minibar-content:first-of-type:after {
+    font-family: 'FontAwesome';
+    content: '\f104';
+    font-size: 90%;
+    float: right;
+    color: #ccc;
+}
+.minibar-content {
+	width: 100%;
+    padding: 10px;
+	position: relative;
+	float: left;
+    border-bottom: 1px #2c2c2c solid;
+    left: -10px;
+    cursor: pointer;
+}
+.minibar-content:hover {
+    background: rgba(255,255,255,.05);
+}

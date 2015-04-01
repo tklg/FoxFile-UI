@@ -17,6 +17,7 @@ var d = {
 		d.errNum++;
 		if (msg == null) msg="undef";
 		$('.alertbox').append('<p class="alert-item alert-error" id="alert-' + d.errNum + '">' + msg + '</p>');
+		console.error(msg);
 		var debO = new debugObject('error', msg);
 		d.show(d.errNum, 5000);
 	},
@@ -24,18 +25,21 @@ var d = {
 		d.errNum++;
 		if (msg == null) msg="undef";
 		$('.alertbox').append('<p class="alert-item alert-warning" id="alert-' + d.errNum + '">' + msg + '</p>');
+		console.warn(msg);
 		d.show(d.errNum, 5000);
 	},
 	info: function(msg) {
 		d.errNum++;
 		if (msg == null) msg="undef";
 		$('.alertbox').append('<p class="alert-item alert-info" id="alert-' + d.errNum + '">' + msg + '</p>');
+		console.info(msg);
 		d.show(d.errNum, 5000);
 	},
 	success: function(msg) {
 		d.errNum++;
 		if (msg == null) msg="undef";
 		$('.alertbox').append('<p class="alert-item alert-success" id="alert-' + d.errNum + '">' + msg + '</p>');
+		console.log(msg);
 		d.show(d.errNum, 5000);
 	},
 	show: function(s, t) {

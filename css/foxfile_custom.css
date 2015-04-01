@@ -34,13 +34,6 @@ body {
 ::-webkit-scrollbar-thumb:window-inactive {
 	background: rgba(255,255,255,0); 
 }
- input:active,
-    input:focus,
-    button:active,
-    button:focus {
-    outline: 0 none;
-    background: #606060;
-}
 ::selection {
 	background: rgba(255,255,255,.1);
 }
@@ -149,6 +142,8 @@ li {
 	float:right;
 	font-size: 120%;
 	z-index: 100;
+	padding: 0 8px;
+	border-radius: 3px;
 }
 a {
 	text-decoration: none;
@@ -229,7 +224,7 @@ a:hover {
     white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
-	max-width: 75%; 
+	max-width: 70%; 
 	display: inline-block;
 }
 .menubar-title-link-home {
@@ -348,6 +343,7 @@ a:hover {
 	font-family: 'FontAwesome';
 	content: '\f016';
 	font-size: 150%;
+	/*font-size: 160%;*/
 }
 .menubar-content img {
 	display: none;
@@ -436,14 +432,14 @@ a:hover {
 }
 .menubar-content .file-multiselect-checkbox-container input:not(:checked) + label:hover .file-multiselect-checkbox:before {
 	content: '\f096' !important;
-	margin-right: 2px;
+	margin-right: 1px;
 }
 .menubar-content[type="folder"] .file-multiselect-checkbox-container input:not(:checked) + label:hover .file-multiselect-checkbox:before {
 	content: '\f096' !important;
-	margin-right: 3px;
+	margin-right: 2px;
 }
 .menubar-content-active[type="Folder"] .file-multiselect-checkbox-container input:not(:checked) + label:hover .file-multiselect-checkbox:before{
-	margin-right: 6px;
+	margin-right: 5px;
 }
 .menubar-content .file-multiselect-checkbox-container input:checked + label .file-multiselect-checkbox:before {
 	content: '\f046' !important;
@@ -620,7 +616,7 @@ a:hover {
 	top: 10px;
 }
 .menubar-content-view[type='text'] .text-preview::selection {
-	background: #fa6500;
+	background: #0B74FF;
 }
 .menubar-content-view[type='text'] .text-preview {
 	position: absolute;
@@ -636,7 +632,7 @@ a:hover {
     user-select: all;
 }
 .menubar-content-view[type='code'] .text-preview::selection {
-	background: #fa6500;
+	background: #0B74FF;
 }
 .menubar-content-view[type='code'] .text-preview {
 	position: absolute;
@@ -735,6 +731,9 @@ a:hover {
 }
 .modal-footer .btn:hover {
 	background: #61391d;
+}
+.modal-footer .btn.btn-submit:hover {
+	background: #fa6500;
 }
 .modal-header #modal-header-name {
 	color: #fa6500;
@@ -870,7 +869,8 @@ a:hover {
 .bar[type="folder"] .menubar-title .menubar-action-btn .btn-delete,
 .bar[type="folder"] .menubar-title .menubar-action-btn .btn-download,
 .bar[type="folder"] .menubar-title .menubar-action-btn .btn-fullscreen,
-.bar[type="folder"] .menubar-title .menubar-action-btn .btn-refresh {
+.bar[type="folder"] .menubar-title .menubar-action-btn .btn-refresh,
+.bar[type="folder"] .menubar-title .menubar-action-btn .btn-move {
 	display: none;
 }
 .clickmenu[file="My Files"] li[cmm="rename"],
@@ -1023,3 +1023,35 @@ input[type="radio"].user-setting {
 	input[type='radio'].user-setting:checked + label {
 	    background: #61391d;
 	}
+input {
+	-webkit-transition: all .2s ease;
+	        transition: all .2s ease;
+}
+input:not([disabled]):active,
+input:not([disabled]):focus,
+button:active,
+button:focus {
+    outline: 0 none;
+    background: #606060;
+}
+.minibar {
+	width: 100%;
+	padding: 0px;
+	border-left: none;
+	-webkit-transition: all .4s ease-in-out;
+          transition: all .4s ease-in-out;
+}
+.minibar .menubar-title {
+	background: rgba(0,0,0,.1);
+}
+.minibar .menubar {
+	z-index: 400;
+	position: relative;
+	top:0 !important;
+}
+.minibar .menubar-action-btn {
+	display: none;
+}
+.minibar .file-info {
+	display: none;
+}

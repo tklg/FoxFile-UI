@@ -20,7 +20,7 @@ if ($uid < 1) {
 <!DOCTYPE html>
 <html lang="en">
 <!--
- * index.php - FoxFile
+ * browse.php - FoxFile
  * (C) Theodore Kluge 2014-2015
  * http://kluge.ninja
  -->
@@ -122,7 +122,6 @@ if ($uid < 1) {
 		<span data-dz-errormessage></span>
 		</li>
 	</div>
-
 	<section class="modal-background modal-new-folder">
 	<div class="modal">
 		<div class="modal-header">
@@ -170,6 +169,36 @@ if ($uid < 1) {
 		<div class="modal-footer">
 			<button class="btn btn-cancel" onclick="files.deleteGUI.hide()">Cancel</button>
 			<button type="submit" class="btn btn-submit" id="btn-delete" onclick="files.delete($('#modal-file-name-delete').val(), $('.modal-delete #modal-file-id-delete').val(), $('.modal-delete #modal-bar-id-delete').val())">Delete</button>
+		</div>
+	</div>
+	</section>
+	<section class="modal-background modal-move">
+	<div class="modal" style="height:70%;position:absolute;">
+		<div class="spinner"><div class="loading up"></div><div class="loading down"></div></div>
+		<div class="modal-header">
+			Select a folder to send <span id="modal-header-name">FILE</span> to.
+		</div>
+		<div class="modal-content">
+            <!--<div class="minibar-control">
+                <span class="btn-back"><i class="fa fa-arrow-circle-o-left"></i> Back a level</span>
+            </div>-->
+			<ul class="minibar" filehash="" id="" type="folder" filename="">
+                <li class="minibar-content" filehash="" id="" type="folder" filename="">
+                    <span class="minibar-file-name"><i class="fa fa-ellipsis-h"></i></span>
+                </li>
+				<li class="minibar-content" filehash="" id="" type="folder" filename="">
+                    <span class="minibar-file-name">Retrieve folder list</span>
+                </li>
+                <li class="minibar-content" filehash="" id="" type="folder" filename="">
+                    <span class="minibar-file-name">Starting at root directory</span>
+                </li>
+			</ul>
+			<input id="modal-file-id-move" type="hidden">
+			<input id="modal-bar-id-move" type="hidden">
+		</div>
+		<div class="modal-footer" style="position:absolute;bottom:0px;width:100%">
+			<button class="btn btn-cancel" onclick="files.moveGUI.hide()">Cancel</button>
+			<button type="submit" class="btn btn-submit" id="btn-move" onclick="files.multimove()">Move</button>
 		</div>
 	</div>
 	</section>
@@ -221,7 +250,14 @@ if ($uid < 1) {
 	} else {
 		$(".alertbox").css("bottom", 20);
 	}
-
+	var pageTitle = $('title').text();
+	var userOpen = false;
+	var settingsOpen = false;
+	var colorsOpen = false;
+	var title_separator = ' ◦ ';
+	String.prototype.capt = function() {
+	    return this.charAt(0).toUpperCase() + this.slice(1);
+	}
 	$(document).ready(function() {
 	   	$('.tabs .tab-links li:not(.menubar-content-user-name)').on('click', function(e)  {
 	   		$('.sp-container').remove();
@@ -238,6 +274,7 @@ if ($uid < 1) {
 					'<div class="spinner" id="' + this.active + '"><div class="loading up"></div><div class="loading down"></div></div>'+
 					'</div>');
 	        	setContent(currentAttrValue);
+	        	document.title = pageTitle + title_separator + currentAttrValue.capt();
 	        }
 	        $('.tabs ' + currentAttrValue).show().siblings().hide();
 	        $(this).addClass('menubar-content-active').siblings().removeClass('menubar-content-active');
@@ -245,12 +282,10 @@ if ($uid < 1) {
 	        resizeAll();
 	    });
 
-
 	    init.resize();
 		clickMenu.rebind();
 		names.get(<?php echo $_SESSION['uid']; ?>);
 		files.open('<?php echo $_SESSION["uhd"] ?>', 'My Files', 1, 'folder');
-
 	});
 	</script>
 	<link href="css/dropzone.css" rel="stylesheet" />

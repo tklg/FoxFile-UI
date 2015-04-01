@@ -102,3 +102,45 @@ if(isset($_POST['use_color'])) {
 	unlink($cfg_orig);
 	rename($cfg_tmp, $cfg_orig);
 }
+if(isset($_POST['edit_setting'])) {
+	/*$settingName = sanitize($_POST['edit_setting']);
+	$settingValue = sanitize($_POST['set_value']);*/
+	$settingName = $_POST['edit_setting']; //psh safety
+	$settingValue = $_POST['set_value']; //psh safety
+	if($settingValue == 'true') {
+		$settingValue = 1;
+	} else if ($settingValue == 'false') {
+		$settingValue = 0;
+	} else {
+
+	}
+	//change config
+	$cfg_orig = 'includes/config.php';
+	$cfg_tmp = 'includes/config.php.tmp';
+	$sh = fopen($cfg_orig, 'r');
+	$th = fopen($cfg_tmp, 'w');
+	//echo '$'.$settingName . ' = ' . $$settingName. '<br>and $'.$settingName . ' = ' . $settingValue;
+	//echo '<br><br>$'.$settingName . ' = "' . $$settingName.'"<br>and $'.$settingName . ' = "' . $settingValue.'"';
+	while (!feof($sh)) {
+	    $line = fgets($sh);
+	    if ($settingValue === 1 || $settingValue === 0) {
+	    	//echo 'settv = 1 or 0';
+	    	$line = str_ireplace('$'.$settingName . ' = ' . $$settingName, '$'.$settingName . ' = ' . $settingValue, $line);
+	    } else {
+	    	//echo 'settv = string';
+	    	$line = str_ireplace('$'.$settingName . ' = "' . $$settingName.'"', '$'.$settingName . ' = "' . $settingValue.'"', $line);
+	    }
+	    if ($settingName == 'group_password') {
+	    	if ($settingValue == '') {
+	    		$line = str_ireplace('$useGroupPassword = 1', '$useGroupPassword = 0', $line);
+	    	} else {
+	    		$line = str_ireplace('$useGroupPassword = 0', '$useGroupPassword = 1', $line);
+	    	}
+	    }
+	    fwrite($th, $line);
+	}
+	fclose($sh);
+	fclose($th);
+	unlink($cfg_orig);
+	rename($cfg_tmp, $cfg_orig);
+}

@@ -222,18 +222,13 @@ $starttime = $time;
             }
 
             $string = '<?php 
+$dbuname = "' . $_POST['dbuname'] . '";
+$dbupass = "' . $_POST['dbupass'] . '";
+$dbhost = "' . $_POST['dbhost'] . '";
+$dbname = "' . $_POST['dbname'] . '";
+$installed = true;
 
-            $dbuname = "' . $_POST['dbuname'] . '";
-
-            $dbupass = "' . $_POST['dbupass'] . '";
-
-            $dbhost = "' . $_POST['dbhost'] . '";
-
-            $dbname = "' . $_POST['dbname'] . '";
-
-            $installed = true;
-
-            ';
+';
 
             $fp = fopen("../includes/user.php", "w");
 

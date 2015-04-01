@@ -1,93 +1,3 @@
-<style type="text/css">
-	/*.fade {
-		-webkit-transition: all .2s ease-in-out;
-            transition: all .2s ease-in-out;
-	}
-	input:active,
-    input:focus,
-    button:active,
-    button:focus {
-	    outline: 0 none;
-	    background: rgba(255,255,255,.2) !important;
-	}
-	h3 {
-		-family: "quicksandlight", sans-serif;
-	}
-	.grid-box {
-		padding: 20px 0;
-		margin: 0;
-		border-bottom: 1px solid #2c2c2c;
-	}
-	.grid-box:after {
-		content: "";
-	    display: table;
-	    clear: both;
-	}
-	.col-content {
-		padding: 10px 30px;
-	}
-	.col {
-		position: relative;
-		float: left;
-	}
-	.col-1 {
-		width: 100%;
-	}
-	.col-2 {
-		width: 50%;
-	}
-	.col-3 {
-		width: 33%;
-	}
-	.col-3-2 {
-		width: 67%;
-	}
-	input.user-setting {
-		padding: 10px;
-		background: rgba(255,255,255,.05);
-		border: none;
-		color: #aaa;
-		margin-top: 3px;
-	}
-	input.full {
-		width: 85%;
-	}
-	input.less {
-		width: 70%;
-		margin-right: 5px;
-	}
-	label {
-		text-transform: uppercase;
-		font-size: 80%;
-	}
-	.btn-submit {
-		padding: 10px 40px;
-		background: rgba(248, 114, 23, .3);
-		color: #aaa;
-		border: none;
-	}
-	.btn:hover {
-		background: rgb(248, 114, 23);
-	}
-	input[type="radio"].user-setting {
-		display: none;
-	}
-	input[type='radio'].user-setting + label {
-	    background: #000;
-	    padding: 10px 0;
-	    width: 20%;
-	    text-align: center;
-	    display: inline-block;
-	    cursor: pointer;
-	    -webkit-transition: all .2s ease;
-	        transition: all .2s ease;
-	    background: rgba(255,255,255,.05);
-	    text-transform: none;
-	}
-	input[type='radio'].user-setting:checked + label {
-	    background: rgba(248, 114, 23, .3);
-	}*/
-</style>
 <section class="grid-box">
 	<div class="col col-3">
 		<div class="col-content">
@@ -98,15 +8,15 @@
 	<div class="col col-3-2">
 		<p>
 			<label>Site Title<br>
-			<input type="text" class="user-setting less fade" value="{{site-title}}" />
+			<input type="text" class="user-setting less fade"  id="title" value="{{site-title}}" />
 			</label>
-			<button type="submit" class="btn btn-submit fade">Save</button>
+			<button type="submit" class="btn btn-submit fade" id="title" >Save</button>
 		</p>
 		<p>
 			<label>Site Name<br>
-			<input type="text" class="user-setting less fade" value="{{site-name}}" />
+			<input type="text" class="user-setting less fade"  id="name" value="{{site-name}}" />
 			</label>
-			<button type="submit" class="btn btn-submit fade">Save</button>
+			<button type="submit" class="btn btn-submit fade" id="name" >Save</button>
 		</p>
 		<p>
 			<label>Site Version<br>
@@ -115,30 +25,30 @@
 		</p>
 		<p>
 			<label>Allow sharing<br></label>
-			<input name="allow-sharing" type="radio" class="user-setting fade" value="true" {{sharing-true}} id="allow-sharing" />
+			<input name="allowsharing" type="radio" class="user-setting fade" value="true" {{sharing-true}} id="allow-sharing" />
 			<label for="allow-sharing"><i class="fa fa-check"></i></label>
-			<input name="allow-sharing" type="radio" class="user-setting fade" value="false" {{sharing-false}} id="disallow-sharing" />
+			<input name="allowsharing" type="radio" class="user-setting fade" value="false" {{sharing-false}} id="disallow-sharing" />
 			<label for="disallow-sharing"><i class="fa fa-times"></i></label>
 		</p>
 		<p>
 			<label>Display footer<br></label>
-			<input name="display-footer" type="radio" class="user-setting fade" value="true" {{footer-true}} id="display-footer-true" />
+			<input name="showfooter" type="radio" class="user-setting fade" value="true" {{footer-true}} id="display-footer-true" />
 			<label for="display-footer-true"><i class="fa fa-check"></i></label>
-			<input name="display-footer" type="radio" class="user-setting fade" value="false" {{footer-false}} id="display-footer-false" />
+			<input name="showfooter" type="radio" class="user-setting fade" value="false" {{footer-false}} id="display-footer-false" />
 			<label for="display-footer-false"><i class="fa fa-times"></i></label>
 		</p>
 		<p>
 			<label>Display page load time<br></label>
-			<input name="display-pageloadtime" type="radio" class="user-setting fade" value="true" {{pageloadtime-true}} id="display-pageloadtime-true" />
+			<input name="showpageloadtime" type="radio" class="user-setting fade" value="true" {{pageloadtime-true}} id="display-pageloadtime-true" />
 			<label for="display-pageloadtime-true"><i class="fa fa-check"></i></label>
-			<input name="display-pageloadtime" type="radio" class="user-setting fade" value="false" {{pageloadtime-false}} id="display-pageloadtime-false" />
+			<input name="showpageloadtime" type="radio" class="user-setting fade" value="false" {{pageloadtime-false}} id="display-pageloadtime-false" />
 			<label for="display-pageloadtime-false"><i class="fa fa-times"></i></label>
 		</p>
 		<p>
 			<label>Display debug<br></label>
-			<input name="display-debug" type="radio" class="user-setting fade" value="true" {{debug-true}} id="display-debug-true" />
+			<input name="show_debug" type="radio" class="user-setting fade" value="true" {{debug-true}} id="display-debug-true" />
 			<label for="display-debug-true"><i class="fa fa-check"></i></label>
-			<input name="display-debug" type="radio" class="user-setting fade" value="false" {{debug-false}} id="display-debug-false" />
+			<input name="show_debug" type="radio" class="user-setting fade" value="false" {{debug-false}} id="display-debug-false" />
 			<label for="display-debug-false"><i class="fa fa-times"></i></label>
 		</p>
 	</div>
@@ -153,9 +63,9 @@
 	<div class="col col-3-2">
 		<p>
 			<label>Group Password<br>
-			<input type="password" class="user-setting less fade" value="{{group-password}}" placeholder="Leave blank for no password" />
+			<input type="password" class="user-setting less fade"  id="group_password" value="{{group-password}}" placeholder="Leave blank for no password" />
 			</label>
-			<button type="submit" class="btn btn-submit fade">Save</button>
+			<button type="submit" class="btn btn-submit fade" id="group_password" >Save</button>
 		</p>
 	</div>
 </section>
@@ -169,15 +79,15 @@
 	<div class="col col-3-2">
 		<p>
 			<label>Max upload size (mb)<br>
-			<input type="text" class="user-setting less fade" value="{{ini-max-upload}}" />
+			<input type="text" class="user-setting less fade" id="ini_max_upload" value="{{ini-max-upload}}" />
 			</label>
-			<button type="submit" class="btn btn-submit fade">Save</button>
+			<button type="submit" class="btn btn-submit fade" id="ini_max_upload">Save</button>
 		</p>
 		<p>
 			<label>Display PHP errors<br></label>
-			<input name="display-errors" type="radio" class="user-setting fade" value="true" {{errors-true}} id="display-errors-true" />
+			<input name="show_errors" type="radio" class="user-setting fade" value="true" {{errors-true}} id="display-errors-true" />
 			<label for="display-errors-true"><i class="fa fa-check"></i></label>
-			<input name="display-errors" type="radio" class="user-setting fade" value="false" {{errors-false}} id="display-errors-false" />
+			<input name="show_errors" type="radio" class="user-setting fade" value="false" {{errors-false}} id="display-errors-false" />
 			<label for="display-errors-false"><i class="fa fa-times"></i></label>
 		</p>
 	</div>
@@ -192,18 +102,53 @@
 	<div class="col col-3-2">
 		<p>
 			<label>Default Gravatar [404 | mm | identicon | monsterid | wavatar | retro | blank]<br>
-			<input type="text" class="user-setting less fade" value="{{gravatar-default}}" />
+			<input type="text" class="user-setting less fade" id="grav_default" value="{{gravatar-default}}" />
 			</label>
-			<button type="submit" class="btn btn-submit fade">Save</button>
+			<button type="submit" class="btn btn-submit fade" id="grav_default">Save</button>
 		</p>
 		<p>
 			<label>Gravatar Rating [g | pg | r | x]<br>
-			<input type="text" class="user-setting less fade" value="{{gravatar-rating}}" />
+			<input type="text" class="user-setting less fade" id="grav_rating" value="{{gravatar-rating}}" />
 			</label>
-			<button type="submit" class="btn btn-submit fade">Save</button>
+			<button type="submit" class="btn btn-submit fade" id="grav_rating">Save</button>
 		</p>
 	</div>
 </section>
 <script type="text/javascript">
+if (!settingsOpen) {
+	settingsOpen = true;
+	function changeSetting(setting, val, type) {
+		if (type == 'button') {
+			$('button#' + setting).text('Saving...');
+		} else {
 
+		}
+		val = val.replace(/(['"])/g, "\'");
+		//d.info("changing " + setting + ' to ' + val);
+		$.post('cfgedit.php',
+			{
+				edit_setting: setting,
+				set_value: val
+			},
+			function(result) {
+				if (result != '') d.info(result);
+				//else d.success("Changed Setting");
+				if (type == 'button') {
+					$('button#' + setting).text('Saved!');
+					setTimeout(function() {
+						$('button#' + setting).text('Save');
+					}, 1000);
+				} else {
+					
+				}
+		});
+	}
+
+	$(document).on('change', 'input[type="radio"]', function() {
+		changeSetting($(this).attr('name'), $(this).val(), 'radio');
+	});
+	$(document).on('click', 'button[type="submit"]', function() {
+		changeSetting($(this).attr('id'), $('#' + $(this).attr('id')).val(), 'button');
+	});
+}
 </script>

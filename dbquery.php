@@ -253,6 +253,39 @@ function deleteFile($file) {
 	$path = getPath($file);
 	unlink($path);
 }
+function zipFolder($source, $destination) {
+    if (!extension_loaded('zip') || !file_exists($source)) {
+        return false;
+    }
+
+    $zip = new ZipArchive();
+    if (!$zip->open($destination, ZIPARCHIVE::CREATE)) {
+        return false;
+    }
+
+    $source = str_replace('\\', '/', realpath($source));
+
+    if (is_dir($source))
+    {
+        $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($source), RecursiveIteratorIterator::SELF_FIRST);
+
+        foreach ($files as $file) {
+            $file = str_replace('\\', '/', realpath($file));
+
+            if (is_dir($file)) {
+                $zip->addEmptyDir(str_replace($source . '/', '', $file . '/'));
+            }
+            else if (is_file($file)) {
+                $zip->addFromString(str_replace($source . '/', '', $file), file_get_contents($file));
+            }
+        }
+    }
+    else if (is_file($source)) {
+        $zip->addFromString(basename($source), file_get_contents($source));
+    }
+
+    return $zip->close();
+}
 if(isset($_POST['fullNameFromID'])) {
 	$id = sanitize($_POST['fullNameFromID']);
 	$res = mysqli_query($db, "SELECT display_name from $usertable WHERE PID = '$id'");
@@ -684,6 +717,52 @@ if(isset($_GET['download'])) {
 		header("Location: error?404");
 	}
 }
+if(isset($_GET['multi_download'])) {
+	$fileName = sanitize($_GET['file_id']);
+	$n = sanitize($_GET['file_name']);
+	$type = sanitize($_GET['file_type']); //folder or group of files
+	$destination = '/download';
+
+	//if files to dl is > 1, use file zip
+	//else use folder zip
+	if (strpos($a,',') !== false) { //if file name contains , is multiple files
+		$files = explode(',', $fileName);
+		$type = 'file';
+	} else {
+		$files = $fileName;
+		$type = 'folder';
+	}
+
+	if ($type === 'folder') {
+		zipFolder(getPath($files), $destination);
+	} else if ($type === 'file') {
+		//$files will be a CSV split into an array
+		foreach($files as $file) {
+			zipFolder($file, $destination);
+		}
+	}
+	if(file_exists($destination . '/' . $n)) {
+	    header('Pragma: public');
+	    header('Expires: 0');
+	    header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+	    header('Last-Modified: ' . gmdate('D, d M Y H:i:s', filemtime($destination . '/' . $n)) . ' GMT');
+	    header('Content-Type: application/octet-stream');
+	    header('Content-Disposition: inline; filename="'.$n.'"');
+	    header('Content-Transfer-Encoding: binary');
+	    header('Content-Length: ' . filesize($destination . '/' . $n));
+	    header('Connection: close');
+	    readfile($destination . '/' . $n);
+	    exit();
+	} else {
+		echo 'Could not find file: ' . $destination . '/' . $n;
+	}
+}
+if (isset($_POST['clear_dl_contents'])) {
+	if ($alvl >= $alvl_admin)
+		if (deleteFolder('/downloads'))
+			if (mkdir('/downloads'))
+				echo "Cleared downloads temp folder";
+}
 if(isset($_POST['getContent'])) {
 	$cType = sanitize($_POST['getContent']);
 
@@ -715,7 +794,7 @@ if(isset($_POST['getContent'])) {
 		if ($showpageloadtime) { $se['show_pageload'] = 'checked="checked"'; $se['show_pageload2'] = ''; } else { $se['show_pageload'] = ''; $se['show_pageload2'] = 'checked="checked"'; }
 		if ($show_debug) { $se['show_debug'] = 'checked="checked"'; $se['show_debug2'] = ''; } else { $se['show_debug'] = ''; $se['show_debug2'] = 'checked="checked"'; }
 		if ($show_errors) { $se['show_errors'] = 'checked="checked"'; $se['show_errors2'] = ''; } else { $se['show_errors'] = ''; $se['show_errors2'] = 'checked="checked"'; }
-		$echo = str_replace('\\', '', str_replace("{{site-title}}", $title, str_replace("{{site-name}}", $name, str_replace("{{group-password}}", $group_password, file_get_contents('includes/settingspage.php')))));
+		$echo = str_replace('\\', '', str_replace("{{site-title}}", desanitize($title), str_replace("{{site-name}}", desanitize($name), str_replace("{{group-password}}", $group_password, file_get_contents('includes/settingspage.php')))));
 		$echo = str_replace('{{sharing-false}}', $se['allow_sharing2'], str_replace("{{sharing-true}}", $se['allow_sharing'], str_replace("{{site-version}}", $ver, $echo)));
 		$echo = str_replace('{{pageloadtime-false}}', $se['show_pageload2'], str_replace('{{pageloadtime-true}}', $se['show_pageload'], str_replace('{{footer-false}}', $se['show_footer2'], str_replace('{{footer-true}}', $se['show_footer'], $echo))));
 		$echo = str_replace('{{errors-false}}', $se['show_errors2'], str_replace('{{errors-true}}', $se['show_errors'], str_replace('{{debug-false}}', $se['show_debug2'], str_replace('{{debug-true}}', $se['show_debug'], $echo))));

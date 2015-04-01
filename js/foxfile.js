@@ -44,6 +44,7 @@ var bar = {
 			'<button class="btn btn-rename" id="menubar-action-btn" filename="' + title + '" fileHash="' + hash + '" bar="' + this.active + '" onclick="files.renameGUI.show($(this).attr(\'filename\'), $(this).attr(\'fileHash\'), $(this).attr(\'bar\'));"><i class="fa fa-pencil-square-o"></i></button>'+
 			'<button class="btn btn-delete" id="menubar-action-btn" filename="' + title + '" fileHash="' + hash + '" bar="' + this.active + '" onclick="files.deleteGUI.show($(this).attr(\'filename\'), $(this).attr(\'fileHash\'), $(this).attr(\'bar\'));"><i class="fa fa-trash"></i></button>'+
 			'<button class="btn btn-refresh" id="menubar-action-btn" onclick="files.refresh(' + this.active + ')"><i class="fa fa-refresh"></i></button>'+
+			'<button class="btn btn-move" id="menubar-action-btn" filename="' + title + '" fileHash="' + hash + '" bar="' + this.active + '" onclick="files.moveGUI.show($(this).attr(\'filename\'), $(this).attr(\'fileHash\'))"><i class="fa fa-arrow-circle-right"></i></button>'+
 			'<button class="btn btn-fullscreen" id="menubar-action-btn" onclick="bar.toggleFullScreen()"><i class="fa fa-expand"></i></button>'+
 			'<button class="btn btn-dropdown" id="menubar-action-btn" fileHash="' + hash + '" fileid="' + this.active + '" type="' + type + '" state="closed" filename="' + title + '"><i class="fa fa-bars"></i></button>'+
 			'</div>'+
@@ -231,10 +232,12 @@ var bar = {
 				this.move(this.active, 3);
 				this.size(this.active, 2);
 			}
+			$('.btn-fullscreen i').addClass('fa-expand').removeClass('fa-compress');
 			this.fullscreen = false;
 		} else {
 			this.move(this.active, 1);
 			this.size(this.active, 4);
+			$('.btn-fullscreen i').addClass('fa-compress').removeClass('fa-expand');
 			this.fullscreen = true;
 		}
 	},
@@ -282,6 +285,7 @@ var modalActive = false;
 var files = {
 	open: function (hash, title, bar_id, type, onclick) {
 		bar.exitFullScreen();
+		document.title = pageTitle + title_separator + title;
 		//console.log("clicked on file in bar " + bar_id);
 		//console.log("hash: " + hash);
 		//console.log("title: " + title);
@@ -472,7 +476,7 @@ var files = {
 	},
 	shareGUI: {
 		show: function(file, id) {
-
+			
 		},
 		hide: function() {
 			
@@ -490,6 +494,29 @@ var files = {
 
 			d.info(result);
 		});
+	},
+	moveGUI: {
+		show: function(file, id) {
+			//d.info(file+'<br>'+id);
+			$('.modal-move').addClass('modal-active');
+			$('.modal-move .modal-header #modal-header-name').text(file);
+			$('.modal-move #modal-file-id-move').val(id);
+			$('.modal-move .modal-content .minibar').attr({
+				'filehash': id,
+				'filename': file
+			});
+			//$('.modal-move .spinner').fadeIn();
+			//$('.modal-move #modal-bar-id-move').val(bar);
+			$('.modal-move').fadeIn();
+			$('.modal-move .modal-content').css({
+				'height':  parseInt($('.modal-move .modal').css('height')) - (parseInt($('.modal-move .modal-header').css('height')) + parseInt($('.modal-move .modal-footer').css('height'))) - 22 + 'px'
+			})
+			modalActive = true;
+		},
+		hide: function() {
+			$('.modal-move').fadeOut();
+			modalActive = false;
+		}
 	},
 	multiMove: function(file, target) { //handles moving both single and multiple files
 		var hashes = _.uniq(file);
@@ -930,12 +957,14 @@ var clickMenu = {
 			'<i class="fa fa-download cm-btn-download"></i> Download',
 			'<i class="fa fa-plus-circle"></i> New Folder',
 			'<i class="fa fa-share-square-o cm-btn-share"></i> Share',
+			'<i class="fa fa-arrow-circle-right cm-btn-move"></i> Move',
 			'<i class="fa fa-refresh"></i> Refresh'];
 		} else {
 			items = ['<i class="fa fa-trash-o"></i> Delete',
 			'<i class="fa fa-pencil-square-o"></i> Rename',
 			'<i class="fa fa-download cm-btn-download"></i> Download',
 			'<i class="fa fa-share-square-o cm-btn-share"></i> Share',
+			'<i class="fa fa-arrow-circle-right cm-btn-move"></i> Move',
 			'<i class="fa fa-refresh"></i> Refresh'];
 		}
 
@@ -963,6 +992,9 @@ var clickMenu = {
 					break;
 				case 'refresh':
 					this.fn = 'files.refresh($(this).attr(\'bar\'));clickMenu.close();';
+					break;
+				case 'move':
+					this.fn = 'files.moveGUI.show($(this).attr(\'file\'), $(this).attr(\'id\'));clickMenu.close();" cmm="move';
 					break;
 			}
 			$('.clickmenu ul').append('<li class="btn" onclick="' + this.fn + '" bar="' + bar + '" file="' + file + '" id="' + id + '">' + items[i] + '</li>');
@@ -1023,10 +1055,11 @@ var clickMenu = {
 			}
 		});
 		$('.modal-background').on('click', function(e) {
-			if (!$(e.target).parents('.modal').length > 0) {
+			if (!$(e.target).parents('.modal').length > 0 && !$(e.target).is('.modal')) {
 				files.newFolderGUI.hide();
 				files.deleteGUI.hide();
 				files.renameGUI.hide();
+				files.moveGUI.hide();
 			}
 		});
 	}

@@ -98,27 +98,27 @@ $starttime = $time;
 		<p>
 			<label class="login-content-title" for="uname"><i class="fa fa-user"></i> Username</label><!-- <br>
 			<label class="login-content-title login-content-title-desc" for="uname"> The name you will use to log in.</label> -->
-			<input class="login-content" name="unamesub" type="text" id="uname" value="" placeholder="Username" required onBlur="check_availability()">
+			<input class="login-content" name="unamesub" type="text" id="uname" value="" placeholder="Pick a Username" required onBlur="check_availability()">
 		</p>
 		<p>				
 			<label class="login-content-title" for="upass"><i class="fa fa-unlock-alt"></i> Password</label>
-			<input class="login-content" name="upasssub" type="password" id="upass" placeholder="Password" required>
+			<input class="login-content" name="upasssub" type="password" id="upass" placeholder="Set a Password" required>
 		</p>
 		<p>
 			<label class="login-content-title" for="upass2" id="passlab2"><i class="fa fa-unlock-alt"></i> Repeat password</label>
-			<input class="login-content" name="upasssub2" type="password" id="upass2" placeholder="Password" required >
+			<input class="login-content" name="upasssub2" type="password" id="upass2" placeholder="Password, again" required >
 		</p>
 		<?php if($useGroupPassword) { ?>
 		<p>				
-			<label class="login-content-title" for="upass"><i class="fa fa-unlock-alt"></i> Group Password</label>
-			<input class="login-content" name="gpasssub" type="password" id="gpass" placeholder="Group Password">
+			<label class="login-content-title" for="upass"><i class="fa fa-unlock-alt"></i> Access Key</label>
+			<input class="login-content" name="gpasssub" type="password" id="gpass" placeholder="Ask the Owner">
 		</p>
 		<?php } else { ?>
 			<input type="hidden" id="gpass">
 		<?php } ?>
 		<p>
 			<label class="login-content-title" for="uemail"><i class="fa fa-envelope"></i> Email</label>
-			<input class="login-content" name="uemailsub" type="text" id="uemail" value="" placeholder="Email" required onBlur="check_email()">
+			<input class="login-content" name="uemailsub" type="text" id="uemail" value="" placeholder="Your Email" required onBlur="check_email()">
 		</p>
 
 		<button type="submit" name="login" class="btn btn-submit" onclick="check_validity()"><b>Register</b></button>
