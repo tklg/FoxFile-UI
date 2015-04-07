@@ -102,7 +102,8 @@ if ($uid < 1) {
 	<script type="text/template" id="file_template">
     <li class="menubar-content-view" container="<%= model.get('container') %>" type="<%= model.get('basicFileType') %>" filehash="<%= model.get('hash_self') %>" id="<%= model.get('fileID') %>" name="<%= model.get('fileName') %>" pos="">
 		<img class="img-preview" />
-		<div class="text-preview"><div class="spinner"><div class="loading up"></div><div class="loading down"></div></div></div>
+		<textarea class="text-preview" id="editor">Loading...</textarea>
+		<!-- <div class="text-preview" id="editor"><div class="spinner"><div class="loading up"></div><div class="loading down"></div></div></div> -->
 		<audio controls class="audio-preview">Audio tags are not supported by your browser.</audio>
 		<video controls class="video-preview">Video tags are not supported by your browser.</video>
 		<%= model.get('script') %>
@@ -292,6 +293,9 @@ if ($uid < 1) {
     <script type="text/javascript" src="js/showlog.js"></script>
     <script type="text/javascript" src="js/dropzone.js"></script>
     <script type="text/javascript" src="js/foxfile.js"></script>
+    <script type="text/javascript" src="js/codemirror.js"></script>
+    <link rel="stylesheet" href="css/codemirror.css">
+    <link rel="stylesheet" href="css/cm-themes/twilight.css">
     <script type="text/javascript">
 	    setTimeout(function() { //give time for the page to set itself up
 	    	$('#wrapper').css('visibility','visible');

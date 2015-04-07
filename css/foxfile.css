@@ -647,6 +647,12 @@ a:hover {
 	font-family: monospace;
     user-select: all;
 }
+.menubar-content-view[type='text'] .CodeMirror,
+.menubar-content-view[type='code'] .CodeMirror {
+	position: absolute;
+	min-height: 100%;
+	min-width: 100%;
+}
 .audio-preview,
 .video-preview {
 	display: none;

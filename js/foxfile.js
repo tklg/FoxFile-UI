@@ -9,6 +9,7 @@ Dropzone.autoDiscover = false;
 var winHeight = $(window).height();
 var winWidth = $(window).width();
 var res;
+var useContextMenu = false;
 
 $(window).resize(function() {
 	clearTimeout(res);
@@ -796,7 +797,8 @@ var BarContentView = Backbone.View.extend({
 						}
 						//obj.fileType += ' File';
 						this.barTypeToMake = 'file'; //usually overridden by a file after this - if this is the only thing opened (file was opened to view) this will stay
-						obj.script = "<script type=\"text/javascript\">previews.getPreviewImage('" + obj.hash_self + "', " + obj.fileID + ", '" + obj.basicFileType + "')</script>";
+						obj.script = "<script type=\"text/javascript\">previews.getPreviewImage('" + obj.hash_self + "', " + obj.fileID + ", '" + obj.basicFileType + "');" + 
+					    "</script>";
 						obj.is_checked = (_.contains(multiSelect.selected, obj.hash_self) ? "checked" : "");
 					}
 
@@ -1012,42 +1014,44 @@ var clickMenu = {
 	},
 	rebind: function() {
 		$('.menubar:not(.menubar-main)').bind("contextmenu", function(e) {
-			e.preventDefault();
-			//d.info($(e.target).attr("class"));
-			if ($(e.target).is('li')) { //is a file bar
-				var bar = $(e.target).attr('container');
-				var file = $(e.target).attr('name');/*onclick').split(',')[1].trim().replace(/'/g, '');*/
-				var type = $(e.target).attr('type');
-				var id = $(e.target).attr('filehash');
-			} else {
-				if (!$(e.target).is('div')) { //is within a file bar
-					var bar = $(e.target).parents('li').attr('container');
-					var file = $(e.target).parents('li').attr('name');/*onclick').split(',')[1].trim().replace(/'/g, '');*/
-					var type = $(e.target).parents('li').attr('type');
-					var id = $(e.target).parents('li').attr('filehash');
-					//d.info('in');
-				} else { //is the empty space under the bar
-					var bar = $(e.target).parents('section').attr('id').split('-')[1];
-					var file = $(e.target).parents('section').attr('filename');
-					var type = $(e.target).parents('section').attr('type');
-					var id = $(e.target).parents('section').attr('filehash');
-					//d.info("under");
+			if (useContextMenu) {
+				e.preventDefault();
+				//d.info($(e.target).attr("class"));
+				if ($(e.target).is('li')) { //is a file bar
+					var bar = $(e.target).attr('container');
+					var file = $(e.target).attr('name');/*onclick').split(',')[1].trim().replace(/'/g, '');*/
+					var type = $(e.target).attr('type');
+					var id = $(e.target).attr('filehash');
+				} else {
+					if (!$(e.target).is('div')) { //is within a file bar
+						var bar = $(e.target).parents('li').attr('container');
+						var file = $(e.target).parents('li').attr('name');/*onclick').split(',')[1].trim().replace(/'/g, '');*/
+						var type = $(e.target).parents('li').attr('type');
+						var id = $(e.target).parents('li').attr('filehash');
+						//d.info('in');
+					} else { //is the empty space under the bar
+						var bar = $(e.target).parents('section').attr('id').split('-')[1];
+						var file = $(e.target).parents('section').attr('filename');
+						var type = $(e.target).parents('section').attr('type');
+						var id = $(e.target).parents('section').attr('filehash');
+						//d.info("under");
+					}
 				}
+				cmWidth = 200;
+				cmHeight = clickMenu.height;
+				if (e.pageY > winHeight - cmHeight) {
+					if (e.pageX > winWidth - cmWidth)
+						clickMenu.open(e.pageX - cmWidth, e.pageY - (cmHeight / 2), bar, file, type, id);
+					else
+						clickMenu.open(e.pageX, e.pageY - (cmHeight / 2), bar, file, type, id);
+				} else {
+					if (e.pageX > winWidth - cmWidth)
+						clickMenu.open(e.pageX - cmWidth, e.pageY, bar, file, type, id);
+					else
+						clickMenu.open(e.pageX, e.pageY, bar, file, type, id);
+				}
+				files.newFolderGUI.hide();
 			}
-			cmWidth = 200;
-			cmHeight = clickMenu.height;
-			if (e.pageY > winHeight - cmHeight) {
-				if (e.pageX > winWidth - cmWidth)
-					clickMenu.open(e.pageX - cmWidth, e.pageY - (cmHeight / 2), bar, file, type, id);
-				else
-					clickMenu.open(e.pageX, e.pageY - (cmHeight / 2), bar, file, type, id);
-			} else {
-				if (e.pageX > winWidth - cmWidth)
-					clickMenu.open(e.pageX - cmWidth, e.pageY, bar, file, type, id);
-				else
-					clickMenu.open(e.pageX, e.pageY, bar, file, type, id);
-			}
-			files.newFolderGUI.hide();
 		});
 		$('.menubar').bind("click", function(e) {
 			if (!$(e.target).parents('.clickmenu').length > 0/* && !$(e.target).parents('.menubar-action-btn') > 0*/) {
@@ -1087,8 +1091,10 @@ var previews = {
 					read_file: hash
 				},
 				function(data) {
-					$('.menubar-content-view#' + target + ' .text-preview').html(data.replace(/(?:\r\n|\r|\n)/g, '<br />')
-																					 .replace(/\t/g, '&nbsp;&nbsp;'));
+					codemir.setcontent(target, data);
+					codemir.seteditor(hash);
+					//$('.menubar-content-view#' + target + ' .text-preview').html(data.replace(/(?:\r\n|\r|\n)/g, '<br />').replace(/\t/g, '&nbsp;&nbsp;'));
+					//$('.menubar-content-view#' + target + ' .text-preview').html(data);
 				});
 			} else if (type == 'audio') {
 				var ext = getExt(hash);
@@ -1244,3 +1250,31 @@ $(document).on('change', '.file-multiselect-checkbox-container input', function(
 });
 var currentTargetFolder = '';
 var currentDraggingFolder = [];
+var codemir = {
+	seteditor: function(file) {
+		mode1 = getExt(file);
+		var mode = null;
+		switch (mode1) {
+			case 'md': mode = 'markdown'; break;
+			case 'js': mode = 'javascript'; break;
+		}
+		var editor = CodeMirror.fromTextArea($('#editor')[0], {
+					lineNumbers: true,
+					lineWrapping: false,
+					theme: 'twilight'
+				});
+		if (mode != null) {
+			d.info("Loading mode: " + mode);
+			$.getScript('js/cm-mode/'+mode+'/'+mode+'.js', function() {
+				d.info("Setting mode to " + mode);
+				editor.setOption("mode", mode);
+		   		d.info("Initialized CodeMirror");
+			});
+		}
+	},
+	setcontent: function(target, content) {
+		$('.menubar-content-view#' + target + ' .text-preview').html(content);
+		d.info("Set editor content");
+		//$('.menubar-content-view#' + target + ' .ace_text-input').html(content);
+	}
+}
