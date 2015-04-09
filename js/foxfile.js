@@ -9,7 +9,8 @@ Dropzone.autoDiscover = false;
 var winHeight = $(window).height();
 var winWidth = $(window).width();
 var res;
-var useContextMenu = false;
+var useContextMenu = true;
+var codemirrorActive = false;
 
 $(window).resize(function() {
 	clearTimeout(res);
@@ -415,13 +416,6 @@ var files = {
 			});
 		}
 	},
-	download: function(file, id) {
-		var frame = $("<iframe></iframe>").attr('src', 'dbquery.php?download&file_id='+id+"&file_name="+file).css('display', 'none');
-		frame.appendTo('body');
-		setTimeout(function() {
-			$('body > iframe, body > input[type="file"]').remove();
-		}, 30000); //let it attempt to download for 30 seconds
-	},
 	uploadGUI: function(target, file, id) {
 
 	},
@@ -582,9 +576,32 @@ var files = {
 			multiSelect.reset();
 		});
 	},
-	multiDownload: function(file) {
-		var hashes = _.uniq(file);
-		d.warning("File zipping is not added yet, sorry :c");
+	download: function(file, id, type) {
+		if (multiSelect.selected.length > 1 || type == 'folder') {
+			this.multiDownload(file, id, type);
+		} else {
+			var frame = $("<iframe></iframe>").attr('src', 'dbquery.php?download&file_id='+id+"&file_name="+file).css('display', 'none');
+			frame.appendTo('body');
+			setTimeout(function() {
+				$('body > iframe, body > input[type="file"]').remove();
+			}, 10000); //let it attempt to download for 10 seconds
+		}
+	},
+	multiDownload: function(file, id, type) {
+		if (multiSelect.selected.length > 1) {
+			var hashes = _.uniq(multiSelect.selected);
+		} else {
+			var hashes = [id];
+		}
+		//d.info("Downloading " + hashes.toString());
+		if (type != 'folder') type = 'file';
+		//d.info("Type: " + type);
+		var frame = $("<iframe></iframe>").attr('src', 'dbquery.php?multi_download&file_id='+hashes.toString()+"&file_name="+file+"&file_type="+type).css('display', 'none');
+		frame.appendTo('body');
+		setTimeout(function() {
+			$('body > iframe, body > input[type="file"]').remove();
+		}, 10000); //let it attempt to download for 10 seconds
+		//d.warning("File zipping is not added yet, sorry :c");
 	}
 }
 
@@ -676,126 +693,11 @@ var BarContentView = Backbone.View.extend({
 						//this.barTypeToMake = 'folder';
 						obj.fileType = 'Folder';
 					} else {
-						switch (getExt(obj.fileName).toLowerCase()) {
-							case 'txt': case 'log': case 'rtf':
-								obj.basicFileType = 'text'
-								break;
-							case 'js': case 'java': case 'bat': case 'c': case 'cs': case 'cpp': case 'lua': case 'md': case 'css': case 'html': case 'htm': case 'php': case 'json':
-								obj.basicFileType = 'code';
-								break;
-							case 'dat': case 'xml':
-								obj.basicFileType = 'data'
-								break;
-							case 'aif': case 'm4a': case 'mid': case 'mp3': case 'mpa': case 'wav': case 'wma':
-								obj.basicFileType = 'audio'
-								break;
-							case 'avi': case 'm4v': case 'mov': case 'mp4': case 'mpg': case 'wmv':
-								obj.basicFileType = 'video'
-								break;
-							case 'bmp': case 'jpg': case 'png': case 'psd': case 'tga': case 'gif': case 'svg': case 'ai':
-								obj.basicFileType = 'image'
-								break;
-							case 'zip': case 'gz': case 'rar': case 'pkg': case '7z':
-								obj.basicFileType = 'zip'
-								break;
-							case 'pdf':
-								obj.basicFileType = 'pdf'
-								break;
-						}
-						switch(getExt(obj.fileName).toLowerCase()) {
-							/* text files */
-							case 'txt':
-								obj.fileType = "Text File";
-								break;
-							case 'log':
-								obj.fileType = 'Log File';
-								break;
-							case 'rtf':
-								obj.fileType = 'Rich Text Format';
-								break;
-							case 'md':
-								obj.fileType = 'Markdown File';
-								break;
-								/* data files */
-							case 'dat':
-								obj.fileType = 'Data File';
-								break;
-							case 'xml':
-								obj.fileType = 'DEFINE PLS';
-								break;
-							case 'dat':
-								obj.fileType = 'Data File';
-								break;
-							case 'json':
-								obj.fileType = 'JSON File';
-								break;
-							/* Image files */
-							case 'bmp':
-								obj.fileType = 'Bitmap Image';
-								break;
-							case 'jpg':
-								obj.fileType = 'JPEG Image';
-								break;
-							case 'png':
-								obj.fileType = 'PNG Image';
-								break;
-							case 'psd':
-								obj.fileType = 'Photoshop Document';
-								break;
-							case 'tga':
-								obj.fileType = 'TARGA Image';
-								break;
-							case 'gif':
-								obj.fileType = 'Animated GIF';
-								break;
-							case 'svg':
-								obj.fileType = 'Scalable Vector';
-								break;
-							case 'ai':
-								obj.fileType = 'Illistrator Image';
-								break;
-							/* video files */
-							case 'wmv':
-								obj.fileType = 'Windows Movie';
-								break;
-							/* archives */
-							case 'zip':
-								obj.fileType = 'ZIP Archive';
-								break;
-							case '7z':
-								obj.fileType = '7zip Archive';
-								break;
-							case 'gz':
-								obj.fileType = 'GZ Archive';
-								break;
-							case 'rar':
-								obj.fileType = 'RAR Archive';
-								break;
-							/* scripts and code files */
-							case 'js':
-								obj.fileType = 'Javascript File';
-								break;
-							case 'rb':
-								obj.fileType = 'Ruby Script';
-								break;
-							case 'py':
-								obj.fileType = 'Python Script';
-								break;
-							case 'bat':
-								obj.fileType = 'Batch File';
-								break;
-							case 'vbs':
-								obj.fileType = 'Visual Basic Script';
-								break;
-							/* other */
-							case 'pdf':
-								obj.fileType = 'Adobe PDF';
-								break;
-							default: 
-								obj.fileType = getExt(obj.fileName).toUpperCase() + ' File';
-								break;
-						}
-						//obj.fileType += ' File';
+
+						var fObj = fileTypeDetails.get(getExt(obj.fileName).toLowerCase());
+						obj.basicFileType = fObj.basicFileType;
+						obj.fileType = fObj.fileType;
+
 						this.barTypeToMake = 'file'; //usually overridden by a file after this - if this is the only thing opened (file was opened to view) this will stay
 						obj.script = "<script type=\"text/javascript\">previews.getPreviewImage('" + obj.hash_self + "', " + obj.fileID + ", '" + obj.basicFileType + "');" + 
 					    "</script>";
@@ -981,7 +883,7 @@ var clickMenu = {
 					this.fn = 'files.renameGUI.show($(this).attr(\'file\'), $(this).attr(\'id\'), $(this).attr(\'bar\'));clickMenu.close();" cmm="rename';
 					break;
 				case 'download':
-					this.fn = 'files.download($(this).attr(\'file\'), $(this).attr(\'id\'));clickMenu.close();" cmm="download';
+					this.fn = 'files.download($(this).attr(\'file\'), $(this).attr(\'id\'), $(this).parents(\'.clickmenu\').attr(\'type\'));clickMenu.close();" cmm="download';
 					break;
 				case 'upload':
 					this.fn = 'clickButton(\'#menubar-action-btn-\', $(this).attr(\'bar\'))';
@@ -1014,7 +916,7 @@ var clickMenu = {
 	},
 	rebind: function() {
 		$('.menubar:not(.menubar-main)').bind("contextmenu", function(e) {
-			if (useContextMenu) {
+			if (useContextMenu && !$(e.target).parents().hasClass('CodeMirror')) {
 				e.preventDefault();
 				//d.info($(e.target).attr("class"));
 				if ($(e.target).is('li')) { //is a file bar
@@ -1175,7 +1077,7 @@ var multiSelect = {
 }
 $(document).keydown(function(e) {
 	if (e.keyCode == 32) { //spacebar
-		if (!modalActive) bar.toggleFullScreen();
+		if (!modalActive && !codemirrorActive) bar.toggleFullScreen();
 	}
 	if (e.keyCode == 13) { //enter
 		if (modalActive) $('.modal-active .modal-footer .btn-submit').click();
@@ -1254,27 +1156,306 @@ var codemir = {
 	seteditor: function(file) {
 		mode1 = getExt(file);
 		var mode = null;
-		switch (mode1) {
-			case 'md': mode = 'markdown'; break;
-			case 'js': mode = 'javascript'; break;
-		}
+		var det = fileTypeDetails.get(mode1);
+		mode = det.language;
+		var mime = null;
+		mime = det.mime;
+
 		var editor = CodeMirror.fromTextArea($('#editor')[0], {
 					lineNumbers: true,
 					lineWrapping: false,
-					theme: 'twilight'
+					theme: 'twilight',
+					indentWithTabs: true,
+					readOnly: false,
+					keyMap: 'sublime',
+				    foldGutter: true,
+				    gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
 				});
-		if (mode != null) {
-			d.info("Loading mode: " + mode);
+				editor.on('focus', function() {
+					codemirrorActive = true;
+				});
+				editor.on('blur', function() {
+					codemirrorActive = false;
+				});
+		if (mode != null && mode != '') {
+			//d.info("Loading mode: " + mode);
 			$.getScript('js/cm-mode/'+mode+'/'+mode+'.js', function() {
-				d.info("Setting mode to " + mode);
-				editor.setOption("mode", mode);
-		   		d.info("Initialized CodeMirror");
+				if (mime != null && mime != '') {
+					d.info("Setting mode to " + mime + '<br>js/cm-mode/'+mode+'/'+mode+'.js');
+					editor.setOption("mode", mime);
+				} else {
+					d.info("Setting mode to " + mode + '<br>js/cm-mode/'+mode+'/'+mode+'.js');
+					editor.setOption("mode", mode);
+				}
+		   		//d.info("Initialized CodeMirror");
 			});
 		}
 	},
 	setcontent: function(target, content) {
 		$('.menubar-content-view#' + target + ' .text-preview').html(content);
-		d.info("Set editor content");
+		//d.info("Set editor content");
 		//$('.menubar-content-view#' + target + ' .ace_text-input').html(content);
+	}
+}
+var fileTypeDetails = {
+	get: function(ext) {
+		if (ext.indexOf('/') > 0) { //'/place/thing/file.ext'
+			ext = getExt(ext);
+		} else { //ext from getExt
+
+		}
+		var bft = 'file';
+		var language = ''; //if it is code
+		var dft = '';
+		var mime = '';
+
+		switch (ext) {
+			case 'txt':
+				bft = 'text';
+				dft = 'Text File';
+				language = '';
+				break;
+			case 'log':
+				bft = 'text';
+				dft = 'Log File';
+				language = '';
+				break;
+			case 'rtf':
+				bft = 'text';
+				dft = 'Rich Text';
+				language = '';
+				break;
+			case 'js':
+				bft = 'code';
+				dft = 'Javascript';
+				language = 'javascript';
+				break;
+			case 'java':
+				bft = 'code';
+				dft = 'Java File';
+				language = 'clike'; //cm doesnt have a mode for java
+				mime = 'text/x-java';
+				break;
+			case 'bat':
+				bft = 'code';
+				dft = 'Batch File';
+				language = '';
+				break;
+			case 'c':
+				bft = 'code';
+				dft = 'C File';
+				language = 'clike';
+				mime = 'text/x-csrc';
+				break;
+			case 'cs':
+				bft = 'code';
+				dft = 'C# File';
+				language = 'clike';
+				mime = 'text/x-csharp';
+				break;
+			case 'cpp':
+				bft = 'code';
+				dft = 'C++ File';
+				language = 'clike';
+				mime = 'text/x-c++src';
+				break;
+			case 'lua':
+				bft = 'code';
+				dft = 'LUA Script';
+				language = 'lua';
+				break;
+			case 'md':
+				bft = 'code';
+				dft = 'Markdown File';
+				language = 'markdown';
+				break;
+			case 'css':
+				bft = 'code';
+				dft = 'CSS File';
+				language = 'css';
+				break;
+			case 'scss':
+				bft = 'code';
+				dft = 'Sass File';
+				language = 'scss';
+				break;
+			case 'html':
+				bft = 'code';
+				dft = 'HTML File';
+				language = 'htmlmixed';
+				break;
+			case 'htm':
+				bft = 'code';
+				dft = 'htmlmixed';
+				language = 'HTM File';
+				break;
+			case 'php':
+				bft = 'code';
+				dft = 'PHP Script';
+				language = 'php';
+				break;
+			case 'json':
+				bft = 'code';
+				dft = 'JSON File';
+				language = '';
+				break;
+			case 'rb':
+				bft = 'code';
+				dft = 'Ruby File';
+				language = 'ruby';
+				break;
+			case 'py':
+				bft = 'code';
+				dft = 'Python Script';
+				language = 'python';
+				break;
+			case 'sql':
+				bft = 'code';
+				dft = 'SQL Script';
+				language = 'sql';
+				break;
+			case 'vbs':
+				bft = 'code';
+				dft = 'Visual Basic';
+				language = 'vbs';
+				break;
+			case 'ino':
+				bft = 'code';
+				dft = 'Arduino Sketch';
+				language = 'clike';
+				mime = "text/x-csrc";
+				break;
+			case 'dat':
+				bft = 'text';
+				dft = 'Data File';
+				language = 'text';
+				break;
+			case 'xml':
+				bft = 'text';
+				dft = 'XML Sheet';
+				language = 'xml';
+				break;
+			case 'aif':
+				bft = 'audio';
+				dft = 'AIFF Audio';
+				break;
+			case 'm4a':
+				bft = 'audio';
+				dft = 'MPEG-4 Audio';
+				break;
+			case 'mid':
+				bft = 'audio';
+				dft = 'MIDI File';
+				break;
+			case 'mp3':
+				bft = 'audio';
+				dft = 'MP3 Audio';
+				break;
+			case 'mpa':
+				bft = 'audio';
+				dft = 'MPEG-2 Audio';
+				break;
+			case 'wav':
+				bft = 'audio';
+				dft = 'Waveform Audio';
+				break;
+			case 'wma':
+				bft = 'audio';
+				dft = 'Windows Audio';
+				break;
+			case 'avi':
+				bft = 'video';
+				dft = 'AVI Video';
+				break;
+			case 'm4v':
+				bft = 'video';
+				dft = 'M4V Video';
+				break;
+			case 'mov':
+				bft = 'video';
+				dft = 'Movie File';
+				break;
+			case 'mp4':
+				bft = 'video';
+				dft = 'MP3 Video';
+				break;
+			case 'mpg':
+				bft = 'video';
+				dft = 'MPEG Video';
+				break;
+			case 'wmv':
+				bft = 'video';
+				dft = 'Windows Video';
+				break;
+			case 'bmp':
+				bft = 'image';
+				dft = 'Bitmap Image';
+				break;
+			case 'jpg':
+				bft = 'image';
+				dft = 'JPEG Image';
+				break;
+			case 'png':
+				bft = 'image';
+				dft = 'PNG Image';
+				break;
+			case 'psd':
+				bft = 'image';
+				dft = 'Photoshop Document';
+				break;
+			case 'tga':
+				bft = 'image';
+				dft = 'TARGA Image';
+				break;
+			case 'gif':
+				bft = 'image';
+				dft = 'Animated GIF';
+				break;
+			case 'svg':
+				bft = 'image';
+				dft = 'Scalable Vector';
+				break;
+			case 'ai':
+				bft = 'image';
+				dft = 'Illustrator Document';
+				break;
+			case 'zip':
+				bft = 'zip';
+				dft = 'ZIP Archive';
+				break;
+			case 'gz':
+				bft = 'zip';
+				dft = 'GNU Archive';
+				break;
+			case 'rar':
+				bft = 'zip';
+				dft = 'RAR Archive';
+				break;
+			case 'pkg':
+				bft = 'zip';
+				dft = 'Package Archive';
+				break;
+			case '7z':
+				bft = 'zip';
+				dft = '7Zip Archive';
+				break;
+			case 'pdf':
+				bft = 'pdf';
+				dft = 'Adobe PDF';
+				break;
+			default:
+				bft = '';
+				dft = ext.toUpperCase() + ' File';
+				break;
+		}
+		//create and return object with stuff
+		var details = {
+			ext: ext,
+			basicFileType: bft,
+			fileType: dft,
+			language: language,
+			mime: mime
+		}
+		return details;
 	}
 }

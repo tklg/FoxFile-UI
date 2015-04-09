@@ -1,10 +1,10 @@
 <?php
+session_start();
 /*
 * dbquery.php - FoxFile
 * (c) Theodore Kluge 2015
 * http://kluge.ninja
 */
-session_start();
 require('includes/user.php');
 require('includes/config.php');
 ini_set('upload_max_filesize', $ini_max_upload . 'M');
@@ -14,7 +14,8 @@ if(!isset($_SESSION['access_level'])) $_SESSION['access_level'] = 0;
 if(!isset($_SESSION['uhd'])) $_SESSION['uhd'] = 0;
 if(!isset($_SESSION['access_level'])) $_SESSION['access_level'] = 0;
 ini_set('display_errors',1);
-error_reporting(E_ALL);
+//error_reporting(E_ALL);
+error_reporting(0);
 //connect to database  
 $db = mysqli_connect($dbhost,$dbuname,$dbupass,$dbname);
 $usertable = $database['TABLE_USERS'];
@@ -88,6 +89,12 @@ if ($show_debug) {
 		phpinfo();
 		die();
 	}
+}
+function getName($file) {
+	global $file_root, $file_prefix, $uhd, $db, $filetable;
+	$result = mysqli_query($db, "SELECT file_name from $filetable where file_self = '$file'");
+	$row = mysqli_fetch_array($result);
+	return $row['file_name'];
 }
 function getPath($file) { //this function was evil and still is - eats memory
 	global $file_root, $file_prefix, $uhd, $db, $filetable;
@@ -253,38 +260,59 @@ function deleteFile($file) {
 	$path = getPath($file);
 	unlink($path);
 }
-function zipFolder($source, $destination) {
-    if (!extension_loaded('zip') || !file_exists($source)) {
+function Zip($source, $destination) {
+    if (is_string($source)) {
+    	$source_arr = array(getPath($source)); // convert it to array
+    	//echo "Source was string, making array<br>";
+    } else {
+    	$fileList = array();
+		foreach($source as $file) {
+			$fileList[] = getPath($file);
+		}
+    	$source_arr = $fileList;
+    }
+    if (!extension_loaded('zip')) {
         return false;
     }
 
     $zip = new ZipArchive();
-    if (!$zip->open($destination, ZIPARCHIVE::CREATE)) {
-        return false;
+    if ($zip->open($destination, ZIPARCHIVE::CREATE)) {
+        //echo "Created zip file: ".$destination.'<br>';
+    } else {
+    	return false;
     }
 
-    $source = str_replace('\\', '/', realpath($source));
+    foreach ($source_arr as $source) {
+        if (!file_exists($source)) continue;
+		$source = str_replace('\\', '/', realpath($source));
+        //echo "Source: " . $source . '<br>';
+		if (is_dir($source)) {
+		    $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($source), RecursiveIteratorIterator::SELF_FIRST);
 
-    if (is_dir($source))
-    {
-        $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($source), RecursiveIteratorIterator::SELF_FIRST);
+		    foreach ($files as $file) {
+		        $file = str_replace('\\', '/', realpath($file));
 
-        foreach ($files as $file) {
-            $file = str_replace('\\', '/', realpath($file));
+		        if (is_dir($file)) {
+		            $zip->addEmptyDir(str_replace($source . '/', '', $file . '/'));
+		            //$zip->addEmptyDir($file);
+		            //echo "Making directory: " . str_replace($source . '/', '', $file . '/') . '<br>';
+		        }
+		        else if (is_file($file)) {
+		            $zip->addFromString(str_replace($source . '/', '', $file), file_get_contents($file));
+		            //$zip->addFromString($file, file_get_contents($file));
+		            //echo "Making file &emsp;: " . str_replace($source . '/', '', $file . '/') . '<br>';
+		        }
+		    }
+		}
+		else if (is_file($source)) {
+		    $zip->addFromString(basename($source), file_get_contents($source));
+		    //$zip->addFromString($file, file_get_contents($file));
+		}
 
-            if (is_dir($file)) {
-                $zip->addEmptyDir(str_replace($source . '/', '', $file . '/'));
-            }
-            else if (is_file($file)) {
-                $zip->addFromString(str_replace($source . '/', '', $file), file_get_contents($file));
-            }
-        }
-    }
-    else if (is_file($source)) {
-        $zip->addFromString(basename($source), file_get_contents($source));
     }
 
     return $zip->close();
+
 }
 if(isset($_POST['fullNameFromID'])) {
 	$id = sanitize($_POST['fullNameFromID']);
@@ -705,6 +733,7 @@ if(isset($_GET['download'])) {
 		    header('Cache-Control: must-revalidate');
 		    header('Pragma: public');
 		    header('Content-Length: ' . filesize($filePath));
+		    ob_end_flush();
 		    readfile($filePath);
 
 	        exit();
@@ -721,40 +750,59 @@ if(isset($_GET['multi_download'])) {
 	$fileName = sanitize($_GET['file_id']);
 	$n = sanitize($_GET['file_name']);
 	$type = sanitize($_GET['file_type']); //folder or group of files
-	$destination = '/download';
-
+	if (!file_exists('downloads/')) mkdir('downloads/');
+	if (!file_exists('downloads/' . $uhd)) mkdir('downloads/' . $uhd);
+	$destination = 'downloads/' . $uhd . '/' . $n . '.zip';
+	//echo 'ID: ' . $fileName.'<br>';
+	//echo 'Name: ' . $n.'<br>';
+	//echo 'Type: ' . $type.'<br>';
+	//echo 'Dest: ' . $destination.'<br>';
 	//if files to dl is > 1, use file zip
 	//else use folder zip
-	if (strpos($a,',') !== false) { //if file name contains , is multiple files
+	if ($type == 'file') { //if file name contains , is multiple files
 		$files = explode(',', $fileName);
-		$type = 'file';
+		//echo 'Type = File<br>';
 	} else {
 		$files = $fileName;
-		$type = 'folder';
+		//echo 'Type = Folder<br>';
 	}
-
 	if ($type === 'folder') {
-		zipFolder(getPath($files), $destination);
+		if (getOwner($files) == $uid) {
+			//echo 'Zipping folder<br>';
+			if (!Zip($files, $destination)) echo "Failed to zip files.";
+		} else {
+			//echo "You do not have access to these files.";
+		}
 	} else if ($type === 'file') {
 		//$files will be a CSV split into an array
-		foreach($files as $file) {
-			zipFolder($file, $destination);
+		if (getOwner($files[0]) == $uid) {
+			//echo 'Zipping files<br>';
+			if (!Zip($files, $destination)) echo "Failed to zip files.";
+		} else {
+			//echo "You do not have access to these files.";
 		}
 	}
-	if(file_exists($destination . '/' . $n)) {
+	if(file_exists($destination)) {
+		//echo $destination;
 	    header('Pragma: public');
 	    header('Expires: 0');
 	    header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
-	    header('Last-Modified: ' . gmdate('D, d M Y H:i:s', filemtime($destination . '/' . $n)) . ' GMT');
 	    header('Content-Type: application/octet-stream');
-	    header('Content-Disposition: inline; filename="'.$n.'"');
-	    header('Content-Transfer-Encoding: binary');
-	    header('Content-Length: ' . filesize($destination . '/' . $n));
-	    header('Connection: close');
-	    readfile($destination . '/' . $n);
+	    header("Content-Description: File Transfer");
+	    header('Content-Disposition: attachment; filename="'.$n.'.zip"');
+	    header('Content-Length: ' . filesize($destination));
+	    header("Content-Transfer-Encoding: binary");
+	    ob_clean();
+		flush();
+	    readfile($destination);
+	    //sleep(1);
+	    //file should stay until it finishes downloading, then poof by itself
+	   /* if (deleteFolder('downloads/' . $uhd))
+			if (mkdir('downloads/' . $uhd))
+				echo "Cleared downloads folder";*/
 	    exit();
 	} else {
-		echo 'Could not find file: ' . $destination . '/' . $n;
+		echo 'Could not find file: ' . $destination;
 	}
 }
 if (isset($_POST['clear_dl_contents'])) {

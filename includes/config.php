@@ -1,5 +1,5 @@
 <?php
-			$show_errors = 1;
+			$show_errors = 0;
 			$show_debug = 0;
 			$title = "FoxFile";
 			$name = "<span id='redfox'>Fox</span>File";
@@ -14,6 +14,7 @@
 			$alvl_admin = 5;
 			$alvl_user = 1;
 			$ini_max_upload = 128;
+			$load_codeMirror_addons = 1;
 			$database = [
 				"NAME" => 'FOXFILE',
 				"PREFIX" => null,

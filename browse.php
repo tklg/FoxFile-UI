@@ -293,16 +293,39 @@ if ($uid < 1) {
     <script type="text/javascript" src="js/showlog.js"></script>
     <script type="text/javascript" src="js/dropzone.js"></script>
     <script type="text/javascript" src="js/foxfile.js"></script>
-    <script type="text/javascript" src="js/codemirror.js"></script>
-    <link rel="stylesheet" href="css/codemirror.css">
-    <link rel="stylesheet" href="css/cm-themes/twilight.css">
     <script type="text/javascript">
 	    setTimeout(function() { //give time for the page to set itself up
 	    	$('#wrapper').css('visibility','visible');
 			$('#spinner-pre').remove();
 	    }, 700);
     </script>
+    <link rel="stylesheet" href="css/codemirror.css">
+    <link rel="stylesheet" href="css/cm-themes/twilight.css">
+    <script type="text/javascript" src="js/codemirror.js"></script>
+    <script src="js/cm-keymap/sublime.js"></script>
+    <?php if ($load_codeMirror_addons) { ?>
+    <script type="text/javascript" src="js/cm-addon/dialog/dialog.js"></script>
+    <link href="js/cm-addon/dialog/dialog.css" rel="stylesheet" />
+    <script type="text/javascript" src="js/cm-addon/search/searchcursor.js"></script>
+    <script type="text/javascript" src="js/cm-addon/search/search.js"></script>
+    <script type="text/javascript" src="js/cm-addon/edit/closebrackets.js"></script>
+    <script type="text/javascript" src="js/cm-addon/comment/comment.js"></script>
+    <script type="text/javascript" src="js/cm-addon/fold/foldcode.js"></script>
+    <script type="text/javascript" src="js/cm-addon/fold/foldgutter.js"></script>
+    <script src="js/cm-addon/fold/brace-fold.js"></script>
+    <script src="js/cm-addon/fold/xml-fold.js"></script>
+    <script src="js/cm-addon/fold/markdown-fold.js"></script>
+    <script src="js/cm-addon/fold/comment-fold.js"></script>
+    <link href="js/cm-addon/fold/foldgutter.css" rel="stylesheet" />
+    <!-- Load the basic modes in because they are used a lot -->
+    <script src="js/cm-mode/xml/xml.js"></script>
+    <script src="js/cm-mode/javascript/javascript.js"></script>
+    <script src="js/cm-mode/css/css.js"></script>
+    <script src="js/cm-mode/htmlmixed/htmlmixed.js"></script>
+    <script src="js/cm-mode/clike/clike.js"></script>
 	<?php
+	}
+
 	$time = microtime();
 	$time = explode(' ', $time);
 	$time = $time[1] + $time[0];

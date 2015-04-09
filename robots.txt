@@ -1,5 +1,5 @@
 User-agent: *
-Disallow: /blackhole/
+Disallow: /downloads/
 Disallow: /files/
 Disallow: /includes/
 Disallow: /_install/
