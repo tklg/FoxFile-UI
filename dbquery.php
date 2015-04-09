@@ -750,7 +750,7 @@ if(isset($_GET['multi_download'])) {
 	$fileName = sanitize($_GET['file_id']);
 	$n = sanitize($_GET['file_name']);
 	$type = sanitize($_GET['file_type']); //folder or group of files
-	if (!file_exists('downloads/')) mkdir('downloads/');
+	if (!file_exists('downloads')) mkdir('downloads');
 	if (!file_exists('downloads/' . $uhd)) mkdir('downloads/' . $uhd);
 	$destination = 'downloads/' . $uhd . '/' . $n . '.zip';
 	//echo 'ID: ' . $fileName.'<br>';
