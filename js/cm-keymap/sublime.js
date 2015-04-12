@@ -550,6 +550,7 @@
   map[ctrl + "H"] = "replace";
   map["F3"] = "findNext";
   map["Shift-F3"] = "findPrev";
+  map[ctrl + "S"] = "save";
 
   CodeMirror.normalizeKeyMap(map);
 });

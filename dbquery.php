@@ -329,7 +329,7 @@ if(isset($_GET['dir'])) {
 		$type = sanitize($_GET['type']);
 		if ($type === 'folder') {
 			$dirOwner = mysqli_query($db, "SELECT owner from $filetable WHERE file_parent='$dir'");
-			$resultDir = mysqli_query($db, "SELECT * from $filetable WHERE file_parent='$dir' AND owner='$uid' ORDER BY file_type"); //also order by file_type or file_name or last_modified
+			$resultDir = mysqli_query($db, "SELECT * from $filetable WHERE file_parent='$dir' AND owner='$uid' ORDER BY file_name"); //also order by file_type or file_name or last_modified
 			$giveResult = false;
 			if (mysqli_num_rows($resultDir) > 0) {
 				while($row = mysqli_fetch_array($dirOwner)) {
@@ -378,6 +378,54 @@ if(isset($_GET['dir'])) {
 			} else {  
 			   	echo '[{"PID": "0","owner":"0","file_name":"File Does Not Exist","file_size":"0","file_type":"text","file_self":"test_hash","file_parent":"home_dir","file_child":"","last_modified":"' . date("F j, Y, g:i a") . '"}]'; 
 			}
+		}
+	}
+}
+if (isset($_POST['minibar_dir'])) {
+	$dir = sanitize($_POST['minibar_dir']);
+	$resultDir = mysqli_query($db, "SELECT * from $filetable WHERE file_parent='$dir' AND owner='$uid' AND file_type='folder' ORDER BY file_name"); //also order by file_type or file_name or last_modified
+	$selfDir = mysqli_query($db, "SELECT * from $filetable WHERE file_self='$dir' AND owner='$uid' AND file_type='folder'");
+	if(mysqli_num_rows($resultDir) > 0) {
+		echo '<ul class="minibar" filehash="'.$dir.'" id="" type="folder" filename="">
+              <li class="minibar-content" type="folder" id="minibar-back">
+              <span class="minibar-file-name"><i class="fa fa-ellipsis-h"></i></span>
+              </li>';
+        $row2 = mysqli_fetch_array($selfDir);
+        if ($dir == $uhd) {
+        	echo '<li class="minibar-content-noclick minibar-content-target" onclick="$(\'.modal-move .modal-footer #btn-move\').click();" filehash="' . $dir . '" id="' . $dir . '" type="folder" filename="' . $dir . '">
+	              <span class="minibar-file-name">Send to: ' . $dir . '</span>
+	              </li>';
+        } else {
+	        echo '<li class="minibar-content-noclick minibar-content-target" onclick="$(\'.modal-move .modal-footer #btn-move\').click();" filehash="' . $row2['file_self'] . '" id="' . $row2['PID'] . '" type="folder" filename="' . $row2['file_name'] . '">
+	              <span class="minibar-file-name">Send to: ' . $row2['file_name'] . '</span>
+	              </li>';
+        }
+		$r = '';
+		while($row = mysqli_fetch_array($resultDir)) {
+			$r .= '<li class="minibar-content" filehash="' . $row['file_self'] . '" id="' . $row['PID'] . '" type="folder" filename="' . $row['file_name'] . '">
+                   <span class="minibar-file-name">' . $row['file_name'] . '</span>
+                   </li>';
+		}
+	
+		echo $r;
+		echo '</ul>
+			<input id="modal-file-id-move" type="hidden" />
+			<input id="modal-bar-id-move" type="hidden" />';
+	
+	} else {
+		if(mysqli_num_rows($selfDir) > 0) {
+			$row = mysqli_fetch_array($selfDir);
+			echo '<ul class="minibar" filehash="'.$dir.'" id="" type="folder" filename="">
+              <li class="minibar-content" type="folder" id="minibar-back">
+              <span class="minibar-file-name"><i class="fa fa-ellipsis-h"></i></span>
+              </li>';
+			echo '<li class="minibar-content-noclick minibar-content-target" filehash="' . $row['file_self'] . '" id="' . $row['PID'] . '" type="folder" filename="' . $row['file_name'] . '">
+                   <span class="minibar-file-name">Send to: ' . $row['file_name'] . '</span>
+                   </li>';
+			echo '<input id="modal-file-id-move" type="hidden" />
+				  <input id="modal-bar-id-move" type="hidden" />';
+		} else {
+			echo 0;
 		}
 	}
 }
@@ -797,9 +845,9 @@ if(isset($_GET['multi_download'])) {
 	    readfile($destination);
 	    //sleep(1);
 	    //file should stay until it finishes downloading, then poof by itself
-	   /* if (deleteFolder('downloads/' . $uhd))
+	   if (deleteFolder('downloads/' . $uhd))
 			if (mkdir('downloads/' . $uhd))
-				echo "Cleared downloads folder";*/
+				echo "Cleared downloads folder";
 	    exit();
 	} else {
 		echo 'Could not find file: ' . $destination;
@@ -875,4 +923,23 @@ if(isset($_POST['newemail'])) {
 		echo "Email address change failed.";
 	}
 }
+if(isset($_POST['cm_save'])) {
+	$file = getPath(sanitize($_POST['file']));
+	$newContent = $_POST['content'];
+	if (getOwner($_POST['file']) == $uid) {
+		$edit = fopen($file, 'w');
+		if ($edit) {
+			if (!fwrite($edit, $newContent)) {
+				echo "Cannot overwrite file.";
+			} else {
+				fclose($edit);
+			}
+		} else {
+			echo "Cannot open file for editing.";
+		}
+	} else {
+		echo "Cannot access file.";
+	}
+}
+
 mysqli_close($db);

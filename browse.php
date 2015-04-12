@@ -5,6 +5,7 @@ if(!isset($_SESSION['uid'])) $_SESSION['uid'] = 0;
 if(!isset($_SESSION['access_level'])) $_SESSION['access_level'] = 0;
 if(!isset($_SESSION['access_level'])) $_SESSION['access_level'] = 0;
 $uid = $_SESSION['uid'];
+$uhd = $_SESSION['uhd'];
 $alvl = $_SESSION['access_level'];
 $uname = $_SESSION['username'];
 //error_reporting($show_errors);//remove for debug
@@ -113,6 +114,11 @@ if ($uid < 1) {
 		</div>
 	</li>
 	</script>
+	<script type="text/template" id="minibar_template">
+	<li class="minibar-content" filehash="<%= model.get('hash_self') %>" id="<%= model.get('fileID') %>" type="<%= model.get('basicFileType') %>" filename="<%= model.get('fileName') %>">
+    	<span class="minibar-file-name"><%= model.get('fileName') %></span>
+    </li>
+	</script>
 	<div type="text/template" id="preview-template" style="display: none;">
 		<li class="menubar-content">
 		<div class="dz-uploadprogress" data-dz-uploadprogress></div>
@@ -130,7 +136,7 @@ if ($uid < 1) {
 		</div>
 		<div class="modal-content">
 			Folder name:<br>
-			<input class="modal-content-input" id="modal-file-name-new" type="text" name="newfoldername">
+			<input class="modal-content-input" id="modal-file-name-new" type="text" name="newfoldername" autofocus>
 			<input id="modal-file-id-new" type="hidden">
 			<input id="modal-bar-id-new" type="hidden">
 		</div>
@@ -147,7 +153,7 @@ if ($uid < 1) {
 		</div>
 		<div class="modal-content">
 			New name:<br>
-			<input class="modal-content-input" id="modal-file-name-rename" type="text" name="newfoldername">
+			<input class="modal-content-input" id="modal-file-name-rename" type="text" name="newfoldername" autofocus>
 			<input id="modal-file-id-rename" type="hidden">
 			<input id="modal-bar-id-rename" type="hidden">
 		</div>
@@ -179,27 +185,25 @@ if ($uid < 1) {
 		<div class="modal-header">
 			Select a folder to send <span id="modal-header-name">FILE</span> to.
 		</div>
+		<input class="minibar-file-id" type="hidden" />
 		<div class="modal-content">
-            <!--<div class="minibar-control">
-                <span class="btn-back"><i class="fa fa-arrow-circle-o-left"></i> Back a level</span>
-            </div>-->
 			<ul class="minibar" filehash="" id="" type="folder" filename="">
-                <li class="minibar-content" filehash="" id="" type="folder" filename="">
+                <li class="minibar-content" type="folder" id="minibar-back">
                     <span class="minibar-file-name"><i class="fa fa-ellipsis-h"></i></span>
                 </li>
-				<li class="minibar-content" filehash="" id="" type="folder" filename="">
+				<li class="minibar-content" filehash="test1" id="" type="folder" filename="">
                     <span class="minibar-file-name">Retrieve folder list</span>
                 </li>
-                <li class="minibar-content" filehash="" id="" type="folder" filename="">
+                <li class="minibar-content" filehash="test2" id="" type="folder" filename="">
                     <span class="minibar-file-name">Starting at root directory</span>
                 </li>
 			</ul>
-			<input id="modal-file-id-move" type="hidden">
-			<input id="modal-bar-id-move" type="hidden">
+			<input id="modal-file-id-move" type="hidden" />
+			<input id="modal-bar-id-move" type="hidden" />
 		</div>
 		<div class="modal-footer" style="position:absolute;bottom:0px;width:100%">
 			<button class="btn btn-cancel" onclick="files.moveGUI.hide()">Cancel</button>
-			<button type="submit" class="btn btn-submit" id="btn-move" onclick="files.multimove()">Move</button>
+			<button type="submit" class="btn btn-submit" id="btn-move" onclick="files.multiMove($('.modal-move .minibar-file-id').attr('filehash'), $('.modal-move .minibar .minibar-content-target').attr('filehash'))">Move</button>
 		</div>
 	</div>
 	</section>
@@ -256,6 +260,7 @@ if ($uid < 1) {
 	var settingsOpen = false;
 	var colorsOpen = false;
 	var title_separator = ' ◦ ';
+	var userRoot = '<?php echo $uhd; ?>';
 	String.prototype.capt = function() {
 	    return this.charAt(0).toUpperCase() + this.slice(1);
 	}
@@ -326,12 +331,12 @@ if ($uid < 1) {
 	<?php
 	}
 
-	$time = microtime();
-	$time = explode(' ', $time);
-	$time = $time[1] + $time[0];
-	$finishtime = $time;
-	$total_time = round(($finishtime - $starttime), 4);
 	if ($showpageloadtime && $showfooter) {
+		$time = microtime();
+		$time = explode(' ', $time);
+		$time = $time[1] + $time[0];
+		$finishtime = $time;
+		$total_time = round(($finishtime - $starttime), 4);
 		echo '<script type="text/javascript">$("#loadtime").html("page generated in ' . $total_time . ' seconds.");</script>';
 	}
 	?>

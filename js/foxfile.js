@@ -343,6 +343,8 @@ var files = {
 			$('.modal-rename #modal-bar-id-rename').val(bar);
 			$('.modal-rename #modal-file-name-rename').val(file);
 			$('.modal-rename').fadeIn();
+			$('.modal-rename #modal-file-name-rename').focus();
+			$('.modal-rename #modal-file-name-rename').select();
 			modalActive = true;
 		},
 		hide: function() {
@@ -429,6 +431,7 @@ var files = {
 			$('.modal-new-folder #modal-file-id-new').val(id);
 			$('.modal-new-folder #modal-bar-id-new').val(bar);
 			$('.modal-new-folder').fadeIn();
+			$('.modal-new-folder #modal-file-name-new').focus();
 			modalActive = true;
 		},
 		hide: function() {
@@ -494,33 +497,48 @@ var files = {
 		show: function(file, id) {
 			//d.info(file+'<br>'+id);
 			$('.modal-move').addClass('modal-active');
-			$('.modal-move .modal-header #modal-header-name').text(file);
+			if (multiSelect.numSelected < 2) {
+				$('.modal-move .modal-header #modal-header-name').text(file);
+			} else {
+				$('.modal-move .modal-header #modal-header-name').text(file + ", and " + (multiSelect.numSelected - 1) + " others");
+			}
 			$('.modal-move #modal-file-id-move').val(id);
-			$('.modal-move .modal-content .minibar').attr({
+			//$('.modal-move #modal-bar-id-move').val(bar);
+			$('.modal-move .minibar-file-id').attr({
 				'filehash': id,
 				'filename': file
 			});
-			//$('.modal-move .spinner').fadeIn();
-			//$('.modal-move #modal-bar-id-move').val(bar);
 			$('.modal-move').fadeIn();
 			$('.modal-move .modal-content').css({
 				'height':  parseInt($('.modal-move .modal').css('height')) - (parseInt($('.modal-move .modal-header').css('height')) + parseInt($('.modal-move .modal-footer').css('height'))) - 22 + 'px'
-			})
+			});
+			if (minibar.open(userRoot, file, id)) {
+				//
+			}
 			modalActive = true;
 		},
 		hide: function() {
 			$('.modal-move').fadeOut();
+			minibar.reset();
 			modalActive = false;
 		}
 	},
 	multiMove: function(file, target) { //handles moving both single and multiple files
+		if (multiSelect.numSelected < 2) {
+			if (!_.isArray(file)) { //if its a single thing
+				var tmp = [file];
+				file = tmp;
+			}
+		} else {
+			file = multiSelect.selected;
+		}
 		var hashes = _.uniq(file);
-		var files = hashes.toString();
-		d.info("moving " + files + " to " + target);
+		var filesList = hashes.toString();
+		//d.info("moving " + filesList + " to " + target);
 		$.post('dbquery.php',
 		{
 			move: 'move',
-			file_multi: files,
+			file_multi: filesList,
 			file_target: target
 		},
 		function(result) {
@@ -528,9 +546,9 @@ var files = {
 				//worked
 				bar.refreshAll();
 				multiSelect.reset();
+				files.moveGUI.hide();
 			} else {
 				d.error(result);
-				console.log(result);
 			}
 			//files.refresh(bar);
 		});
@@ -600,6 +618,7 @@ var files = {
 		frame.appendTo('body');
 		setTimeout(function() {
 			$('body > iframe, body > input[type="file"]').remove();
+			multiSelect.reset();
 		}, 10000); //let it attempt to download for 10 seconds
 		//d.warning("File zipping is not added yet, sorry :c");
 	}
@@ -758,7 +777,7 @@ var BarContentView = Backbone.View.extend({
 				tolerance: 'pointer',
 				drop: function(event, ui) {
 					currentTargetFolder = $(this).parents('.bar').attr('filehash');
-					d.info("set currentTargetFolder to " + currentTargetFolder);
+					//d.info("set currentTargetFolder to " + currentTargetFolder);
 					currentDraggingFolder = _.clone(multiSelect.selected);
 					currentDraggingFolder[multiSelect.selected.length] = $(ui.helper).attr('filehash');
 					currentDraggingFolder = _.uniq(currentDraggingFolder);
@@ -826,7 +845,54 @@ var BarContentLoader = Backbone.Router.extend({
 		BCV.barTypeToMake = type;
 	}
 });
-
+var minibar = {
+	//prev: ['70111f8e5d30bba774011b2762aa4e4c9e278bc017d413983339907240c45f85'], //the SHA256 hash of "foxfilerootfolder". If you name a folder this, it will break.
+	prev: [userRoot],
+	numActive: 1,
+	active: '',
+	open: function(folder, tFile, tID) {
+		if (this.numActive < 1) {
+			//this.prev[0] = '70111f8e5d30bba774011b2762aa4e4c9e278bc017d413983339907240c45f85';
+			this.prev[0] = userRoot;
+			this.numActive = 1;
+		} else {
+			$('.modal-move .spinner').fadeIn();
+			this.active = folder;
+			if (!_.contains(this.prev, folder)) this.prev[this.numActive] = folder;
+			this.numActive = this.prev.length;
+			//d.info("minibar.open('"+folder+"')");
+			//d.info("Prev: " + this.prev.toString());
+			//d.info("active: " + this.numActive);
+			$.post('dbquery.php',
+				{
+					minibar_dir: folder
+				},
+				function(result) {
+					if (result != '0') { //worked
+						$('.modal-move .modal-content').html(result);
+						//d.info(result);
+					} else {
+						d.error(":(");
+					}
+					$('.modal-move .spinner').fadeOut(100);
+					return true;
+			});
+		}
+	},
+	back: function() {
+		//d.info("minibar.back()");
+		this.prev = _.without(this.prev, this.active);
+		//d.info("removing " + this.active + " from prev");
+		this.numActive = this.prev.length;
+		//d.info("back active: " + this.numActive);
+		this.open(this.prev[this.numActive - 1]);
+	},
+	reset: function(folder) {
+		//this.prev[0] = '70111f8e5d30bba774011b2762aa4e4c9e278bc017d413983339907240c45f85';
+		this.prev = [userRoot];
+		this.numActive = 1;
+	}
+}
 var state = {
 	update: function(cont, id) {
 		$('.menubar-content[container="' + cont + '"]').removeClass('menubar-content-active');
@@ -1070,6 +1136,7 @@ var multiSelect = {
 	reset: function() {
 		this.selected = [];
 		this.numSelected = 0;
+		$('.file-multiselect-checkbox-container input').prop("checked", false); //uncheck all
 		setTimeout(function() {
 			bar.selected = [];
 		}, 200);
@@ -1085,6 +1152,7 @@ $(document).keydown(function(e) {
 });
 var dragging = false;
 $(document).on('mousedown', "li.menubar-content:not(.menubar-content-main)", function(e) {
+	if (!codemir.saved) codemir.savecontent();
 	var posX = e.pageX,
 		posY = e.pageY;
     $(window).mousemove(function(m) {
@@ -1112,18 +1180,32 @@ $(document).on('mousedown', "li.menubar-content:not(.menubar-content-main)", fun
     $(window).unbind("mousemove");
     if (!wasDragging) { //was clicking
 		//if ($(e.target).parents('.menubar-content').length > 0) {
-		if ($(e.target).text() == '') { //hacky way for detecting of the checkbox was clicked
+		if ($(e.target).text() == '') { //if the checkbox was clicked
 
 		} else {
 			if (e.which == 1) { //left click only
-				files.open($(this).attr('filehash'), $(this).attr('name'), $(this).attr('container'), $(this).attr('type'), this.id);
-				state.update($(this).attr('container'), this.id);
-				$('#bar-' + ($(this).attr('container') + 1) + ' .menubar-title-link').attr('onclick');
+				if (e.shiftKey || e.ctrlKey) { //check the checkbox
+					$('.file-multiselect-checkbox-container input[type="checkbox"][value="' + $(this).attr('filehash') + '"]').click();
+				} else { //open file/folder
+					files.open($(this).attr('filehash'), $(this).attr('name'), $(this).attr('container'), $(this).attr('type'), this.id);
+					state.update($(this).attr('container'), this.id);
+					$('#bar-' + ($(this).attr('container') + 1) + ' .menubar-title-link').attr('onclick');
+				}
 			}
 		}
     } else {
     	
     }
+});
+$(document).on('mousedown', "li.minibar-content", function(e) {
+	if (e.which == 1) { //left click only
+		if ($(this).attr('id') == 'minibar-back') {
+			minibar.back();
+		//} else if ($(this).is('.minibar-content-target')) {
+		} else {
+			minibar.open($(this).attr('filehash'));
+		}
+	}
 });
 $(document).mouseup(function() { //in case user unclicks not over the list
     if (dragging) {
@@ -1152,7 +1234,9 @@ $(document).on('change', '.file-multiselect-checkbox-container input', function(
 });
 var currentTargetFolder = '';
 var currentDraggingFolder = [];
+var editor; //codemirror editor object
 var codemir = {
+	saved: true,
 	seteditor: function(file) {
 		mode1 = getExt(file);
 		var mode = null;
@@ -1161,33 +1245,70 @@ var codemir = {
 		var mime = null;
 		mime = det.mime;
 
-		var editor = CodeMirror.fromTextArea($('#editor')[0], {
-					lineNumbers: true,
-					lineWrapping: false,
-					theme: 'twilight',
-					indentWithTabs: true,
-					readOnly: false,
-					keyMap: 'sublime',
-				    foldGutter: true,
-				    gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
-				});
-				editor.on('focus', function() {
-					codemirrorActive = true;
-				});
-				editor.on('blur', function() {
-					codemirrorActive = false;
-				});
+		editor = CodeMirror.fromTextArea($('#editor')[0], {
+			lineNumbers: true,
+			lineWrapping: false,
+			theme: 'twilight',
+			indentWithTabs: true,
+			readOnly: false,
+			keyMap: 'sublime',
+		    foldGutter: true,
+		    gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
+		    extraKeys: {
+    			"Ctrl-S": function(instance) { codemir.savecontent(instance.getValue()); }
+    		}
+		});
+		editor.on('focus', function() {
+			codemirrorActive = true;
+		});
+		editor.on('blur', function() {
+			codemirrorActive = false;
+			codemir.savecontent();
+		});
+		editor.on('change', function() {
+			if (codemir.saved) {
+				codemir.saved = false;
+				//d.warning("Content changed");
+				$('.cm-save-status i').attr('class', 'fa fa-save');
+			}
+		});
 		if (mode != null && mode != '') {
 			//d.info("Loading mode: " + mode);
 			$.getScript('js/cm-mode/'+mode+'/'+mode+'.js', function() {
 				if (mime != null && mime != '') {
-					d.info("Setting mode to " + mime + '<br>js/cm-mode/'+mode+'/'+mode+'.js');
+					//d.info("Setting mode to " + mime + '<br>js/cm-mode/'+mode+'/'+mode+'.js');
 					editor.setOption("mode", mime);
 				} else {
-					d.info("Setting mode to " + mode + '<br>js/cm-mode/'+mode+'/'+mode+'.js');
+					//d.info("Setting mode to " + mode + '<br>js/cm-mode/'+mode+'/'+mode+'.js');
 					editor.setOption("mode", mode);
 				}
 		   		//d.info("Initialized CodeMirror");
+			});
+		}
+
+		$(".bar.bar-vertical[active='true'] .menubar-title-link").html($(".bar.bar-vertical[active='true'] .menubar-title-link").text() + '<span class="cm-save-status" onclick="codemir.savecontent()" title="Save Status"><i class="fa fa-circle-o"></i></span>');
+	},
+	savecontent: function() {
+		if (!codemir.saved) {
+			editor.save();
+			codemir.saved = true;
+			d.info("Saving...");
+			$('.cm-save-status i').attr('class', 'fa fa-spinner fa-spin');
+			$.post('dbquery.php',
+			{
+				cm_save: 'cm_save',
+				file: $(".bar.bar-vertical[active='true']").attr('filehash'),
+				content: editor.getValue()
+			},
+			function(result) {
+				//hide spinny
+				if (result == '') { //worked
+					$('.cm-save-status i').attr('class', 'fa fa-circle-o');
+					d.success("Saved!");
+				} else {
+					$('.cm-save-status i').attr('class', 'fa fa-warning');
+					d.error("Failed to save file:<br>" + result);
+				}
 			});
 		}
 	},
@@ -1286,8 +1407,8 @@ var fileTypeDetails = {
 				break;
 			case 'htm':
 				bft = 'code';
-				dft = 'htmlmixed';
-				language = 'HTM File';
+				dft = 'HTM File';
+				language = 'htmlmixed';
 				break;
 			case 'php':
 				bft = 'code';
@@ -1297,7 +1418,7 @@ var fileTypeDetails = {
 			case 'json':
 				bft = 'code';
 				dft = 'JSON File';
-				language = '';
+				language = 'json';
 				break;
 			case 'rb':
 				bft = 'code';
@@ -1444,7 +1565,7 @@ var fileTypeDetails = {
 				dft = 'Adobe PDF';
 				break;
 			default:
-				bft = '';
+				bft = 'file';
 				dft = ext.toUpperCase() + ' File';
 				break;
 		}

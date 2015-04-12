@@ -19,6 +19,7 @@ body {
 }
 ::-webkit-scrollbar {
     width: 6px;
+    height: 6px;
 }
 ::-webkit-scrollbar-track {
     -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0); 
@@ -557,14 +558,17 @@ a:hover {
 	font-size: 200%;
 	position: absolute;
 }
-.menubar-content-view:not([type='text']):not([type='code']) .text-preview {
+.menubar-content-view .text-preview {
+	display: none;
+}
+.menubar-content-view:not([type='text']):not([type='code']) .file-view {
 	position: absolute;
 	width: 100%;
 	margin-top: 15%;
 	text-align: center;
 	font-size: 1000%;
 }
-.menubar-content-view .text-preview:before {
+.menubar-content-view .file-view:before {
 	font-family: 'FontAwesome';
 	color: #666;
 	content: '\f016';
@@ -575,29 +579,26 @@ a:hover {
 	font-size: 100%;
 	display: none;
 }
-.menubar-content-view[type="text"] .text-preview:before {
-	content: '\f0f6';
-}
-.menubar-content-view[type='zip'] .text-preview:before {
+.menubar-content-view[type='zip'] .file-view:before {
 	content: '\f1c6';
 }
-.menubar-content-view[type='pdf'] .text-preview:before {
+.menubar-content-view[type='pdf'] .file-view:before {
 	content: '\f1c1';
 }
-.menubar-content-view[type='text'] .text-preview:before {
+.menubar-content-view[type='text'] .file-view:before {
 	content: none;
 }
-.menubar-content-view[type='audio'] .text-preview:before {
+.menubar-content-view[type='audio'] .file-view:before {
 	content: none;
 }
-.menubar-content-view[type='video'] .text-preview:before {
+.menubar-content-view[type='video'] .file-view:before {
 	content: none;
 }
-.menubar-content-view[type='image'] .text-preview:before {
+.menubar-content-view[type='image'] .file-view:before {
 	/*content: '\f1c5';*/
 	content: none;
 }
-.menubar-content-view[type='code'] .text-preview:before {
+.menubar-content-view[type='code'] .file-view:before {
 	/*content: '\f1c9';*/
 	content: none;
 }
@@ -647,6 +648,12 @@ a:hover {
 	font-family: monospace;
     user-select: all;
 }
+.menubar-content-view[type='text'] .CodeMirror,
+.menubar-content-view[type='code'] .CodeMirror {
+	position: absolute;
+	height: 100%;
+	width: 100%;
+}
 .audio-preview,
 .video-preview {
 	display: none;
@@ -687,6 +694,7 @@ a:hover {
 	color: #ccc;
 	font-family: 'quicksandlight', sans-serif;
 	z-index: 200;
+    cursor: default;
 }
 .modal-content-input::selection {
 	background: #fa6500;
@@ -714,7 +722,7 @@ a:hover {
 .modal-footer {
 /*	background: #606060;*/
 	text-align: center;
-	z-index: 201;
+	z-index: 203;
 }
 .modal-footer .btn {
 	background: rgba(255,255,255,.1);
@@ -876,7 +884,8 @@ a:hover {
 .clickmenu[file="My Files"] li[cmm="rename"],
 .clickmenu[file="My Files"] li[cmm="delete"],
 .clickmenu[file="My Files"] li[cmm="download"],
-.clickmenu[file="My Files"] li[cmm="share"] {
+.clickmenu[file="My Files"] li[cmm="share"],
+.clickmenu[file="My Files"] li[cmm="move"] {
 	display: none;
 }
 .ui-draggable-dragging {
@@ -1034,24 +1043,65 @@ button:focus {
     outline: 0 none;
     background: #606060;
 }
+.modal-move .modal-content {
+    padding-top: 0;
+    padding-bottom: 0;
+    position: absolute;
+    height: 80%;
+/*    width: 100%;*/
+    overflow-y: auto;
+    z-index: 200;
+}
 .minibar {
+/*    position: absolute;*/
 	width: 100%;
 	padding: 0px;
 	border-left: none;
 	-webkit-transition: all .4s ease-in-out;
           transition: all .4s ease-in-out;
 }
-.minibar .menubar-title {
-	background: rgba(0,0,0,.1);
+.minibar-control {
+    padding: 10px;
+    border-bottom: 1px #2c2c2c solid;
+    width: 100%;
+    left: -10px;
+    position: relative;
 }
-.minibar .menubar {
-	z-index: 400;
+.minibar-control i {
+    padding: 0 2px;
+    font-size: 25px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+.minibar-control i:hover {
+    background: #fa6500;
+}
+.minibar-content:after {
+    font-family: 'FontAwesome';
+    content: '\f105';
+    font-size: 90%;
+    float: right;
+    color: #ccc;
+}
+.minibar-content:first-of-type {
+    background: #61391d;
+}
+.minibar-content:first-of-type:after {
+    font-family: 'FontAwesome';
+    content: '\f104';
+    font-size: 90%;
+    float: right;
+    color: #ccc;
+}
+.minibar-content {
+	width: 100%;
+    padding: 10px;
 	position: relative;
-	top:0 !important;
+	float: left;
+    border-bottom: 1px #2c2c2c solid;
+    left: -10px;
+    cursor: pointer;
 }
-.minibar .menubar-action-btn {
-	display: none;
-}
-.minibar .file-info {
-	display: none;
+.minibar-content:hover {
+    background: rgba(255,255,255,.05);
 }

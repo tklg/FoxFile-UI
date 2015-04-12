@@ -3,7 +3,7 @@
 			$show_debug = 0;
 			$title = "FoxFile";
 			$name = "<span id='redfox'>Fox</span>File";
-			$ver = "1.2a";
+			$ver = "1.3a";
 			$grav_default = "retro";
 			$grav_rating = "pg";
 			$showfooter = 0;
