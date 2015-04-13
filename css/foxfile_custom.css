@@ -1049,51 +1049,40 @@ button:focus {
     position: absolute;
     height: 80%;
 /*    width: 100%;*/
+	width: calc(100% - 20px);
     overflow-y: auto;
     z-index: 200;
 }
 .minibar {
 /*    position: absolute;*/
-	width: 100%;
+	/*width: 100%;
 	padding: 0px;
-	border-left: none;
+	border-left: none;*/
 	-webkit-transition: all .4s ease-in-out;
           transition: all .4s ease-in-out;
 }
-.minibar-control {
-    padding: 10px;
-    border-bottom: 1px #2c2c2c solid;
-    width: 100%;
-    left: -10px;
-    position: relative;
-}
-.minibar-control i {
-    padding: 0 2px;
-    font-size: 25px;
-    cursor: pointer;
-    border-radius: 4px;
-}
-.minibar-control i:hover {
-    background: #fa6500;
-}
-.minibar-content:after {
+.minibar-content:after,
+.minibar-content-noclick:after {
     font-family: 'FontAwesome';
     content: '\f105';
     font-size: 90%;
     float: right;
     color: #ccc;
 }
-.minibar-content:first-of-type {
+.minibar-content:first-of-type,
+.minibar-content-noclick:first-of-type {
     background: #61391d;
 }
-.minibar-content:first-of-type:after {
+.minibar-content:first-of-type:after,
+.minibar-content-noclick:first-of-type:after {
     font-family: 'FontAwesome';
     content: '\f104';
     font-size: 90%;
     float: right;
     color: #ccc;
 }
-.minibar-content {
+.minibar-content,
+.minibar-content-noclick {
 	width: 100%;
     padding: 10px;
 	position: relative;
@@ -1102,6 +1091,25 @@ button:focus {
     left: -10px;
     cursor: pointer;
 }
-.minibar-content:hover {
+.minibar-content:hover,
+.minibar-content-noclick:hover {
     background: rgba(255,255,255,.05);
+}
+.minibar-content-target {
+	background: rgba(255,255,255,.08);
+}
+.cm-save-status * {
+	margin-left: 10px;
+	padding: 0 2px;
+	font-size: 85%;
+	-webkit-transition: all .2s ease-in-out;
+          transition: all .2s ease-in-out;
+}
+.cm-save-status:hover .fa-spinner {
+	color: yellow;
+	cursor: progress;
+}
+.cm-save-status:hover .fa-save {
+	color: lime;
+	cursor: pointer;
 }

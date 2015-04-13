@@ -386,10 +386,7 @@ if (isset($_POST['minibar_dir'])) {
 	$resultDir = mysqli_query($db, "SELECT * from $filetable WHERE file_parent='$dir' AND owner='$uid' AND file_type='folder' ORDER BY file_name"); //also order by file_type or file_name or last_modified
 	$selfDir = mysqli_query($db, "SELECT * from $filetable WHERE file_self='$dir' AND owner='$uid' AND file_type='folder'");
 	if(mysqli_num_rows($resultDir) > 0) {
-		echo '<ul class="minibar" filehash="'.$dir.'" id="" type="folder" filename="">
-              <li class="minibar-content" type="folder" id="minibar-back">
-              <span class="minibar-file-name"><i class="fa fa-ellipsis-h"></i></span>
-              </li>';
+		echo '<ul class="minibar" filehash="'.$dir.'" id="" type="folder" filename="">';
         $row2 = mysqli_fetch_array($selfDir);
         if ($dir == $uhd) {
         	echo '<li class="minibar-content-noclick minibar-content-target" onclick="$(\'.modal-move .modal-footer #btn-move\').click();" filehash="' . $dir . '" id="' . $dir . '" type="folder" filename="' . $dir . '">
@@ -400,6 +397,9 @@ if (isset($_POST['minibar_dir'])) {
 	              <span class="minibar-file-name">Send to: ' . $row2['file_name'] . '</span>
 	              </li>';
         }
+        echo '<li class="minibar-content" type="folder" id="minibar-back">
+              <span class="minibar-file-name">&middot;&middot;&middot;</span>
+              </li>';
 		$r = '';
 		while($row = mysqli_fetch_array($resultDir)) {
 			$r .= '<li class="minibar-content" filehash="' . $row['file_self'] . '" id="' . $row['PID'] . '" type="folder" filename="' . $row['file_name'] . '">

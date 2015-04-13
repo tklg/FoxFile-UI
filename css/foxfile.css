@@ -18,17 +18,17 @@ body {
 	list-style-type: none;
 }
 ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 10px;
+    height: 10px;
 }
 ::-webkit-scrollbar-track {
     -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0); 
-    -webkit-border-radius: 3px;
-    border-radius: 3px;
+    -webkit-border-radius: 5px;
+    border-radius: 5px;
 }
 ::-webkit-scrollbar-thumb {
-    -webkit-border-radius: 3px;
-    border-radius: 3px;
+    -webkit-border-radius: 5px;
+    border-radius: 5px;
     background: rgba(255,255,255,0.6); 
     -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.5); 
 }
@@ -225,8 +225,27 @@ a:hover {
     white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
-	max-width: 70%; 
 	display: inline-block;
+}
+@media screen and (min-width: 1525px) { /* if greater than 751 */
+	.menubar-title-link {
+		max-width: 70%;
+	}
+}
+@media screen and (max-width: 1525px) and (min-width: 1160px) { 
+	.menubar-title-link {
+		max-width: 60%;
+	}
+}
+@media screen and (max-width: 1162px) and (min-width: 945px) { 
+	.menubar-title-link {
+		max-width: 50%;
+	}
+}
+@media screen and (max-width: 945px) { 
+	.menubar-title-link {
+		max-width: 30%;
+	}
 }
 .menubar-title-link-home {
 	padding-right: 20px;
@@ -283,61 +302,6 @@ a:hover {
 .menubar-content[type='folder'] .file-info #filesize span:not(span.filetype) {
 	display: none;
 }
-/*.menubar-content:before {
-	color: #666;
-	font-family: 'FontAwesome';
-	content: '\f016';
-	padding-right: 13px;
-	font-size: 120%;
-}
-.menubar-content img {
-	display: none;
-}
-.menubar-content-user:before,
-.menubar-content-main:before {
-	content: none !important;
-	width: 0;
-}
-.menubar-content[type='file']:before {
-	content: '\f016';
-}
-.menubar-content .file-info:after {
-	content: " ";
-	float: right;
-	padding-left: 26px;
-	font-size: 15pt;
-}
-.menubar-content[type='folder']:before {
-	content: '\f07b';
-}
-.menubar-content[type='folder'].menubar-content-active:before {
-	content: '\f07c';
-	padding-right: 8px;
-}
-.menubar-content[type='zip']:before {
-	content: '\f1c6';
-}
-.menubar-content[type='pdf']:before {
-	content: '\f1c1';
-}
-.menubar-content[type='text']:before {
-	content: '\f0f6';
-}
-.menubar-content[type='audio']:before {
-	content: '\f1c7';
-}
-.menubar-content[type='video']:before {
-	content: '\f1c8';
-}
-.menubar-content[type='image']:before {
-	content: '\f1c5';
-}
-.menubar-content[type='image'] img {
-	display: inline;
-}
-.menubar-content[type='code']:before {
-	content: '\f1c9';
-}*/
 /* -------------------------------------------------------------------------------------------------- */
 .menubar-content .file-multiselect-checkbox:before { /*default to file icon*/
 	color: #666;
@@ -996,6 +960,7 @@ h3 {
 	#usedstorage {
 		background: #61391d;
 		width: 0%;
+		max-width: 100%;
 	}
 	#totalstorage {
 		background: rgba(255,255,255,.05);
@@ -1098,6 +1063,9 @@ button:focus {
 .minibar-content-target {
 	background: rgba(255,255,255,.08);
 }
+.minibar-content-target:hover {
+	background: #fa6500;
+}
 .cm-save-status * {
 	margin-left: 10px;
 	padding: 0 2px;
@@ -1105,11 +1073,14 @@ button:focus {
 	-webkit-transition: all .2s ease-in-out;
           transition: all .2s ease-in-out;
 }
+.cm-save-status:hover .fa-circle-o {
+	color: lime;
+}
 .cm-save-status:hover .fa-spinner {
 	color: yellow;
 	cursor: progress;
 }
-.cm-save-status:hover .fa-save {
-	color: lime;
+.cm-save-status .fa-save {
+	color: red;
 	cursor: pointer;
 }
