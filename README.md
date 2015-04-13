@@ -24,7 +24,3 @@ Currently in use at:
 - Zip file downloads where the folders are named their names and not the hashes they are stored as
 - Resource optimization (codemirror is a lot of separate scripts <.<)
 - Sharing files with anyone
-
-#### Screenshot(s)
-<img src="http://i.gyazo.com/2f456896708de71b1686555b7f1b2b27.png" alt="screenshot" />
-
