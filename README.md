@@ -3,7 +3,8 @@ Because I wanted to try to make an online file management thingy too
 I called it FoxFile because it was the first thing I thought of and because a google search for it returned nothing related to its purpose that was available to the general public  
 yeah idk  
 if I think of a better name I will rename it  
-jk i wont
+jk i wont  
+I will make this readme better/more informative later i promise
 
 ---------
 #### Stuff to figure out:  
