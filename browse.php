@@ -240,7 +240,7 @@ if ($uid < 1) {
 				'letter-spacing': width.titleLetterSpacing + 'pt'
 			});
 			$('.menubar').css({
-				'top': (parseInt($('.title').height()) + (parseInt($('.title').css('padding')) * 2)) + 'px'
+				'top': parseInt($('.title').height()) + parseInt($('.title').css('paddingTop')) + parseInt($('.title').css('paddingBottom')) + 'px'
 			});
 			//d.info($('.menubar').css('top'));
 		},
