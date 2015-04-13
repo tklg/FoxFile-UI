@@ -1,22 +1,30 @@
 # FoxFile
-Because I wanted to try to make an online file management thingy too  
-I called it FoxFile because it was the first thing I thought of and because a google search for it returned nothing related to its purpose that was available to the general public  
-yeah idk  
-if I think of a better name I will rename it  
-jk i wont  
-I will make this readme better/more informative later i promise
+Because I wanted to try to make an online file management thingy too.
+Currently in use at:  
+[lucianoalberto.zapto.org/foxfile](http://lucianoalberto.zapto.org/foxfile)
 
----------
-#### Stuff to figure out:  
-- how to handle file uploads/downloads
-- how to handle files in general
-- how to make the files have nice boxes with names and stuff that can be refreshed by the server with ajax or something
-- how to do the thing
-- uhhh
-- detect file types and prevent running of executable files like .php and stuff
-- if backbone.js is applicable to this project and if so how it works
-- same for underscore.js
-- tidy up my sql stuff like with the d&d thing
-- file permissions
-- directory names and database tables
-- this list is long enough now and I have to sleep
+#### What it has so far:  
+- Drag n' Drop uploading of files (and normal uploading too)  
+- Creation of new folders to put stuff in
+- Renaming and deletion of said folders (and files too)
+- Previews for text, image, audio, and video files
+- Text file previews are in the CodeMirror editor
+- Text file previews can also be used to edit the text file
+- Drag n' Drop files to move them between folders
+- Shift + click on files to select multiple to drag/drop/delete/move/download
+- Single/multiple file downloading
+- A move file modal for sending files to folders that are not shown
+- An account settings page
+- A server settings page for the owner
+- A color settings page to change the color scheme (default is orange and gray)
+
+#### What it doesn't have yet:
+- Mobile UI - doesn't work on small displays
+- Responsive file bars - currently always uses 3 (2x 25% width, 1x 50% width)
+- Zip file downloads where the folders are named their names and not the hashes they are stored as
+- Resource optimization (codemirror is a lot of separate scripts <.<)
+- Sharing files with anyone
+
+#### Screenshot(s)
+<img src="http://i.gyazo.com/2f456896708de71b1686555b7f1b2b27.png" alt="screenshot" />
+
