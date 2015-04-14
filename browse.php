@@ -188,7 +188,7 @@ if ($uid < 1) {
 		<input class="minibar-file-id" type="hidden" />
 		<div class="modal-content">
 			<ul class="minibar" filehash="" id="" type="folder" filename="">
-                <li class="minibar-content" type="folder" id="minibar-back">
+                <!-- <li class="minibar-content" type="folder" id="minibar-back">
                     <span class="minibar-file-name"><i class="fa fa-ellipsis-h"></i></span>
                 </li>
 				<li class="minibar-content" filehash="test1" id="" type="folder" filename="">
@@ -196,7 +196,7 @@ if ($uid < 1) {
                 </li>
                 <li class="minibar-content" filehash="test2" id="" type="folder" filename="">
                     <span class="minibar-file-name">Starting at root directory</span>
-                </li>
+                </li> -->
 			</ul>
 			<input id="modal-file-id-move" type="hidden" />
 			<input id="modal-bar-id-move" type="hidden" />

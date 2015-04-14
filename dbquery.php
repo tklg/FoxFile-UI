@@ -416,12 +416,12 @@ if (isset($_POST['minibar_dir'])) {
 		if(mysqli_num_rows($selfDir) > 0) {
 			$row = mysqli_fetch_array($selfDir);
 			echo '<ul class="minibar" filehash="'.$dir.'" id="" type="folder" filename="">
-              <li class="minibar-content" type="folder" id="minibar-back">
-              <span class="minibar-file-name"><i class="fa fa-ellipsis-h"></i></span>
-              </li>';
-			echo '<li class="minibar-content-noclick minibar-content-target" filehash="' . $row['file_self'] . '" id="' . $row['PID'] . '" type="folder" filename="' . $row['file_name'] . '">
-                   <span class="minibar-file-name">Send to: ' . $row['file_name'] . '</span>
-                   </li>';
+              	  <li class="minibar-content-noclick minibar-content-target" filehash="' . $row['file_self'] . '" id="' . $row['PID'] . '" type="folder" filename="' . $row['file_name'] . '">
+                  <span class="minibar-file-name">Send to: ' . $row['file_name'] . '</span>
+                  </li>';
+			echo '<li class="minibar-content" type="folder" id="minibar-back">
+              	  <span class="minibar-file-name">&middot;&middot;&middot;</span>
+              	  </li>';
 			echo '<input id="modal-file-id-move" type="hidden" />
 				  <input id="modal-bar-id-move" type="hidden" />';
 		} else {
