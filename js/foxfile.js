@@ -40,6 +40,7 @@ var bar = {
 			'<span class="heightsettertext"></span>'+
 			'<span class="menubar-title-link" onclick="">' + title + '</span>'+
 			'<div class="menubar-action-btn">'+
+			'<span class="heightsettertext"></span>'+
 			'<button class="btn btn-new-folder" id="menubar-action-btn"><i class="fa fa-plus-circle"></i></button>'+
 			'<button class="btn btn-download" id="menubar-action-btn" filename="' + title + '" fileHash="' + hash + '" onclick="files.download($(this).attr(\'filename\'), $(this).attr(\'fileHash\'));"><i class="fa fa-download"></i></button>'+
 			'<button class="btn btn-upload" id="menubar-action-btn-' + this.active + '"><i class="fa fa-upload"></i></button>'+
@@ -856,7 +857,7 @@ var minibar = {
 			this.prev[0] = userRoot;
 			this.numActive = 1;
 		} else {
-			$('.modal-move .spinner').fadeIn();
+			$('.modal-move .spinner').fadeIn(0);
 			this.active = folder;
 			if (!_.contains(this.prev, folder)) this.prev[this.numActive] = folder;
 			this.numActive = this.prev.length;
@@ -874,7 +875,7 @@ var minibar = {
 					} else {
 						d.error(":(");
 					}
-					$('.modal-move .spinner').fadeOut(100);
+					$('.modal-move .spinner').fadeOut(0);
 					return true;
 			});
 		}

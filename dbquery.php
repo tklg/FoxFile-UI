@@ -14,8 +14,8 @@ if(!isset($_SESSION['access_level'])) $_SESSION['access_level'] = 0;
 if(!isset($_SESSION['uhd'])) $_SESSION['uhd'] = 0;
 if(!isset($_SESSION['access_level'])) $_SESSION['access_level'] = 0;
 ini_set('display_errors',1);
-//error_reporting(E_ALL);
-error_reporting(0);
+error_reporting(E_ALL);
+//error_reporting(0);
 //connect to database  
 $db = mysqli_connect($dbhost,$dbuname,$dbupass,$dbname);
 $usertable = $database['TABLE_USERS'];
@@ -263,6 +263,7 @@ function deleteFile($file) {
 function Zip($source, $destination) {
     if (is_string($source)) {
     	$source_arr = array(getPath($source)); // convert it to array
+    	$source = array($source);
     	//echo "Source was string, making array<br>";
     } else {
     	$fileList = array();
@@ -276,18 +277,28 @@ function Zip($source, $destination) {
     }
 
     $zip = new ZipArchive();
-    if ($zip->open($destination, ZIPARCHIVE::CREATE)) {
-        //echo "Created zip file: ".$destination.'<br>';
+    if (file_exists($destination)) {
+    	if ($zip->open($destination, ZIPARCHIVE::OVERWRITE)) {
+	        //echo "Created zip file: ".$destination.'<br>';
+	    } else {
+	    	return false;
+	    }
     } else {
-    	return false;
+    	if ($zip->open($destination, ZIPARCHIVE::CREATE)) {
+	        //echo "Created zip file: ".$destination.'<br>';
+	    } else {
+	    	return false;
+	    }
     }
-
+    $files = array();
     foreach ($source_arr as $source) {
         if (!file_exists($source)) continue;
 		$source = str_replace('\\', '/', realpath($source));
         //echo "Source: " . $source . '<br>';
 		if (is_dir($source)) {
-		    $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($source), RecursiveIteratorIterator::SELF_FIRST);
+			$iterator = new RecursiveDirectoryIterator($source);
+			$iterator->setFlags(RecursiveDirectoryIterator::SKIP_DOTS);
+		    $files = new RecursiveIteratorIterator($iterator, RecursiveIteratorIterator::SELF_FIRST);
 
 		    foreach ($files as $file) {
 		        $file = str_replace('\\', '/', realpath($file));
@@ -311,6 +322,16 @@ function Zip($source, $destination) {
 
     }
 
+    //loop through zip renaming files
+    for($i = 0; $i < $zip->numFiles; $i++) {
+    	$f = $zip->statIndex($i)['name'];
+    	$fIndex = $zip->locateName(basename($f), ZipArchive::FL_NOCASE|ZipArchive::FL_NODIR);
+    	echo "got index: " . $fIndex . ' of ' . basename($f) . '<br>';
+    	$name = getName(basename($f));
+    	$zip->renameIndex($fIndex, $name);
+    	echo "renaming to: " . $name . '<br>';
+    }
+    //echo 'a';
     return $zip->close();
 
 }
@@ -904,6 +925,14 @@ if(isset($_POST['getContent'])) {
 	} else {
 
 	}
+}
+if (isset($_POST['get_user_photo'])) {
+	$user = sanitize($_POST['get_user_photo']);
+	$result = mysqli_query($db, "SELECT * from $usertable where name = '$user'");
+		$row = mysqli_fetch_array($result);
+		$userEmail = $row['email'];
+		$gtarhash = md5($userEmail) . '?r=' . $grav_rating . '&d=' . $grav_default . '&s=100';
+		echo 'http://gravatar.com/avatar/' . $gtarhash;
 }
 if(isset($_POST['newname'])) {
 	$newName = sanitize($_POST['newname']);

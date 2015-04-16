@@ -880,8 +880,8 @@ a:hover {
 	border-radius: 25px;
 	cursor: pointer;
 	display: none;
-	/*-webkit-transition: all .2s ease-in-out;
-            transition: all .2s ease-in-out;*/
+	-webkit-transition: all .2s ease-in-out;
+            transition: all .2s ease-in-out;
 }
 .return-to-main:hover {
 	background: #fa6500;
