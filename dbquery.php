@@ -260,7 +260,23 @@ function deleteFile($file) {
 	$path = getPath($file);
 	unlink($path);
 }
+function recurse_copy($src,$dst) { 
+    $dir = opendir($src); 
+		if (!file_exists($dst)) if (mkdir($dst, 0777, true)) echo "<font color='red'>Folder " . $dst . ' did not exist, creating</font><br>';
+    while(false !== ( $file = readdir($dir)) ) { 
+        if (( $file != '.' ) && ( $file != '..' )) { 
+            if ( is_dir($src . '/' . $file) ) { 
+                recurse_copy($src . '/' . $file,$dst . '/' . $file); 
+            } 
+            else { 
+                copy($src . '/' . $file,$dst . '/' . $file); 
+            } 
+        } 
+    } 
+    closedir($dir); 
+} 
 function Zip($source, $destination) {
+	global $uhd;
     if (is_string($source)) {
     	$source_arr = array(getPath($source)); // convert it to array
     	$source = array($source);
@@ -291,10 +307,14 @@ function Zip($source, $destination) {
 	    }
     }
     $files = array();
+    $dest = str_replace('.', '', $destination) . '/'; //makes a normal folder called *zip :D
+    //copy over folders
     foreach ($source_arr as $source) {
         if (!file_exists($source)) continue;
 		$source = str_replace('\\', '/', realpath($source));
-        //echo "Source: " . $source . '<br>';
+        echo "Source: " . $source . '<br>';
+        $oTarget = str_replace('files', 'downloads', $source);
+        echo "Target: " . $oTarget . '<br><hr>';
 		if (is_dir($source)) {
 			$iterator = new RecursiveDirectoryIterator($source);
 			$iterator->setFlags(RecursiveDirectoryIterator::SKIP_DOTS);
@@ -302,35 +322,173 @@ function Zip($source, $destination) {
 
 		    foreach ($files as $file) {
 		        $file = str_replace('\\', '/', realpath($file));
+		        $target = str_replace('files', 'downloads', $file);
+		        $tartmp = str_replace('/'.basename($target), '', $target);
+		        if (!file_exists($tartmp)) {
+		        	//if (is_dir($tartmp)) {
+		        		mkdir($tartmp, 0777, true);
+		        		echo "<font color='red'>Folder " . $tartmp . ' did not exist, creating</font><br>';
+		        	//}
+		        }
+		        if (is_dir($file)) {
+		            //$zip->addEmptyDir(str_replace($source . '/', '', $file . '/'));
+		            echo "Folder: " . str_replace('downloads', 'files', $file) . '<br>';
+		            //echo 'Destination: ' . $dest . str_replace($source . '/', '', $file . '/' . '<br>');
+		            echo "Target: " . $target . '<br>';
+		            //recurse_copy(str_replace('downloads', 'files', $file), $dest . str_replace($source . '/', '', $file));
+		            recurse_copy($file, $target);
+		            echo '<hr>';
+		        }
+		        else if (is_file($file)) {
+		            //$zip->addFromString(str_replace($source . '/', '', $file), file_get_contents($file));
+		            echo "File: " . str_replace('downloads', 'files', $file) . '<br>';
+		            //echo 'Destination: ' . $dest . str_replace($source . '/', '', $file . '/<br>');
+		            echo "Target: " . $target . '<br>';
+		            //copy(str_replace('downloads', 'files', $file), $dest . str_replace($source . '/', '', $file));
+		            copy($file, $target);
+		            echo '<hr>';
+		        }
+		    }
+		}
+		else if (is_file($source)) {
+			$target = str_replace('files', 'downloads', $file);
+		    //$zip->addFromString(basename($source), file_get_contents($source));
+		    //copy(str_replace('downloads', 'files', $file), $dest . str_replace($source . '/', '', $file));
+		    copy($file, $target);
+		}
 
+    }
+    //loop through folder renaming files because folders cant be renamed in a zip
+    echo "<b>looping through files and folders</b><hr>";
+    $source = $oTarget;
+    echo $source . '<br>';
+    if (is_dir($source)) {
+		$iterator = new RecursiveDirectoryIterator($source);
+		$iterator->setFlags(RecursiveDirectoryIterator::SKIP_DOTS);
+	    $files = new RecursiveIteratorIterator($iterator, RecursiveIteratorIterator::CHILD_FIRST);
+	    $i = 0;
+	    echo 'items: ' . sizeof($files).'<br>';
+	    foreach ($files as $file) {
+	    	echo 'current index: ' . $i . '<br>';
+	    	/*$updatedFile = new RecursiveIteratorIterator($iterator, RecursiveIteratorIterator::CHILD_FIRST);
+	    	//$updatedFile = $unused;
+	    	$file = array();
+	    	foreach($updatedFile as $f) {
+	    		$file[] = $f;
+	    	}
+	    	$file = $file[$i];*/
+	        $file = str_replace('\\', '/', realpath($file));
+
+	        if (is_dir($file)) {
+	            echo "Folder: " . $file . '<br>';
+	            echo 'Renaming to: ' . getName(basename($file));
+	            chmod($file, 0777);
+	            rename($file, str_replace(basename($file), getName(basename($file)), $file));
+		        echo '<hr>';
+        	} else if (is_file($file)) {
+	            /*echo "File: " . basename($file) . '<br>';
+	            echo 'Renaming to: ' . getName(basename($file));
+	            chmod($file, 0777);
+	            rename($file, str_replace(basename($file), getName(basename($file)), $file));
+		        echo '<hr>';*/
+	        }
+	        $i++;
+	    }
+	}
+	else if (is_file($source)) {
+	    /*echo "File: " . $file . '<br>';
+	    echo 'Renaming to: ' . getName(basename($file));
+	    chmod($file, 0777);
+	    rename($file, str_replace(basename($file), getName(basename($file)), $file));
+		echo '<hr>';*/
+	}
+
+    //zip created folder
+        if (!file_exists($source)) continue;
+		$source = $oTarget;
+		echo '<hr><b>creating zip</b><hr>';
+        echo "Source: " . $source . '<br>';
+        $oTarget = str_replace('files', 'downloads', $source);
+        echo "Target: " . $oTarget . '<br><hr>';
+		if (is_dir($source)) {
+			$iterator = new RecursiveDirectoryIterator($source);
+			$iterator->setFlags(RecursiveDirectoryIterator::SKIP_DOTS);
+		    $files = new RecursiveIteratorIterator($iterator, RecursiveIteratorIterator::SELF_FIRST);
+
+		    foreach ($files as $file) {
+		        $file = str_replace('\\', '/', realpath($file));
+/*		        $target = str_replace('files', 'downloads', $file);
+		        if (!file_exists($target)) 
+		        	if (is_dir($target)) mkdir($target, 0777, true);*/
 		        if (is_dir($file)) {
 		            $zip->addEmptyDir(str_replace($source . '/', '', $file . '/'));
-		            //$zip->addEmptyDir($file);
-		            //echo "Making directory: " . str_replace($source . '/', '', $file . '/') . '<br>';
+		            //echo "Folder: " . str_replace('downloads', 'files', $file) . '<br>';
+		            echo 'Destination: ' . $dest . str_replace($source . '/', '', $file . '/' . '<br>');
+		            echo "Target: " . $target;
+		            //recurse_copy(str_replace('downloads', 'files', $file), $dest . str_replace($source . '/', '', $file));
+		            //recurse_copy($file, $target);
+		            echo '<hr>';
 		        }
 		        else if (is_file($file)) {
 		            $zip->addFromString(str_replace($source . '/', '', $file), file_get_contents($file));
-		            //$zip->addFromString($file, file_get_contents($file));
-		            //echo "Making file &emsp;: " . str_replace($source . '/', '', $file . '/') . '<br>';
+		            //echo "File: " . str_replace('downloads', 'files', $file) . '<br>';
+		            echo 'Destination: ' . $dest . str_replace($source . '/', '', $file . '/<br>');
+		            echo "Target: " . $target;
+		            //copy(str_replace('downloads', 'files', $file), $dest . str_replace($source . '/', '', $file));
+		            //copy($file, $target);
+		            echo '<hr>';
 		        }
 		    }
 		}
 		else if (is_file($source)) {
 		    $zip->addFromString(basename($source), file_get_contents($source));
-		    //$zip->addFromString($file, file_get_contents($file));
+		    echo 'file: ' . str_replace('downloads', 'files', $file) . '<hr>';
+		    //copy(str_replace('downloads', 'files', $file), $dest . str_replace($source . '/', '', $file));
 		}
 
-    }
-
     //loop through zip renaming files
+    echo "looping through files<br>";
     for($i = 0; $i < $zip->numFiles; $i++) {
-    	$f = $zip->statIndex($i)['name'];
-    	$fIndex = $zip->locateName(basename($f), ZipArchive::FL_NOCASE|ZipArchive::FL_NODIR);
-    	echo "got index: " . $fIndex . ' of ' . basename($f) . '<br>';
-    	$name = getName(basename($f));
-    	$zip->renameIndex($fIndex, $name);
-    	echo "renaming to: " . $name . '<br>';
-    }
+    	$s = $zip->statIndex($i);
+    	$f = $s['name'];
+    	$t = $s['size'];
+    	if ($t !== 0) {
+	    	$p = pathinfo($f, PATHINFO_DIRNAME);
+	    	$fIndex = $zip->locateName(basename($f), ZipArchive::FL_NOCASE|ZipArchive::FL_NODIR);
+	    	echo "got index: " . $fIndex . ' of file: ' . basename($f) . '<br>';
+	    	$name = getName(basename($f));
+	    	if ($p != '.' && $p != '') {
+	    		$name = $p . '/' . $name;
+	    	}
+	    	$zip->renameIndex($fIndex, $name);
+	    	echo "renaming to: " . $name . '<br>';
+	    }
+    }/*
+    echo "<hr>Looping through folders<br>";
+    //loop trough again renaming folders
+    for($i = 0; $i < $zip->numFiles; $i++) {
+    	$s = $zip->statIndex($i);
+    	$f = $s['name'];
+    	$t = $s['size'];
+    	if ($t === 0) {
+	    	$p = pathinfo($f)['dirname'];
+	    	echo 'Path: ' . $f . ' dirname: ' . $p . ' with basename: ' . basename($f) . '<br>';
+	    	if (!$fIndex = $zip->locateName($f, ZipArchive::FL_NOCASE|ZipArchive::FL_NODIR)) {
+	    		echo "<font color='red'>could not find " . $f . ' in zip</font><br>';
+	    	}
+	    	//echo "got Index: " . $fIndex . ' of folder: ' . $f . '<br>';
+	    	$name = getName(basename($f));
+	    	if ($p != '.' && $p != '') {
+	    		$name = $p . '/' . $name;
+	    	}
+	    	//$zip->renameIndex($fIndex, $name);
+	    	if ($zip->renameName($f, $name)) {
+	    		echo 'renaming ' . $f . ' to ' . $name . '<br>';
+	    	}
+	    	echo "renaming to: " . $name . '<br>';
+	    }
+    }*/
+
     //echo 'a';
     return $zip->close();
 
@@ -338,6 +496,15 @@ function Zip($source, $destination) {
 if(isset($_POST['fullNameFromID'])) {
 	$id = sanitize($_POST['fullNameFromID']);
 	$res = mysqli_query($db, "SELECT display_name from $usertable WHERE PID = '$id'");
+	if (mysqli_num_rows($res) > 0) {
+		while($row = mysqli_fetch_array($res)) {
+			echo $row['display_name'];
+		}
+	}
+}
+if(isset($_POST['fullNameFromUser'])) {
+	$id = sanitize($_POST['fullNameFromUser']);
+	$res = mysqli_query($db, "SELECT display_name from $usertable WHERE name = '$id'");
 	if (mysqli_num_rows($res) > 0) {
 		while($row = mysqli_fetch_array($res)) {
 			echo $row['display_name'];
@@ -853,7 +1020,7 @@ if(isset($_GET['multi_download'])) {
 	}
 	if(file_exists($destination)) {
 		//echo $destination;
-	    header('Pragma: public');
+	    /*header('Pragma: public');
 	    header('Expires: 0');
 	    header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
 	    header('Content-Type: application/octet-stream');
@@ -869,7 +1036,7 @@ if(isset($_GET['multi_download'])) {
 	   if (deleteFolder('downloads/' . $uhd))
 			if (mkdir('downloads/' . $uhd))
 				echo "Cleared downloads folder";
-	    exit();
+	    exit();*/
 	} else {
 		echo 'Could not find file: ' . $destination;
 	}

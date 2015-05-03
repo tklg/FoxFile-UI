@@ -21,6 +21,5 @@ Currently in use at:
 #### What it doesn't have yet:
 - Mobile UI - doesn't work on small displays
 - Responsive file bars - currently always uses 3 (2x 25% width, 1x 50% width)
-- Zip file downloads where the folders are named their names and not the hashes they are stored as
 - Resource optimization (codemirror is a lot of separate scripts <.<)
 - Sharing files with anyone

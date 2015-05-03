@@ -236,7 +236,15 @@ $starttime = $time;
 	    if (u != null && u != "") {
 	        using_cookie = true;
 	        $('#uname2').val(u);
-	        $('.login-user-message').text(u);
+	        $.post('dbquery.php', {
+				fullNameFromUser: u
+			}, function(result) {
+				if (result != 1) {
+					$('.login-user-message').text(result);
+				} else {
+					$('.login-user-message').text(u);
+				}
+			});
 	        $.post('dbquery.php', {
 				get_user_photo: u
 			}, function(result) {
@@ -245,8 +253,6 @@ $starttime = $time;
 				} else {
 					d.error("Failed to retrieve photo for " + username);
 				}
-				files.refresh(bar);
-				files.deleteGUI.hide();
 			});
 	        $('.login-user-show').css("display", 'block');
 	        $('.login-nouser').css("display", 'none');

@@ -298,12 +298,6 @@ if ($uid < 1) {
     <script type="text/javascript" src="js/showlog.js"></script>
     <script type="text/javascript" src="js/dropzone.js"></script>
     <script type="text/javascript" src="js/foxfile.js"></script>
-    <script type="text/javascript">
-	    setTimeout(function() { //give time for the page to set itself up
-	    	$('#wrapper').css('visibility','visible');
-			$('#spinner-pre').remove();
-	    }, 700);
-    </script>
     <link rel="stylesheet" href="css/codemirror.css">
     <link rel="stylesheet" href="css/cm-themes/twilight.css">
     <script type="text/javascript" src="js/codemirror.js"></script>
@@ -340,6 +334,12 @@ if ($uid < 1) {
 		echo '<script type="text/javascript">$("#loadtime").html("page generated in ' . $total_time . ' seconds.");</script>';
 	}
 	?>
+    <script type="text/javascript">
+	    setTimeout(function() { //give time for the page to set itself up
+	    	$('#wrapper').css('visibility','visible');
+			$('#spinner-pre').remove();
+	    }, 700);
+    </script>
 
 </body>
 </html>
