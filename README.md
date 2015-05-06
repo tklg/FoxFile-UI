@@ -14,6 +14,7 @@ Currently in use at:
 - Shift + click on files to select multiple to drag/drop/delete/move/download
 - Single/multiple file downloading
 - A move file modal for sending files to folders that are not shown
+- Search for files and folders
 - An account settings page
 - A server settings page for the owner
 - A color settings page to change the color scheme (default is orange and gray)
