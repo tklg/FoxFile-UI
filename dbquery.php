@@ -1048,6 +1048,50 @@ if (isset($_POST['clear_dl_contents'])) {
 			if (mkdir('/downloads'))
 				echo "Cleared downloads temp folder";
 }
+if (isset($_POST['search'])) {
+	$search = sanitize($_POST['search']);
+	//if(preg_match("/[A-Za-z0-9]+/", $search)) { 
+		if ($alvl >= $alvl_user) {
+			$result = mysqli_query($db, "SELECT * from $filetable where file_name LIKE '%$search%' AND owner = '$uid' ORDER BY file_name");
+
+			if (mysqli_num_rows($result) > 0) {
+				while($row = mysqli_fetch_array($result)) {
+					$fileID = $row['PID'];
+					$fileName = $row['file_name'];
+					$fileSelf = $row['file_self'];
+					$fileParent = $row['file_parent'];
+					$fileType = $row['file_type'];
+					$fileSize = $row['file_size'];
+					$datemod = $row['last_modified'];
+
+					echo '<li class="menubar-content" container="2" type="'.$fileType.'" filehash="'.$fileSelf.'" id="'.$fileID.'" name="'.$fileName.'" pos="" fileparent="'.$fileParent.'">
+								<div class="dragdrop-border"></div>
+								<span class="file-multiselect-checkbox-container">
+									<input type="checkbox" id="cb-'.$fileID.'" value="'.$fileSelf.'" />
+									<label class="file-multiselect-label" for="cb-'.$fileID.'"><span class="file-multiselect-checkbox"></span></label>
+								</span>
+								<span class="folder file-name">'.$fileName.'</span>
+								<div class="file-info">
+									<span class="file-info-item" id="filemod"><span class="filemod">'.$datemod.'</span><br><span class="filemod"></span></span>
+									<span class="file-info-item" id="filedet"><span class="filetype">File Link</span></span>
+								</div>
+							</li>';
+				}
+			} else {
+				echo '<li class="menubar-content" container="2">
+								<div class="dragdrop-border"></div>
+								<!--<span class="file-multiselect-checkbox-container">
+									<input type="checkbox" id="cb-0" value="" />
+									<label class="file-multiselect-label" for="cb-0"><span class="file-multiselect-checkbox"></span></label>
+								</span>-->
+								<span class="folder file-name">No results found for "'.$search.'"</span>
+							</li>';
+			}
+		}
+	//} else {
+	//	echo "no";
+	//}
+}
 if(isset($_POST['getContent'])) {
 	$cType = sanitize($_POST['getContent']);
 
@@ -1091,7 +1135,7 @@ if(isset($_POST['getContent'])) {
 		$echo = str_replace('{{cust-color-7}}', $custom_colors['C_TEXT_SECONDARY'], str_replace('{{cust-color-6}}', $custom_colors['C_BACKGROUND'], str_replace('{{cust-color-5}}', $custom_colors['C_HORIZ_DIV'], $echo)));
 		echo $echo;
 	} else {
-
+		echo file_get_contents('includes/' . $cType . 'page.php');
 	}
 }
 if (isset($_POST['get_user_photo'])) {

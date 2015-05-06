@@ -803,7 +803,7 @@ var BarContentView = Backbone.View.extend({
 					} else {
 						currentTargetFolder = $(this).parents('.menybar-content').attr('filehash');
 					}
-					d.info("set currentTargetFolder to " + currentTargetFolder);
+					//d.info("set currentTargetFolder to " + currentTargetFolder);
 					currentDraggingFolder = _.clone(multiSelect.selected);
 					currentDraggingFolder[multiSelect.selected.length] = $(ui.helper).attr('filehash');
 					currentDraggingFolder = _.uniq(currentDraggingFolder);
@@ -1143,12 +1143,25 @@ var multiSelect = {
 		}, 200);
 	}
 }
+var search = {
+	searchTerm: '',
+	search: function(term) {
+		$.post('dbquery.php',
+		{
+			search: term
+		},
+		function(result) {
+			if(result != '') $('#search-target').html(result);
+		});
+	}
+}
 $(document).keydown(function(e) {
 	if (e.keyCode == 32) { //spacebar
 		if (!modalActive && !codemirrorActive) bar.toggleFullScreen();
 	}
 	if (e.keyCode == 13) { //enter
 		if (modalActive) $('.modal-active .modal-footer .btn-submit').click();
+		//if (search.searchActive) if (search.searchTerm != '') search.search(search.searchTerm);
 	}
 });
 var dragging = false;

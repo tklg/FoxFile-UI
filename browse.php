@@ -62,6 +62,7 @@ if ($uid < 1) {
 	<ul>
 		<li class="menubar-content menubar-content-user menubar-content-user-name menubar-content-active" id="menubar-button-1"><span id="display_name"><?php echo $uname ?></span><a href="uauth.php?logout" class="btn btn-logout"><i class="fa fa-sign-out"></i></a></li>
 		<li class="menubar-content menubar-content-main menubar-content-active" container="1" id="menubar-button-files" type="folder" onclick="files.open('<?php echo $_SESSION["uhd"] ?>', $(this).text(), $(this).attr('container'), $(this).attr('type'));" href="#files">My Files</li>
+		<li class="menubar-content menubar-content-main" id="menubar-button-search" href="#search">Search</li>
 		<?php if($allowsharing) {?><li class="menubar-content menubar-content-main" id="menubar-button-shared" href="#shared">Shared</li> <?php } ?>
 		<!-- <li class="menubar-content menubar-content-main" id="menubar-button-bookmarks" href="#bookmarks">Bookmarks</li> -->
 		<li class="menubar-content menubar-content-main" id="menubar-button-account" href="#profile">Profile</li>
@@ -274,7 +275,7 @@ if ($uid < 1) {
 		        $('#wrapper').append('<section class="bar bar-vertical bar-full bar-alt tabs" id="bar-' + currentAttrValue + '"></section>');
 		        $('#bar-' + currentAttrValue).append('<div class="menubar-title">'+
 					'<span class="heightsettertext"></span>'+
-					'<span class="menubar-title-link" onclick="">' + ((currentAttrValue != 'settings' && currentAttrValue != 'colors') ? 'My' : 'Foxfile') + ' ' + currentAttrValue + ((currentAttrValue == 'shared') ? ' Files' : '') + '</span>'+
+					'<span class="menubar-title-link" onclick="">' + ((currentAttrValue == 'search') ? 'Search Files' : ((currentAttrValue != 'settings' && currentAttrValue != 'colors') ? 'My' : 'Foxfile') + ' ' + currentAttrValue + ((currentAttrValue == 'shared') ? ' Files' : '')) + '</span>'+
 					'</div>'+
 					'<div class="menubar menubar-left">'+
 					'<div class="spinner" id="' + this.active + '"><div class="loading up"></div><div class="loading down"></div></div>'+

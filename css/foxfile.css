@@ -1005,7 +1005,7 @@ input:not([disabled]):focus,
 button:active,
 button:focus {
     outline: 0 none;
-    background: #606060;
+    background: rgba(255, 255, 255, 0.12);
 }
 .modal-move .modal-content {
     padding-top: 0;
