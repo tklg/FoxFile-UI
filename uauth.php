@@ -1,4 +1,7 @@
 <?php
+if (isset($_POST['SETSESSIONID'])) {
+	session_id($_POST['SETSESSIONID']);
+}
 session_start();
 require('includes/user.php');
 require('includes/config.php');
@@ -56,6 +59,9 @@ function validate_username($s) {
   } else {
     return false;
   }
+}
+if (isset($_POST['GETSESSIONID'])) {
+	echo session_id();
 }
 if(isset($_POST['check_username'])) {
 

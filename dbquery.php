@@ -1,4 +1,7 @@
 <?php
+if (isset($_POST['SETSESSIONID'])) {
+	session_id($_POST['SETSESSIONID']);
+}
 session_start();
 /*
 * dbquery.php - FoxFile
