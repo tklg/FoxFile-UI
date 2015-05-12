@@ -24,7 +24,7 @@ input.search {
 		<input class="search" type="search" id="search" placeholder="Type a filename:" />
 	</div>
 </section>
-<section class="row row-1" id="search-target">
+<section class="row row-1 search-target" id="search-target">
 
 </section>
 
@@ -36,6 +36,7 @@ $('#search').on('keyup', function() {
 	ser = setTimeout(function() {
     	if (search.searchTerm != '') {
     		search.search(search.searchTerm);
+    		$('.spinner#undefined').fadeIn(0);
     	} else {
     		$('#search-target').empty();
     	}
@@ -52,5 +53,6 @@ $('#search').on('blur', function() {
 });
 $('#bar-search').attr('id', 'bar-2');
 bar.active = 2;
+clickMenu.rebind();
 //on search, query and return the first list, then use the existing file stuff to handle the rest
 </script>

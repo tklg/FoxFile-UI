@@ -10,7 +10,8 @@ var winHeight = $(window).height();
 var winWidth = $(window).width();
 var res;
 var useContextMenu = true;
-var codemirrorActive = false;
+var codemirrorActive = false,
+	searchActive = false;
 
 $(window).resize(function() {
 	clearTimeout(res);
@@ -46,8 +47,8 @@ var bar = {
 			'<button class="btn btn-upload" id="menubar-action-btn-' + this.active + '"><i class="fa fa-upload"></i></button>'+
 			'<button class="btn btn-rename" id="menubar-action-btn" filename="' + title + '" fileHash="' + hash + '" bar="' + this.active + '" onclick="files.renameGUI.show($(this).attr(\'filename\'), $(this).attr(\'fileHash\'), $(this).attr(\'bar\'));"><i class="fa fa-pencil-square-o"></i></button>'+
 			'<button class="btn btn-delete" id="menubar-action-btn" filename="' + title + '" fileHash="' + hash + '" bar="' + this.active + '" onclick="files.deleteGUI.show($(this).attr(\'filename\'), $(this).attr(\'fileHash\'), $(this).attr(\'bar\'));"><i class="fa fa-trash"></i></button>'+
-			'<button class="btn btn-refresh" id="menubar-action-btn" onclick="files.refresh(' + this.active + ')"><i class="fa fa-refresh"></i></button>'+
 			'<button class="btn btn-move" id="menubar-action-btn" filename="' + title + '" fileHash="' + hash + '" bar="' + this.active + '" onclick="files.moveGUI.show($(this).attr(\'filename\'), $(this).attr(\'fileHash\'))"><i class="fa fa-arrow-circle-right"></i></button>'+
+			'<button class="btn btn-refresh" id="menubar-action-btn" onclick="files.refresh(' + this.active + ')"><i class="fa fa-refresh"></i></button>'+
 			'<button class="btn btn-fullscreen" id="menubar-action-btn" onclick="bar.toggleFullScreen()"><i class="fa fa-expand"></i></button>'+
 			'<button class="btn btn-dropdown" id="menubar-action-btn" fileHash="' + hash + '" fileid="' + this.active + '" type="' + type + '" state="closed" filename="' + title + '"><i class="fa fa-bars"></i></button>'+
 			'</div>'+
@@ -501,7 +502,7 @@ var files = {
 			if (multiSelect.numSelected < 2) {
 				$('.modal-move .modal-header #modal-header-name').text(file);
 			} else {
-				$('.modal-move .modal-header #modal-header-name').text(file + ", and " + (multiSelect.numSelected - 1) + " others");
+				$('.modal-move .modal-header #modal-header-name').text(file + " and " + (multiSelect.numSelected - 1) + " others");
 			}
 			$('.modal-move #modal-file-id-move').val(id);
 			//$('.modal-move #modal-bar-id-move').val(bar);
@@ -940,6 +941,8 @@ var clickMenu = {
 		}
 
 		this.height = 40 * items.length;
+		if (bar == 2) this.height = 40 * 3;
+		//d.info(this.height);
 
 		for(i = 0; i < items.length; i++) {
 			switch(items[i].toLowerCase().split('</i>')[1].trim()) {
@@ -982,7 +985,7 @@ var clickMenu = {
 		this.isOpen = false;
 	},
 	rebind: function() {
-		$('.menubar:not(.menubar-main)').bind("contextmenu", function(e) {
+		$('.menubar:not(.menubar-main), .search-target').bind("contextmenu", function(e) {
 			if (useContextMenu && !$(e.target).parents().hasClass('CodeMirror')) {
 				e.preventDefault();
 				//d.info($(e.target).attr("class"));
@@ -1010,9 +1013,9 @@ var clickMenu = {
 				cmHeight = clickMenu.height;
 				if (e.pageY > winHeight - cmHeight) {
 					if (e.pageX > winWidth - cmWidth)
-						clickMenu.open(e.pageX - cmWidth, e.pageY - (cmHeight / 2), bar, file, type, id);
+						clickMenu.open(e.pageX - cmWidth, e.pageY - (cmHeight/1.3), bar, file, type, id);
 					else
-						clickMenu.open(e.pageX, e.pageY - (cmHeight / 2), bar, file, type, id);
+						clickMenu.open(e.pageX, e.pageY - (cmHeight/1.3), bar, file, type, id);
 				} else {
 					if (e.pageX > winWidth - cmWidth)
 						clickMenu.open(e.pageX - cmWidth, e.pageY, bar, file, type, id);
@@ -1152,12 +1155,13 @@ var search = {
 		},
 		function(result) {
 			if(result != '') $('#search-target').html(result);
+			$('.spinner#undefined').fadeOut(0);
 		});
 	}
 }
 $(document).keydown(function(e) {
 	if (e.keyCode == 32) { //spacebar
-		if (!modalActive && !codemirrorActive) bar.toggleFullScreen();
+		if (!modalActive && !codemirrorActive && !searchActive) bar.toggleFullScreen();
 	}
 	if (e.keyCode == 13) { //enter
 		if (modalActive) $('.modal-active .modal-footer .btn-submit').click();

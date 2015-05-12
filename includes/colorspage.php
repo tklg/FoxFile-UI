@@ -100,6 +100,56 @@
 		<input type="text" id="BACKGROUND" class="colorbox" style="background: {{cust-color-6}}" value="{{cust-color-6}}"></input>
 	</div>
 </section>
+<section class="grid-box">
+	<div class="col col-3">
+		<div class="col-content">
+			<h3>CodeMirror (WIP)</h3>
+			<p>Chose a theme for the CodeMirror editor</p>
+		</div>
+	</div>
+	<div class="col col-3-2">
+		<p>
+			<div class="colorbox colorbox-small" style="background: lightgray"></div>
+			<div class="colorbox colorbox-small" style="background: lightgray"></div>
+			<div class="colorbox colorbox-small" style="background: lightgray"></div>
+			<div class="colorbox colorbox-small" style="background: lightgray"></div>
+			<div class="colorbox colorbox-small" style="background: lightgray"></div>
+			<div class="colorbox colorbox-small" style="background: lightgray"></div>
+			<div class="colorbox colorbox-small" style="background: lightgray"></div>
+			<button class="btn btn-submit" onclick="changeCmTheme('default')">Default</button>
+		</p>
+		<p>
+			<div class="colorbox colorbox-small" style="background: #eecccc"></div>
+			<div class="colorbox colorbox-small" style="background: #eecccc"></div>
+			<div class="colorbox colorbox-small" style="background: #eecccc"></div>
+			<div class="colorbox colorbox-small" style="background: #eecccc"></div>
+			<div class="colorbox colorbox-small" style="background: #eecccc"></div>
+			<div class="colorbox colorbox-small" style="background: #eecccc"></div>
+			<div class="colorbox colorbox-small" style="background: #eecccc"></div>
+			<button class="btn btn-submit" onclick="changeCmTheme('solarizedlight')">Solarized Light</button>
+		</p>
+		<p>
+			<div class="colorbox colorbox-small" style="background: #333"></div>
+			<div class="colorbox colorbox-small" style="background: #333"></div>
+			<div class="colorbox colorbox-small" style="background: #333"></div>
+			<div class="colorbox colorbox-small" style="background: #333"></div>
+			<div class="colorbox colorbox-small" style="background: #333"></div>
+			<div class="colorbox colorbox-small" style="background: #333"></div>
+			<div class="colorbox colorbox-small" style="background: #333"></div>
+			<button class="btn btn-submit" onclick="changeCmTheme('twilight')">Twilight</button>
+		</p>
+		<p>
+			<div class="colorbox colorbox-small" style="background: navy"></div>
+			<div class="colorbox colorbox-small" style="background: navy"></div>
+			<div class="colorbox colorbox-small" style="background: navy"></div>
+			<div class="colorbox colorbox-small" style="background: navy"></div>
+			<div class="colorbox colorbox-small" style="background: navy"></div>
+			<div class="colorbox colorbox-small" style="background: navy"></div>
+			<div class="colorbox colorbox-small" style="background: navy"></div>
+			<button class="btn btn-submit" onclick="changeCmTheme('cobalt')">Cobalt</button>
+		</p>
+	</div>
+</section>
 <script type="text/javascript">
 function changeColor(use, color) {
 	$.post('cfgedit.php',

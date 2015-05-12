@@ -6,6 +6,12 @@ require('includes/config.php');
 $db = mysqli_connect($dbhost,$dbuname,$dbupass,$dbname);
 $usertable = $database['TABLE_USERS'];
 $filetable = $database['TABLE_FILES'];
+if(!isset($_SESSION['uid'])) {
+	$_SESSION['uid'] = 0;
+}
+if(!isset($_SESSION['access_level'])) {
+	$_SESSION['access_level'] = 0;
+}
 $uid = $_SESSION['uid'];
 $alvl = $_SESSION['access_level'];
 date_default_timezone_set('America/New_York');
