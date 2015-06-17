@@ -1,4 +1,5 @@
 /files/*
 
 /downloads/*
+/shared/*
 /includes/user.php

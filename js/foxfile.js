@@ -6,10 +6,10 @@
 
 Dropzone.autoDiscover = false;
 
+var useContextMenu = true;
 var winHeight = $(window).height();
 var winWidth = $(window).width();
 var res;
-var useContextMenu = true;
 var codemirrorActive = false,
 	searchActive = false;
 
@@ -40,18 +40,23 @@ var bar = {
 			'<div class="menubar-title">'+
 			'<span class="heightsettertext"></span>'+
 			'<span class="menubar-title-link" onclick="">' + title + '</span>'+
-			'<div class="menubar-action-btn">'+
-			'<span class="heightsettertext"></span>'+
-			'<button class="btn btn-new-folder" id="menubar-action-btn"><i class="fa fa-plus-circle"></i></button>'+
-			'<button class="btn btn-download" id="menubar-action-btn" filename="' + title + '" fileHash="' + hash + '" onclick="files.download($(this).attr(\'filename\'), $(this).attr(\'fileHash\'));"><i class="fa fa-download"></i></button>'+
-			'<button class="btn btn-upload" id="menubar-action-btn-' + this.active + '"><i class="fa fa-upload"></i></button>'+
-			'<button class="btn btn-rename" id="menubar-action-btn" filename="' + title + '" fileHash="' + hash + '" bar="' + this.active + '" onclick="files.renameGUI.show($(this).attr(\'filename\'), $(this).attr(\'fileHash\'), $(this).attr(\'bar\'));"><i class="fa fa-pencil-square-o"></i></button>'+
-			'<button class="btn btn-delete" id="menubar-action-btn" filename="' + title + '" fileHash="' + hash + '" bar="' + this.active + '" onclick="files.deleteGUI.show($(this).attr(\'filename\'), $(this).attr(\'fileHash\'), $(this).attr(\'bar\'));"><i class="fa fa-trash"></i></button>'+
-			'<button class="btn btn-move" id="menubar-action-btn" filename="' + title + '" fileHash="' + hash + '" bar="' + this.active + '" onclick="files.moveGUI.show($(this).attr(\'filename\'), $(this).attr(\'fileHash\'))"><i class="fa fa-arrow-circle-right"></i></button>'+
-			'<button class="btn btn-refresh" id="menubar-action-btn" onclick="files.refresh(' + this.active + ')"><i class="fa fa-refresh"></i></button>'+
-			'<button class="btn btn-fullscreen" id="menubar-action-btn" onclick="bar.toggleFullScreen()"><i class="fa fa-expand"></i></button>'+
-			'<button class="btn btn-dropdown" id="menubar-action-btn" fileHash="' + hash + '" fileid="' + this.active + '" type="' + type + '" state="closed" filename="' + title + '"><i class="fa fa-bars"></i></button>'+
-			'</div>'+
+				'<div class="menubar-action-btn">'+
+				'<span class="heightsettertext"></span>'+
+				'<button class="btn btn-new-folder" id="menubar-action-btn"><i class="fa fa-plus-circle"></i></button>'+
+				'<button class="btn btn-download" id="menubar-action-btn" filename="' + title + '" fileHash="' + hash + '" onclick="files.download($(this).attr(\'filename\'), $(this).attr(\'fileHash\'));"><i class="fa fa-download"></i></button>'+
+				'<button class="btn btn-upload" id="menubar-action-btn-' + this.active + '"><i class="fa fa-upload"></i></button>'+
+				'<button class="btn btn-rename" id="menubar-action-btn" filename="' + title + '" fileHash="' + hash + '" bar="' + this.active + '" onclick="files.renameGUI.show($(this).attr(\'filename\'), $(this).attr(\'fileHash\'), $(this).attr(\'bar\'));"><i class="fa fa-pencil-square-o"></i></button>'+
+				'<button class="btn btn-delete" id="menubar-action-btn" filename="' + title + '" fileHash="' + hash + '" bar="' + this.active + '" onclick="files.deleteGUI.show($(this).attr(\'filename\'), $(this).attr(\'fileHash\'), $(this).attr(\'bar\'));"><i class="fa fa-trash"></i></button>'+
+				'<button class="btn btn-move" id="menubar-action-btn" filename="' + title + '" fileHash="' + hash + '" bar="' + this.active + '" onclick="files.moveGUI.show($(this).attr(\'filename\'), $(this).attr(\'fileHash\'))"><i class="fa fa-arrow-circle-right"></i></button>'+
+				'<button class="btn btn-refresh" id="menubar-action-btn" onclick="files.refresh(' + this.active + ')"><i class="fa fa-refresh"></i></button>'+
+				'<button class="btn btn-fullscreen" id="menubar-action-btn" onclick="bar.toggleFullScreen()"><i class="fa fa-expand"></i></button>'+
+				'<button class="btn btn-dropdown" id="menubar-action-btn" fileHash="' + hash + '" fileid="' + this.active + '" type="' + type + '" state="closed" filename="' + title + '"><i class="fa fa-bars"></i></button>'+
+				'</div>'+
+				'<div class="menubar-title-bar-headers">'+
+				'<span id="fileshared">Shared</span>'+
+				'<span id="filemod">Modified</span>'+
+				'<span id="filedet">Info</span>'+
+				'</div>'+
 			'</div>'+
 			'<div class="menubar menubar-left dropzone" id="dropzone-' + this.active + '">'+
 			'<ul id="file-target" class="file-target"></ul>'+
@@ -67,6 +72,7 @@ var bar = {
 				previewsContainer: '#dz-preview-target-' + aT,
 				previewTemplate: $("#preview-template").html(),
 				uploadMultiple: false,
+				parallelUploads: 5,
 				init: function() {
 					var num = 0;
 					var first = '';
@@ -288,6 +294,7 @@ bar.updatePos(2);
 var modalActive = false;
 var files = {
 	open: function (hash, title, bar_id, type, onclick) {
+		if (type == 'foxfile_noclick') return;
 		bar.exitFullScreen();
 		document.title = pageTitle + title_separator + title;
 		//console.log("clicked on file in bar " + bar_id);
@@ -474,27 +481,6 @@ var files = {
 			});
 		}
 	},
-	shareGUI: {
-		show: function(file, id) {
-			
-		},
-		hide: function() {
-			
-		}
-	},
-	share: function(file, id) {
-		$.post('dbquery.php',
-		{
-			share: 'share',
-			file_id: id
-		},
-		function(result) {
-			//open fileshare modal
-			//get file url from db
-
-			d.info(result);
-		});
-	},
 	moveGUI: {
 		show: function(file, id) {
 			//d.info(file+'<br>'+id);
@@ -623,6 +609,67 @@ var files = {
 			multiSelect.reset();
 		}, 10000); //let it attempt to download for 10 seconds
 		//d.warning("File zipping is not added yet, sorry :c");
+	},
+	shareGUI: {
+		show: function(file, id) {
+			$('.modal-share').addClass('modal-active');
+
+			$('.modal-share .modal-header #modal-header-name').text(file);
+
+			//d.warning("id: " + id);
+			$('.modal-share #modal-file-id-share').val(id);
+			//$('.modal-move #modal-bar-id-move').val(bar);
+			$('.modal-share').fadeIn();
+			
+			files.share(file, id);
+
+			// $('.modal-share #modal-file-name-share').select();
+			
+			modalActive = true;
+		}, 
+		hide: function() {
+			$('.modal-share').fadeOut();
+			modalActive = false;
+		}
+	},
+	share: function(file, id) {
+		$.post('dbquery.php',
+		{
+			modifyshared: 'yes',
+			action: 'add',
+			file: id
+		},
+		function(result) {
+			if (result.includes('success')) {
+				//d.info(result);
+				var key = location.hostname + '/foxfile/share?id=' + result.split("|-=-|")[1];
+				$('.modal-share #modal-file-name-share').val(key).select();
+				bar.refreshAll();
+				//$('.modal-share #modal-file-name-share').select();
+			} else {
+				d.error(result);
+			}
+		});
+	},
+	unshare: function(file, id) {
+		//d.warning(file + " " + id);
+		$.post('dbquery.php',
+		{
+			modifyshared: 'yes',
+			action: 'remove',
+			file: id
+		},
+		function(result) {
+			if (result.includes('success')) {
+				$('.modal-share #modal-file-name-share').val("Link removed");
+				//d.info(result);
+				d.info("Unshared");
+				bar.refreshAll();
+				files.shareGUI.hide();
+			} else {
+				d.error(result);
+			}
+		});
 	}
 }
 
@@ -649,7 +696,8 @@ var BarContentModel = Backbone.Model.extend({
 		units: '',
 		last_modified_date: '',
 		last_modified_time: '',
-		is_checked: ''
+		is_checked: '',
+		isShared: ''
 	}
 });
 
@@ -658,9 +706,15 @@ var BarContentList = Backbone.Collection.extend({
 	parent_key: '',
 	type: '',
 	url: function() {
-		return 'dbquery.php?dir=' + this.parent_key + '&type=' + this.type;
+		if (isSharedPage) {
+			//d.info('sharedpage dbquery.php?get_shared=' + this.parent_key + '&type=' + this.type);
+			//isSharedPage = false;
+			return 'dbquery.php?get_shared=' + this.parent_key + '&type=' + this.type;
+		} else {
+			//d.info('browsepage dbquery.php?dir=' + this.parent_key + '&type=' + this.type);
+			return 'dbquery.php?dir=' + this.parent_key + '&type=' + this.type;
+		}
 	}
-	//url: 'dbquery.php?dir=home_dir'
 });
 var BCL, BCV;
 var barTypeToMake;
@@ -723,6 +777,9 @@ var BarContentView = Backbone.View.extend({
 						obj.script = "<script type=\"text/javascript\">previews.getPreviewImage('" + obj.hash_self + "', " + obj.fileID + ", '" + obj.basicFileType + "');" + 
 					    "</script>";
 						obj.is_checked = (_.contains(multiSelect.selected, obj.hash_self) ? "checked" : "");
+					}
+					if (files[i].is_shared == 1) {
+						obj.isShared = '<span class="file-status-icon"><span class="filemod">Public</span><br><i class="fa fa-link"></i></span>';
 					}
 
 					arr.push(obj);
@@ -956,10 +1013,10 @@ var clickMenu = {
 					this.fn = 'files.download($(this).attr(\'file\'), $(this).attr(\'id\'), $(this).parents(\'.clickmenu\').attr(\'type\'));clickMenu.close();" cmm="download';
 					break;
 				case 'upload':
-					this.fn = 'clickButton(\'#menubar-action-btn-\', $(this).attr(\'bar\'))';
+					this.fn = 'clickButton(\'#menubar-action-btn-\', $(this).attr(\'bar\'));" cmm="upload';
 					break;
 				case 'new folder':
-					this.fn = 'files.newFolderGUI.show($(this).attr(\'file\'), $(this).attr(\'id\'), $(this).attr(\'bar\'));clickMenu.close();';
+					this.fn = 'files.newFolderGUI.show($(this).attr(\'file\'), $(this).attr(\'id\'), $(this).attr(\'bar\'));clickMenu.close();" cmm="newfolder';
 					break;
 				case 'share':
 					this.fn = 'files.shareGUI.show($(this).attr(\'file\'), $(this).attr(\'id\'));clickMenu.close();" cmm="share'; //not hacky at all
@@ -1036,6 +1093,7 @@ var clickMenu = {
 				files.deleteGUI.hide();
 				files.renameGUI.hide();
 				files.moveGUI.hide();
+				files.shareGUI.hide();
 			}
 		});
 	}
@@ -1197,14 +1255,19 @@ $(document).on('mousedown', "li.menubar-content:not(.menubar-content-main)", fun
     dragging = false;
     $(window).unbind("mousemove");
     if (!wasDragging) { //was clicking
-		//if ($(e.target).parents('.menubar-content').length > 0) {
-		if ($(e.target).text() == '') { //if the checkbox was clicked
+		//d.info($(e.target).attr('class') + "<br>" + $(e.target).parent().attr('class') + "<br>" + $(e.target).parent().parent().attr('class'));
+		
+		if ($(e.target).hasClass('file-status-icon') || $(e.target).parent().hasClass('file-status-icon')) { //if one of the share action links was clicked
+			if (e.which == 1) {	
+				files.shareGUI.show($(this).attr('name'), $(this).attr('filehash'));
+			}
+		} else if ($(e.target).text() == '') { //if the checkbox was clicked
 
 		} else {
 			if (e.which == 1) { //left click only
 				if (e.shiftKey || e.ctrlKey) { //check the checkbox
 					$('.file-multiselect-checkbox-container input[type="checkbox"][value="' + $(this).attr('filehash') + '"]').click();
-				} else { //open file/folder
+				} else if (!isSharedPage) { //open file/folder
 					files.open($(this).attr('filehash'), $(this).attr('name'), $(this).attr('container'), $(this).attr('type'), this.id);
 					state.update($(this).attr('container'), this.id);
 					$('#bar-' + ($(this).attr('container') + 1) + ' .menubar-title-link').attr('onclick');

@@ -465,16 +465,24 @@ a:hover {
 .file-info:after {
 	/*content: " · ";*/
 }
-.file-info-item#filedet {
+.bar #filedet {
 	position: absolute;
 	right: 20px;
 }
-.bar[active='true'] .file-info-item#filemod {
+.bar[active='true'] #filemod {
 	position: absolute;
-	right: 150px;
+	right: 120px;
 }
-.bar[active='false'] .file-info-item#filemod {
+.bar[active='false'] #filemod {
 	display: none;
+}
+.bar[active='true'] #fileshared {
+	position: absolute;
+	right: 250px;
+}
+.bar[active='false'] #fileshared {
+	position: absolute;
+	right: 120px;
 }
 .file-type-icon {
 	position: relative;
@@ -1082,4 +1090,41 @@ button:focus {
 .cm-save-status .fa-save {
 	color: red;
 	cursor: pointer;
+}
+.file-status-icon {
+	margin-left: 5px;
+	color: #666;
+}
+.menubar-title-bar-headers {
+	display: none;
+}
+.bar[type="folder"] .menubar-title-bar-headers {
+	display: inline;
+	position: absolute;
+	font-family: sans-serif;
+	font-size: 8pt;
+	color: #666;
+	right: 0;
+}
+.menubar-title-bar-headers span {
+	/*width: 200px;*/
+}
+.fileshare-btn {
+	/*font-size: 130%;*/
+	/*padding: 5px 0;*/
+}
+/*.fileshare-btn:hover {*/
+#fileshared:hover span {
+	-webkit-transition: all .2s ease-in-out;
+          transition: all .2s ease-in-out;
+	color: #fa6500;
+}
+.btn-blank {
+	border: none;
+	background: transparent;
+	color: #ccc;
+	padding: 10px 30px;
+}
+.btn-remove {
+	background: #61391d;
 }

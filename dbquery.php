@@ -1,7 +1,4 @@
 <?php
-if (isset($_POST['SETSESSIONID'])) {
-	session_id($_POST['SETSESSIONID']);
-}
 session_start();
 /*
 * dbquery.php - FoxFile
@@ -23,6 +20,7 @@ error_reporting(E_ALL);
 $db = mysqli_connect($dbhost,$dbuname,$dbupass,$dbname);
 $usertable = $database['TABLE_USERS'];
 $filetable = $database['TABLE_FILES'];
+$shareTable = $database['TABLE_SHARE'];
 $file_root = $files['ROOT'];
 $file_prefix = $files['PREFIX'];
 $uid = $_SESSION['uid'];
@@ -46,6 +44,13 @@ function getOwner($f) {
 			$row = mysqli_fetch_array($result);
 			return $row['owner'];
 		}
+function isShared($file) {
+	global $db, $filetable;
+	$file = sanitize($file);
+	$result = mysqli_query($db, "SELECT is_shared from $filetable where file_self = '$file'");
+	$row = mysqli_fetch_array($result);
+	return $row['is_shared'] == 1;
+}
 function sanitize($s) {
 	global $db;
 	// return htmlentities(br2nl(addslashes(mysqli_real_escape_string($db, $s))), ENT_QUOTES);
@@ -68,7 +73,7 @@ function br2nl($s) {
 function nlTobr($s) {
 	return str_replace( "\n", '<br>', $s);
 }
-if ($show_debug) {
+if (!$show_debug) {
 	if(isset($_GET['getpath'])) {
 		 echo '<br>'.getPath($_GET['getpath']);
 	}
@@ -91,6 +96,9 @@ if ($show_debug) {
 	if (isset($_GET['phpinfo'])) {
 		phpinfo();
 		die();
+	}
+	if (isset($_GET['isShared'])) {
+		echo "is shared: " . isShared($_GET['isShared']);
 	}
 }
 function getName($file) {
@@ -265,7 +273,9 @@ function deleteFile($file) {
 }
 function recurse_copy($src,$dst) { 
     $dir = opendir($src); 
-		if (!file_exists($dst)) if (mkdir($dst, 0777, true)) echo "<font color='red'>Folder " . $dst . ' did not exist, creating</font><br>';
+		if (!file_exists($dst))
+			if (mkdir($dst, 0777, true))
+				//echo "<font color='red'>Folder " . $dst . ' did not exist, creating</font><br>';
     while(false !== ( $file = readdir($dir)) ) { 
         if (( $file != '.' ) && ( $file != '..' )) { 
             if ( is_dir($src . '/' . $file) ) { 
@@ -278,19 +288,33 @@ function recurse_copy($src,$dst) {
     } 
     closedir($dir); 
 } 
-function Zip($source, $destination) {
+function Zip($source, $destination, $sharedl = false) {
 	global $uhd;
-    if (is_string($source)) {
-    	$source_arr = array(getPath($source)); // convert it to array
-    	$source = array($source);
-    	//echo "Source was string, making array<br>";
-    } else {
-    	$fileList = array();
-		foreach($source as $file) {
-			$fileList[] = getPath($file);
-		}
-    	$source_arr = $fileList;
-    }
+	if (!$sharedl) {
+	    if (is_string($source)) {
+	    	$source_arr = array(getPath($source)); // convert it to array
+	    	$source = array($source);
+	    	//echo "Source was string, making array<br>";
+	    } else {
+	    	$fileList = array();
+			foreach($source as $file) {
+				$fileList[] = getPath($file);
+			}
+	    	$source_arr = $fileList;
+	    }
+	} else { //zipping from the shared folder
+		if (is_string($source)) {
+	    	$source_arr = array('shared/'.$source); // convert it to array
+	    	$source = array($source);
+	    	//echo "Source was string, making array<br>";
+	    } else {
+	    	$fileList = array();
+			foreach($source as $file) {
+				$fileList[] = 'shared/'.$file;
+			}
+	    	$source_arr = $fileList;
+	    }
+	}
     if (!extension_loaded('zip')) {
         return false;
     }
@@ -316,7 +340,7 @@ function Zip($source, $destination) {
         if (!file_exists($source)) continue;
 		$source = str_replace('\\', '/', realpath($source));
         //echo "Source: " . $source . '<br>';
-        $oTarget = str_replace('files', 'downloads', $source);
+        $oTarget = str_replace('shared', 'downloads', str_replace('files', 'downloads', $source));
         //echo "Target: " . $oTarget . '<br><hr>';
 		if (is_dir($source)) {
 			$iterator = new RecursiveDirectoryIterator($source);
@@ -325,7 +349,7 @@ function Zip($source, $destination) {
 
 		    foreach ($files as $file) {
 		        $file = str_replace('\\', '/', realpath($file));
-		        $target = str_replace('files', 'downloads', $file);
+		        $target = str_replace('shared', 'downloads', str_replace('files', 'downloads', $file));
 		        $tartmp = str_replace('/'.basename($target), '', $target);
 		        if (!file_exists($tartmp)) {
 		        	//if (is_dir($tartmp)) {
@@ -334,27 +358,17 @@ function Zip($source, $destination) {
 		        	//}
 		        }
 		        if (is_dir($file)) {
-		            //$zip->addEmptyDir(str_replace($source . '/', '', $file . '/'));
-		            //echo "Folder: " . str_replace('downloads', 'files', $file) . '<br>';
-		            //echo 'Destination: ' . $dest . str_replace($source . '/', '', $file . '/' . '<br>');
-		            //echo "Target: " . $target . '<br>';
-		            //recurse_copy(str_replace('downloads', 'files', $file), $dest . str_replace($source . '/', '', $file));
 		            recurse_copy($file, $target);
 		            //echo '<hr>';
 		        }
 		        else if (is_file($file)) {
-		            //$zip->addFromString(str_replace($source . '/', '', $file), file_get_contents($file));
-		            //echo "File: " . str_replace('downloads', 'files', $file) . '<br>';
-		            //echo 'Destination: ' . $dest . str_replace($source . '/', '', $file . '/<br>');
-		            //echo "Target: " . $target . '<br>';
-		            //copy(str_replace('downloads', 'files', $file), $dest . str_replace($source . '/', '', $file));
 		            copy($file, $target);
 		            //echo '<hr>';
 		        }
 		    }
 		}
 		else if (is_file($source)) {
-			$target = str_replace('files', 'downloads', $file);
+			$target = str_replace('shared', 'downloads', str_replace('files', 'downloads', $file));
 		    //$zip->addFromString(basename($source), file_get_contents($source));
 		    //copy(str_replace('downloads', 'files', $file), $dest . str_replace($source . '/', '', $file));
 		    copy($file, $target);
@@ -373,13 +387,6 @@ function Zip($source, $destination) {
 	    //echo 'items: ' . sizeof($files).'<br>';
 	    foreach ($files as $file) {
 	    	//echo 'current index: ' . $i . '<br>';
-	    	/*$updatedFile = new RecursiveIteratorIterator($iterator, RecursiveIteratorIterator::CHILD_FIRST);
-	    	//$updatedFile = $unused;
-	    	$file = array();
-	    	foreach($updatedFile as $f) {
-	    		$file[] = $f;
-	    	}
-	    	$file = $file[$i];*/
 	        $file = str_replace('\\', '/', realpath($file));
 
 	        if (is_dir($file)) {
@@ -389,21 +396,12 @@ function Zip($source, $destination) {
 	            rename($file, str_replace(basename($file), getName(basename($file)), $file));
 		        //echo '<hr>';
         	} else if (is_file($file)) {
-	            /*echo "File: " . basename($file) . '<br>';
-	            echo 'Renaming to: ' . getName(basename($file));
-	            chmod($file, 0777);
-	            rename($file, str_replace(basename($file), getName(basename($file)), $file));
-		        echo '<hr>';*/
 	        }
 	        $i++;
 	    }
 	}
 	else if (is_file($source)) {
-	    /*echo "File: " . $file . '<br>';
-	    echo 'Renaming to: ' . getName(basename($file));
-	    chmod($file, 0777);
-	    rename($file, str_replace(basename($file), getName(basename($file)), $file));
-		echo '<hr>';*/
+
 	}
 
     //zip created folder
@@ -411,7 +409,7 @@ function Zip($source, $destination) {
 		$source = $oTarget;
 		//echo '<hr><b>creating zip</b><hr>';
         //echo "Source: " . $source . '<br>';
-        $oTarget = str_replace('files', 'downloads', $source);
+        $oTarget = str_replace('shared', 'downloads', str_replace('files', 'downloads', $source));
         //echo "Target: " . $oTarget . '<br><hr>';
 		if (is_dir($source)) {
 			$iterator = new RecursiveDirectoryIterator($source);
@@ -420,26 +418,11 @@ function Zip($source, $destination) {
 
 		    foreach ($files as $file) {
 		        $file = str_replace('\\', '/', realpath($file));
-/*		        $target = str_replace('files', 'downloads', $file);
-		        if (!file_exists($target)) 
-		        	if (is_dir($target)) mkdir($target, 0777, true);*/
 		        if (is_dir($file)) {
 		            $zip->addEmptyDir(str_replace($source . '/', '', $file . '/'));
-		            //echo "Folder: " . str_replace('downloads', 'files', $file) . '<br>';
-		            //echo 'Destination: ' . $dest . str_replace($source . '/', '', $file . '/' . '<br>');
-		            //echo "Target: " . $target;
-		            //recurse_copy(str_replace('downloads', 'files', $file), $dest . str_replace($source . '/', '', $file));
-		            //recurse_copy($file, $target);
-		            //echo '<hr>';
 		        }
 		        else if (is_file($file)) {
 		            $zip->addFromString(str_replace($source . '/', '', $file), file_get_contents($file));
-		            //echo "File: " . str_replace('downloads', 'files', $file) . '<br>';
-		            //echo 'Destination: ' . $dest . str_replace($source . '/', '', $file . '/<br>');
-		            //echo "Target: " . $target;
-		            //copy(str_replace('downloads', 'files', $file), $dest . str_replace($source . '/', '', $file));
-		            //copy($file, $target);
-		            //echo '<hr>';
 		        }
 		    }
 		}
@@ -466,31 +449,7 @@ function Zip($source, $destination) {
 	    	$zip->renameIndex($fIndex, $name);
 	    	//echo "renaming to: " . $name . '<br>';
 	    }
-    }/*
-    echo "<hr>Looping through folders<br>";
-    //loop trough again renaming folders
-    for($i = 0; $i < $zip->numFiles; $i++) {
-    	$s = $zip->statIndex($i);
-    	$f = $s['name'];
-    	$t = $s['size'];
-    	if ($t === 0) {
-	    	$p = pathinfo($f)['dirname'];
-	    	echo 'Path: ' . $f . ' dirname: ' . $p . ' with basename: ' . basename($f) . '<br>';
-	    	if (!$fIndex = $zip->locateName($f, ZipArchive::FL_NOCASE|ZipArchive::FL_NODIR)) {
-	    		echo "<font color='red'>could not find " . $f . ' in zip</font><br>';
-	    	}
-	    	//echo "got Index: " . $fIndex . ' of folder: ' . $f . '<br>';
-	    	$name = getName(basename($f));
-	    	if ($p != '.' && $p != '') {
-	    		$name = $p . '/' . $name;
-	    	}
-	    	//$zip->renameIndex($fIndex, $name);
-	    	if ($zip->renameName($f, $name)) {
-	    		echo 'renaming ' . $f . ' to ' . $name . '<br>';
-	    	}
-	    	echo "renaming to: " . $name . '<br>';
-	    }
-    }*/
+    }
     //echo 'deleting ' . $source;
     deleteDir($source);
     //echo 'a';
@@ -515,10 +474,15 @@ if(isset($_POST['fullNameFromUser'])) {
 		}
 	}
 }
-if(isset($_GET['dir'])) {
+if(isset($_GET['dir']) || isset($_POST['dir'])) {
 	if ($alvl > 0) {
-		$dir = sanitize($_GET['dir']);
-		$type = sanitize($_GET['type']);
+		if(isset($_GET['dir'])) {
+			$dir = sanitize($_GET['dir']);
+			$type = sanitize($_GET['type']);
+		} else {
+			$dir = sanitize($_POST['dir']);
+			$type = sanitize($_POST['type']);
+		}
 		if ($type === 'folder') {
 			$dirOwner = mysqli_query($db, "SELECT owner from $filetable WHERE file_parent='$dir'");
 			$resultDir = mysqli_query($db, "SELECT * from $filetable WHERE file_parent='$dir' AND owner='$uid' ORDER BY file_name"); //also order by file_type or file_name or last_modified
@@ -539,11 +503,11 @@ if(isset($_GET['dir'])) {
 					if ($giveResult) {
 						echo json_encode($r);
 					} else {
-						echo '[{"PID": "0","owner":"0","file_name":"Folder Access Denied","file_size":"0","file_type":"text","file_self":"test_hash","file_parent":"home_dir","file_child":""}]';
+						echo '[{"PID": "0","owner":"0","file_name":"Folder Access Denied","file_size":"0","file_type":"foxfile_noclick","file_self":"test_hash","file_parent":"home_dir","file_child":""}]';
 						//echo json_encode($r);
 					}
 			} else {  
-			    echo '[{"PID": "0","owner":"0","file_name":"Folder is Empty","file_size":"0","file_type":"text","file_self":"test_hash","file_parent":"home_dir","file_child":"","last_modified":"' . date("F j, Y, g:i a") . '"}]';  
+			    echo '[{"PID": "0","owner":"0","file_name":"Folder is Empty","file_size":"0","file_type":"foxfile_noclick","file_self":"test_hash","file_parent":"home_dir","file_child":"","last_modified":"' . date("F j, Y, g:i a") . '"}]';  
 			}
 		} else {
 			$dirOwner = mysqli_query($db, "SELECT owner from $filetable WHERE file_self='$dir'");
@@ -564,13 +528,15 @@ if(isset($_GET['dir'])) {
 					if ($giveResult) {
 						echo json_encode($r);
 					} else {
-						echo '[{"PID": "0","owner":"0","file_name":"File Access Denied","file_size":"0","file_type":"text","file_self":"test_hash","file_parent":"home_dir","file_child":""}]';
+						echo '[{"PID": "0","owner":"0","file_name":"File Access Denied","file_size":"0","file_type":"foxfile_noclick","file_self":"test_hash","file_parent":"home_dir","file_child":""}]';
 						//echo json_encode($r);
 					}
 			} else {  
-			   	echo '[{"PID": "0","owner":"0","file_name":"File Does Not Exist","file_size":"0","file_type":"text","file_self":"test_hash","file_parent":"home_dir","file_child":"","last_modified":"' . date("F j, Y, g:i a") . '"}]'; 
+			   	echo '[{"PID": "0","owner":"0","file_name":"File Does Not Exist","file_size":"0","file_type":"foxfile_noclick","file_self":"test_hash","file_parent":"home_dir","file_child":"","last_modified":"' . date("F j, Y, g:i a") . '"}]'; 
 			}
 		}
+	} else {
+		echo '[{"PID": "0","owner":"0","file_name":"Please log in.","file_size":"0","file_type":"foxfile_noclick","file_self":"test_hash","file_parent":"home_dir","file_child":"","last_modified":"' . date("F j, Y, g:i a") . '"}]';
 	}
 }
 if (isset($_POST['minibar_dir'])) {
@@ -857,8 +823,13 @@ if (isset($_POST['move'])) {
 		}
 	}
 }
-if(isset($_GET['upload_target'])) {
-	$target = sanitize($_GET['upload_target']);
+if(isset($_GET['upload_target']) || isset($_POST['upload_target'])) {
+	//echo "Hello from upload_target()";
+	if (isset($_POST['upload_target'])) {
+		$target = sanitize($_POST['upload_target']);
+	} else {
+		$target = sanitize($_GET['upload_target']);
+	}
 	$path = getPath($target);
 	//echo $path;
 
@@ -909,6 +880,8 @@ if(isset($_GET['upload_target'])) {
 					echo 'Update failed';
 				}
 			}
+		} else {
+			print_r($_FILES);
 		}
 	} else {
 		echo "You have reached your storage quota!";
@@ -917,7 +890,7 @@ if(isset($_GET['upload_target'])) {
 if(isset($_POST['read_file'])) {
 	$fileName = sanitize($_POST['read_file']);
 	$filePath = getPath($fileName);
-	if (getOwner($fileName) == $uid) {
+	if (getOwner($fileName) == $uid || isShared($fileName) == 1) {
 		if (is_readable($filePath)) {
 			echo str_replace('<', '&lt;', str_replace('>', '&gt;', file_get_contents($filePath)));
 		} else {
@@ -940,7 +913,7 @@ if(isset($_GET['preview'])) {
 	}
 
 	if (is_readable($filePath)) {
-		if(getOwner($fileName) == $uid) {
+		if(getOwner($fileName) == $uid || isShared($fileName) == 1) {
 			$finfo = finfo_open(FILEINFO_MIME_TYPE);
 			$fileType = finfo_file($finfo, $filePath);
 			finfo_close($finfo);
@@ -958,10 +931,15 @@ if(isset($_GET['preview'])) {
 if(isset($_GET['download'])) {
 	$fileName = sanitize($_GET['file_id']);
 	$n = sanitize($_GET['file_name']);
+	$isShared = isShared($fileName);
 
-	if (getOwner($fileName) == $uid) {
+	if (getOwner($fileName) == $uid || $isShared) {
 
-		$filePath = getPath($fileName);
+		if ($isShared) {
+			$filePath = 'shared/'.$fileName;
+		} else {
+			$filePath = getPath($fileName);
+		}
 
 	    if(is_readable($filePath)) {
 	        $fileSize = filesize($filePath);
@@ -1007,17 +985,28 @@ if(isset($_GET['multi_download'])) {
 		//echo 'Type = Folder<br>';
 	}
 	if ($type === 'folder') {
-		if (getOwner($files) == $uid) {
-			//echo 'Zipping folder<br>';
-			if (!Zip($files, $destination)) echo "Failed to zip files.";
+		$isShared = isShared($files);
+		if (getOwner($files) == $uid || $isShared) {
+			if ($isShared) {
+				if (!Zip($files, $destination, true)) echo "Failed to zip files.";
+			} else {
+				//echo 'Zipping folder<br>';
+				if (!Zip($files, $destination)) echo "Failed to zip files.";
+			}
 		} else {
 			//echo "You do not have access to these files.";
 		}
 	} else if ($type === 'file') {
 		//$files will be a CSV split into an array
-		if (getOwner($files[0]) == $uid) {
-			//echo 'Zipping files<br>';
-			if (!Zip($files, $destination)) echo "Failed to zip files.";
+		$fil = $files[0];
+		$isShared = isShared($files[0]);
+		if (getOwner($files[0]) == $uid || $isShared) {
+			if ($isShared) {
+				if (!Zip($files, $destination, true)) echo "Failed to zip files.";
+			} else {
+				//echo 'Zipping files<br>';
+				if (!Zip($files, $destination)) echo "Failed to zip files.";
+			}
 		} else {
 			//echo "You do not have access to these files.";
 		}
@@ -1184,6 +1173,107 @@ if(isset($_POST['cm_save'])) {
 	} else {
 		echo "Cannot access file.";
 	}
+}
+if (isset($_POST['modifyshared'])) {
+	$action = sanitize($_POST['action']);
+	$file = sanitize($_POST['file']);
+	$destPath = "shared";
+	if (!file_exists($destPath)) {
+		mkdir($destPath);
+	}
+	
+	$destRealPath = realpath($destPath);
+	$destRealPath .= '/'.$file;
+	//echo 'file'.$fileRealPath.'<br>dest'.$destRealPath;
+	$origtable = mysqli_query($db, "SELECT * from $filetable WHERE file_self='$file' AND owner='$uid'");
+	$row = mysqli_fetch_array($origtable);
+	$date =date("F j, Y, g:i a");
+	$fileKey = $row['file_self'];
+	$fileSelf = $row['file_self'];
+	$fileParent = $row['file_parent'];
+	$fileName = $row['file_name'];
+	$fileType = $row['file_type'];
+	$fileSize = $row['file_size'];
+
+	if ($action == 'add') {
+		$filePath = getPath($file);
+		$fileRealPath = realpath($filePath);
+
+		$res = mysqli_query($db, "SELECT * from $shareTable WHERE file_original='$file'");
+		$resrows = mysqli_num_rows($res);
+		if ($resrows > 0) {
+			//if file has already been shared
+			$row2 = mysqli_fetch_array($res);
+			echo 'no new added - success|-=-|'.$row2['file_key'];
+		} else {
+			//if file is just being shared now
+			if (is_dir($fileRealPath)) {
+				recurse_copy($fileRealPath, $destRealPath);
+			} else {
+				copy($fileRealPath, $destRealPath);
+			}
+			mysqli_query($db, "INSERT INTO $shareTable (file_original, file_name, file_type, file_size, file_self, file_parent, last_modified, download_count)
+						VALUES ('$fileSelf', '$fileName', '$fileType', '$fileSize', '$fileKey', '$fileParent', '$date', '0')");
+			mysqli_query($db, "UPDATE $filetable SET is_shared='1' WHERE file_self='$file'");
+			echo 'added new - success|-=-|'.$fileKey;
+		}
+	} else if ($action == 'remove') {
+		if (is_dir($destRealPath)) {
+			deleteDir($destRealPath);
+		} else {
+			unlink($destRealPath);
+		}
+		echo 'fileSelf: ' .$fileSelf .'<br>';
+		echo 'file: ' . $file . '<br>';
+		echo "removing: ". $destRealPath.'<br>';
+		mysqli_query($db, "DELETE FROM $shareTable WHERE file_original='$fileSelf'");
+		mysqli_query($db, "UPDATE $filetable SET is_shared='0' WHERE file_self='$file'");
+		echo 'success - removed';
+	} else {
+		echo 'can only add or remove';
+	}
+}
+//to make this work, copy any 'shared' files into a separate directory (/shared/) and make a separate db table with hashes refering to those
+//that way this does not need to know the username of the file owner to retrieve the file
+if(isset($_GET['get_shared']) || isset($_POST['get_shared'])) {
+	if(isset($_GET['get_shared'])) {
+		$dir = sanitize($_GET['get_shared']);
+		$type = sanitize($_GET['type']);
+	} else {
+		$dir = sanitize($_POST['get_shared']);
+		$type = sanitize($_POST['type']);
+	}
+	if ($type === 'folder') {
+		$resultDir = mysqli_query($db, "SELECT * from $shareTable WHERE file_self='$dir' ORDER BY file_name"); //also order by file_type or file_name or last_modified
+
+		if(mysqli_num_rows($resultDir) > 0) {
+			$r = array();
+			while($row = mysqli_fetch_assoc($resultDir)) {
+				$r[] = $row;
+			}
+			echo json_encode($r);
+		} else {  
+		    echo '[{"PID": "0","owner":"0","file_name":"Folder is Empty","file_size":"0","file_type":"foxfile_noclick","file_self":"test_hash","file_parent":"home_dir","file_child":"","last_modified":"' . date("F j, Y, g:i a") . '"}]';  
+		}
+	} else {
+		$resultFileData = mysqli_query($db, "SELECT * from $shareTable WHERE file_self='$dir'");
+			
+		if(mysqli_num_rows($resultFileData) > 0) {
+			$r = array();
+			while($row = mysqli_fetch_assoc($resultFileData)) {
+				$r[] = $row;
+			}
+			echo json_encode($r);
+		} else {  
+		   	echo '[{"PID": "0","owner":"0","file_name":"File Does Not Exist","file_size":"0","file_type":"foxfile_noclick","file_self":"test_hash","file_parent":"home_dir","file_child":"","last_modified":"' . date("F j, Y, g:i a") . '"}]'; 
+		}
+	}
+}
+if(isset($_POST['getfileinfo'])) {
+	$file = sanitize($_POST['getfileinfo']);
+	$res = mysqli_query($db, "SELECT * from $filetable WHERE file_self='$file'");
+	$row = mysqli_fetch_array($res);
+	echo 'success|-=-|' . $row['file_name'] . '|-=-|' . $row['file_type'];
 }
 
 mysqli_close($db);

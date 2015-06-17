@@ -10,7 +10,7 @@
 			$showpageloadtime = 0;
 			$useGroupPassword = 1;
 			$group_password = "foxfilealpha";
-			$allowsharing = 0;
+			$allowsharing = 1;
 			$alvl_admin = 5;
 			$alvl_user = 1;
 			$ini_max_upload = 128;
@@ -19,7 +19,8 @@
 				"NAME" => 'FOXFILE',
 				"PREFIX" => null,
 				"TABLE_FILES" => "FILES",
-				"TABLE_USERS" => "USERS"
+				"TABLE_USERS" => "USERS",
+				"TABLE_SHARE" => "SHARED"
 			];
 			$files = [
 				"ROOT" => 'files',

@@ -221,6 +221,26 @@ $starttime = $time;
               echo "<script type='text/javascript'>d.error('MySQL Query failed: " . mysqli_error($db) . "')</script>";
             }
 
+            $sql = 'CREATE TABLE SHARED (
+                PID INT NOT NULL AUTO_INCREMENT, 
+                PRIMARY KEY(PID),
+                file_original VARCHAR(512),
+                file_name VARCHAR(100),
+                file_type VARCHAR(50),
+                file_size DOUBLE(30, 2),
+                file_self VARCHAR(512),
+                file_parent VARCHAR(512),
+                last_modified VARCHAR(50),
+                is_shared BOOLEAN,
+                download_count INT
+                )';
+
+            if (mysqli_query($db,$sql)) {
+              echo "<script type='text/javascript'>d.success('Table \"Shared\" Created successfully')</script>";
+            } else {
+              echo "<script type='text/javascript'>d.error('MySQL Query failed: " . mysqli_error($db) . "')</script>";
+            }
+
             $string = '<?php 
 $dbuname = "' . $_POST['dbuname'] . '";
 $dbupass = "' . $_POST['dbupass'] . '";
