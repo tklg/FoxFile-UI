@@ -1204,7 +1204,7 @@ if (isset($_POST['modifyshared'])) {
 		if ($resrows > 0) {
 			//if file has already been shared
 			$row2 = mysqli_fetch_array($res);
-			echo 'no new added - success|-=-|'.$row2['file_key'];
+			echo 'no new added - success|-=-|'.$row2['file_self'];
 		} else {
 			//if file is just being shared now
 			if (is_dir($fileRealPath)) {

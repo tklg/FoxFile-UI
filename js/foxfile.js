@@ -641,7 +641,7 @@ var files = {
 		},
 		function(result) {
 			if (result.includes('success')) {
-				//d.info(result);
+				d.info(result);
 				var key = location.hostname + '/foxfile/share?id=' + result.split("|-=-|")[1];
 				$('.modal-share #modal-file-name-share').val(key).select();
 				bar.refreshAll();
