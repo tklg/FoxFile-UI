@@ -135,6 +135,7 @@ if(isset($_POST['register'])) {
 		                '5000000000',
 		                '$date')";
 				if (mysqli_query($db,$sql)) {
+					mkdir('shared/'.$uname);
 		            //echo 'User \''. $uname .'\' created successfully';
 		        } else {
 		            echo 'MySQL Query failed: ' . mysqli_error($db);

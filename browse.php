@@ -105,7 +105,7 @@ if ($uid < 1) {
     <li class="menubar-content-view" container="<%= model.get('container') %>" type="<%= model.get('basicFileType') %>" filehash="<%= model.get('hash_self') %>" id="<%= model.get('fileID') %>" name="<%= model.get('fileName') %>" pos="">
 		<img class="img-preview" />
 		<textarea class="text-preview" id="editor">Loading...</textarea>
-		<!-- <div class="text-preview" id="editor"><div class="spinner"><div class="loading up"></div><div class="loading down"></div></div></div> -->
+		<iframe class="pdf-preview" id="pdfjsviewer" frameborder="0"></iframe>
 		<audio controls class="audio-preview">Audio tags are not supported by your browser.</audio>
 		<video controls class="video-preview">Video tags are not supported by your browser.</video>
 		<%= model.get('script') %>
@@ -222,8 +222,8 @@ if ($uid < 1) {
 			<input id="modal-bar-id-share" type="hidden">
 		</div>
 		<div class="modal-footer">
-			<button type="submit" class="btn btn-submit" id="btn-delete" onclick="files.unshare($('.modal-share #modal-header-name').text(), $('.modal-share #modal-file-id-share').val())">Remove Link</button>
-			<button class="btn btn-cancel" onclick="files.shareGUI.hide()">Close</button>
+			<button type="submit" class="btn btn-cancel" onclick="files.unshare($('.modal-share #modal-header-name').text(), $('.modal-share #modal-file-id-share').val())">Remove Link</button>
+			<button class="btn btn-submit" onclick="files.shareGUI.hide()">Close</button>
 		</div>
 	</div>
 	</section>

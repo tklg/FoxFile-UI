@@ -224,7 +224,6 @@ $starttime = $time;
             $sql = 'CREATE TABLE SHARED (
                 PID INT NOT NULL AUTO_INCREMENT, 
                 PRIMARY KEY(PID),
-                file_original VARCHAR(512),
                 file_name VARCHAR(100),
                 file_type VARCHAR(50),
                 file_size DOUBLE(30, 2),

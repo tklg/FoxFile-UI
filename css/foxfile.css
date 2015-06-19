@@ -555,7 +555,8 @@ a:hover {
 	content: '\f1c6';
 }
 .menubar-content-view[type='pdf'] .file-view:before {
-	content: '\f1c1';
+	/*content: '\f1c1';*/
+	content: none;
 }
 .menubar-content-view[type='text'] .file-view:before {
 	content: none;
@@ -647,6 +648,16 @@ a:hover {
 	left: 0;right:0;
 	/*top:0;bottom:0;*/
 	top: 10px;
+}
+.menubar-content-view[type='pdf'] .pdf-preview {
+	height: auto;
+	min-height: 100%;
+	min-width: 100%;
+	margin: auto;
+	position: absolute;
+	left: 0;right:0;
+	/*top:0;bottom:0;*/
+	border: none;
 }
 .modal-background {
 	width: 100%;
@@ -927,19 +938,26 @@ h3 {
 	.col-3-2 {
 		width: 67%;
 	}
-	input.user-setting {
+	input.user-setting,
+	textarea.user-setting {
 		padding: 10px;
 		background: rgba(255,255,255,.05);
 		border: none;
 		color: #aaa;
 		margin-top: 3px;
 	}
-	input.full {
+	input.full,
+	textarea.full {
 		width: 85%;
 	}
-	input.less {
+	input.less,
+	textarea.less {
 		width: 70%;
 		margin-right: 5px;
+	}
+	textarea.user-setting {
+		min-height: 100px;
+		outline: none;
 	}
 .btn-submit {
 		padding: 10px;
@@ -1004,15 +1022,18 @@ input[type="radio"].user-setting {
 	input[type='radio'].user-setting:checked + label {
 	    background: #61391d;
 	}
-input {
+input,
+textarea,
+button {
+	outline: 0 none;
 	-webkit-transition: all .2s ease;
 	        transition: all .2s ease;
 }
 input:not([disabled]):active,
 input:not([disabled]):focus,
-button:active,
-button:focus {
-    outline: 0 none;
+textarea:not([disabled]):active,
+textarea:not([disabled]):focus,
+button:active {
     background: rgba(255, 255, 255, 0.12);
 }
 .modal-move .modal-content {

@@ -3,10 +3,11 @@ session_start();
 require ('includes/config.php');
 if(!isset($_SESSION['uid'])) $_SESSION['uid'] = 0;
 if(!isset($_SESSION['access_level'])) $_SESSION['access_level'] = 0;
-if(!isset($_SESSION['uhd'])) $_SESSION['uhd'] = 'USER_HOME_DIR';
-if(!isset($_SESSION['username'])) $_SESSION['username'] = 'USERNAME';
+if(!isset($_SESSION['uhd'])) $_SESSION['uhd'] = 'SHARED_USER';
+if(!isset($_SESSION['username'])) $_SESSION['username'] = 'SHARED_USERNAME';
 
-if(!isset($_GET['id'])) $_GET['id'] = "root";
+if(!isset($_GET['id'])) 
+	header("Location: error.php?404");
 
 $uid = $_SESSION['uid'];
 $uhd = $_SESSION['uhd'];
@@ -85,6 +86,9 @@ if ($alvl < 1) {
 	.menubar-title-bar-headers {
     	display: none !important;
     }
+    /*a li {
+    	color: #ccc;;
+    }*/
     </style>
 
 </head>
@@ -113,14 +117,13 @@ if ($alvl < 1) {
 	<?php if ($hasUser) { ?>
 	<ul>
 		<li class="menubar-content menubar-content-user menubar-content-user-name menubar-content-active" id="menubar-button-1"><span id="display_name"><?php echo $uname ?></span><a href="uauth.php?logout" class="btn btn-logout"><i class="fa fa-sign-out"></i></a></li>
-		<a href="browse"><li class="menubar-content menubar-content-main menubar-content-active" container="1" id="menubar-button-files" type="folder">My Files</li></a>
+		<a href="browse"><li class="menubar-content menubar-content-main menubar-content-active" container="1" id="menubar-button-files" type="folder">Go to My Files</li></a>
+		<li class="menubar-content menubar-content-main" container="1" id="menubar-button-copy" type="folder" onclick="copyFile()">Copy to My Files</li>
 	</ul>
 	<?php } else { ?>
 		<div class="promo">
 			<div id="promo-message">
-				<h4>Semi-reliable cloud storage.</h4>
-				<h4>Somewhat fast server connection.</h4>
-				<h4>Absolutely no backups.</h4>
+				<?php echo $promo_message; ?>
 			</div>
 			<br><br><br>
 			<button class="btn btn-submit" onclick="document.location = 'register.php'"><b>Sign Up for 5GB FREE</b></button>

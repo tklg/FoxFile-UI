@@ -618,6 +618,7 @@ var files = {
 
 			//d.warning("id: " + id);
 			$('.modal-share #modal-file-id-share').val(id);
+			$('.modal-share #modal-file-name-share').val("generating link...");
 			//$('.modal-move #modal-bar-id-move').val(bar);
 			$('.modal-share').fadeIn();
 			
@@ -641,10 +642,18 @@ var files = {
 		},
 		function(result) {
 			if (result.includes('success')) {
-				d.info(result);
-				var key = location.hostname + '/foxfile/share?id=' + result.split("|-=-|")[1];
+				//d.info(result);
+				var urla = window.location.href.toString().split('/');
+				var url = '';
+				for (i = 0; i < urla.length - 1; i++) {
+					url += urla[i] + '/';
+				}
+				//var key = location.hostname + '/foxfile/share?id=' + result.split("|-=-|")[1];
+				var key = url + 'share?id=' + result.split("|-=-|")[1];
 				$('.modal-share #modal-file-name-share').val(key).select();
-				bar.refreshAll();
+
+				if (!result.includes("no new"))
+					bar.refreshAll();
 				//$('.modal-share #modal-file-name-share').select();
 			} else {
 				d.error(result);
@@ -1146,6 +1155,15 @@ var previews = {
 				setTimeout(function() {
 					$('.menubar-content-view#' + target + ' .img-preview').attr('src', 'dbquery.php?preview=' + hash);
 				}, 500);
+			} else if (type == 'pdf') {
+				var urla = window.location.href.toString().split('/');
+				var url = '';
+				for (i = 0; i < urla.length - 1; i++) {
+					url += urla[i] + '/';
+				}
+				var url2 = 'plugins/pdf.js/web/viewer.html?file=' + url + 'dbquery%3Fpreview%3D' + hash;
+				// var url = 'plugins/pdf.js/web/viewer.html?file=test.pdf';
+				$('.menubar-content-view#' + target + ' .pdf-preview').attr('src', url2);
 			}
 		}, 500);
 	}

@@ -850,6 +850,7 @@ if(isset($_GET['upload_target']) || isset($_POST['upload_target'])) {
 				'today' => date("Y-m-d H:i:s")
 			];
 			$lmdf = $date['last_modified'];
+			//$self_hash = md5($uhd . $path . $_FILES['file']['name']) . '.' . $fExt . $date['today']; 
 
 			echo $targetPath;
 
@@ -1119,7 +1120,7 @@ if(isset($_POST['getContent'])) {
 		$echo = str_replace('{{sharing-false}}', $se['allow_sharing2'], str_replace("{{sharing-true}}", $se['allow_sharing'], str_replace("{{site-version}}", $ver, $echo)));
 		$echo = str_replace('{{pageloadtime-false}}', $se['show_pageload2'], str_replace('{{pageloadtime-true}}', $se['show_pageload'], str_replace('{{footer-false}}', $se['show_footer2'], str_replace('{{footer-true}}', $se['show_footer'], $echo))));
 		$echo = str_replace('{{errors-false}}', $se['show_errors2'], str_replace('{{errors-true}}', $se['show_errors'], str_replace('{{debug-false}}', $se['show_debug2'], str_replace('{{debug-true}}', $se['show_debug'], $echo))));
-		echo str_replace('{{ini-max-upload}}', $ini_max_upload, str_replace('{{gravatar-rating}}', $grav_rating, str_replace('{{gravatar-default}}', $grav_default, $echo)));
+		echo str_replace('{{promo-message}}', $promo_message, str_replace('{{ini-max-upload}}', $ini_max_upload, str_replace('{{gravatar-rating}}', $grav_rating, str_replace('{{gravatar-default}}', $grav_default, $echo))));
 	} else if ($cType == 'colors' && $alvl >= $alvl_admin) {
 		$echo = str_replace('{{color-4}}', $colors['VERT_DIV'], str_replace('{{color-3}}', $colors['TEXT'], str_replace('{{color-2}}', $colors['SECONDARY'], str_replace('{{color-1}}', $colors['PRIMARY'], file_get_contents('includes/colorspage.php')))));
 		$echo = str_replace('{{color-7}}', $colors['TEXT_SECONDARY'], str_replace('{{color-6}}', $colors['BACKGROUND'], str_replace('{{color-5}}', $colors['HORIZ_DIV'], $echo)));
@@ -1188,23 +1189,25 @@ if (isset($_POST['modifyshared'])) {
 	$origtable = mysqli_query($db, "SELECT * from $filetable WHERE file_self='$file' AND owner='$uid'");
 	$row = mysqli_fetch_array($origtable);
 	$date =date("F j, Y, g:i a");
-	$fileKey = $row['file_self'];
 	$fileSelf = $row['file_self'];
 	$fileParent = $row['file_parent'];
 	$fileName = $row['file_name'];
 	$fileType = $row['file_type'];
 	$fileSize = $row['file_size'];
 
+	$fileKey = base64_encode($fileSelf);
+	//$fileKey = intval($fileSelf, 36); //tinyurl type hashes
+
 	if ($action == 'add') {
 		$filePath = getPath($file);
 		$fileRealPath = realpath($filePath);
 
-		$res = mysqli_query($db, "SELECT * from $shareTable WHERE file_original='$file'");
+		$res = mysqli_query($db, "SELECT * from $shareTable WHERE file_self='$file'");
 		$resrows = mysqli_num_rows($res);
 		if ($resrows > 0) {
 			//if file has already been shared
 			$row2 = mysqli_fetch_array($res);
-			echo 'no new added - success|-=-|'.$row2['file_self'];
+			echo 'no new added - success|-=-|'.$fileKey;
 		} else {
 			//if file is just being shared now
 			if (is_dir($fileRealPath)) {
@@ -1212,8 +1215,8 @@ if (isset($_POST['modifyshared'])) {
 			} else {
 				copy($fileRealPath, $destRealPath);
 			}
-			mysqli_query($db, "INSERT INTO $shareTable (file_original, file_name, file_type, file_size, file_self, file_parent, last_modified, download_count)
-						VALUES ('$fileSelf', '$fileName', '$fileType', '$fileSize', '$fileKey', '$fileParent', '$date', '0')");
+			mysqli_query($db, "INSERT INTO $shareTable (file_name, file_type, file_size, file_self, file_parent, last_modified, download_count)
+						VALUES ('$fileName', '$fileType', '$fileSize', '$fileSelf', '$fileParent', '$date', '0')");
 			mysqli_query($db, "UPDATE $filetable SET is_shared='1' WHERE file_self='$file'");
 			echo 'added new - success|-=-|'.$fileKey;
 		}
@@ -1223,18 +1226,16 @@ if (isset($_POST['modifyshared'])) {
 		} else {
 			unlink($destRealPath);
 		}
-		echo 'fileSelf: ' .$fileSelf .'<br>';
-		echo 'file: ' . $file . '<br>';
-		echo "removing: ". $destRealPath.'<br>';
-		mysqli_query($db, "DELETE FROM $shareTable WHERE file_original='$fileSelf'");
+		//echo 'fileSelf: ' .$fileSelf .'<br>';
+		//echo 'file: ' . $file . '<br>';
+		//echo "removing: ". $destRealPath.'<br>';
+		mysqli_query($db, "DELETE FROM $shareTable WHERE file_self='$fileSelf'");
 		mysqli_query($db, "UPDATE $filetable SET is_shared='0' WHERE file_self='$file'");
 		echo 'success - removed';
 	} else {
 		echo 'can only add or remove';
 	}
 }
-//to make this work, copy any 'shared' files into a separate directory (/shared/) and make a separate db table with hashes refering to those
-//that way this does not need to know the username of the file owner to retrieve the file
 if(isset($_GET['get_shared']) || isset($_POST['get_shared'])) {
 	if(isset($_GET['get_shared'])) {
 		$dir = sanitize($_GET['get_shared']);
@@ -1243,6 +1244,8 @@ if(isset($_GET['get_shared']) || isset($_POST['get_shared'])) {
 		$dir = sanitize($_POST['get_shared']);
 		$type = sanitize($_POST['type']);
 	}
+	$dir = base64_decode($dir);
+	//$dir = strval(base_convert($dir, 10, 36));
 	if ($type === 'folder') {
 		$resultDir = mysqli_query($db, "SELECT * from $shareTable WHERE file_self='$dir' ORDER BY file_name"); //also order by file_type or file_name or last_modified
 
@@ -1271,6 +1274,8 @@ if(isset($_GET['get_shared']) || isset($_POST['get_shared'])) {
 }
 if(isset($_POST['getfileinfo'])) {
 	$file = sanitize($_POST['getfileinfo']);
+	$file = base64_decode($file);
+	//$file = strval(base_convert($file, 10, 36));
 	$res = mysqli_query($db, "SELECT * from $filetable WHERE file_self='$file'");
 	$row = mysqli_fetch_array($res);
 	echo 'success|-=-|' . $row['file_name'] . '|-=-|' . $row['file_type'];
