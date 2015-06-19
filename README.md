@@ -18,9 +18,9 @@ Currently in use at:
 - An account settings page
 - A server settings page for the owner
 - A color settings page to change the color scheme (default is orange and gray)
+- Sharing files with public links
 
 #### What it doesn't have yet:
 - Mobile UI - doesn't work on small displays
 - Responsive file bars - currently always uses 3 (2x 25% width, 1x 50% width)
 - Resource optimization (codemirror is a lot of separate scripts <.<)
-- Sharing files with anyone
