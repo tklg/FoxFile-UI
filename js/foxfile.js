@@ -73,6 +73,9 @@ var bar = {
 				previewTemplate: $("#preview-template").html(),
 				uploadMultiple: false,
 				parallelUploads: 5,
+				maxFilesize: 10000, //in mb (10GB should be enough)
+				//addRemoveLinks: true,
+				dictFileTooBig: 'File is too large',
 				init: function() {
 					var num = 0;
 					var first = '';
@@ -411,6 +414,7 @@ var files = {
 		if (multiSelect.numSelected > 1) {
 				files.multiDelete(multiSelect.selected);
 		} else {
+			files.unshare(file, id);
 			$.post('dbquery.php',
 			{
 				delete: 'delete',
@@ -1607,6 +1611,10 @@ var fileTypeDetails = {
 				bft = 'video';
 				dft = 'Windows Video';
 				break;
+			case 'webm':
+				bft = 'video';
+				dft = 'Open Web Media';
+				break;
 			case 'bmp':
 				bft = 'image';
 				dft = 'Bitmap Image';
@@ -1620,11 +1628,9 @@ var fileTypeDetails = {
 				dft = 'PNG Image';
 				break;
 			case 'psd':
-				bft = 'image';
 				dft = 'Photoshop Document';
 				break;
 			case 'tga':
-				bft = 'image';
 				dft = 'TARGA Image';
 				break;
 			case 'gif':
@@ -1636,7 +1642,6 @@ var fileTypeDetails = {
 				dft = 'Scalable Vector';
 				break;
 			case 'ai':
-				bft = 'image';
 				dft = 'Illustrator Document';
 				break;
 			case 'zip':

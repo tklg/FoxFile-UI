@@ -20,16 +20,32 @@ $starttime = $time;
     <title><?php echo $title ?></title>
     <?php require('includes/header.php'); ?>
     <style type="text/css">
-	#wrapper {
+	/*#wrapper {
 		top: 50px;
         width: 300px;
         height: auto;
         position: absolute;
         left: 0;right: 0;margin: auto;
         font-family: 'quicksandlight', sans-serif;
+    }*/
+    #wrapper {
+        width: 300px;
+        /*height: 250px;*/
+        height: auto;
+        position: absolute;
+        top: 20%;
+        left: 0;right: 0;margin: auto;
+        font-family: 'quicksandlight', sans-serif;
+        padding: 30px;
+        border: 1px solid blue;
+        border-radius: 10px;
     }
     .loginpage-title {
-    	font-size: 200%;
+    	font-size: 300%;
+        margin: 0;
+        margin-bottom: 10px;
+        color: #999999;
+        text-align: center;
     }
     .login-content-title,
     .login-content,
@@ -40,7 +56,7 @@ $starttime = $time;
         -webkit-transition: all .2s ease-in-out;
           transition: all .2s ease-in-out;
     }
-    .login-content {
+    /*.login-content {
         background: rgba(255,255,255,.1);
         border: 1px solid transparent;
         padding: 4px 0;
@@ -51,6 +67,19 @@ $starttime = $time;
         border: none;
         padding: 5px;
         margin-top: 10px;
+    }*/
+    .login-content {
+        background: transparent;
+        border: 1px solid transparent;
+        border-bottom: 1px solid rgba(255,255,255,.1);
+        padding: 4px 0;
+        text-indent: 5px;
+    }
+    .btn-submit {
+        background: rgba(255,255,255,.1);
+        padding: 10px 5px;
+        margin-top: 10px;
+        border: 1px solid transparent;
     }
     .btn-submit:hover {
         background: rgba(255,255,255,.6);
@@ -61,7 +90,7 @@ $starttime = $time;
     button:active,
     button:focus {
     outline: 0 none;
-    background: rgba(255,255,255,.3);
+    	background: transparent !important;
 	}
 	.uname-val {
 		float: right;
@@ -92,6 +121,7 @@ $starttime = $time;
 		margin-bottom: 5px;
 		width: 100px;
 		border-radius: 50px;
+		/*border: 1px solid;*/
 	}
 	.login-user .login-user-message {
 		width: 100%;
@@ -105,21 +135,21 @@ $starttime = $time;
 
 	<div class="alertbox"></div>
 
-	<div id="wrapper">
+	<div class="orangeborder" id="wrapper">
 	
-		<p class="loginpage-title" style="margin-top: 40px"><?php echo $name; ?> Login</p>
+		<p class="loginpage-title"><?php echo $name; ?></p>
 		<p class="login-nouser">
 			<label class="login-content-title" for="uname"><i class="fa fa-user"></i> Username</label>
-			<input class="login-content" name="unamesub" type="text" id="uname" value="" placeholder="Username" required onBlur="check_availability()" />
+			<input class="login-content obf" name="unamesub" type="text" id="uname" value="" placeholder="" required onBlur="check_availability()" />
 		</p>
 		<div class="login-user login-user-show">
-			<img src="http://placehold.it/100x100" />
-			<input class="login-content" name="unamesub" type="hidden" id="uname2" value="" />
+			<img class="orangeborder" src="http://placehold.it/100x100" />
+			<input class="login-content obf" name="unamesub" type="hidden" id="uname2" value="" />
 			<div class="login-user-message">USERNAME</div>
 		</div>
 		<p>				
 			<label class="login-content-title" for="upass"><i class="fa fa-unlock-alt"></i> Password</label>
-			<input class="login-content" name="upasssub" type="password" id="upass" placeholder="Password" required >
+			<input class="login-content obf" name="upasssub" type="password" id="upass" placeholder="" required >
 		</p>
 
 		<button type="submit" name="login" class="btn btn-submit" onclick="check_validity()"><b>Login</b></button>
@@ -143,11 +173,11 @@ $starttime = $time;
 	        	},  
 	            function(result) {  
 	                if (result == 0) {  
-	                    $('#uname').css('border','#99c68e solid 1px'); //light green
+	                    //$('#uname').css('border-bottom','#99c68e solid 1px'); //light green
 				        setCookie("username", username, 28);
 	                    uexists = true;
 	                } else {  
-	                    $('#uname').css('border','#e77471 solid 1px'); //light red
+	                    //$('#uname').css('border-bottom','#e77471 solid 1px'); //light red
 	                    uexists = false;
 	                }  
 	        });  
@@ -172,15 +202,15 @@ $starttime = $time;
 				},
 				function (result) {
 					if (result == 'valid') {
-						$('#uname').css('border','#99c68e solid 1px');
-						$('#upass').css('border','#99c68e solid 1px');
+						$('#uname').css('border-bottom','#99c68e solid 1px');
+						$('#upass').css('border-bottom','#99c68e solid 1px');
 						//d.info("Valid!");
 						d.success("Logging in...");
 						setTimeout(function() {
 							document.location = '<?php if(isset($_GET["target"])) {echo $_GET["target"];} else {echo "browse";}?>';
 						}, 1000);
 					} else {
-						$('#pass').css('border','#e77471 solid 1px')
+						$('#pass').css('border-bottom','#e77471 solid 1px')
 						console.info(result);
 						d.error(result);
 					}

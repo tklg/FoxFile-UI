@@ -123,11 +123,14 @@ if ($uid < 1) {
 	<div type="text/template" id="preview-template" style="display: none;">
 		<li class="menubar-content">
 		<div class="dz-uploadprogress" data-dz-uploadprogress></div>
-		<span class="folder file-name"><span data-dz-name></span></span>
-		<div class="file-info">
-			<span class="file-info-item"><span data-dz-size></span><br></span>
-		</div>
+		<span class="folder file-name">
+		<span data-dz-name></span>
+		<!-- <a class="dz-remove" href="javascript:undefined;" data-dz-remove>Remove</a> -->
 		<span data-dz-errormessage></span>
+		</span>
+		<div class="file-info" style="position:relative;float:right">
+			<div class="file-info-item dz-size data-dz-size">filesize</div>
+		</div>
 		</li>
 	</div>
 	<section class="modal-background modal-new-folder">

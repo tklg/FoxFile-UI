@@ -46,6 +46,13 @@ body {
 	position: absolute;
 	color: #ccc;
 }
+.orangeborder {
+	border-color: #fa6500 !important;
+}
+input.obf:active,
+input.obf:focus {
+	border-bottom-color: #fa6500;
+}
 #redfox {
 	color: #fa6500;
 }
@@ -744,6 +751,8 @@ a:hover {
 	display: inline;
 	margin-top: -10px;
 	/*margin-left: -52px;*/
+	-webkit-transition: all .5s ease;
+            transition: all .5s ease;
 }
 .spinner--- {
   width: 50px;
@@ -1148,4 +1157,7 @@ button:active {
 }
 .btn-remove {
 	background: #61391d;
+}
+.top-layer {
+	z-index: 10000;
 }
