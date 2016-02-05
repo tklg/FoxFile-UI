@@ -24,6 +24,7 @@
  * THE SOFTWARE.
  *
  */
+ //search for '//custom' for edited parts
 
 (function() {
   var Dropzone, Emitter, camelize, contentLoaded, detectVerticalSquash, drawImageIOSFix, noop, without,
@@ -357,7 +358,8 @@
               _results.push(node.value = progress);
             } else {
               _results.push(node.style.width = "" + progress + "%");
-              _results.push(node.setAttribute('widthval', "" + progress + "%"));
+              //custom
+              //$('.dz-file-progress').text(progress + "%");
             }
           }
           return _results;

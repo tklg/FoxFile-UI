@@ -6,28 +6,28 @@ session_start();
 <head>
 <meta name="viewport" content="initial-scale=1, width=device-width, maximum-scale=1, minimum-scale=1, user-scalable=no">
 <style type="text/css">
-	html, body {
-		height: 100%;
-		width: 100%;
-		margin: 0;
-		padding: 0;
-		font-family: sans-serif;
-		background: #628fce;
-	}
+    html, body {
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        font-family: sans-serif;
+        background: #628fce;
+    }
     :selection {
         background: #2b65ec;  
     }
-	.wrapper {
-		height: 560px;
-		width: 320px;
-		position: absolute;
-		top:0;bottom:0;right:0;left:0;margin:auto;
+    .wrapper {
+        height: 270px;
+        width: 320px;
+        position: absolute;
+        top:0;bottom:0;right:0;left:0;margin:auto;
     }
-	.content {
-		width: 320px;
-		top:0;bottom:0;right:0;left:0;margin:auto;
-		position: absolute;
-	}
+    .content {
+        width: 320px;
+        top:0;bottom:0;right:0;left:0;margin:auto;
+        position: absolute;
+    }
 	.inputbar {
 		position: relative;
 		width: 100%;
@@ -35,15 +35,6 @@ session_start();
 		margin-bottom: 30px;
 /*        background: red*/
 	}
-    .inputbar-half {
-        width: 48%;
-    }
-    .inputbar-half:nth-child(odd) {
-        float: right;
-    }
-    .inputbar-half:nth-child(even) {
-        float: left;
-    }
 	.userlabel {
 		color: white;
 	}
@@ -163,11 +154,13 @@ session_start();
     	height: 18px;
     	opacity: 1;
     }
-    .placeholder {
-        z-index: -1;
+    .instructions {
+        color: white;
+        margin-bottom: 60px;
+        display: none;
     }
 </style>
-    <title>Title - New Account</title>
+    <title>Title - Recover Account</title>
 </head>
 <body>
 <h1 class="title">
@@ -175,62 +168,24 @@ session_start();
 </h1>
 <section class="wrapper">
 	<section class="content">
-    <form name="register" action="uauth.php" method="post">
+    <form name="recover" action="uauth.php" method="post">
+        <p class="instructions">
+            Please enter your email address below and we'll send you instructions on how to set a new password.
+        </p>
         <div class="inputbar nosel">
-            <label class="userlabel">
-                <input name="username" class="userinfo" id="username" type="text" autofocus>
-                <span class="placeholder-userinfo nosel">Username</span>
-                <div class="input-underline"></div>
-                <div class="error error-name"><div class="error-message">Username not Available</div></div>
-            </label>
-        </div>
-        <div class="inputbar inputbar-half nosel">
-            <label class="userlabel">
-                <input name="firstname" class="userinfo" id="firstname" type="text">
-                <span class="placeholder-userinfo nosel">First Name</span>
-                <div class="input-underline"></div>
-                <div class="error error-name"><div class="error-message">Username not Available</div></div>
-            </label>
-        </div>
-        <div class="inputbar inputbar-half nosel">
-            <label class="userlabel">
-                <input name="lastname" class="userinfo" id="lastname" type="text">
-                <span class="placeholder-userinfo nosel">Last Name</span>
-                <div class="input-underline"></div>
-                <div class="error error-name"><div class="error-message">Username not Available</div></div>
-            </label>
-        </div>
-        <div class="inputbar nosel placeholder"></div>
-        <div class="inputbar nosel">
-            <label class="userlabel">
-                <input name="password" class="userinfo" id="password" type="password">
-                <span class="placeholder-userinfo nosel">Password</span>
-                <div class="input-underline"></div>
-                <div class="error error-pass"><div class="error-message">Passwords do not Match</div></div>
-            </label>
-        </div>
-        <div class="inputbar nosel">
-            <label class="userlabel">
-                <input name="password2" class="userinfo" id="password2" type="password">
-                <span class="placeholder-userinfo nosel">Repeat Password</span>
-                <div class="input-underline"></div>
-                <div class="error error-pass"><div class="error-message">Passwords do not Match</div></div>
-            </label>
-        </div>
-		<div class="inputbar nosel">
 			<label class="userlabel">
-				<input name="email" class="userinfo" id="email" type="text">
+				<input name="email" class="userinfo" id="email" type="text" autofocus>
 				<span class="placeholder-userinfo nosel">Email</span>
 				<div class="input-underline"></div>
-				<div class="error error-email"><div class="error-message">Invalid Email Address</div></div>
+				<div class="error"><div class="error-message">Invalid Email Address</div></div>
 			</label>
 		</div>
         <section class="inputbar nosel nomargin">
-            <button class="btn btn-submit" type="submit">Sign Up</button>
+            <button class="btn btn-submit" type="submit">Send Recovery Email</button>
         </section>
         <div class="inputbar">
             <a href="login">Login</a>
-            <a href="recover">Forgot Password</a>
+            <a href="register">Create an Account</a>
         </div>
     </form>
 	</section>
@@ -244,20 +199,12 @@ session_start();
     $('input.userinfo').change(function() {
         $(this).attr('empty', ($(this).val() != '') ? 'false' : 'true');
     });
-    $('#password2, #password').change(function() {
-        if ($('#password').val() == $('#password2').val()) {
-            $('.error-pass').removeClass('error-active');
-        } else {
-            if ($('#password2').val() != '')
-                $('.error-pass').addClass('error-active');
-        }
-    });
     $('#email').blur(function() {
     	if (/[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/g.test($('#email').val())) {
-    		$('.error-email').removeClass('error-active');
+    		$('.error').removeClass('error-active');
     	} else {
     		if ($('#email').val() != '') {
-                $('.error-email').addClass('error-active');
+                $('.error').addClass('error-active');
             }
     	}
     });

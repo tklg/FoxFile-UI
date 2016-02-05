@@ -1,5 +1,5 @@
 User-agent: *
-Disallow: /downloads/
-Disallow: /files/
+
+Disallow: /temp/
+
 Disallow: /includes/
-Disallow: /_install/
