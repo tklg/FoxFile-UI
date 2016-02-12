@@ -1,9 +1,15 @@
 <?php
 session_start();
 include 'includes/cfgvars.php';
-/*if (!isset ($_SESSION['access_token'])) header ("Location: login");
-$userphoto = $_SESSION['foxfile_user_picture'];
-$username = $_SESSION['foxfile_user_name'];*/
+if (!isset ($_SESSION['foxfile_uid'])) header ("Location: login");
+$user_md5 = $_SESSION['foxfile_user_md5'];
+$user_alvl = $_SESSION['foxfile_access_level'];
+$user_uid = $_SESSION['foxfile_uid'];
+$user_email = $_SESSION['foxfile_email'];
+$user_uhd = $_SESSION['foxfile_uhd'];
+$user_first = $_SESSION['foxfile_firstname'];
+$user_last = $_SESSION['foxfile_lastname'];
+$user_name = $_SESSION['foxfile_username'];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -73,7 +79,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
             <li class="btn-more"><i class="mdi mdi-unfold-more"></i><span>More</span></li>
         </ul>
         <div class="user-menu">
-        	<span class="user-menu-msg">Hello, username</span>
+        	<span class="user-menu-msg">Hello, <?php echo $user_first; ?></span>
         	<img class="img user-menu-img" src="img/default_avatar.png" alt="user img" />
         </div>
     </nav>
@@ -82,8 +88,8 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
             <li class="nav-vert-header nointeract">
             	<img class="img user-menu-img float" src="img/default_avatar.png" alt="user img" />
             	<div class="infobox">
-	            	<span class="nav-header-name">firstname lastname</span>
-	            	<span class="nav-header-email">email</span>
+	            	<span class="nav-header-name"><?php echo $user_name; ?></span>
+	            	<span class="nav-header-email"><?php echo $user_email; ?></span>
 	            </div>
             </li>
             <hr class="nav-vert-divider">
@@ -214,8 +220,8 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 		<section class="bar" id="bar-0" type="folder" folder="menu">
 			<header>
 				<div class="infobox">
-		           	<span class="header-name">firstname lastname</span>
-		           	<span class="header-email">email</span>
+		           	<span class="header-name"><?php echo $user_name; ?></span>
+		           	<span class="header-email"><?php echo $user_email; ?></span>
 		        </div>
 			</header>
 			<nav class="file-list">
@@ -307,7 +313,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     <script src="js/foxfile.js"></script>
     <script>
     $(document).ready(function() {
-	    
+	    app.files.init();
     });
     </script>
 	

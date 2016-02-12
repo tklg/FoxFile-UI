@@ -1,40 +1,36 @@
 <?php
 session_start();
-require('includes/user.php');
-require('includes/config.php');
+require('../includes/user.php');
+//require('includes/cfgvars.php');
 
 $uri = $_SERVER['REQUEST_URI'];
 if (strpos($uri, '/') !== false) {
     $uri = explode('/', $uri);
-    $id = $uri[sizeof($uri) - 1];
+    $pageID = $uri[sizeof($uri) - 1];
 } else {
-    $id = substr($uri, 1);
+    $pageID = substr($uri, 1);
 }
 
 //connect to database  
 $db = mysqli_connect($dbhost,$dbuname,$dbupass,$dbname);
-if(!isset($_SESSION['uid'])) {
-	$_SESSION['uid'] = 0;
+if(!isset($_SESSION['foxfile_uid'])) {
+	$_SESSION['foxfile_uid'] = 0;
 }
-if(!isset($_SESSION['access_level'])) {
-	$_SESSION['access_level'] = 0;
+if(!isset($_SESSION['foxfile_access_level'])) {
+	$_SESSION['foxfile_access_level'] = 0;
 }
-$uid = $_SESSION['uid'];
-$alvl = $_SESSION['access_level'];
+$uid = $_SESSION['foxfile_uid'];
+$alvl = $_SESSION['foxfile_access_level'];
 date_default_timezone_set('America/New_York');
 
 function sanitize($s) {
 	global $db;
 	return htmlentities(br2nl(mysqli_real_escape_string($db, $s)), ENT_QUOTES);
 }
-function desanitize($s) {
-	//return nlTobr(html_entity_decode($s));
-	return nlTobr($s);
-}
 function br2nl($s) {
     return preg_replace('/\<br(\s*)?\/?\>/i', "\n", $s);
 }
-if($uri == 'userexists') {
+if($pageID == 'userexists') {
 	$useremail = sanitize($_POST['useremail']);
 	$result = mysqli_query($db, "SELECT 1 from users where email = '$useremail' LIMIT 1");  
 	if(mysqli_num_rows($result)>0){  
@@ -43,32 +39,39 @@ if($uri == 'userexists') {
 	    echo 1;  
 	}
 }
-if($uri == 'login') {
+if($pageID == 'login') {
 	$useremail = sanitize($_POST['useremail']);
-	$user = mysqli_query($db, "SELECT * from users where email = '$useremail' LIMIT 1");
-	$row = mysqli_fetch_array($user);
-	$password = $_POST['password'];
-	$passToMatch = $row['pass'];
-
-	if (password_verify($password, $passToMatch)) {
-		$_SESSION['access_level'] = $row['access_level'];
-		$_SESSION['uid'] = $row['PID'];
-		$_SESSION['email'] = $useremail;
-		$_SESSION['uhd'] = $row['root_folder'];
-		echo 'valid';
+	$sql = "SELECT * from users where email = '$useremail' LIMIT 1";
+	if ($result = mysqli_query($db, $sql)) {
+		$row = mysqli_fetch_object($result);
+		$passToMatch = $row->password;
+		$password = $_POST['userpass'];
+		if (password_verify($password, $passToMatch)) {
+			$_SESSION['foxfile_access_level'] = $row->access_level;
+			$_SESSION['foxfile_uid'] = $row->PID;
+			$_SESSION['foxfile_email'] = $useremail;
+			$_SESSION['foxfile_uhd'] = $row->root_folder;
+			$_SESSION['foxfile_firstname'] = $row->firstname;
+			$_SESSION['foxfile_lastname'] = $row->lastname;
+			$_SESSION['foxfile_username'] = $row->firstname.' '.$row->lastname;
+			$_SESSION['foxfile_user_md5'] = md5($row->email);
+			echo 0;
+		} else {
+			echo 1;
+		}
 	} else {
-		echo 'Invalid username or password';
+		echo 2;
 	}
 }
 
-if($uri == 'logout') {
+if($pageID == 'logout') {
 	session_destroy();
 	foreach ($_SESSION as $value) {
 		$value = null;
 	}
 	header('Location: login');
 }
-if($uri =='new') {
+if($pageID =='new') {
 	if ($useGroupPassword) {
 		$gp = true;
 		if ($_POST['group_password'] == $group_password) {
@@ -116,7 +119,7 @@ if($uri =='new') {
 			echo 'Invalid group password,<br>or something is broken.';
 		}
 }
-if($uri == 'newpass') {
+if($pageID == 'newpass') {
 	$passC = sanitize($_POST['checkpass']);
 	$passN = sanitize($_POST['newpass']);
 	$passNCrypt = password_hash($passN, PASSWORD_BCRYPT);

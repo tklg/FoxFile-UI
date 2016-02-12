@@ -22,16 +22,17 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 html,
 body {
 	width: 100%;
+	height: 100%;
 	padding: 0;
 	margin: 0;
     background: #f2f2f2;
     font-family: 'Roboto', sans-serif;
+    overflow-x: hidden;
 }
 body {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-    min-height: 100vh;
     flex-direction: column;
 }
 .float, .float-1 {box-shadow: 0 -1px 0 #e5e5e5,0 0 2px rgba(0,0,0,.12),0 2px 4px rgba(0,0,0,.24); } .float-2 {box-shadow: 0 0 4px rgba(0,0,0,.14),0 4px 8px rgba(0,0,0,.28); } .float-3 {box-shadow: 0 8px 17px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19); } .floatb::before, .floatb-1::before {position: absolute; content: ''; display: block; top: 0; bottom: 0; left: 0; right: 0; pointer-events: none; box-shadow: 0 -1px 0 #e5e5e5,0 0 2px rgba(0,0,0,.12),0 2px 4px rgba(0,0,0,.24); } .floatb-2::before {position: absolute; content: ''; display: block; top: 0; bottom: 0; left: 0; right: 0; pointer-events: none; box-shadow: 0 0 4px rgba(0,0,0,.14),0 4px 8px rgba(0,0,0,.28); } .floatb-3::before {position: absolute; content: ''; display: block; top: 0; bottom: 0; left: 0; right: 0; pointer-events: none; box-shadow: 0 8px 17px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19); }
@@ -263,6 +264,7 @@ a:focus {
 }
 .error {
 	display: none;
+	font-size: 10pt;
 }
 .error.active {
 	display: block;
@@ -282,17 +284,21 @@ a:focus {
 main.register {
 	height: 460px;
 }
-main.register .content {
+main.register .content,
+main.setup .content {
 	white-space: normal;
 }
 main.register .new-account,
 main.register .new-account + button,
 main.recover .new-account,
-main.recover .new-account + button {
+main.recover .new-account + button,
+main.setup .new-account,
+main.setup .new-account + button {
 	margin-top: 0;
 }
 main.register .inputbar,
-main.recover .inputbar {
+main.recover .inputbar,
+main.setup .inputbar {
 	height: 60px;
 }
 main.recover p,
@@ -303,4 +309,13 @@ main.recover p {
 	font-size: 11pt;
 	padding: 20px;
 	margin: 0;
+}
+main.setup {
+	height: 570px;
+}
+main.setup .content {
+	padding-top: 20px;
+}
+main.setup {
+	transition: all 0.3s ease-in-out;
 }

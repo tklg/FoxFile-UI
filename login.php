@@ -41,7 +41,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 		<span>Sign in to FoxFile</span>
 	</header>
 	<section class="content">
-	    <form name="login" action="login.php" method="post" onsubmit="sub(); return false;">
+	    <form name="login" action="login.php" method="post" onsubmit="return false;">
 	    	<section class="slider">
 				<div class="inputbar nosel">
 					<label class="userlabel">
@@ -64,7 +64,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 			<a href="register" class="new-account">Need an account?</a>
 	        <button class="btn btn-submit" type="button" onclick="checkEmail()">Next</button>
 	        <a href="recover" class="forgot-password">Forgot password?</a>
-	        <button class="btn btn-submit" type="submit">Sign In</button>
+	        <button class="btn btn-submit" type="button" onclick="sub()">Sign In</button>
 	    </form>
 	</section>
 </main>
@@ -74,6 +74,23 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     $('input.userinfo').change(function() {
         $(this).attr('empty', ($(this).val() != '') ? 'false' : 'true');
     });
+    var stage = 0;
+    var pressed = false;
+    $(document).keydown(function(e) {
+		if (!pressed && e.keyCode == 13) { //enter
+			pressed = true;
+            if (stage == 0) {
+            	checkEmail();
+            } else {
+            	sub();
+            }
+		}
+	});
+	$(document).keyup(function(e) {
+		if (e.keyCode == 13) { //enter
+			pressed = false;
+		}
+	});
     function checkEmail() {
     	if (/[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/g.test($('#email').val())) {
     		$('main').addClass('active');
@@ -84,6 +101,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     			$('#userpass').focus();
     		}, 450);
     		setCookie('useremail', $('#email').val(), 7);
+    		stage = 1;
     	} else {
     		if ($('#email').val() != '') {
                 $('.error-email').addClass('active');
@@ -94,22 +112,25 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     	$('main').removeClass('active');
     	$('#header-main span').text('Sign in to FoxFile');
     	$('.email').focus();
+    	stage = 0;
     }
     function sub() {
-    	console.log('a');
     	$.post('./api/user/login',
 			{
 				useremail: $('#email').val(),
-				password: $('#userpass').val()
+				userpass: $('#userpass').val()
 			},
 			function(result) {
 				console.log(result);
 				switch (result) {
-					case '1': //ok
+					case '0': //ok
 						window.location.href = "./browse";
 						break;
-					case '2': //invalid u/p
-						$('.errors').text('Invalid user/pass');
+					case '1': //invalid u/p
+						$('.error-pass').addClass('active').text('Invalid email/pass');
+						break;
+					case '2':
+						$('.error-pass').addClass('active').text('Database error');
 						break;
 				}
 		});
