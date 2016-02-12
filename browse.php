@@ -8,7 +8,6 @@ $username = $_SESSION['foxfile_user_name'];*/
 <!DOCTYPE html>
 <html lang="en">
 <!--
-	
                                                               
    ad88                             ad88  88  88              
   d8"                              d8"    ""  88              
@@ -19,11 +18,10 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
   88    "8a,   ,a8"  ,d8" "8b,     88     88  88  "8b,   ,aa  
   88     `"YbbdP"'  8P'     `Y8    88     88  88   `"Ybbd8"'  
                                                               
-                                                              
-	
+
 	Foxfile : <?php echo basename(__FILE__); ?> 
 	Version <?php echo $foxfile_version; ?> 
-	Copyright (C) 2016 Theodore Kluge - All Rights Reserved
+	Copyright (C) 2016 Theodore Kluge
 	http://tkluge.net
 
 -->
@@ -63,7 +61,6 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 <header class="main">
     <nav class="floatb-2" id="nav-header">
         <h1 class="logo-text"><span class="redfox">Fox</span>File</h1>
-        <!-- <h1 class="logo-text"><span class="redfox">CTRL</span>V</h1> -->
         <form class="user-input-box file-search">
 			<input class="user-input input-text input-search" type="text" id="search" />
 			<label class="input-text-icon" for="search"><i class="mdi mdi-magnify"></i></label>
@@ -73,14 +70,14 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
             <li>Upload</li>
             <li>New folder</li>
             <!-- <li>Show deleted items</li> -->
-            <li class="btn-more"><i class="mdi mdi-dots-horizontal"></i><span>More</span></li>
+            <li class="btn-more"><i class="mdi mdi-unfold-more"></i><span>More</span></li>
         </ul>
         <div class="user-menu">
         	<span class="user-menu-msg">Hello, username</span>
         	<img class="img user-menu-img" src="img/default_avatar.png" alt="user img" />
         </div>
     </nav>
-    <nav class="floatb-2 nav-right" id="nav-right">
+    <nav class="floatb-2 nav-right " id="nav-right">
     	<ul class="nav nav-vert" id="user-controls">
             <li class="nav-vert-header nointeract">
             	<img class="img user-menu-img float" src="img/default_avatar.png" alt="user img" />
@@ -90,131 +87,224 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 	            </div>
             </li>
             <hr class="nav-vert-divider">
-            <li>Manage account</li>
-            <li>Install desktop app</li>
-            <li>Help</li>
+            <li class="closeOnClick"><a class="fill" href="account">Manage account</a></li>
+            <li class="closeOnClick"><a class="fill" href="installapp">Install desktop app</a></li>
+            <li class="closeOnClick"><a class="fill" href="help">Help</a></li>
             <hr class="nav-vert-divider">
-            <li class="nav-vert-footer">Log out</li>
+            <li class="nav-vert-footer closeOnClick"><a class="fill" href="logout">Log out</a></li>
         </ul>
     </nav>
     <div class="nav-right-active-cover"></div>
 </header>
 <main>
-	<section class="bar" id="bar-0" folder="menu">
-		<header>
-			<div class="infobox">
-	           	<span class="header-name">firstname lastname</span>
-	           	<span class="header-email">email</span>
-	        </div>
-		</header>
-		<nav class="file-list">
-			<ul class="">
-				<li class="menubar-content floatb active">
-					<i class="nocheckbox-icon mdi mdi-folder-multiple-outline"></i><span class="file-name">My files</span>
-				</li>
-				<li class="menubar-content floatb">
-					<i class="nocheckbox-icon mdi mdi-account-multiple"></i><span class="file-name">Shared with me</span>
-				</li>
-				<li class="menubar-content floatb">
-					<i class="nocheckbox-icon mdi mdi-delete"></i><span class="file-name">Trash</span>
-				</li>
-			</ul>
-		</nav>
-	</section>
-	<section class="bar bar-active" id="bar-1" folder="root-files">
-		<header>
-			<h1>Folder name</h1>
-			<section class="file-det-header">
-				<span>Shared</span>
-				<span>File info</span>
-				<span>Modified</span>
+	<section class="pages">
+		<section class="transfers" id="transfers">
+			<section class="bar bar-transfers" id="bar-2" type="folder" folder="file-transfers">
+				<header>
+					<span class="filename">File uploads</span>
+					<section class="file-actions-header">
+						<span><i class="mdi mdi-delete"></i></span>
+						<span><i class="mdi mdi-dots-vertical"></i></span>
+					</section>
+				</header>
+				<nav class="file-list">
+					<ul class="">
+						<li class="menubar-content floatb" container="<%= model.get('container') %>" type="<%= model.get('basicFileType') %>" filehash="<%= model.get('hash_self') %>" id="<%= model.get('fileID') %>" name="<%= model.get('fileName') %>" pos="" fileparent="<%= model.get('hash_parent') %>">
+							<span class="file-upload-status">Waiting</span>
+							<div class="nameandprogress">
+								<span class="file-name">File name 1</span>
+								<span class="file-upload-progress"></span>
+							</div>
+							<div class="file-info">
+								<span class="file-info-item" id="filedet"><span class="filetype">type</span><br><span id="filesize" unit="<%= model.get('units') %>">size</span></span>
+							</div>
+						</li>
+						<li class="menubar-content floatb" container="<%= model.get('container') %>" type="<%= model.get('basicFileType') %>" filehash="<%= model.get('hash_self') %>" id="<%= model.get('fileID') %>" name="<%= model.get('fileName') %>" pos="" fileparent="<%= model.get('hash_parent') %>">
+							<span class="file-upload-status">Uploading</span>
+							<div class="nameandprogress active">
+								<span class="file-name">File name 2</span>
+								<span class="file-upload-progress"></span>
+							</div>
+							<div class="file-info">
+								<span class="file-info-item" id="filedet"><span class="filetype">type</span><br><span id="filesize" unit="<%= model.get('units') %>">size</span></span>
+							</div>
+						</li>
+						<li class="menubar-content floatb" container="<%= model.get('container') %>" type="<%= model.get('basicFileType') %>" filehash="<%= model.get('hash_self') %>" id="<%= model.get('fileID') %>" name="<%= model.get('fileName') %>" pos="" fileparent="<%= model.get('hash_parent') %>">
+							<span class="file-upload-status">Done</span>
+							<div class="nameandprogress">
+								<span class="file-name">File name 4</span>
+								<span class="file-upload-progress"></span>
+							</div>
+							<div class="file-info">
+								<span class="file-info-item" id="filedet"><span class="filetype">type</span><br><span id="filesize" unit="<%= model.get('units') %>">size</span></span>
+							</div>
+						</li>
+					</ul>
+				</nav>
 			</section>
-		</header>
-		<nav class="file-list">
-			<ul class="">
-				<li class="menubar-content floatb" container="<%= model.get('container') %>" type="<%= model.get('basicFileType') %>" filehash="<%= model.get('hash_self') %>" id="<%= model.get('fileID') %>" name="<%= model.get('fileName') %>" pos="" fileparent="<%= model.get('hash_parent') %>">
-					<div class="dragdrop-border"></div>
-					<span class="file-multiselect-checkbox-container">
-						<input type="checkbox" id="cb-0" value="abcdef" />
-						<label class="label" for="cb-0"><i class="mdi mdi-checkbox-blank-outline"></i></label>
-						<label class="label-checked" for="cb-0"><i class="mdi mdi-checkbox-marked"></i></label>
-						<label class="label-icon" for="cb-0"><i class="mdi mdi-file-outline"></i></label>
-					</span>
-					<span class="file-name">File name</span>
-					<div class="file-info">
-						<span class="file-info-item" id="fileshared"><span class="filesharedstatus">shared</span><br><span class="filedownloadcount">DL'd 0 times</span></span>
-						<span class="file-info-item" id="filedet"><span class="filetype">type</span><br><span id="filesize" unit="<%= model.get('units') %>">size</span></span>
-						<span class="file-info-item" id="filemod"><span class="filemod">lastmod_date</span><br><span class="filemod">lastmod_time</span></span>
-					</div>
-				</li>
-				<li class="menubar-content floatb active" container="<%= model.get('container') %>" type="<%= model.get('basicFileType') %>" filehash="<%= model.get('hash_self') %>" id="<%= model.get('fileID') %>" name="<%= model.get('fileName') %>" pos="" fileparent="<%= model.get('hash_parent') %>">
-					<div class="dragdrop-border"></div>
-					<span class="file-multiselect-checkbox-container">
-						<input type="checkbox" id="cb-1" value="abcdef" />
-						<label class="label" for="cb-1"><i class="mdi mdi-checkbox-blank-outline"></i></label>
-						<label class="label-checked" for="cb-1"><i class="mdi mdi-checkbox-marked"></i></label>
-						<label class="label-icon" for="cb-1"><i class="mdi mdi-file-outline"></i></label>
-					</span>
-					<span class="file-name">File name 2</span>
-					<div class="file-info">
-						<span class="file-info-item" id="fileshared"><span class="filesharedstatus">shared</span><br><span class="filedownloadcount">DL'd 0 times</span></span>
-						<span class="file-info-item" id="filedet"><span class="filetype">type</span><br><span id="filesize" unit="<%= model.get('units') %>">size</span></span>
-						<span class="file-info-item" id="filemod"><span class="filemod">lastmod_date</span><br><span class="filemod">lastmod_time</span></span>
-					</div>
-				</li>
-			</ul>
-		</nav>
-	</section>
-	<section class="bar bar-active" id="bar-2" folder="root-files">
-		<header>
-			<h1>Folder name</h1>
-			<section class="file-det-header">
-				<span>Shared</span>
-				<span>File info</span>
-				<span>Modified</span>
+		</section>
+		<section class="shared" id="shared">
+			<section class="bar bar-shared" id="bar-2" type="folder" folder="file-transfers">
+				<header>
+					<span class="filename">Shared with me</span>
+					<section class="file-actions-header">
+						<span><i class="mdi mdi-download"></i></span>
+						<span><i class="mdi mdi-content-copy"></i></span>
+					</section>
+				</header>
+				<nav class="file-list">
+					<ul class="">
+						<li class="menubar-content floatb" container="<%= model.get('container') %>" type="<%= model.get('basicFileType') %>" filehash="<%= model.get('hash_self') %>" id="<%= model.get('fileID') %>" name="<%= model.get('fileName') %>" pos="" fileparent="<%= model.get('hash_parent') %>">
+							<span class="file-multiselect-checkbox-container">
+								<input type="checkbox" id="cb-04" value="abcdef" />
+								<label class="label" for="cb-04"><i class="mdi mdi-checkbox-blank-outline"></i></label>
+								<label class="label-checked" for="cb-04"><i class="mdi mdi-checkbox-marked"></i></label>
+								<label class="label-icon" for="cb-04"><i class="mdi mdi-file-outline"></i></label>
+							</span>
+							<span class="file-name">File name 1</span>
+							<div class="file-info">
+								<span class="file-info-item" id="filedet"><span class="filetype">type</span><br><span id="filesize" unit="<%= model.get('units') %>">size</span></span>
+							</div>
+						</li>
+						<li class="menubar-content floatb" container="<%= model.get('container') %>" type="<%= model.get('basicFileType') %>" filehash="<%= model.get('hash_self') %>" id="<%= model.get('fileID') %>" name="<%= model.get('fileName') %>" pos="" fileparent="<%= model.get('hash_parent') %>">
+							<span class="file-multiselect-checkbox-container">
+								<input type="checkbox" id="cb-03" value="abcdef" />
+								<label class="label" for="cb-03"><i class="mdi mdi-checkbox-blank-outline"></i></label>
+								<label class="label-checked" for="cb-03"><i class="mdi mdi-checkbox-marked"></i></label>
+								<label class="label-icon" for="cb-03"><i class="mdi mdi-file-outline"></i></label>
+							</span>
+							<span class="file-name">File name 2</span>
+							<div class="file-info">
+								<span class="file-info-item" id="filedet"><span class="filetype">type</span><br><span id="filesize" unit="<%= model.get('units') %>">size</span></span>
+							</div>
+						</li>
+					</ul>
+				</nav>
 			</section>
-		</header>
-		<nav class="file-list">
-			<ul class="">
-				<li class="menubar-content floatb" container="<%= model.get('container') %>" type="<%= model.get('basicFileType') %>" filehash="<%= model.get('hash_self') %>" id="<%= model.get('fileID') %>" name="<%= model.get('fileName') %>" pos="" fileparent="<%= model.get('hash_parent') %>">
-					<div class="dragdrop-border"></div>
-					<span class="file-multiselect-checkbox-container">
-						<input type="checkbox" id="cb-2aad" value="abcdef" />
-						<label class="label" for="cb-2aad"><i class="mdi mdi-checkbox-blank-outline"></i></label>
-						<label class="label-checked" for="cb-2aad"><i class="mdi mdi-checkbox-marked"></i></label>
-						<label class="label-icon" for="cb-2aad"><i class="mdi mdi-file-outline"></i></label>
-					</span>
-					<span class="file-name">File name</span>
-					<div class="file-info">
-						<span class="file-info-item" id="fileshared"><span class="filesharedstatus">shared</span><br><span class="filedownloadcount">DL'd 0 times</span></span>
-						<span class="file-info-item" id="filedet"><span class="filetype">type</span><br><span id="filesize" unit="<%= model.get('units') %>">size</span></span>
-						<span class="file-info-item" id="filemod"><span class="filemod">lastmod_date</span><br><span class="filemod">lastmod_time</span></span>
-					</div>
-				</li>
-				<li class="menubar-content floatb" shared container="<%= model.get('container') %>" type="<%= model.get('basicFileType') %>" filehash="<%= model.get('hash_self') %>" id="<%= model.get('fileID') %>" name="<%= model.get('fileName') %>" pos="" fileparent="<%= model.get('hash_parent') %>">
-					<div class="dragdrop-border"></div>
-					<span class="file-multiselect-checkbox-container">
-						<input type="checkbox" id="cb-asda33" value="abcdef" />
-						<label class="label" for="cb-asda33"><i class="mdi mdi-checkbox-blank-outline"></i></label>
-						<label class="label-checked" for="cb-asda33"><i class="mdi mdi-checkbox-marked"></i></label>
-						<label class="label-icon" for="cb-asda33"><i class="mdi mdi-file-outline"></i></label>
-					</span>
-					<span class="file-name">File name 2</span>
-					<div class="file-info">
-						<span class="file-info-item" id="fileshared"><span class="filesharedstatus">shared</span><br><span class="filedownloadcount">DL'd 0 times</span></span>
-						<span class="file-info-item" id="filedet"><span class="filetype">type</span><br><span id="filesize" unit="<%= model.get('units') %>">size</span></span>
-						<span class="file-info-item" id="filemod"><span class="filemod">lastmod_date</span><br><span class="filemod">lastmod_time</span></span>
-					</div>
-				</li>
-			</ul>
-		</nav>
+		</section>
+		<section class="trash" id="trash">
+			<section class="bar bar-trash" id="bar-2" type="folder" folder="file-transfers">
+				<header>
+					<span class="filename">Deleted files</span>
+					<section class="file-actions-header">
+						<span><i class="mdi mdi-backup-restore"></i></span>
+						<span><i class="mdi mdi-delete"></i></span>
+					</section>
+				</header>
+				<nav class="file-list">
+					<ul class="">
+						<li class="menubar-content floatb" container="<%= model.get('container') %>" type="<%= model.get('basicFileType') %>" filehash="<%= model.get('hash_self') %>" id="<%= model.get('fileID') %>" name="<%= model.get('fileName') %>" pos="" fileparent="<%= model.get('hash_parent') %>">
+							<span class="file-multiselect-checkbox-container">
+							<input type="checkbox" id="cb-02" value="abcdef" />
+								<label class="label" for="cb-02"><i class="mdi mdi-checkbox-blank-outline"></i></label>
+								<label class="label-checked" for="cb-02"><i class="mdi mdi-checkbox-marked"></i></label>
+								<label class="label-icon" for="cb-02"><i class="mdi mdi-file-outline"></i></label>
+							</span>
+							<span class="file-name">File name 1</span>
+							<div class="file-info">
+								<span class="file-info-item" id="filedet"><span class="filetype">type</span><br><span id="filesize" unit="<%= model.get('units') %>">size</span></span>
+							</div>
+						</li>
+					</ul>
+				</nav>
+			</section>
+		</section>
+	</section>
+	<section class="file-manager">
+		<section class="bar" id="bar-0" type="folder" folder="menu">
+			<header>
+				<div class="infobox">
+		           	<span class="header-name">firstname lastname</span>
+		           	<span class="header-email">email</span>
+		        </div>
+			</header>
+			<nav class="file-list">
+				<ul class="">
+					<li class="menubar-content floatb btn-ctrlbar active" id="files">
+						<i class="nocheckbox-icon mdi mdi-folder-multiple-outline"></i><span class="file-name">My files</span>
+					</li>
+					<li class="menubar-content floatb btn-ctrlbar" id="shared">
+						<i class="nocheckbox-icon mdi mdi-account-multiple"></i><span class="file-name">Shared with me</span>
+					</li>
+					<li class="menubar-content floatb btn-ctrlbar" id="trash">
+						<i class="nocheckbox-icon mdi mdi-delete"></i><span class="file-name">Trash</span>
+					</li>
+					<li class="menubar-content floatb btn-ctrlbar" id="transfers">
+						<i class="nocheckbox-icon mdi mdi-transfer"></i><span class="file-name">File transfers</span>
+					</li>
+				</ul>
+			</nav>
+		</section>
+		<section class="bar" id="bar-1" type="folder" folder="root-files">
+			<header>
+				<span class="filename">Folder name</span>
+				<section class="file-det-header">
+					<span>Shared</span>
+					<span>File info</span>
+					<span>Modified</span>
+				</section>
+			</header>
+			<nav class="file-list">
+				<ul class="">
+					<li class="menubar-content floatb" container="<%= model.get('container') %>" type="<%= model.get('basicFileType') %>" filehash="<%= model.get('hash_self') %>" id="<%= model.get('fileID') %>" name="<%= model.get('fileName') %>" pos="" fileparent="<%= model.get('hash_parent') %>">
+						<div class="dragdrop-border"></div>
+						<span class="file-multiselect-checkbox-container">
+							<input type="checkbox" id="cb-0" value="abcdef" />
+							<label class="label" for="cb-0"><i class="mdi mdi-checkbox-blank-outline"></i></label>
+							<label class="label-checked" for="cb-0"><i class="mdi mdi-checkbox-marked"></i></label>
+							<label class="label-icon" for="cb-0"><i class="mdi mdi-file-outline"></i></label>
+						</span>
+						<span class="file-name">File name</span>
+						<div class="file-info">
+							<span class="file-info-item" id="fileshared"><span class="filesharedstatus">shared</span><br><span class="filedownloadcount">DL'd 0 times</span></span>
+							<span class="file-info-item" id="filedet"><span class="filetype">type</span><br><span id="filesize" unit="<%= model.get('units') %>">size</span></span>
+							<span class="file-info-item" id="filemod"><span class="filemod">lastmod_date</span><br><span class="filemod">lastmod_time</span></span>
+						</div>
+					</li>
+					<li class="menubar-content floatb active" container="<%= model.get('container') %>" type="<%= model.get('basicFileType') %>" filehash="<%= model.get('hash_self') %>" id="<%= model.get('fileID') %>" name="<%= model.get('fileName') %>" pos="" fileparent="<%= model.get('hash_parent') %>">
+						<div class="dragdrop-border"></div>
+						<span class="file-multiselect-checkbox-container">
+							<input type="checkbox" id="cb-1" value="abcdef" />
+							<label class="label" for="cb-1"><i class="mdi mdi-checkbox-blank-outline"></i></label>
+							<label class="label-checked" for="cb-1"><i class="mdi mdi-checkbox-marked"></i></label>
+							<label class="label-icon" for="cb-1"><i class="mdi mdi-file-outline"></i></label>
+						</span>
+						<span class="file-name">File name 2</span>
+						<div class="file-info">
+							<span class="file-info-item" id="fileshared"><span class="filesharedstatus">shared</span><br><span class="filedownloadcount">DL'd 0 times</span></span>
+							<span class="file-info-item" id="filedet"><span class="filetype">type</span><br><span id="filesize" unit="<%= model.get('units') %>">size</span></span>
+							<span class="file-info-item" id="filemod"><span class="filemod">lastmod_date</span><br><span class="filemod">lastmod_time</span></span>
+						</div>
+					</li>
+				</ul>
+			</nav>
+		</section>
+		<section class="bar" id="bar-2" type="file" spectype="image" folder="root-files">
+			<header>
+				<span class="filename">File name</span>
+				<section class="file-actions-header">
+					<span><i class="mdi mdi-information-outline"></i></span>
+					<span><i class="mdi mdi-download"></i></span>
+					<span><i class="mdi mdi-rename-box"></i></span>
+					<span><i class="mdi mdi-delete"></i></span>
+					<span><i class="mdi mdi-folder-move"></i></span>
+					<span><i class="mdi mdi-reload"></i></span>
+					<span><i class="mdi mdi-dots-vertical"></i></span>
+				</section>
+			</header>
+			<section class="file-view">
+				<img src="//placehold.it/1500x1000" alt="placeholder image" />
+			</section>
+		</section>
 	</section>
 </main>	
 </body>
 	<script type="text/javascript" src="//code.jquery.com/jquery-2.1.4.min.js"></script>
 	<script src="//code.jquery.com/ui/1.11.4/jquery-ui.min.js"></script>
 	<!-- <link async rel="stylesheet" type="text/css" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.7.1/themes/base/jquery-ui.css"/> -->
-    <!-- <script src="js/underscore.min.js"></script> -->
+    <script src="js/underscore.min.js"></script>
+    <script src="js/backbone.min.js"></script>
+    <script src="js/foxfile.js"></script>
     <script>
     $(document).ready(function() {
 	    

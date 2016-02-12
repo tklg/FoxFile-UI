@@ -1,4 +1,18 @@
-/*
+/* 
+                                                              
+   ad88                             ad88  88  88              
+  d8"                              d8"    ""  88              
+  88                               88         88              
+MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,  
+  88    a8"     "8a  `Y8, ,8P'     88     88  88  a8P_____88  
+  88    8b       d8    )888(       88     88  88  8PP"""""""  
+  88    "8a,   ,a8"  ,d8" "8b,     88     88  88  "8b,   ,aa  
+  88     `"YbbdP"'  8P'     `Y8    88     88  88   `"Ybbd8"'  
+                                                                  
+    Foxfile : foxfile.css
+    Copyright (C) 2016 Theodore Kluge
+    http://tkluge.net
+*//*
 orange 300 #FF8A65
 orange 500 #FF5722
 orange 700 #E64A19
@@ -12,6 +26,19 @@ dividers rgba(0,0,0,.12)
 offwhite #f2f2f2
 https://materialdesignicons.com/
 */
+:root {
+	--primary: #E64A19;
+	--secondary: #FF5722;
+	--light: #FF8A65;
+	--dark: #BF360C;
+	--meddark: #D84315;
+	--accent: #FF9E80;
+	--text: rgba(0,0,0,.87);
+	--text2: rgba(0,0,0,.54);
+	--disabled: rgba(0,0,0,.38);
+	--dividers: rgba(0,0,0,.12);;
+	--bg: #f2f2f2;
+}
 @font-face {
   font-family: 'Roboto';
   font-style: normal;
@@ -25,6 +52,7 @@ body {
 	padding: 0;
 	margin: 0;
     background: #f2f2f2;
+    color: rgba(0,0,0,.87);
     font-family: 'Roboto', sans-serif;
     /*overflow-x: hidden;*/
     overflow: hidden;
@@ -37,6 +65,14 @@ img {
 	max-height: 100%;
 	max-width: 100%;
 }
+.fill {
+	height: 100%;
+	width: 100%;
+	margin: 0;
+}
+.wrap {
+	padding: 0;
+}
 #nav-header {
 	position: relative;
 	display: inline-block;
@@ -45,7 +81,7 @@ img {
 	background: #FF5722;
 	color: white;
 	display: flex;
-	z-index: 40;
+	z-index: 1000;
 }
 .logo-text {
 	display: inline-block;
@@ -196,30 +232,45 @@ nav ul {
 	margin: 0;
 	background: white;
 	transition: all 0.2s ease-in-out;
+	z-index: 2000;
 }
-.nav-right-active {
+.nav-right.active {
 	right: 0;
 }
-.nav-right-active + .nav-right-active-cover {
+.nav-right-active-cover {
 	position: absolute;
 	display: inline-block;
-	background: rgba(0,0,0,.38);
+	background: rgba(0,0,0,.54);
 	top: 0;
 	right: 0;
 	left: 0;
 	bottom: 0;
 	height: 100%;
-	width: calc(100% - 280px);
+	width: 100%;
+	z-index: 1999;
+	opacity: 0;
+	transition: all 0.15s ease-in-out;
+	pointer-events: none;
+}
+.nav-right.active + .nav-right-active-cover {
+	pointer-events: initial;
+	opacity: 1;
 }
 .nav-vert {
 	margin: 10px 0;
 }
 .nav-vert li {
-	display: block;
-	padding: 10px 20px;
+	display: inline-block;
 	margin: 0;
 	cursor: pointer;
+	width: 100%;
 	transition: all 0.1s ease-in-out;
+}
+.nav-vert li a {
+	display: block;
+	padding: 10px 20px;
+	color: rgba(0,0,0,.87);
+	text-decoration: none;
 }
 .nav-vert li:hover {
 	background: rgba(0,0,0,.12);
@@ -237,7 +288,8 @@ nav ul {
 }
 #user-controls .nav-vert-header {
 	height: 70px;
-	/*padding: 10px;*/
+	width: calc(100% - 40px);
+	padding: 0 20px;
 }
 #user-controls li:first-of-type {
 	cursor: default;
@@ -285,8 +337,15 @@ main {
 	display: flex;
 }
 /* ---------------------------------------------------------------------------------------------------------
-==========================================  remove this line  ==============================================
+==========================================    FILE MANAGER    ==============================================
 ----------------------------------------------------------------------------------------------------------*/
+.file-manager {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	padding: 0;
+	margin: 0;
+}
 .bar {
 	height: 100%;
 	min-width: 280px;
@@ -294,6 +353,7 @@ main {
 	float: left;
 	border-left: 1px solid rgba(0,0,0,.06);
 	flex: none;
+	transition: all 0.1s ease-in-out;
 }
 .bar:last-of-type {
 	flex: 1 0 auto;
@@ -303,6 +363,7 @@ main {
 	box-shadow: 0 -10px 0 #e5e5e5,0 -7px 7px rgba(0,0,0,.12),0 0 20px rgba(0,0,0,.24);
 }
 .bar header {
+	display: flex;
 	position: relative;
 	background: #f2f2f2;
 	border-bottom: 1px solid #FF5722;
@@ -316,13 +377,15 @@ main {
 	border-bottom: 1px solid rgba(0,0,0,.12);
 	/*border-bottom: 1px solid transparent;*/
 }
-.bar header h1 {
+.bar header .filename {
 	font-weight: normal;
 	margin: 0;
 	font-size: 14pt;
+	height: 60px;
 	line-height: 60px;
 	padding: 0 20px;
-	width: calc(100% - 40px);
+	/*width: calc(100% - 40px);*/
+	flex: 1 0 auto;
 	overflow: hidden;
 	white-space: nowrap;
 	text-overflow: ellipsis;
@@ -343,7 +406,7 @@ main {
 .bar header .header-email {
 	color: rgba(0,0,0,.54);
 }
-.bar .file-det-header {
+.bar[type=folder] .file-det-header {
 	display: none;
 	position: absolute;
 	height: 20px;
@@ -352,22 +415,22 @@ main {
 	bottom: 0;
 	font-size: 9pt;
 }
-.bar:last-of-type .file-det-header {
+.bar[type=folder]:last-of-type .file-det-header {
 	display: inline-block;
 	margin-right: 10px;
 	/*color: rgba(0,0,0,.54);*/
 }
-.bar .file-det-header span {
+.bar[type=folder] .file-det-header span {
 	display: inline-block;
 	width: 100px;
 }
-.bar .file-list {
+.bar[type=folder] .file-list {
 	height: calc(100% - 60px);
 	width: 100%;
 	overflow-y: auto;
 	/*display: inline-block;*/
 }
-.bar ul {
+.bar[type=folder] ul {
 	position: relative;
 	margin: 0;
 	padding: 0;
@@ -377,7 +440,7 @@ main {
 	z-index: 10;
 	box-shadow: 0 -1px 0 #e5e5e5,0 0 2px -2px rgba(0,0,0,.12),0 2px 4px -4px rgba(0,0,0,.24);
 }
-.bar li {
+.bar[type=folder] li {
 	display: block;
 	position: relative;
 	width: calc(100% - 10px);
@@ -393,7 +456,7 @@ main {
 	flex-direction: row;
 	-webkit-touch-callout: none;-webkit-user-select: none;-khtml-user-select: none;-moz-user-select: none;-ms-user-select: none;user-select: none;
 }
-.bar li::before {
+.bar[type=folder] li::before {
 	content: '';
     position: absolute;
     display: block;
@@ -404,19 +467,20 @@ main {
     pointer-events: none;
     transition: all 0.1s ease-in-out;
 }
-.bar li:not(.active):hover::before {
+.bar[type=folder] li:not(.active):hover::before {
     background: rgba(0,0,0,.06);
 }
-.bar .file-info {
+.bar[type=folder] .file-info {
 	display: none;
 }
-.bar:last-of-type li {
+.bar[type=folder]:last-of-type li {
 	background: white;
 }
-.bar:last-of-type .file-info {
+.bar[type=folder]:last-of-type .file-info {
 	display: inline-block;
+	align-self: flex-end;
 }
-.bar .file-name {
+.bar[type=folder] .file-name {
 	cursor: default;
 	/*display: inline-block;*/
 	max-width: 100%;
@@ -426,8 +490,8 @@ main {
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
-.bar:last-of-type .file-name {
-	max-width: calc(100% - 370px);
+.bar[type=folder]:last-of-type .file-name {
+	/*max-width: calc(100% - 370px);*/
 }
 .menubar-content.active::before {
 	/*background: #e6e6e6;*/
@@ -445,10 +509,15 @@ main {
 }
 .menubar-content .file-multiselect-checkbox-container {
 	display: inline-block;
-	line-height: 40px;
-	height: 40px;
+	line-height: 34px;
+	height: 34px;
+	width: 34px;
+	padding: 0;
 	color: rgba(0,0,0,.54);
 	flex: none;
+	margin: 3px 3px;
+	border-radius: 50%;
+	transition: all 0.15s ease-in-out;
 }
 .menubar-content .file-multiselect-checkbox-container input[type=checkbox] {
 	display: none;
@@ -460,13 +529,13 @@ main {
 	line-height: 34px;
 	width: 34px;
 	text-align: center;
-	margin: 3px 3px;
 	border-radius: 50%;
-	/*transition: all 0.15s ease-in-out;*/
+	cursor: pointer;
 }
-.menubar-content .file-multiselect-checkbox-container:hover label {
-	background: rgba(0,0,0,.12);
-	box-shadow: 0 -1px 0 #e5e5e5,0 0 2px rgba(0,0,0,.12),0 2px 4px rgba(0,0,0,.24);
+.menubar-content .file-multiselect-checkbox-container:hover {
+	/*background: rgba(0,0,0,.12);*/
+	color: rgba(0,0,0,.87);
+	/*box-shadow: 0 -1px 0 #e5e5e5,0 0 2px rgba(0,0,0,.12),0 2px 4px rgba(0,0,0,.24);*/
 }
 .menubar-content .file-multiselect-checkbox-container .label,
 .menubar-content .file-multiselect-checkbox-container .label-checked {
@@ -504,4 +573,138 @@ main {
 .menubar-content[shared] #fileshared {
 	/*display: inline-block;*/
 	visibility: visible;
+}
+.bar header .file-actions-header {
+	display: none;
+}
+.bar:last-of-type header .file-actions-header {
+	/*position: absolute;*/
+	display: inline-block;
+	/*right: 10px;*/
+	margin-right: 10px;
+	height: 60px;
+	line-height: 60px;
+	bottom: 0;
+	flex: none;
+}
+.bar .file-actions-header span {
+	font-size: 16pt;
+	color: rgba(0,0,0,.54);
+}
+.bar .file-actions-header i {
+	display: inline-block;
+	height: 36px;
+	width: 36px;
+	margin: 0;
+	padding: 0;
+	/*vertical-align: middle;*/
+	line-height: 36px;
+	text-align: center;
+	border-radius: 50%;
+	transition: all .15s ease-in-out;
+	cursor: pointer;
+}
+.bar .file-actions-header i:hover {
+	background: rgba(0,0,0,.12);
+	color: rgba(0,0,0,.87);
+	box-shadow: 0 -1px 0 #e5e5e5,0 0 2px rgba(0,0,0,.12),0 2px 4px rgba(0,0,0,.24);
+}
+.bar[type=file] img {
+	display: inline;
+	max-width: calc(100% - 40px);
+	max-height: calc(100% - 40px);
+	width: auto;
+	margin: auto;
+	position: absolute;
+	left: 0;right:0;
+	top: 20px;
+	box-shadow: 0 -1px 0 #e5e5e5,0 0 2px rgba(0,0,0,.12),0 2px 4px rgba(0,0,0,.24);
+}
+.bar[type=file] .file-view {
+	position: relative;
+	height: calc(100% - 60px);
+	width: calc(100% - 40px);
+	margin: 0;
+	padding: 0 20px;
+	overflow-y: auto;
+	display: flex;
+}
+/* ---------------------------------------------------------------------------------------------------------
+=====================================   SHARED, TRASH, TRANSFERS   =========================================
+----------------------------------------------------------------------------------------------------------*/
+.transfers,
+.trash,
+.shared {
+	z-index: 400;
+	position: absolute;
+	display: inline-block;
+	height: calc(100% - 60px);
+	background: white;
+	width: 80%;
+	max-width: calc(100% - 280px);
+	right: -100%;
+	transition: all 0.55s ease-in-out;
+}
+.transfers.active,
+.shared.active,
+.trash.active {
+	right: 0;
+}
+.bar-transfers,
+.bar-trash,
+.bar-shared {
+	width: 100%;
+}
+.bar-transfers .nameandprogress {
+	flex: 1 0 auto;
+	margin: 0;
+	padding: 0;
+	height: 40px;
+	display: flex;
+}
+.bar-transfers .file-name {
+	position: absolute;
+	display: inline-block;
+	height: 40px;
+	width: calc(100% - 240px);
+	line-height: 40px;
+	top: 0;
+	flex: 1 0 auto;
+	transition: all 0.15s ease-in-out;
+}
+.bar-transfers .nameandprogress.active .file-name {
+	height: 30px;
+	line-height: 30px;
+}
+.bar-transfers .file-upload-progress {
+	position: absolute;
+	display: inline-block;
+	width: calc(100% - 240px);
+	top: 28px;
+	height: 0;
+	background: rgba(0,0,0,.06);
+	flex: 1 0 auto;
+	transition: all 0.15s ease-in-out;
+}
+.bar-transfers .nameandprogress.active .file-upload-progress {
+	height: 4px;
+}
+.bar-transfers .file-upload-progress::after {
+	position: absolute;
+	content: '';
+	height: 0px;
+	width: 0;
+	background: #FF9E80;
+}
+.bar-transfers .nameandprogress.active .file-upload-progress::after {
+	height: 4px;
+}
+.bar-transfers .file-upload-status {
+	display: inline-block;
+	height: 40px;
+	line-height: 40px;
+	color: rgba(0,0,0,.45);
+	width: 65px;
+	/*text-align: center;*/
+	padding: 0 20px;
 }

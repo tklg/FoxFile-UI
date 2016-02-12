@@ -1,195 +1,61 @@
 <?php
 session_start();
+include 'includes/cfgvars.php';
+/*if (!isset ($_SESSION['access_token'])) header ("Location: login");*/
 ?>
 <!DOCTYPE html>
-<html>
+<html lang="en-US">
+<!--
+                                                              
+   ad88                             ad88  88  88              
+  d8"                              d8"    ""  88              
+  88                               88         88              
+MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,  
+  88    a8"     "8a  `Y8, ,8P'     88     88  88  a8P_____88  
+  88    8b       d8    )888(       88     88  88  8PP"""""""  
+  88    "8a,   ,a8"  ,d8" "8b,     88     88  88  "8b,   ,aa  
+  88     `"YbbdP"'  8P'     `Y8    88     88  88   `"Ybbd8"'  
+                                                              
+
+    Foxfile : <?php echo basename(__FILE__); ?> 
+    Version <?php echo $foxfile_version; ?> 
+    Copyright (C) 2016 Theodore Kluge
+    http://tkluge.net
+
+-->
 <head>
-<meta name="viewport" content="initial-scale=1, width=device-width, maximum-scale=1, minimum-scale=1, user-scalable=no">
-<style type="text/css">
-    html, body {
-        height: 100%;
-        width: 100%;
-        margin: 0;
-        padding: 0;
-        font-family: sans-serif;
-        background: #628fce;
-    }
-    :selection {
-        background: #2b65ec;  
-    }
-    .wrapper {
-        height: 270px;
-        width: 320px;
-        position: absolute;
-        top:0;bottom:0;right:0;left:0;margin:auto;
-    }
-    .content {
-        width: 320px;
-        top:0;bottom:0;right:0;left:0;margin:auto;
-        position: absolute;
-    }
-	.inputbar {
-		position: relative;
-		width: 100%;
-		height: 60px;
-		margin-bottom: 30px;
-/*        background: red*/
-	}
-	.userlabel {
-		color: white;
-	}
-	.userinfo {
-		color: white;
-		font-size: 110%;
-		width: 100%;
-		background: transparent;
-		border: none;
-		border-bottom: 2px solid rgba(255,255,255,.1);
-		padding: 7px 0;
-		text-indent: 10px;
-	}
-	input:active,
-	input:focus {
-		outline: 0 none;
-	}
-	.placeholder-userinfo {
-		color: white;
-		position: absolute;
-		top: 11px;
-		left: 10px;
-		cursor: text;
-		user-select: none;
-		-webkit-transition: all .3s ease-in-out;
-        transition: all .3s ease;
-	}
-	.input-underline {
-		margin-top: -2px;
-		position: absolute;
-		height: 2px;
-		width: 0;
-		left: 50%;
-		background: #2b65ec;
-		-webkit-transition: all .3s ease-in-out;
-        transition: all .3s ease;
-	}
-	.userinfo:focus ~ .input-underline {
-		width: 100%;
-		left: 0;
-	}
-	.userinfo:focus ~ .placeholder-userinfo,
-    .userinfo[empty="false"] ~ .placeholder-userinfo {
-		top: -14px;
-		left: 0;
-		font-size: 70%;
-        color: #2b65ec;
-	}
-	.nosel {
-		-webkit-touch-callout: none;
-	    -webkit-user-select: none;
-	    -khtml-user-select: none;
-	    -moz-user-select: none;
-	    -ms-user-select: none;
-	    user-select: none;
-	}
-    .title {
-        color: white;
-        font-size: 200%;
-        position: relative;
-        width: 100%;
-        height: 50px;
-        padding: 10px 0;
-        text-indent: 15px;
-        margin: 0;
-        font-weight: normal;
-        display: none;
-    }
-    .btn {
-        background: #2b65ec;
-        padding: 12px 0;
-        border: none;
-        outline: 0 none;
-        width: 100%;
-        font-size: 104%;
-        color: white;
-        cursor: pointer;
-        -webkit-transition: all .3s ease-in-out;
-        transition: all .3s ease;
-    }
-    .btn:hover,
-    .btn:focus {
-        background: #517ee8;  
-    }
-    .nomargin {
-        margin: 0;
-    }
-    a {
-        text-decoration: none;
-        color: #2b65ec;
-        -webkit-transition: all .3s ease-in-out;
-        transition: all .3s ease;
-    }
-    a:hover,
-    a:focus {
-        color: #517ee8;
-    }
-    .inputbar a {
-        font-size: 80%;   
-    }
-    .inputbar a:last-of-type {
-        float: right;
-    }
-    .error {
-    	width: 100%;
-    	border: 1px solid red;
-    	padding: 2px 0;
-    	text-indent: 4px;
-    	border-top: none;
-    	color: red;
-    	height: 0;
-    	opacity: 0;
-    	-webkit-transition: all .3s ease-in-out;
-        transition: all .3s ease;
-    }
-    .error.error-active {
-    	height: 18px;
-    	opacity: 1;
-    }
-    .instructions {
-        color: white;
-        margin-bottom: 60px;
-        display: none;
-    }
-</style>
-    <title>Title - Recover Account</title>
+    <title>FoxFile - Recover password</title>
+    <meta charset="utf-8" />
+    <meta author="tkluge" />
+    <link rel="stylesheet" href="css/login.css" />
+    <link href="css/materialdesignicons.min.css" media="all" rel="stylesheet" type="text/css" />
+    <link rel="icon" type="image/ico" href="favicon.ico">
+    <meta name="viewport" content="initial-scale=1, width=device-width, maximum-scale=1, minimum-scale=1, user-scalable=no">
 </head>
 <body>
-<h1 class="title">
-    StandardLogin 4 - Recover
-</h1>
-<section class="wrapper">
+<main class="recover float-2">
+    <header class="header float" id="header-main">
+        <img class="float" src="img/default_avatar.png" alt="profile picture" />
+        <span>Enter recovery email</span>
+    </header>
 	<section class="content">
-    <form name="recover" action="uauth.php" method="post">
-        <p class="instructions">
-            Please enter your email address below and we'll send you instructions on how to set a new password.
-        </p>
-        <div class="inputbar nosel">
-			<label class="userlabel">
-				<input name="email" class="userinfo" id="email" type="text" autofocus>
-				<span class="placeholder-userinfo nosel">Email</span>
-				<div class="input-underline"></div>
-				<div class="error"><div class="error-message">Invalid Email Address</div></div>
-			</label>
-		</div>
-        <section class="inputbar nosel nomargin">
-            <button class="btn btn-submit" type="submit">Send Recovery Email</button>
-        </section>
-        <div class="inputbar">
-            <a href="login">Login</a>
-            <a href="register">Create an Account</a>
-        </div>
-    </form>
+        <form name="recover" action="uauth.php" method="post">
+            <p class="instructions">
+                Please enter your email address below and we'll send you instructions on how to set a new password.
+            </p>
+            <div class="inputbar nosel">
+    			<label class="userlabel">
+    				<input name="email" class="userinfo" id="email" type="text" autofocus>
+    				<span class="placeholder-userinfo nosel">Email</span>
+    				<hr class="input-underline"></hr>
+    				<div class="error"><div class="error-message">Invalid Email Address</div></div>
+    			</label>
+    		</div>
+            <a href="login" class="new-account">Log in</a>
+            <button class="btn btn-submit" type="button" onclick="sendEmail()">Send email</button>
+        </form>
 	</section>
-</section>
+</main>
 <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
     <script type="text/javascript">
     $(document).ready(function() {
