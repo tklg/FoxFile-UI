@@ -123,6 +123,12 @@ main.active #header-main img {
 	left: 0;
 	transition: all 0.45s ease-in-out;
 }
+.slider .inputbar:first-of-type {
+	float: left;
+}
+.slider .inputbar:last-of-type {
+	float: right;
+}
 main.active .slider {
 	left: -365px;
 }
@@ -147,7 +153,7 @@ main.active .back:hover {
 	position: relative;
 	display: inline-block;
 	width: 320px;
-	height: 80px;
+	/*height: 80px;*/
 	margin: 0 20px;
 }
 .userlabel {
@@ -282,7 +288,7 @@ a:focus {
 	float: right;
 }
 main.register {
-	height: 460px;
+	height: 520px;
 }
 main.register .content,
 main.setup .content {

@@ -1,7 +1,7 @@
 <?php
 session_start();
 require('../includes/user.php');
-//require('includes/cfgvars.php');
+require('../includes/cfgvars.php');
 
 $uri = $_SERVER['REQUEST_URI'];
 if (strpos($uri, '/') !== false) {
@@ -71,52 +71,55 @@ if($pageID == 'logout') {
 	}
 	header('Location: login');
 }
-if($pageID =='new') {
-	if ($useGroupPassword) {
+if($pageID == 'new') {
+	$gp = false;
+	if ($foxfile_require_access_code) {
 		$gp = true;
-		if ($_POST['group_password'] == $group_password) {
+		if ($_POST['gpass'] == $foxfile_access_code) { //change this to use password_verify
 			$v = true;
 		} else {
 			$v = false;
-			echo 'Invalid group password';
+			echo 4;
 			die();
 		}
 	} else {
 		$gp = false;
 	}
 		if (!$gp || $v) {
-		/*$options = [
-	        	'cost' => 11,
-	        ];*/
-	        
-	        $username = sanitize($_POST['username']);  
-			$result = mysqli_query($db, "SELECT name from $usertable where name = '$username'");  
+
+	        $email = sanitize($_POST['useremail']);  
+			$result = mysqli_query($db, "SELECT 1 from users where email = '$email' LIMIT 1");  
 			
 			if(mysqli_num_rows($result) > 0){  
-			    echo "Username is not available";
+			    echo 2;
+			    die();
 			} else {  
-				$uname = sanitize($_POST['username']);
-				$upass = password_hash(sanitize($_POST['password']), PASSWORD_BCRYPT/*, $options*/);
-				$email = sanitize($_POST['email']);
-				$date = date("F j, Y");
-				$sql = "INSERT INTO $usertable (name, pass, email, access_level, root_folder, total_storage, join_date)
-		                VALUES ('$uname', 
-		                '$upass',
+				$upass = password_hash($_POST['userpass'], PASSWORD_BCRYPT);
+				$userfirst = sanitize($_POST['userfirst']);
+				$userlast = sanitize($_POST['userlast']);
+				$root_folder = md5($email);
+				$sql = "INSERT INTO users (firstname, lastname, email, password, access_level, root_folder, total_storage, account_status)
+		                VALUES ('$userfirst',
+		                '$userlast',
 		                '$email',
+		                '$upass',
 		                '1',
-		                '$uname',
-		                '5000000000',
-		                '$date')";
+		                '$root_folder',
+		                '2000000000',
+		                'unverified')";
 				if (mysqli_query($db,$sql)) {
-					mkdir('shared/'.$uname);
-		            //echo 'User \''. $uname .'\' created successfully';
+					mkdir('../files/'.$root_folder.'/');
+					mkdir('../trashes/'.$root_folder.'/');
+					echo 0;
+					die();
 		        } else {
-		            echo 'MySQL Query failed: ' . mysqli_error($db);
+		        	//echo mysqli_error($db);
+		            echo 5;
+		            die();
 		        }
-		        echo 'valid';
 		    }
 		} else {
-			echo 'Invalid group password,<br>or something is broken.';
+			echo 4;
 		}
 }
 if($pageID == 'newpass') {

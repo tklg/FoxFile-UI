@@ -62,14 +62,15 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 			</section>
 			</div>
 			<a href="register" class="new-account">Need an account?</a>
-	        <button class="btn btn-submit" type="button" onclick="checkEmail()">Next</button>
+	        <button class="btn btn-submit" type="button" onclick="checkEmail()">Next<link class="rippleJS" /></button>
 	        <a href="recover" class="forgot-password">Forgot password?</a>
-	        <button class="btn btn-submit" type="button" onclick="sub()">Sign In</button>
+	        <button class="btn btn-submit" type="button" onclick="sub()">Sign In<link class="rippleJS" /></button>
 	    </form>
 	</section>
 </main>
 <script type="text/javascript" src="//code.jquery.com/jquery-2.1.4.min.js"></script>
 <script type="text/javascript" src="js/md5.js"></script>
+<script type="text/javascript" src="js/ripple.js"></script>
     <script type="text/javascript">
     $('input.userinfo').change(function() {
         $(this).attr('empty', ($(this).val() != '') ? 'false' : 'true');
@@ -110,6 +111,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     }
     function restart() {
     	$('main').removeClass('active');
+    	$('.error-email').removeClass('active');
     	$('#header-main span').text('Sign in to FoxFile');
     	$('.email').focus();
     	stage = 0;

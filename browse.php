@@ -80,13 +80,13 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
         </ul>
         <div class="user-menu">
         	<span class="user-menu-msg">Hello, <?php echo $user_first; ?></span>
-        	<img class="img user-menu-img" src="img/default_avatar.png" alt="user img" />
+        	<img class="img user-menu-img" src="//gravatar.com/avatar/<?php echo $user_md5; ?>?r=r" alt="user gravatar" />
         </div>
     </nav>
     <nav class="floatb-2 nav-right " id="nav-right">
     	<ul class="nav nav-vert" id="user-controls">
             <li class="nav-vert-header nointeract">
-            	<img class="img user-menu-img float" src="img/default_avatar.png" alt="user img" />
+            	<img class="img user-menu-img float" src="//gravatar.com/avatar/<?php echo $user_md5; ?>?r=r" alt="user gravatar" />
             	<div class="infobox">
 	            	<span class="nav-header-name"><?php echo $user_name; ?></span>
 	            	<span class="nav-header-email"><?php echo $user_email; ?></span>
@@ -241,79 +241,69 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 				</ul>
 			</nav>
 		</section>
-		<section class="bar" id="bar-1" type="folder" folder="root-files">
-			<header>
-				<span class="filename">Folder name</span>
-				<section class="file-det-header">
-					<span>Shared</span>
-					<span>File info</span>
-					<span>Modified</span>
-				</section>
-			</header>
-			<nav class="file-list">
-				<ul class="">
-					<li class="menubar-content floatb" container="<%= model.get('container') %>" type="<%= model.get('basicFileType') %>" filehash="<%= model.get('hash_self') %>" id="<%= model.get('fileID') %>" name="<%= model.get('fileName') %>" pos="" fileparent="<%= model.get('hash_parent') %>">
-						<div class="dragdrop-border"></div>
-						<span class="file-multiselect-checkbox-container">
-							<input type="checkbox" id="cb-0" value="abcdef" />
-							<label class="label" for="cb-0"><i class="mdi mdi-checkbox-blank-outline"></i></label>
-							<label class="label-checked" for="cb-0"><i class="mdi mdi-checkbox-marked"></i></label>
-							<label class="label-icon" for="cb-0"><i class="mdi mdi-file-outline"></i></label>
-						</span>
-						<span class="file-name">File name</span>
-						<div class="file-info">
-							<span class="file-info-item" id="fileshared"><span class="filesharedstatus">shared</span><br><span class="filedownloadcount">DL'd 0 times</span></span>
-							<span class="file-info-item" id="filedet"><span class="filetype">type</span><br><span id="filesize" unit="<%= model.get('units') %>">size</span></span>
-							<span class="file-info-item" id="filemod"><span class="filemod">lastmod_date</span><br><span class="filemod">lastmod_time</span></span>
-						</div>
-					</li>
-					<li class="menubar-content floatb active" container="<%= model.get('container') %>" type="<%= model.get('basicFileType') %>" filehash="<%= model.get('hash_self') %>" id="<%= model.get('fileID') %>" name="<%= model.get('fileName') %>" pos="" fileparent="<%= model.get('hash_parent') %>">
-						<div class="dragdrop-border"></div>
-						<span class="file-multiselect-checkbox-container">
-							<input type="checkbox" id="cb-1" value="abcdef" />
-							<label class="label" for="cb-1"><i class="mdi mdi-checkbox-blank-outline"></i></label>
-							<label class="label-checked" for="cb-1"><i class="mdi mdi-checkbox-marked"></i></label>
-							<label class="label-icon" for="cb-1"><i class="mdi mdi-file-outline"></i></label>
-						</span>
-						<span class="file-name">File name 2</span>
-						<div class="file-info">
-							<span class="file-info-item" id="fileshared"><span class="filesharedstatus">shared</span><br><span class="filedownloadcount">DL'd 0 times</span></span>
-							<span class="file-info-item" id="filedet"><span class="filetype">type</span><br><span id="filesize" unit="<%= model.get('units') %>">size</span></span>
-							<span class="file-info-item" id="filemod"><span class="filemod">lastmod_date</span><br><span class="filemod">lastmod_time</span></span>
-						</div>
-					</li>
-				</ul>
-			</nav>
-		</section>
-		<section class="bar" id="bar-2" type="file" spectype="image" folder="root-files">
-			<header>
-				<span class="filename">File name</span>
-				<section class="file-actions-header">
-					<span><i class="mdi mdi-information-outline"></i></span>
-					<span><i class="mdi mdi-download"></i></span>
-					<span><i class="mdi mdi-rename-box"></i></span>
-					<span><i class="mdi mdi-delete"></i></span>
-					<span><i class="mdi mdi-folder-move"></i></span>
-					<span><i class="mdi mdi-reload"></i></span>
-					<span><i class="mdi mdi-dots-vertical"></i></span>
-				</section>
-			</header>
-			<section class="file-view">
-				<img src="//placehold.it/1500x1000" alt="placeholder image" />
-			</section>
-		</section>
 	</section>
 </main>	
 </body>
+<script type="text/template" id="fm-folder">
+<section class="bar" id="bar-<%= hash %>" type="folder" folder="<%= hash %>" parent="<%= parent %>">
+	<header>
+		<span class="filename"><%= name %></span>
+		<section class="file-det-header">
+			<span>Shared</span>
+			<span>File info</span>
+			<span>Modified</span>
+		</section>
+	</header>
+	<nav class="file-list"></nav>
+</section>
+</script>
+<script type="text/template" id="fm-file">
+<li class="menubar-content floatb" parent="<%= parent %>" type="<%= type %>" hash="<%= hash %>" id="file-<%= hash %>" name="<%= name %>" <%= shared %> >
+	<div class="dragdrop-border"></div>
+	<span class="file-multiselect-checkbox-container">
+		<input type="checkbox" id="cb-<%= hash %>" value="abcdef" />
+		<label class="label" for="cb-<%= hash %>"><i class="mdi mdi-checkbox-blank-outline"></i></label>
+		<label class="label-checked" for="cb-<%= hash %>"><i class="mdi mdi-checkbox-marked"></i></label>
+		<label class="label-icon" for="cb-<%= hash %>"><i class="mdi <%= icon %>"></i></label>
+	</span>
+	<span class="file-name"><%= name %></span>
+	<div class="file-info">
+		<span class="file-info-item" id="fileshared"><span class="filesharedstatus">shared</span><br><span class="filedownloadcount">DL'd <%= dlcount %> times</span></span>
+		<span class="file-info-item" id="filedet"><span class="filetype"><%= type %></span><br><span id="filesize"><%= size %></span></span>
+		<span class="file-info-item" id="filemod"><span class="filemod"><%= lastmod_date %></span><br><span class="filemod"><%= lastmod_time %></span></span>
+	</div>
+</li>
+</script>
+<script type="text/template" id="fm-file-detail">
+<section class="bar" spectype="<%= filetype %>" parent="<%= parent %>" type="<%= type %>" hash="<%= self %>" id="file-detail-<%= hash %>" name="<%= name %>">
+	<header>
+		<span class="filename"><%= name %></span>
+		<section class="file-actions-header">
+			<span><i class="mdi mdi-information-outline"></i><link class="rippleJS lightgray" /></span>
+			<span><i class="mdi mdi-download"></i><link class="rippleJS lightgray" /></span>
+			<span><i class="mdi mdi-rename-box"></i><link class="rippleJS lightgray" /></span>
+			<span><i class="mdi mdi-delete"></i><link class="rippleJS lightgray" /></span>
+			<span><i class="mdi mdi-folder-move"></i><link class="rippleJS lightgray" /></span>
+			<span><i class="mdi mdi-reload"></i><link class="rippleJS lightgray" /></span>
+			<span><i class="mdi mdi-dots-vertical"></i><link class="rippleJS lightgray" /></span>
+		</section>
+	</header>
+	<section class="file-view">
+		<img src="//placehold.it/1500x1000" alt="placeholder image" />
+	</section>
+</section>
+</script>
 	<script type="text/javascript" src="//code.jquery.com/jquery-2.1.4.min.js"></script>
 	<script src="//code.jquery.com/ui/1.11.4/jquery-ui.min.js"></script>
 	<!-- <link async rel="stylesheet" type="text/css" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.7.1/themes/base/jquery-ui.css"/> -->
     <script src="js/underscore.min.js"></script>
     <script src="js/backbone.min.js"></script>
     <script src="js/foxfile.js"></script>
+    <script type="text/javascript" src="js/ripple.js"></script>
     <script>
+    var foxfile_root = '<?php echo $user_md5; ?>';
     $(document).ready(function() {
-	    app.files.init();
+	    foxfile.init();
     });
     </script>
 	

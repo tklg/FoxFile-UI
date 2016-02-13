@@ -9,7 +9,7 @@ function sanitize($s) {
  	return htmlentities(preg_replace('/\<br(\s*)?\/?\>/i', "\n", mysqli_real_escape_string($db, $s)), ENT_QUOTES);
 }
 if (isset($installed) && $installed && isset($_SESSION['foxfile_done_setup'])) {
-	header("Location: ../dashboard");
+	header("Location: ../login");
 } else if(isset($_POST['connect_database'])) {
 	$dbhost = $_POST['dbhost'];
 	$dbuname = $_POST['dbuser'];
@@ -42,6 +42,7 @@ $installed = true;
 	    password VARCHAR(512),
 	    root_folder VARCHAR(32),
 		total_storage DOUBLE(100, 2),
+		account_status VARCHAR(32),
 	    access_level TINYINT,
 	    join_date DATETIME DEFAULT CURRENT_TIMESTAMP
     )';
@@ -56,17 +57,18 @@ $installed = true;
 	$password = password_hash($_POST['userpass'], PASSWORD_BCRYPT);
 	$root_folder = md5($email);
 	$total_storage = 5000000000;
-	$sql = "INSERT INTO USERS (firstname, email, password, root_folder, total_storage, access_level)
+	$sql = "INSERT INTO USERS (firstname, email, password, root_folder, total_storage, account_status, access_level)
         VALUES (
         'Administrator',
         '$email',
         '$password',
         '$root_folder',
         '$total_storage',
+        'verified',
         '5')";
 	if (mysqli_query($db, $sql)) {
 		mkdir('../files/'.$root_folder.'/');
-		mkdir('../trashes/'.$root_folder.'/')
+		mkdir('../trashes/'.$root_folder.'/');
 		echo 0;
 	} else {
 		echo mysql_error();
@@ -78,6 +80,7 @@ $installed = true;
         PRIMARY KEY(PID),
 		owner_email VARCHAR(128),
 		owner_id INT,
+		is_folder BOOLEAN,
 		hash CHAR(12),
 		parent CHAR(12),
 		title VARCHAR(128),
@@ -89,6 +92,7 @@ $installed = true;
         UNIQUE(PID,hash)
         )';
 	if (mysqli_query($db, $sql)) {
+		$_SESSION['foxfile_done_setup'] = true;
 		echo 0;
 	} else {
 		echo mysql_error();
@@ -101,7 +105,7 @@ $installed = true;
 <meta name="viewport" content="initial-scale=1, width=device-width, maximum-scale=1, minimum-scale=1, user-scalable=no">
 <link rel="stylesheet" href="../css/login.css" />
 <link rel="icon" type="image/ico" href="img/foxfile.png">
-    <title>foxfile - Setup</title>
+    <title>FoxFile - Setup</title>
 </head>
 <body>
 <main class="setup float-2">
@@ -154,7 +158,7 @@ $installed = true;
 			</label>
 		</div>
 		<a class="new-account"></a>
-		<button class="btn btn-submit" type="submit">Start</button>
+		<button class="btn btn-submit" type="submit">Start<link class="rippleJS" /></button>
     </form>
 	</section>
 </main>
@@ -217,6 +221,7 @@ $installed = true;
 		</div>
 	</section>
 <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+<script type="text/javascript" src="../js/ripple.js"></script>
     <script type="text/javascript">
     $('input.userinfo').change(function() {
         $(this).attr('empty', ($(this).val() != '') ? 'false' : 'true');

@@ -73,6 +73,11 @@ img {
 .wrap {
 	padding: 0;
 }
+.rippleJS.lightgray .ripple {
+  opacity: 0.15;
+  background: rgba(0,0,0,.38);
+  /*background: blue;*/
+}
 #nav-header {
 	position: relative;
 	display: inline-block;
@@ -172,6 +177,7 @@ nav ul {
 	flex: none;
 }
 #nav-header .nav-horiz li {
+	position: relative;
 	display: inline-block;
 	margin-top: -2px;
 	padding: 0 10px;
@@ -182,6 +188,7 @@ nav ul {
 	background: #D84315;
 }
 #nav-header .user-menu {
+	position: relative;
 	float: right;
 	display: block;
 	height: 60px;
@@ -225,7 +232,7 @@ nav ul {
 .nav-right {
 	display: inline-block;
 	position: absolute;
-	right: -280px;
+	right: -300px;
 	top: 0;
 	width: 280px;
 	height: 100%;
@@ -267,6 +274,7 @@ nav ul {
 	transition: all 0.1s ease-in-out;
 }
 .nav-vert li a {
+	position: relative;
 	display: block;
 	padding: 10px 20px;
 	color: rgba(0,0,0,.87);
@@ -318,6 +326,8 @@ nav ul {
 	float: right;
 	padding: 20px 0;
 	font-size: 12pt;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 .nav-vert-header span {
 	display: inline-block;
@@ -330,6 +340,7 @@ nav ul {
 }
 .nav-header-email {
 	color: rgba(0,0,0,.54);
+	font-size: 10pt;
 }
 main {
 	height: calc(100% - 60px);
@@ -340,22 +351,26 @@ main {
 ==========================================    FILE MANAGER    ==============================================
 ----------------------------------------------------------------------------------------------------------*/
 .file-manager {
+	position: absolute;
+	height: calc(100% - 60px);
 	width: 100%;
-	height: 100%;
 	display: flex;
 	padding: 0;
 	margin: 0;
+	left: 0;
 }
 .bar {
-	height: 100%;
 	min-width: 280px;
 	width: calc(20% - 1px);
+	height: 100%;
 	float: left;
 	border-left: 1px solid rgba(0,0,0,.06);
 	flex: none;
 	transition: all 0.1s ease-in-out;
+	/*position: absolute;*/
 }
 .bar:last-of-type {
+	/*position: relative;*/
 	flex: 1 0 auto;
 	background: white;
 	z-index: 30;
@@ -578,18 +593,27 @@ main {
 	display: none;
 }
 .bar:last-of-type header .file-actions-header {
-	/*position: absolute;*/
+	/*position: relative;*/
 	display: inline-block;
 	/*right: 10px;*/
 	margin-right: 10px;
+	margin-top: 4px;
 	height: 60px;
 	line-height: 60px;
 	bottom: 0;
 	flex: none;
 }
 .bar .file-actions-header span {
+	position: relative;
+	display: inline-block;
 	font-size: 16pt;
 	color: rgba(0,0,0,.54);
+	height: 36px;
+	line-height: 36px;
+	width: 36px;
+	border-radius: 50%;
+	cursor: pointer;
+	transition: all .15s ease-in-out;
 }
 .bar .file-actions-header i {
 	display: inline-block;
@@ -601,10 +625,8 @@ main {
 	line-height: 36px;
 	text-align: center;
 	border-radius: 50%;
-	transition: all .15s ease-in-out;
-	cursor: pointer;
 }
-.bar .file-actions-header i:hover {
+.bar .file-actions-header span:hover {
 	background: rgba(0,0,0,.12);
 	color: rgba(0,0,0,.87);
 	box-shadow: 0 -1px 0 #e5e5e5,0 0 2px rgba(0,0,0,.12),0 2px 4px rgba(0,0,0,.24);

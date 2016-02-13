@@ -58,12 +58,21 @@ session_start();
                     <div class="error error-pass"><div class="error-message">Passwords do not Match</div></div>
                 </label>
             </div>
+            <div class="inputbar nosel">
+                <label class="userlabel">
+                    <input name="gpass" class="userinfo" id="gpass" type="password" required>
+                    <span class="placeholder-userinfo nosel">Access code</span>
+                    <hr class="input-underline" />
+                    <div class="error error-gpass"><div class="error-message">Nope</div></div>
+                </label>
+            </div>
             <a href="login" class="new-account">Got an account?</a>
-            <button class="btn btn-submit" type="submit">Create</button>
+            <button class="btn btn-submit" type="submit">Create<link class="rippleJS" /></button>
         </form>
 	</section>
 </main>
 <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+<script type="text/javascript" src="js/ripple.js"></script>
     <script type="text/javascript">
     $(document).ready(function() {
         var user = $('#email').val();
@@ -72,26 +81,62 @@ session_start();
     $('input.userinfo').change(function() {
         $(this).attr('empty', ($(this).val() != '') ? 'false' : 'true');
     });
+    var passMatch = false;
     $('#password2, #password').change(function() {
         if ($('#password').val() == $('#password2').val()) {
             $('.error-pass').removeClass('active');
+            passMatch = true;
         } else {
-            if ($('#password2').val() != '')
+            if ($('#password2').val() != '') {
                 $('.error-pass').addClass('active');
+                passMatch = false;
+            }
         }
     });
-    $('#email').blur(function() {
+    function sub() {
     	if (/[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/g.test($('#email').val())) {
     		$('.error-email').removeClass('active');
+
+            if (passMatch) {
+                $.post('./api/user/new',
+                    {
+                        useremail: $('#email').val(),
+                        userpass: $('#password').val(),
+                        userfirst: $('#firstname').val(),
+                        userlast: $('#lastname').val(),
+                        gpass: $('#gpass').val()
+                    },
+                    function(result) {
+                        console.log(result);
+                        switch (result) {
+                            case '0': //ok
+                                window.location.href = "./login";
+                                break;
+                            case '1': //invalid u/p
+                                $('.error-email').addClass('active').text('Invalid email');
+                                break;
+                            case '2':
+                                $('.error-email').addClass('active').text('Account with that email already exists');
+                                break;
+                            case '3':
+                                $('.error-pass').addClass('active').text('Passwords do not match');
+                                break;
+                            case '4':
+                                $('.error-gpass').addClass('active').text('Incorrect access key');
+                                break;
+                            case '5':
+                                $('.error-email').addClass('active').text('Database error');
+                                break;
+                        }
+                });
+            }
+
     	} else {
     		if ($('#email').val() != '') {
                 $('.error-email').addClass('active');
             }
     	}
-    });
-    function sub() {
-
-    }
+    };
     </script>
 </body>
 </html>

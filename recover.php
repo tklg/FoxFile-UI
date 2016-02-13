@@ -52,11 +52,12 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     			</label>
     		</div>
             <a href="login" class="new-account">Log in</a>
-            <button class="btn btn-submit" type="button" onclick="sendEmail()">Send email</button>
+            <button class="btn btn-submit" type="button" onclick="sendEmail()">Send email<link class="rippleJS" /></button>
         </form>
 	</section>
 </main>
 <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+<script type="text/javascript" src="js/ripple.js"></script>
     <script type="text/javascript">
     $(document).ready(function() {
         var user = $('#email').val();
