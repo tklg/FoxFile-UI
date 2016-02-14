@@ -1,2 +1,3 @@
-includes/OAuth2/client_secret.json
-includes/OAuth2/user_refresh_tokens.json
+files/*
+trashes/*
+temp/*

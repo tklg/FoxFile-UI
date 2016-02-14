@@ -133,10 +133,15 @@ header3 font
             'width': fm.barWidth + 'px'
         });
         fm.open(foxfile_root, '', 'My files', 'folder');
-        fm.open('fsnj43njn3l4jnrl3kn4r3rnjkl3nrl3', '59d2646254895816400fcb1eded7d86d', 'Subfolder 1', 'folder');
-        fm.open('nj43nrlj3njk4n3lr3ljrn3lnr3krnln', 'fsnj43njn3l4jnrl3kn4r3rnjkl3nrl3', 'Subfolder 2', 'folder');
+        //fm.open('fsnj43njn3l4jnrl3kn4r3rnjkl3nrl3', '59d2646254895816400fcb1eded7d86d', 'Subfolder 1', 'folder');
+        //fm.open('nj43nrlj3njk4n3lr3ljrn3lnr3krnln', 'fsnj43njn3l4jnrl3kn4r3rnjkl3nrl3', 'Subfolder 2', 'folder');
         //fm.open('n5lt4j5nnl56k4jn564klnl3kn6j3lnk', 'nj43nrlj3njk4n3lr3ljrn3lnr3krnln', 'Subfolder 3', 'folder');
         //fm.open('3bk45b34b5kjbh2klkj41m2lk32k4n2s', 'n5lt4j5nnl56k4jn564klnl3kn6j3lnk', 'Subfolder 4', 'folder');
+        setTimeout(function() {
+            $('.bar, .file-manager').css({
+                transition: 'all 0.45s ease-in-out'
+            });
+        }, 500);
     }
     fm.getLast = function() {
         fm.last = fileTree[fileTree.length - 1];
@@ -144,6 +149,7 @@ header3 font
     }
     fm.open = function(hash, parent, name, type) {
         var item = null;
+        var resType = type;
         var fHash = hash;
         if (type == 'folder') {
             item = new FolderBar(name, hash, parent);
@@ -155,23 +161,37 @@ header3 font
         }
         $.ajax({
             type: "POST",
-            url: "./api/file/open",
+            url: "./api/files/list_files",
             data: {
-                hash: fHash
+                hash: fHash,
+                offset: 0,
+                limit: 30
             },
             success: function(result) {
-                var res = JSON.parse(result);
+                var json = JSON.parse(result);
                 console.log("fm.open("+fHash+") Got response from server: ");
-                console.log(res);
-                var resType = res['type'];
-                var res = res['content'];
+                console.log(json);
+                var hasMore = json['more'];
+                var resultsRemaining = json['remaining'];
+                var res = json['results'];
                 if (resType == 'folder') {
                     var files = [];
-                    $.each(json, function(i) {
-                        files.push(new File(json[i].name, json[i].parent, json[i].icon, json[i].hash, json[i].type, json[i].size, json[i].lastmod_date, json[i].lastmod_time, json[i].shared));
+                    $.each(res, function(i) {
+                        // name, parent, icon, hash, type, btype, size, lastmod, shared, public
+                        files.push(new File(res[i].name,
+                                            res[i].parent,
+                                            res[i].icon,
+                                            res[i].hash,
+                                            res[i].type,
+                                            res[i].is_folder == '1' ? "folder" : "file",
+                                            res[i].size,
+                                            res[i].lastmod,
+                                            res[i].is_shared,
+                                            res[i].is_public));
                     });
                     item.setFiles(files);
-                    fm.add(item);
+                    item.setRemaining(resultsRemaining);
+                    item.setHasMore(hasMore);
                 } else { // is file
 
                 }
@@ -186,7 +206,7 @@ header3 font
                 }
             },
             error: function(request, error) {
-                console.error(request, error);
+                //console.error(request, error);
             }
         });
     }
@@ -221,10 +241,10 @@ header3 font
         $('.file-manager').append(template(barItem));
         if (fileTree.length > 1) fileTree[fileTree.length - 2].setWidth(fm.barWidth);
         //barItem.setWidth(fm.activeBarWidth);
-        barItem.moveTo(fileTree.length);
+        //barItem.moveTo(fileTree.length); // pos rel makes this do nothing
         barItem.loadContent();
-        fm.moveToFitCurrentlyActive();
         fm.resizeToFitCurrentlyActive();
+        fm.moveToFitCurrentlyActive();
     }
     fm.remove = function(hash) {
 
@@ -249,6 +269,8 @@ header3 font
         this.name = name;
         this.hash = hash;
         this.parent = parent;
+        this.hasMore = false;
+        this.remaining = 0;
         this.files = []; // all files contained within this folder
         this.getName = function() {return this.name;}
         this.getHash = function() {return this.hash;}
@@ -274,34 +296,83 @@ header3 font
                 'left': fm.barWidth * pos + 'px'
             });
         }
+        this.setHasMore = function(has) {
+            this.hasMore = has;
+        }
+        this.setRemaining = function(num) {
+            this.remaining = num;
+        }
     }
     var FileBar = function(name, hash, parent, type, jsonData) {
         this.name = name;
         this.hash = hash;
         this.parent = parent;
         this.type = type;
+        this.hasMore = false;
+        this.remaining = 0;
         this.jsonData = jsonData;
         this.getName = function() {return this.name;}
         this.getHash = function() {return this.hash;}
         this.getParent = function() {return this.parent;}
         this.getType = function() {return this.type;}
         this.getJsonData = function() {return this.jsonData;}
+        this.setHasMore = function(has) {
+            this.hasMore = has;
+        }
+        this.setRemaining = function(num) {
+            this.remaining = num;
+        }
     }
-    var File = function(name, parent, icon, hash, type, size, lastmod_date, lastmod_time, shared) {
+    var File = function(name, parent, icon, hash, type, btype, size, lastmod, shared, public) {
         this.name = name;
         this.icon = icon;
         this.hash = hash;
+        this.btype = btype;
         this.type = type;
         this.size = size;
-        this.lastmod_date = lastmod_date;
-        this.lastmod_time = lastmod_time;
-        this.shared = shared;
+        this.lastmod = new Date(lastmod);
+        this.shared = shared == '0' ? false : true;
+        this.public = public == '0' ? false : true;
         this.getName = function() {return this.name;}
         this.getHash = function() {return this.hash;}
-        this.getIcon = function() {return this.icon;}
-        this.getType = function() {return this.type;}
-        this.getSize = function() {return this.size;}
-        this.getLastmod = function() {return [this.lastmod_date, this.lastmod_time];}
-        this.getShared = function() {return this.shared;}
+        this.getIcon = function() {
+            return getIcon(this);
+        }
+        this.getType = function() {
+            return getType(this);
+        }
+        this.isFolder = function() {
+            return this.btype == 'folder';
+        }
+        this.getSize = function() {
+            if (!this.isFolder()) {
+                var units = '';
+                var size = '';
+                if (this.size > 1000) {
+                    if (this.size > 1000000) {
+                        if (this.size > 1000000000) {
+                            units = 'GB';
+                            size = (this.size / 1000000000).toFixed(2);
+                        } else {
+                            units = 'MB';
+                            size = (this.size / 1000000).toFixed(2);
+                        }
+                    } else {
+                        units = 'KB';
+                        size = (this.size / 1000).toFixed(2);
+                    }
+                }
+                return size + " " + units;
+            } else return "&emsp;"; // folders do not display a size
+        }
+        this.isPublic = function() {return this.public;}
+        this.isShared = function() {return this.shared;}
+        this.getDate = function() {
+            var date = this.lastmod.toDateString().split(' ');
+            return date[1]+", "+date[2]+" "+date[3];
+        }
+        this.getTime = function() {
+            return this.lastmod.toLocaleTimeString();
+        }
     }
 })(window.fm = window.fm || {}, jQuery);

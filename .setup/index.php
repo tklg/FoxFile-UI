@@ -47,29 +47,50 @@ $installed = true;
 	    join_date DATETIME DEFAULT CURRENT_TIMESTAMP
     )';
 	if (mysqli_query($db, $sql)) {
-		echo 0;
+		//$db = mysqli_connect($dbhost,$dbuname,$dbupass,$dbname);
+		$sql = "CREATE TABLE IDGEN (
+			  PID bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			  PRIMARY KEY(PID),
+			  stub char(1) NOT NULL DEFAULT '',
+			  UNIQUE(stub)
+			)";
+		if (mysqli_query($db, $sql)) {
+			echo 0;
+			die();
+		} else {
+			echo mysql_error();
+		}
 	} else {
 		echo mysql_error();
 	}
 } else if (isset($_POST['create_user'])) {
+	require '../plugins/hashids/Hashids.php';
 	$db = mysqli_connect($dbhost,$dbuname,$dbupass,$dbname);
 	$email = $_POST['useremail'];
 	$password = password_hash($_POST['userpass'], PASSWORD_BCRYPT);
-	$root_folder = md5($email);
-	$total_storage = 5000000000;
-	$sql = "INSERT INTO USERS (firstname, email, password, root_folder, total_storage, account_status, access_level)
-        VALUES (
-        'Administrator',
-        '$email',
-        '$password',
-        '$root_folder',
-        '$total_storage',
-        'verified',
-        '5')";
-	if (mysqli_query($db, $sql)) {
-		mkdir('../files/'.$root_folder.'/');
-		mkdir('../trashes/'.$root_folder.'/');
-		echo 0;
+	$sql = "REPLACE INTO IDGEN (stub) VALUES ('a')";
+	if ($result = mysqli_query($db, $sql)) {
+		$newIdObj = mysqli_insert_id($db);
+		$hashids = new Hashids\Hashids('foxfilesaltisstillbestsalt', 12);
+		$root_folder = $hashids->encode($newIdObj);
+		$total_storage = 5000000000;
+		$sql = "INSERT INTO USERS (firstname, email, password, root_folder, total_storage, account_status, access_level)
+	        VALUES (
+	        'Administrator',
+	        '$email',
+	        '$password',
+	        '$root_folder',
+	        '$total_storage',
+	        'verified',
+	        '5')";
+		if (mysqli_query($db, $sql)) {
+			mkdir('../files/'.$root_folder.'/');
+			mkdir('../trashes/'.$root_folder.'/');
+			echo 0;
+			die();
+		} else {
+			echo mysql_error();
+		}
 	} else {
 		echo mysql_error();
 	}
@@ -83,20 +104,22 @@ $installed = true;
 		is_folder BOOLEAN,
 		hash CHAR(12),
 		parent CHAR(12),
-		title VARCHAR(128),
-        trashed BOOLEAN DEFAULT 0,
-        shared BOOLEAN DEFAULT 0,
-        date_submitted DATETIME DEFAULT CURRENT_TIMESTAMP,
-        date_last_checked DATETIME DEFAULT NULL,
-        date_completed DATETIME DEFAULT NULL,
+		name VARCHAR(128),
+		size, DOUBLE(30, 2),
+        is_trashed BOOLEAN DEFAULT 0,
+        is_shared BOOLEAN DEFAULT 0,
+        is_public BOOLEAN DEFAULT 0,
+        lastmod DATETIME DEFAULT CURRENT_TIMESTAMP,
         UNIQUE(PID,hash)
         )';
 	if (mysqli_query($db, $sql)) {
 		$_SESSION['foxfile_done_setup'] = true;
 		echo 0;
+		die();
 	} else {
 		echo mysql_error();
 	}
+//} else if (isset($_POST['create_table_files'])) { 
 } else {
 	?>
 <!DOCTYPE html>
@@ -104,7 +127,7 @@ $installed = true;
 <head>
 <meta name="viewport" content="initial-scale=1, width=device-width, maximum-scale=1, minimum-scale=1, user-scalable=no">
 <link rel="stylesheet" href="../css/login.css" />
-<link rel="icon" type="image/ico" href="img/foxfile.png">
+<link rel="icon" type="image/ico" href="../img/foxfile.ico">
     <title>FoxFile - Setup</title>
 </head>
 <body>

@@ -358,6 +358,7 @@ main {
 	padding: 0;
 	margin: 0;
 	left: 0;
+	/*transition: all 0.45s ease-in-out;*/
 }
 .bar {
 	min-width: 280px;
@@ -366,7 +367,7 @@ main {
 	float: left;
 	border-left: 1px solid rgba(0,0,0,.06);
 	flex: none;
-	transition: all 0.1s ease-in-out;
+	/*transition: all 0.45s ease-in-out;*/
 	/*position: absolute;*/
 }
 .bar:last-of-type {
@@ -585,7 +586,7 @@ main {
 	/*display: none;*/
 	visibility: hidden;
 }
-.menubar-content[shared] #fileshared {
+.menubar-content[shared=true] #fileshared {
 	/*display: inline-block;*/
 	visibility: visible;
 }

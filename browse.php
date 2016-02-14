@@ -258,19 +258,19 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 </section>
 </script>
 <script type="text/template" id="fm-file">
-<li class="menubar-content floatb" parent="<%= parent %>" type="<%= type %>" hash="<%= hash %>" id="file-<%= hash %>" name="<%= name %>" <%= shared %> >
+<li class="menubar-content floatb" parent="<%= parent %>" type="<%= getType() %>" btype="<%= btype %>" hash="<%= hash %>" id="file-<%= hash %>" name="<%= name %>" shared="<%= shared %>" >
 	<div class="dragdrop-border"></div>
 	<span class="file-multiselect-checkbox-container">
 		<input type="checkbox" id="cb-<%= hash %>" value="abcdef" />
 		<label class="label" for="cb-<%= hash %>"><i class="mdi mdi-checkbox-blank-outline"></i></label>
 		<label class="label-checked" for="cb-<%= hash %>"><i class="mdi mdi-checkbox-marked"></i></label>
-		<label class="label-icon" for="cb-<%= hash %>"><i class="mdi <%= icon %>"></i></label>
+		<label class="label-icon" for="cb-<%= hash %>"><i class="mdi <%= getIcon() %>"></i></label>
 	</span>
 	<span class="file-name"><%= name %></span>
 	<div class="file-info">
-		<span class="file-info-item" id="fileshared"><span class="filesharedstatus">shared</span><br><span class="filedownloadcount">DL'd <%= dlcount %> times</span></span>
-		<span class="file-info-item" id="filedet"><span class="filetype"><%= type %></span><br><span id="filesize"><%= size %></span></span>
-		<span class="file-info-item" id="filemod"><span class="filemod"><%= lastmod_date %></span><br><span class="filemod"><%= lastmod_time %></span></span>
+		<span class="file-info-item" id="fileshared"><span class="filesharedstatus">Shared</span><br><span class="filedownloadcount"><%= isPublic() ? "Public" : "Private" %></span></span>
+		<span class="file-info-item" id="filedet"><span class="filetype"><%= getType() %></span><br><span id="filesize"><%= getSize() %></span></span>
+		<span class="file-info-item" id="filemod"><span class="filemod"><%= getDate() %></span><br><span class="filemod"><%= getTime() %></span></span>
 	</div>
 </li>
 </script>
@@ -299,9 +299,10 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     <script src="js/underscore.min.js"></script>
     <script src="js/backbone.min.js"></script>
     <script src="js/foxfile.js"></script>
+    <script src="js/filetypes.js"></script>
     <script type="text/javascript" src="js/ripple.js"></script>
     <script>
-    var foxfile_root = '<?php echo $user_md5; ?>';
+    var foxfile_root = '<?php echo $user_uhd; ?>';
     $(document).ready(function() {
 	    foxfile.init();
     });

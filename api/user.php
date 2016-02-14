@@ -97,26 +97,35 @@ if($pageID == 'new') {
 				$upass = password_hash($_POST['userpass'], PASSWORD_BCRYPT);
 				$userfirst = sanitize($_POST['userfirst']);
 				$userlast = sanitize($_POST['userlast']);
-				$root_folder = md5($email);
-				$sql = "INSERT INTO users (firstname, lastname, email, password, access_level, root_folder, total_storage, account_status)
-		                VALUES ('$userfirst',
-		                '$userlast',
-		                '$email',
-		                '$upass',
-		                '1',
-		                '$root_folder',
-		                '2000000000',
-		                'unverified')";
-				if (mysqli_query($db,$sql)) {
-					mkdir('../files/'.$root_folder.'/');
-					mkdir('../trashes/'.$root_folder.'/');
-					echo 0;
-					die();
-		        } else {
-		        	//echo mysqli_error($db);
-		            echo 5;
-		            die();
-		        }
+				require '../plugins/hashids/Hashids.php';
+				$sql = "REPLACE INTO IDGEN (stub) VALUES ('a')";
+				if ($result = mysqli_query($db, $sql)) {
+					$newIdObj = mysqli_insert_id($db);
+					$hashids = new Hashids\Hashids('foxfilesaltisstillbestsalt', 12);
+					$root_folder = $hashids->encode($newIdObj);
+					$sql = "INSERT INTO users (firstname, lastname, email, password, access_level, root_folder, total_storage, account_status)
+			                VALUES ('$userfirst',
+			                '$userlast',
+			                '$email',
+			                '$upass',
+			                '1',
+			                '$root_folder',
+			                '2000000000',
+			                'unverified')";
+					if (mysqli_query($db,$sql)) {
+						mkdir('../files/'.$root_folder.'/');
+						mkdir('../trashes/'.$root_folder.'/');
+						echo 0;
+						die();
+			        } else {
+			        	//echo mysqli_error($db);
+			            echo 5;
+			            die();
+			        }
+			    } else {
+			    	echo 5;
+			    	die();
+			    }
 		    }
 		} else {
 			echo 4;

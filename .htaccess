@@ -16,7 +16,7 @@ ErrorDocument 403 ./403.html
 
   RewriteCond %{SCRIPT_FILENAME} !-d
   RewriteCond %{SCRIPT_FILENAME} !-f
-  RewriteRule ^(.*api\/file.+)$ api/file.php [NC,L]
+  RewriteRule ^(.*api\/files.+)$ api/files.php [NC,L]
 
   RewriteCond %{SCRIPT_FILENAME} !-d
   RewriteCond %{SCRIPT_FILENAME} !-f
