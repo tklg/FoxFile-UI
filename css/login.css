@@ -13,12 +13,12 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     Copyright (C) 2016 Theodore Kluge
     http://tkluge.net
 */
-@font-face {
+/*@font-face {
   font-family: 'Roboto';
   font-style: normal;
   font-weight: 300;
   src: local('Roboto Light'), local('Roboto-Light'), url(../fonts/Roboto-Light.ttf) format('ttf');
-}
+}*/
 html,
 body {
 	width: 100%;
@@ -27,7 +27,8 @@ body {
 	margin: 0;
     background: #f2f2f2;
     font-family: 'Roboto', sans-serif;
-    overflow-x: hidden;
+    /*overflow-x: hidden;*/
+    overflow: hidden;
 }
 body {
 	display: flex;
@@ -324,4 +325,57 @@ main.setup .content {
 }
 main.setup {
 	transition: all 0.3s ease-in-out;
+}
+.footer {
+	/*position: relative;*/
+	flex: none;
+	height: 60px;
+	line-height: 60px;
+	width: 70%;
+	margin: 0 auto;
+	/*background: #E64A19;*/
+	font-size: 11pt;
+	color: rgba(0,0,0,.87);
+}
+.footer nav {
+	display: inline-block;
+	height: 60px;
+	line-height: 60px;
+	/*margin-left: 20%;*/
+	float: left;
+}
+.footer nav span {
+	display: inline-block;
+	margin: 0 4px;
+	/*float: initial;*/
+}
+.footer nav span.nav-horiz-bar {
+	margin: 0 4px;
+	font-size: 14pt;
+}
+.footer nav span a {
+	text-decoration: none;
+	color: #E64A19;
+}
+.footer span.copyright {
+	display: inline-block;
+	height: 60px;
+	line-height: 60px;
+	/*margin-right: 20%;*/
+	float: right;
+}
+.footer .copyright {
+	color: rgba(0,0,0,.54);
+}
+.footer .copyright span {
+	/*line-height: initial;*/
+}
+.copyright #c2 {
+	display: none;
+}
+.copyright:hover #c1 {
+	display: none;
+}
+.copyright:hover #c2 {
+	display: inline;
 }

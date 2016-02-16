@@ -49,9 +49,9 @@ if ($pageID == 'list_files') {
 			}
 			$final = array(
 				'total_rows' => $total,
-				'results' => $rows,
 				'more' => $more,
-				'remaining' => $remaining > 0 ? $remaining : 0
+				'remaining' => $remaining > 0 ? $remaining : 0,
+				'results' => $rows
 			);
 			echo json_encode($final);
 		} else {
@@ -68,6 +68,38 @@ if ($pageID == 'list_files') {
 		$res = array(
 			'status' => '500',
 			'message' => 'Failed to count contents of folder '.$fileParent
+		);
+		echo json_encode($res);
+		die();
+	}
+}
+if ($pageID == 'get_file') {
+	$self = sanitize($_POST['hash']);
+	$sql = "SELECT * FROM FILES WHERE hash = '$self' AND owner_id = '$uid' LIMIT 1";
+	if ($result = mysqli_query($db, $sql)) {
+		$rows = mysqli_fetch_object($result);
+		echo json_encode($rows);
+	} else {
+		http_response_code(500);
+		$res = array(
+			'status' => '500',
+			'message' => 'Failed to retrieve file details '.$fileParent
+		);
+		echo json_encode($res);
+		die();
+	}
+}
+if ($pageID == 'get_file_info') {
+	$self = sanitize($_POST['hash']);
+	$sql = "SELECT name, hash, parent, is_folder FROM FILES WHERE hash = '$self' AND owner_id = '$uid' LIMIT 1";
+	if ($result = mysqli_query($db, $sql)) {
+		$rows = mysqli_fetch_object($result);
+		echo json_encode($rows);
+	} else {
+		http_response_code(500);
+		$res = array(
+			'status' => '500',
+			'message' => 'Failed to retrieve file details '.$fileParent
 		);
 		echo json_encode($res);
 		die();

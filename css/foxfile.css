@@ -39,12 +39,12 @@ https://materialdesignicons.com/
 	--dividers: rgba(0,0,0,.12);;
 	--bg: #f2f2f2;
 }
-@font-face {
+/*@font-face {
   font-family: 'Roboto';
   font-style: normal;
   font-weight: 300;
   src: local('Roboto Light'), local('Roboto-Light'), url(../fonts/Roboto-Light.ttf) format('ttf');
-}
+}*/
 html,
 body {
 	width: 100%;
@@ -97,7 +97,7 @@ img {
 	line-height: 60px;
 	padding: 0 20px;
 	margin: 0;
-	font-weight: normal;
+	font-weight: 300;
 	flex: none;
 }
 .redfox {
@@ -370,13 +370,20 @@ main {
 	/*transition: all 0.45s ease-in-out;*/
 	/*position: absolute;*/
 }
-.bar:last-of-type {
+.bar:first-of-type {
+	border: none;
+	width: 80%;
+}
+.bar:not(.bar-ignore):last-of-type {
 	/*position: relative;*/
 	flex: 1 0 auto;
 	background: white;
 	z-index: 30;
 	border: none;
 	box-shadow: 0 -10px 0 #e5e5e5,0 -7px 7px rgba(0,0,0,.12),0 0 20px rgba(0,0,0,.24);
+}
+.bar:last-of-type[parent=root] {
+	transition: none !important;
 }
 .bar header {
 	display: flex;
@@ -406,6 +413,9 @@ main {
 	white-space: nowrap;
 	text-overflow: ellipsis;
 }
+.bar.leftmost header .filename {
+	padding-left: 30px;
+}
 .bar header .infobox {
 	display: block;
 	height: 40px;
@@ -421,6 +431,39 @@ main {
 }
 .bar header .header-email {
 	color: rgba(0,0,0,.54);
+}
+.bar header .btn-back {
+	display: none;
+}
+/*.bar[parent=root] header .btn-back {
+	display: none !important;
+}*/
+.bar.leftmost header .btn-back {
+	position: absolute;
+	display: inline-block;
+	left: 0;
+	top: 0;
+	height: 60px;
+	line-height: 64px;
+	width: 30px;
+	text-align: center;
+	padding: 0;
+	cursor: pointer;
+}
+.bar header .btn-back i {
+	height: 30px;
+	line-height: 30px;
+	width: 30px;
+	font-size: 16pt;
+	text-align: center;
+	color: rgba(0,0,0,.38);
+	border-radius: 50%;
+	transition: all 0.1s ease-in-out;
+}
+.bar header .btn-back:hover i {
+	color: #E64A19;
+	/*background: rgba(0,0,0,.12);*/
+	/*box-shadow: 0 -1px 0 #e5e5e5,0 0 2px rgba(0,0,0,.12),0 2px 4px rgba(0,0,0,.24);*/
 }
 .bar[type=folder] .file-det-header {
 	display: none;
@@ -652,6 +695,28 @@ main {
 	overflow-y: auto;
 	display: flex;
 }
+.bar .folder-empty {
+	/*display: inline-block;*/
+	display: flex;
+	align-items: center;
+	justify-content: center;
+    flex-direction: column;
+	width: 100%;
+	height: 100%;
+	line-height: 100%;
+	vertical-align: middle;
+	text-align: center;
+}
+.bar .folder-empty i {
+	font-size: 120pt;
+	color: rgba(0,0,0,.12);
+	/*display: block;*/
+}
+.bar .folder-empty span {
+	display: inline-block;
+	margin-top: -10px;
+	color: rgba(0,0,0,.38);
+}
 /* ---------------------------------------------------------------------------------------------------------
 =====================================   SHARED, TRASH, TRANSFERS   =========================================
 ----------------------------------------------------------------------------------------------------------*/
@@ -660,23 +725,28 @@ main {
 .shared {
 	z-index: 400;
 	position: absolute;
-	display: inline-block;
+	/*display: inline-block;*/
 	height: calc(100% - 60px);
 	background: white;
 	width: 80%;
 	max-width: calc(100% - 280px);
-	right: -100%;
-	transition: all 0.55s ease-in-out;
+	/*left: 101%;*/
+	/*left: 0;*/
+	right: 0;
+	display: none;
+	/*transition: all 0.55s ease-in-out;*/
 }
 .transfers.active,
 .shared.active,
 .trash.active {
 	right: 0;
+	display: inline-block;
 }
-.bar-transfers,
-.bar-trash,
-.bar-shared {
+.bar.bar-transfers,
+.bar.bar-trash,
+.bar.bar-shared {
 	width: 100%;
+	/*box-shadow: none !important;*/
 }
 .bar-transfers .nameandprogress {
 	flex: 1 0 auto;
@@ -731,3 +801,58 @@ main {
 	/*text-align: center;*/
 	padding: 0 20px;
 }
+.progress {
+	display: none;
+}
+.bar.loading header {
+	border: none;
+	height: 60px;
+}
+.bar.loading .progress {
+  position: relative;
+  height: 4px;
+  display: block;
+  width: 100%;
+  background-color: #FEC0AD;
+  border-radius: 2px;
+  background-clip: padding-box;
+  /*margin: 0.5rem 0 1rem 0;*/
+  margin: 0;
+  overflow: hidden;
+}
+.progress .determinate {
+  position: absolute;
+  background-color: inherit;
+  top: 0;
+  bottom: 0;
+  background-color: #E64A19;
+  transition: width .3s linear;
+}
+.progress .indeterminate {
+  background-color: #E64A19;
+}
+.progress .indeterminate:before {
+  content: '';
+  position: absolute;
+  background-color: inherit;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  will-change: left, right;
+  -webkit-animation: indeterminate 2.1s cubic-bezier(0.65, 0.815, 0.735, 0.395) infinite;
+  animation: indeterminate 2.1s cubic-bezier(0.65, 0.815, 0.735, 0.395) infinite;
+}
+.progress .indeterminate:after {
+  content: '';
+  position: absolute;
+  background-color: inherit;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  will-change: left, right;
+  -webkit-animation: indeterminate-short 2.1s cubic-bezier(0.165, 0.84, 0.44, 1) infinite;
+  animation: indeterminate-short 2.1s cubic-bezier(0.165, 0.84, 0.44, 1) infinite;
+  -webkit-animation-delay: 1.15s;
+  animation-delay: 1.15s;
+}
+@-webkit-keyframes indeterminate {0% {left: -35%; right: 100%; } 60% {left: 100%; right: -90%; } 100% {left: 100%; right: -90%; } } @keyframes indeterminate {0% {left: -35%; right: 100%; } 60% {left: 100%; right: -90%; } 100% {left: 100%; right: -90%; } } @-webkit-keyframes indeterminate-short {0% {left: -200%; right: 100%; } 60% {left: 107%; right: -8%; } 100% {left: 107%; right: -8%; } } @keyframes indeterminate-short {0% {left: -200%; right: 100%; } 60% {left: 107%; right: -8%; } 100% {left: 107%; right: -8%; } }

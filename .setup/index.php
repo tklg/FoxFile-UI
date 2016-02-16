@@ -8,8 +8,9 @@ function sanitize($s) {
  	$db = mysqli_connect($dbhost,$dbuname,$dbupass,$dbname);
  	return htmlentities(preg_replace('/\<br(\s*)?\/?\>/i', "\n", mysqli_real_escape_string($db, $s)), ENT_QUOTES);
 }
-if (isset($installed) && $installed && isset($_SESSION['foxfile_done_setup'])) {
+if (isset($installed) && $installed) {
 	header("Location: ../login");
+	die();
 } else if(isset($_POST['connect_database'])) {
 	$dbhost = $_POST['dbhost'];
 	$dbuname = $_POST['dbuser'];
@@ -22,7 +23,6 @@ $dbuname = "' . $dbuname . '";
 $dbupass = "' . $dbupass . '";
 $dbhost = "' . $dbhost . '";
 $dbname = "' . $dbname . '";
-$installed = true;
 ';
 	    $fp = fopen($db_config_path, "w");
         fwrite($fp, $string);
@@ -105,7 +105,7 @@ $installed = true;
 		hash CHAR(12),
 		parent CHAR(12),
 		name VARCHAR(128),
-		size, DOUBLE(30, 2),
+		size DOUBLE(30, 2),
         is_trashed BOOLEAN DEFAULT 0,
         is_shared BOOLEAN DEFAULT 0,
         is_public BOOLEAN DEFAULT 0,
@@ -113,7 +113,16 @@ $installed = true;
         UNIQUE(PID,hash)
         )';
 	if (mysqli_query($db, $sql)) {
-		$_SESSION['foxfile_done_setup'] = true;
+		$string = '<?php 
+$dbuname = "' . $dbuname . '";
+$dbupass = "' . $dbupass . '";
+$dbhost = "' . $dbhost . '";
+$dbname = "' . $dbname . '";
+$installed = true;
+';
+	    $fp = fopen($db_config_path, "w");
+        fwrite($fp, $string);
+        fclose($fp);
 		echo 0;
 		die();
 	} else {

@@ -1,7 +1,7 @@
 <?php
 session_start();
 include 'includes/cfgvars.php';
-if (!isset ($_SESSION['foxfile_uid'])) header ("Location: login");
+if (!isset ($_SESSION['foxfile_uid'])) header ("Location: ./");
 $user_md5 = $_SESSION['foxfile_user_md5'];
 $user_alvl = $_SESSION['foxfile_access_level'];
 $user_uid = $_SESSION['foxfile_uid'];
@@ -37,7 +37,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     <meta name="viewport" content="initial-scale=1, width=device-width, maximum-scale=1, minimum-scale=1">
     <title>FoxFile</title>
 <!-- 	<link async href="http://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"> -->
-	<link async href='https://fonts.googleapis.com/css?family=Roboto:300' rel='stylesheet' type='text/css'>
+	<link href='https://fonts.googleapis.com/css?family=Roboto:300,400,700' rel='stylesheet' type='text/css'>
 	<link async rel="stylesheet" href="css/foxfile.css">
 	<link href="css/materialdesignicons.min.css" media="all" rel="stylesheet" type="text/css" />
 	<link rel="icon" type="image/ico" href="favicon.ico">
@@ -113,6 +113,9 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 						<span><i class="mdi mdi-dots-vertical"></i></span>
 					</section>
 				</header>
+				<div class="progress">
+			    	<div class="indeterminate"></div>
+			  	</div>
 				<nav class="file-list">
 					<ul class="">
 						<li class="menubar-content floatb" container="<%= model.get('container') %>" type="<%= model.get('basicFileType') %>" filehash="<%= model.get('hash_self') %>" id="<%= model.get('fileID') %>" name="<%= model.get('fileName') %>" pos="" fileparent="<%= model.get('hash_parent') %>">
@@ -150,7 +153,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 			</section>
 		</section>
 		<section class="shared" id="shared">
-			<section class="bar bar-shared" id="bar-2" type="folder" folder="file-transfers">
+			<section class="bar bar-shared loading" id="bar-2" type="folder" folder="file-transfers">
 				<header>
 					<span class="filename">Shared with me</span>
 					<section class="file-actions-header">
@@ -158,6 +161,9 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 						<span><i class="mdi mdi-content-copy"></i></span>
 					</section>
 				</header>
+				<div class="progress">
+			    	<div class="indeterminate"></div>
+			  	</div>
 				<nav class="file-list">
 					<ul class="">
 						<li class="menubar-content floatb" container="<%= model.get('container') %>" type="<%= model.get('basicFileType') %>" filehash="<%= model.get('hash_self') %>" id="<%= model.get('fileID') %>" name="<%= model.get('fileName') %>" pos="" fileparent="<%= model.get('hash_parent') %>">
@@ -189,7 +195,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 			</section>
 		</section>
 		<section class="trash" id="trash">
-			<section class="bar bar-trash" id="bar-2" type="folder" folder="file-transfers">
+			<section class="bar bar-trash loading" id="bar-2" type="folder" folder="file-transfers">
 				<header>
 					<span class="filename">Deleted files</span>
 					<section class="file-actions-header">
@@ -197,6 +203,9 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 						<span><i class="mdi mdi-delete"></i></span>
 					</section>
 				</header>
+				<div class="progress">
+			    	<div class="indeterminate"></div>
+			  	</div>
 				<nav class="file-list">
 					<ul class="">
 						<li class="menubar-content floatb" container="<%= model.get('container') %>" type="<%= model.get('basicFileType') %>" filehash="<%= model.get('hash_self') %>" id="<%= model.get('fileID') %>" name="<%= model.get('fileName') %>" pos="" fileparent="<%= model.get('hash_parent') %>">
@@ -226,7 +235,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 			</header>
 			<nav class="file-list">
 				<ul class="">
-					<li class="menubar-content floatb btn-ctrlbar active" id="files">
+					<li class="menubar-content floatb btn-ctrlbar active" id="files" hash="<?php echo $user_uhd; ?>">
 						<i class="nocheckbox-icon mdi mdi-folder-multiple-outline"></i><span class="file-name">My files</span>
 					</li>
 					<li class="menubar-content floatb btn-ctrlbar" id="shared">
@@ -245,8 +254,9 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 </main>	
 </body>
 <script type="text/template" id="fm-folder">
-<section class="bar" id="bar-<%= hash %>" type="folder" folder="<%= hash %>" parent="<%= parent %>">
+<section class="bar loading" id="bar-<%= hash %>" type="folder" hash="<%= hash %>" parent="<%= parent %>">
 	<header>
+		<span class="btn-back"><i class="mdi mdi-chevron-left"></i></span>
 		<span class="filename"><%= name %></span>
 		<section class="file-det-header">
 			<span>Shared</span>
@@ -254,11 +264,15 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 			<span>Modified</span>
 		</section>
 	</header>
-	<nav class="file-list"></nav>
+	<div class="progress">
+	   	<div class="indeterminate"></div>
+	</div>
+	<nav class="file-list">
+	</nav>
 </section>
 </script>
 <script type="text/template" id="fm-file">
-<li class="menubar-content floatb" parent="<%= parent %>" type="<%= getType() %>" btype="<%= btype %>" hash="<%= hash %>" id="file-<%= hash %>" name="<%= name %>" shared="<%= shared %>" >
+<li class="menubar-content floatb" parent="<%= getParent() %>" type="<%= getType() %>" btype="<%= btype %>" hash="<%= hash %>" id="file-<%= hash %>" name="<%= name %>" shared="<%= shared %>" >
 	<div class="dragdrop-border"></div>
 	<span class="file-multiselect-checkbox-container">
 		<input type="checkbox" id="cb-<%= hash %>" value="abcdef" />
@@ -275,7 +289,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 </li>
 </script>
 <script type="text/template" id="fm-file-detail">
-<section class="bar" spectype="<%= filetype %>" parent="<%= parent %>" type="<%= type %>" hash="<%= self %>" id="file-detail-<%= hash %>" name="<%= name %>">
+<section class="bar" spectype="<%= getType() %>" parent="<%= parent %>" type="<%= type %>" hash="<%= hash %>" id="file-detail-<%= hash %>" name="<%= name %>">
 	<header>
 		<span class="filename"><%= name %></span>
 		<section class="file-actions-header">
@@ -291,6 +305,12 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 	<section class="file-view">
 		<img src="//placehold.it/1500x1000" alt="placeholder image" />
 	</section>
+</section>
+</script>
+<script type="text/template" id="fm-folder-empty">
+<section class="folder-empty">
+	<i class="mdi mdi-cloud-upload"></i>
+	<span>This folder is empty</span>
 </section>
 </script>
 	<script type="text/javascript" src="//code.jquery.com/jquery-2.1.4.min.js"></script>

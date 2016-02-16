@@ -1,6 +1,7 @@
 <?php
 session_start();
 include 'includes/cfgvars.php';
+if (isset ($_SESSION['foxfile_uid'])) header ("Location: browse");
 /*if (!isset ($_SESSION['access_token'])) header ("Location: login");*/
 ?>
 <!DOCTYPE html>
@@ -24,11 +25,12 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 
 -->
 <head>
-	<title>FoxFile - Login</title>
+	<title>FoxFile</title>
 	<meta charset="utf-8" />
 	<meta author="tkluge" />
 	<link rel="stylesheet" href="css/login.css" />
 	<link href="css/materialdesignicons.min.css" media="all" rel="stylesheet" type="text/css" />
+	<link href='https://fonts.googleapis.com/css?family=Roboto:400,700' rel='stylesheet' type='text/css'>
 	<link rel="icon" type="image/ico" href="favicon.ico">
 	<meta name="viewport" content="initial-scale=1, width=device-width, maximum-scale=1, minimum-scale=1, user-scalable=no">
 </head>
@@ -68,6 +70,21 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 	    </form>
 	</section>
 </main>
+<footer class="footer">
+	<nav class="nav-horiz-bars">
+		<span class="nav-horiz-item"><a href="tos">Terms of service</a></span>
+		<span class="nav-horiz-bar">|</span>
+		<span class="nav-horiz-item"><a href="privacy">Privacy policy</a></span>
+		<span class="nav-horiz-bar">|</span>
+		<span class="nav-horiz-item"><a href="about">About</a></span>
+		<span class="nav-horiz-bar">|</span>
+		<span class="nav-horiz-item"><a href="help">Help</a></span>
+	</nav>
+	<span class="copyright">
+		<span id="c1">&copy; <?php echo date("Y");?> Theodore Kluge</span>
+		<span id="c2">Made with ❤ by Theodore Kluge</span>
+	</span>
+</footer>
 <script type="text/javascript" src="//code.jquery.com/jquery-2.1.4.min.js"></script>
 <script type="text/javascript" src="js/md5.js"></script>
 <script type="text/javascript" src="js/ripple.js"></script>

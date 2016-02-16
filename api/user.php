@@ -69,7 +69,7 @@ if($pageID == 'logout') {
 	foreach ($_SESSION as $value) {
 		$value = null;
 	}
-	header('Location: login');
+	header('Location: ./');
 }
 if($pageID == 'new') {
 	$gp = false;
