@@ -123,6 +123,10 @@ header nav .btn {
 	height: 40px;
 	line-height: 40px;
 }
+.main .error {
+	font-size: 30pt;
+	margin-top: 15%;
+}
 .main article {
 	background: white;
 	width: calc(80% - 40px);
@@ -155,9 +159,10 @@ header nav .btn {
 }
 footer.footer {
 	flex: none;
-	height: 60px;
+	/*height: 60px;*/
 	line-height: 60px;
 	width: 70%;
+	max-width: 700px;
 	margin: 0 auto;
 	/*background: #E64A19;*/
 	font-size: 11pt;
@@ -165,15 +170,13 @@ footer.footer {
 }
 .footer nav {
 	display: inline-block;
-	height: 60px;
+	/*height: 60px;*/
 	line-height: 60px;
-	/*margin-left: 20%;*/
 	float: left;
 }
 .footer nav span {
 	display: inline-block;
 	margin: 0 4px;
-	/*float: initial;*/
 }
 .footer nav span.nav-horiz-bar {
 	margin: 0 4px;
@@ -187,14 +190,12 @@ footer.footer {
 	display: inline-block;
 	height: 60px;
 	line-height: 60px;
-	/*margin-right: 20%;*/
 	float: right;
 }
 .footer .copyright {
 	color: rgba(0,0,0,.54);
 }
 .footer .copyright span {
-	/*line-height: initial;*/
 }
 .copyright #c2 {
 	display: none;

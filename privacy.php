@@ -118,21 +118,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 			<p>We reserve the right to revise, amend, or modify this policy and our other policies and agreements at any time and in any manner. The latest revision of this policy will be published on a webpage accessible from <a href="https://tkluge.net/foxfile">https://tkluge.net/foxfile</a>. Your continued use of FoxFile will signify your acceptance and consent to all current policies and agreements.</p>
 		</article>
 	</main>
-	<footer class="footer">
-		<nav class="nav-horiz-bars">
-			<span class="nav-horiz-item"><a href="tos">Terms of service</a></span>
-			<span class="nav-horiz-bar">|</span>
-			<span class="nav-horiz-item"><a href="privacy">Privacy policy</a></span>
-			<span class="nav-horiz-bar">|</span>
-			<span class="nav-horiz-item"><a href="about">About</a></span>
-			<span class="nav-horiz-bar">|</span>
-			<span class="nav-horiz-item"><a href="help">Help</a></span>
-		</nav>
-		<span class="copyright">
-			<span id="c1">&copy; <?php echo date("Y");?> Theodore Kluge</span>
-			<span id="c2">Made with ❤ by Theodore Kluge</span>
-		</span>
-	</footer>
+	<?php include './includes/footer.html'; ?>
 <!-- <script type="text/javascript" src="//code.jquery.com/jquery-2.1.4.min.js"></script> -->
 <script type="text/javascript" src="js/ripple.js"></script>
 </body>

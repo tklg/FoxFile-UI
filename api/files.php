@@ -14,10 +14,10 @@ if (strpos($uri, '/') !== false) {
 //connect to database  
 $db = mysqli_connect($dbhost,$dbuname,$dbupass,$dbname);
 if(!isset($_SESSION['foxfile_uid'])) {
-	$_SESSION['foxfile_uid'] = 0;
+	die();
 }
 if(!isset($_SESSION['foxfile_access_level'])) {
-	$_SESSION['foxfile_access_level'] = 0;
+	die();
 }
 $uid = $_SESSION['foxfile_uid'];
 $alvl = $_SESSION['foxfile_access_level'];

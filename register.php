@@ -67,26 +67,12 @@ session_start();
                     <div class="error error-gpass"><div class="error-message">Nope</div></div>
                 </label>
             </div>
-            <a href="login" class="new-account">Got an account?</a>
+            <a href="./" class="new-account">Got an account?</a>
             <button class="btn btn-submit" type="submit">Create<link class="rippleJS" /></button>
         </form>
 	</section>
 </main>
-<footer class="footer">
-    <nav class="nav-horiz-bars">
-        <span class="nav-horiz-item"><a href="tos">Terms of service</a></span>
-        <span class="nav-horiz-bar">|</span>
-        <span class="nav-horiz-item"><a href="privacy">Privacy policy</a></span>
-        <span class="nav-horiz-bar">|</span>
-        <span class="nav-horiz-item"><a href="about">About</a></span>
-        <span class="nav-horiz-bar">|</span>
-        <span class="nav-horiz-item"><a href="help">Help</a></span>
-    </nav>
-    <span class="copyright">
-        <span id="c1">&copy; <?php echo date("Y");?> Theodore Kluge</span>
-        <span id="c2">Made with ❤ by Theodore Kluge</span>
-    </span>
-</footer>
+<?php include './includes/footer.html'; ?>
 <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
 <script type="text/javascript" src="js/ripple.js"></script>
     <script type="text/javascript">

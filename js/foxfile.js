@@ -20,10 +20,6 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
         foxfile.routerbox.init();
     }
     foxfile.routerbox = {
-        views: {},
-        models: {},
-        collections: {},
-        content: null,
         router: null,
         init: function() {
             console.info("Initialize router");

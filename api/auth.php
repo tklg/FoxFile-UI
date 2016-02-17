@@ -13,14 +13,7 @@ if (strpos($uri, '/') !== false) {
 
 //connect to database  
 $db = mysqli_connect($dbhost,$dbuname,$dbupass,$dbname);
-if(!isset($_SESSION['foxfile_uid'])) {
-	$_SESSION['foxfile_uid'] = 0;
-}
-if(!isset($_SESSION['foxfile_access_level'])) {
-	$_SESSION['foxfile_access_level'] = 0;
-}
-$uid = $_SESSION['foxfile_uid'];
-$alvl = $_SESSION['foxfile_access_level'];
+
 date_default_timezone_set('America/New_York');
 
 function sanitize($s) {

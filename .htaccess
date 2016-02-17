@@ -1,6 +1,8 @@
-ErrorDocument 404 ./404.html
-ErrorDocument 500 ./500.html
-ErrorDocument 403 ./403.html
+Options -Indexes
+
+ErrorDocument 404 /foxfile/404.html
+ErrorDocument 500 /foxfile/500.html
+ErrorDocument 403 /foxfile/403.html
 
 #Clean URLs
 <IfModule mod_rewrite.c>
@@ -8,11 +10,11 @@ ErrorDocument 403 ./403.html
 
   RewriteCond %{SCRIPT_FILENAME} !-d
   RewriteCond %{SCRIPT_FILENAME} !-f
-  RewriteRule ^(.*logout.+)$ api/user/logout [NC]
+  RewriteRule ^(.*logout.+)$ api/auth/logout [NC]
 
   RewriteCond %{SCRIPT_FILENAME} !-d
   RewriteCond %{SCRIPT_FILENAME} !-f
-  RewriteRule ^(.*api\/user\/.+)$ api/user.php [NC,L]
+  RewriteRule ^(.*api\/auth\/.+)$ api/auth.php [NC,L]
 
   RewriteCond %{SCRIPT_FILENAME} !-d
   RewriteCond %{SCRIPT_FILENAME} !-f

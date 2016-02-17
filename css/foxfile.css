@@ -389,15 +389,15 @@ main {
 	display: flex;
 	position: relative;
 	background: #f2f2f2;
-	border-bottom: 1px solid #FF5722;
-	height: 59px;
+	border-bottom: 2px solid #FF5722;
+	height: 58px;
 	/*margin-bottom: 1px;*/
 	/*box-shadow: 0 0 4px rgba(0,0,0,.14),0 4px 8px rgba(0,0,0,.28);*/
 	z-index: 15;
 }
 .bar:last-of-type header {
 	background: white;
-	border-bottom: 1px solid rgba(0,0,0,.12);
+	border-bottom: 2px solid rgba(0,0,0,.12);
 	/*border-bottom: 1px solid transparent;*/
 }
 .bar header .filename {
@@ -806,11 +806,11 @@ main {
 }
 .bar.loading header {
 	border: none;
-	height: 60px;
+	/*height: 59px;*/
 }
 .bar.loading .progress {
   position: relative;
-  height: 4px;
+  height: 2px;
   display: block;
   width: 100%;
   background-color: #FEC0AD;

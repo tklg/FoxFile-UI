@@ -70,21 +70,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 	    </form>
 	</section>
 </main>
-<footer class="footer">
-	<nav class="nav-horiz-bars">
-		<span class="nav-horiz-item"><a href="tos">Terms of service</a></span>
-		<span class="nav-horiz-bar">|</span>
-		<span class="nav-horiz-item"><a href="privacy">Privacy policy</a></span>
-		<span class="nav-horiz-bar">|</span>
-		<span class="nav-horiz-item"><a href="about">About</a></span>
-		<span class="nav-horiz-bar">|</span>
-		<span class="nav-horiz-item"><a href="help">Help</a></span>
-	</nav>
-	<span class="copyright">
-		<span id="c1">&copy; <?php echo date("Y");?> Theodore Kluge</span>
-		<span id="c2">Made with ❤ by Theodore Kluge</span>
-	</span>
-</footer>
+<?php include './includes/footer.html'; ?>
 <script type="text/javascript" src="//code.jquery.com/jquery-2.1.4.min.js"></script>
 <script type="text/javascript" src="js/md5.js"></script>
 <script type="text/javascript" src="js/ripple.js"></script>
@@ -134,7 +120,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     	stage = 0;
     }
     function sub() {
-    	$.post('./api/user/login',
+    	$.post('./api/auth/login',
 			{
 				useremail: $('#email').val(),
 				userpass: $('#userpass').val()
