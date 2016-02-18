@@ -118,7 +118,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 			  	</div>
 				<nav class="file-list">
 					<ul class="">
-						<li class="menubar-content floatb" container="<%= model.get('container') %>" type="<%= model.get('basicFileType') %>" filehash="<%= model.get('hash_self') %>" id="<%= model.get('fileID') %>" name="<%= model.get('fileName') %>" pos="" fileparent="<%= model.get('hash_parent') %>">
+						<!-- <li class="menubar-content floatb" container="<%= model.get('container') %>" type="<%= model.get('basicFileType') %>" filehash="<%= model.get('hash_self') %>" id="<%= model.get('fileID') %>" name="<%= model.get('fileName') %>" pos="" fileparent="<%= model.get('hash_parent') %>">
 							<span class="file-upload-status">Waiting</span>
 							<div class="nameandprogress">
 								<span class="file-name">File name 1</span>
@@ -147,7 +147,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 							<div class="file-info">
 								<span class="file-info-item" id="filedet"><span class="filetype">type</span><br><span id="filesize" unit="<%= model.get('units') %>">size</span></span>
 							</div>
-						</li>
+						</li> -->
 					</ul>
 				</nav>
 			</section>
@@ -312,6 +312,34 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 	<i class="mdi mdi-cloud-upload"></i>
 	<span>This folder is empty</span>
 </section>
+</script>
+<script type="text/template" id="fm-file-transferring">
+<li class="menubar-content floatb" hash="<%= id %>" id="tfile-<%= id %>" name="<%= name %>">
+	<span class="file-upload-status">Waiting</span>
+	<div class="nameandprogress">
+		<span class="file-name"><%= getName() %></span>
+		<span class="file-upload-progress">
+			<div class="file-upload-progress-bar"></div>
+		</span>
+	</div>
+	<div class="file-info">
+		<span class="file-info-item" id="filedet"><span class="filetype">File</span><br><span id="filesize"><%= getSize() %></span></span>
+	</div>
+</li>
+</script>
+<script type="text/template" id="fm-file-basic">
+<li class="menubar-content floatb" btype="<%= btype %>" hash="<%= hash %>" id="bfile-<%= hash %>" name="<%= name %>" parent="<%= parent %>">
+	<span class="file-multiselect-checkbox-container">
+	<input type="checkbox" id="cb-<%= id %>" value="<%= hash %>" />
+	<label class="label" for="cb-<%= id %>"><i class="mdi mdi-checkbox-blank-outline"></i></label>
+	<label class="label-checked" for="cb-<%= id %>"><i class="mdi mdi-checkbox-marked"></i></label>
+	<label class="label-icon" for="cb-<%= id %>"><i class="mdi <%= getIcon() %>"></i></label>
+	</span>
+	<span class="file-name"><%= name %></span>
+	<div class="file-info">
+		<span class="file-info-item" id="filedet"><span class="filetype"><%= getType() %></span><br><span id="filesize"><%= getSize() %></span></span>
+	</div>
+</li>
 </script>
 	<script type="text/javascript" src="//code.jquery.com/jquery-2.1.4.min.js"></script>
 	<script src="//code.jquery.com/ui/1.11.4/jquery-ui.min.js"></script>

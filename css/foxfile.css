@@ -777,19 +777,21 @@ main {
 	height: 0;
 	background: rgba(0,0,0,.06);
 	flex: 1 0 auto;
-	transition: all 0.15s ease-in-out;
+	transition: all 0.45s ease-in-out;
 }
 .bar-transfers .nameandprogress.active .file-upload-progress {
 	height: 4px;
 }
-.bar-transfers .file-upload-progress::after {
+.bar-transfers .file-upload-progress-bar {
 	position: absolute;
+	display: inline-block;
+	/*margin-top: 28px;*/
 	content: '';
 	height: 0px;
 	width: 0;
 	background: #FF9E80;
 }
-.bar-transfers .nameandprogress.active .file-upload-progress::after {
+.bar-transfers .nameandprogress.active .file-upload-progress-bar {
 	height: 4px;
 }
 .bar-transfers .file-upload-status {
@@ -856,3 +858,20 @@ main {
   animation-delay: 1.15s;
 }
 @-webkit-keyframes indeterminate {0% {left: -35%; right: 100%; } 60% {left: 100%; right: -90%; } 100% {left: 100%; right: -90%; } } @keyframes indeterminate {0% {left: -35%; right: 100%; } 60% {left: 100%; right: -90%; } 100% {left: 100%; right: -90%; } } @-webkit-keyframes indeterminate-short {0% {left: -200%; right: 100%; } 60% {left: 107%; right: -8%; } 100% {left: 107%; right: -8%; } } @keyframes indeterminate-short {0% {left: -200%; right: 100%; } 60% {left: 107%; right: -8%; } 100% {left: 107%; right: -8%; } }
+/*
+8888888b.  8888888b.  
+888  "Y88b 888  "Y88b 
+888    888 888    888 
+888    888 888    888 
+888    888 888    888 
+888    888 888    888 
+888  .d88P 888  .d88P 
+8888888P"  8888888P"  
+*/
+.dd-input-hidden {
+	position: absolute;
+	top: 0;
+	left: 0;
+	height: 0;
+	width: 0;
+}

@@ -17,6 +17,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     foxfile.init = function(){
         page.init();
         fm.init();
+        dd.init();
         foxfile.routerbox.init();
     }
     foxfile.routerbox = {
@@ -75,7 +76,6 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
         init: function() {
             console.info("Initialize page");
             this.calculateBars();
-            this.content = $("#content");
         },
         calculateSize: function() {
             this.calculateBars();
@@ -188,8 +188,13 @@ header3 font
 
         fm.open(foxfile_root);
 
-        setTimeout(function() {
+        /*setTimeout(function() {
             $('.bar, .file-manager').css({
+                transition: 'all 0.45s ease-in-out'
+            });
+        }, 500);*/
+        setTimeout(function() {
+            $('.file-manager').css({
                 transition: 'all 0.45s ease-in-out'
             });
         }, 500);
@@ -200,6 +205,12 @@ header3 font
     }
     fm.get = function(index) {
         return fileTree[index];
+    }
+    fm.getFileTree = function() {
+        return fileTree;
+    }
+    fm.getHashTree = function() {
+        return hashTree;
     }
     fm.getFromHash = function(hash) {
         for (i = 0; i < fileTree.length; i++) {
@@ -328,6 +339,8 @@ header3 font
     fm.add = function(barItem) {
         console.log("adding barItem: " + barItem.getHash());
 
+        document.title = barItem.name + " - FoxFile";
+
         if (barItem.getParent() == hashTree[hashTree.length - 2]) { // opening a file from the same folder
             fm.remove(fm.getLast());
         } else if (_.indexOf(hashTree, barItem.getParent()) < (hashTree.length - 2)) {
@@ -352,6 +365,7 @@ header3 font
         if (fileTree.length > 1) fileTree[fileTree.length - 2].setWidth(fm.barWidth);
         
         barItem.loadContent();
+        dd.addListener(barItem);
 
         if (fileTree.length > fm.numBarsCanBeActive) {
             $('.file-manager .bar[hash='+(fileTree[(fileTree.length - 1) - fm.numBarsCanBeActive].getHash())+']').addClass('leftmost').siblings().removeClass('leftmost');
@@ -373,6 +387,7 @@ header3 font
                 hashTree.pop();
             }
         }
+        //document.title = fm.getLast().name + " - FoxFile";
         fm.resizeToFitCurrentlyActive();
         fm.moveToFitCurrentlyActive();
     }
@@ -520,23 +535,10 @@ header3 font
         }
         this.getSize = function() {
             if (!this.isFolder()) {
-                var units = '';
-                var size = '';
-                if (this.size > 1000) {
-                    if (this.size > 1000000) {
-                        if (this.size > 1000000000) {
-                            units = 'GB';
-                            size = (this.size / 1000000000).toFixed(2);
-                        } else {
-                            units = 'MB';
-                            size = (this.size / 1000000).toFixed(2);
-                        }
-                    } else {
-                        units = 'KB';
-                        size = (this.size / 1000).toFixed(2);
-                    }
-                }
-                return size + " " + units;
+                var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+               if (this.size == 0) return '0 Bytes';
+               var i = parseInt(Math.log(this.size) / Math.log(1024));
+               return (this.size / Math.pow(1024, i)).toFixed(2) + ' ' + sizes[i];
             } else return "&emsp;"; // folders do not display a size
         }
         this.isPublic = function() {return this.public;}
@@ -573,5 +575,313 @@ header3 font
 */
 
 (function(dd, $, undefined) {
+    var timer;
+    var internal = true;
+    var traversalDone = true;
+    var hovering = false;
+    var queue;
+    dd.init = function() {
+        console.info("Initializing dragdrop");
+        $('body').append('<input type="file" class="dd-input-hidden" id="dd-file-upload" multiple="" />')
+                 .on('change', function(e) {
+                    startFileDrop(e, this);
+                 });
+        $('body').append('<input type="file" class="dd-input-hidden" id="dd-folder-upload" multiple webkitdirectory="" directory="" />')
+                 .on('change', function(e) {
+                    startFolderDrop(e, this);
+                 });
+        queue = new UploadQueue();
+    }
+    dd.addListener = function(folder) {
+        var hash = folder.getHash();
+        console.log("Adding DragDrop listeners to " + hash);
+        $('.bar#bar-'+hash).on('dragover dragenter', function(e) {
+            e.preventDefault();
+            if (!hovering) {
+                e = e.originalEvent;
+                if (e.dataTransfer) internal = false;
+                hovering = true;
+                fileDragHover(e, this);
+            }
+        });
+        $('.bar#bar-'+hash).on('dragleave dragend drop', function(e) {
+            e.preventDefault();
+            e = e.originalEvent;
+            hovering = false;
+            internal = true;
+            fileDragLeave(e, this);
+        });
+        $('.bar#bar-'+hash).on('drop', function(e) {
+            e.preventDefault();
+            e = e.originalEvent;
+            fileDragDrop(e, this);
+        });
+    }
+    function fileDragHover(e, elem) {
+        //e.stopPropogation();
+        e.preventDefault();
+        window.clearTimeout(timer);
+        var hash = $(elem).attr('hash');
+        var barItem;
+        for (i = 0; i < fm.getHashTree().length; i++) {
+            if (fm.getHashTree()[i] == hash) 
+                barItem = fm.getFileTree()[i];
+        }
+        console.log("Hover entered bar " + barItem.getHash());
+        if (!internal) { // uploading a new file or folder  
+            console.log('new');
+        } else { // moving a file or folder
+            console.log('move');
+        }
+    }
+    function fileDragLeave(e, elem) {
+        //e.stopPropogation();
+        e.preventDefault();
+        timer = window.setTimeout(function() {
+            var hash = $(elem).attr('hash');
+            var barItem;
+            for (i = 0; i < fm.getHashTree().length; i++) {
+                if (fm.getHashTree()[i] == hash) 
+                    barItem = fm.getFileTree()[i];
+            }
+            console.log("Hover left bar " + barItem.getHash());
+        }, 25);
+    }
+    function fileDragDrop(e, elem) {
+        console.log("Dropped a file on " + $(elem).attr('id'));
+        //e.stopPropogation();
+        e.preventDefault();
+        console.log(e.dataTransfer);
+        var dataTransfer = e.dataTransfer;
+        var files = e.target.files || (dataTransfer && dataTransfer.files);
+        if (!files || files.length == 0) {
+            return false;
+        }
+        if (ua.ua == 'chrome' 
+                && e.dataTransfer
+                && e.dataTransfer.items
+                && e.dataTransfer.items.length > 0 && e.dataTransfer.items[0].webkitGetAsEntry) {
+            var items = e.dataTransfer.items;
+            for (var i = 0; i < items.length; i++) {
+                if (items[i].webkitGetAsEntry) {
+                    var item = items[i].webkitGetAsEntry();
+                    if (item) {
+                        if (i == items.length - 1) {
+                            //traversalDone = true;
+                        }
+                        console.log("starting tree traversal");
+                        traverseFileTree(item);
+                    }
+                }
+            }
+        } else if (ua.ua == 'firefox' && e.dataTransfer) {
+            try {
+                for (var i = 0, m = e.dataTransfer.mozItemCount; i < m; ++i) {
+                    var file = e.dataTransfer.mozGetDataAt("application/x-moz-file", i);
+                    if (file instanceof Ci.nsIFile) {
+                        if (i == m - 1) {
+                            //traversalDone = true;
+                        }
+                        console.log("starting tree traversal");
+                        traverseFileTree(new mozDirtyGetAsEntry(file));
+                    }
+                    else {
+                        console.log('dd.fileDragDrop: Not a nsIFile', file);
+                    }
+                }
+            }
+            catch (e) {
+                console.warn(e.getMessage());
+            }
+        } else if (ua.ua == 'safari' && e.dataTransfer ) {
+            // same as for chrome, but replace webkitGetAsEntry with getAsEntry
+            // I think
+        }
+
+    }
+    function traverseFileTree(item, path) {
+        path = path || "";
+        if (item.isFile) {
+            item.file(function(file) {
+                //console.log("File: ", path + file.name);
+                queue.add(new SmallFile(file, path));
+            });
+        } else if (item.isDirectory) {
+            var dirReader = item.createReader();
+            dirReader.readEntries(function(entries) {
+                for (i = 0; i < entries.length; i++) {
+                    traverseFileTree(entries[i], path + item.name + "/");
+                }
+            });
+        }
+    }
+    function SmallFile(item, path) {
+        this.item = item;
+        this.path = path;
+        this.id = 'unset';
+        this.state = 0;
+        this.progress = 0;
+        this.getSize = function() {
+           var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+           if (this.item.size == 0) return '0 Byte';
+           var i = parseInt(Math.log(this.item.size) / Math.log(1024));
+           return (this.item.size / Math.pow(1024, i)).toFixed(2) + ' ' + sizes[i];
+        }
+        this.getName = function() {
+            return this.path + this.item.name;
+        }
+        this.getType = function() {
+            return getType(this.item.name);
+        }
+        this.startUpload = function() {
+            var id = this.id;
+            $.ajax({
+                xhr: function() {
+                    var xhr = $.ajaxSettings.xhr();
+                    //var xhr = new window.XMLHttpRequest();
+                    var elem = $('#transfers .file-list #tfile-'+id+' .file-upload-progress-bar');
+                    if(xhr.upload){
+                        xhr.upload.addEventListener('progress', function(e) {
+                            if(e.lengthComputable) {
+                                elem.css({
+                                    width: ((e.loaded / e.total) * 100) + '%'
+                                }).attr({value: e.loaded, max: e.total});
+                                console.log(e.loaded);
+                            }
+                        }, false);
+                    }
+                    return xhr;
+                },
+                url: './api/files/new',
+                type: 'POST',
+                enctype: 'multipart/form-data',
+                data: {
+                    file: this.item,
+                    name: this.item.name,
+                    parent: this.path.split('/')[this.path.split('/').length - 2],
+                    path: this.path
+                },
+                beforeSend: function() {
+                    $('#transfers .file-list #tfile-'+id+' .nameandprogress').addClass('active');
+                    $('#transfers .file-list #tfile-'+id+' .file-upload-status').text("Uploading");
+                },
+                success: function(xhr, result, e) {
+                    $('#transfers .file-list #tfile-'+id+' .nameandprogress').removeClass('active');
+                    $('#transfers .file-list #tfile-'+id+' .file-upload-status').text("Done");
+                    queue.start();
+                },
+                error: function(xhr, result, e) {
+                    console.log("onError: " + result + " " + e);
+                    $('#transfers .file-list #tfile-'+id+' .nameandprogress').removeClass('active').addClass('failed');
+                    $('#transfers .file-list #tfile-'+id+' .file-upload-status').text("Failed");
+                    queue.start();
+                },
+                processData: false
+            });
+        }
+        this.remove = function() {
+
+        }
+        this.addToTransfersPage = function() {
+            var template = _.template($('#fm-file-transferring').html());
+            $('#transfers .file-list ul').append(template(this));
+        }
+    }
+    function ChunkedFile(item, path) {
+        this.item = item;
+        this.path = path;
+        this.id = 'unset';
+        this.state = 0;
+        this.startUpload = function() {
+
+        }
+        this.nextChunk = function() {
+
+        }
+        this.finishUpload = function() {
+
+        }
+        this.remove = function() {
+
+        }
+    }
+    var qLen = 0;
+    function UploadQueue() {
+        this.queue = [];
+        this.numToRunAtOnce = 1; // unused
+        this.timer;
+        this.genID = function() {
+            return 'q-'+qLen;
+        }
+        this.start = function() {
+            if (this.queue.length > 0) {
+                console.log("File upload started");
+                this.queue.shift().startUpload();
+            } else {
+                console.log("Upload queue finished");
+                this.finish();
+            }
+        }
+        this.finish = function() {
+            console.log("File upload queue done");
+        }
+        this.add = function(file) {
+            file.id = this.genID();
+            console.log("Added file " + file.id + " to queue");
+            file.addToTransfersPage();
+            this.queue.push(file);
+            var _this = this;
+            clearTimeout(timer);
+            timer = setTimeout(function() {
+                _this.start();
+            }, 100);
+        }
+        this.pause = function() {
+
+        }
+        this.empty = function() {
+
+        }
+    }
 
 })(window.dd = window.dd || {}, jQuery);
+
+/*
+888     888       d8888 
+888     888      d88888 
+888     888     d88P888 
+888     888    d88P 888 
+888     888   d88P  888 
+888     888  d88P   888 
+Y88b. .d88P d8888888888 
+ "Y88888P" d88P     888 
+*/
+
+(function(ua, $, undefined) {
+    // http://stackoverflow.com/a/9851769/3605190
+
+    // Opera 8.0+
+    var isOpera = (!!window.opr && !!opr.addons) || !!window.opera || navigator.userAgent.indexOf(' OPR/') >= 0;
+    // Firefox 1.0+
+    var isFirefox = typeof InstallTrigger !== 'undefined';
+    // At least Safari 3+: "[object HTMLElementConstructor]"
+    var isSafari = Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0;
+    // Internet Explorer 6-11
+    var isIE = /*@cc_on!@*/false || !!document.documentMode;
+    // Edge 20+
+    var isEdge = !isIE && !!window.StyleMedia;
+    // Chrome 1+
+    var isChrome = !!window.chrome && !!window.chrome.webstore;
+    // Blink engine detection
+    var isBlink = (isChrome || isOpera) && !!window.CSS;
+
+    ua.ua = '';
+
+    if (isOpera) ua.ua = 'opera';
+    if (isFirefox) ua.ua = 'firefox';
+    if (isSafari) ua.ua = 'safari';
+    if (isIE) ua.ua = 'ie';
+    if (isEdge) ua.ua = 'edge';
+    if (isChrome) ua.ua = 'chrome';
+
+})(window.ua = window.ua || {}, jQuery);

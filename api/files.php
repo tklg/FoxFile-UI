@@ -105,3 +105,9 @@ if ($pageID == 'get_file_info') {
 		die();
 	}
 }
+if ($pageID == 'new') {
+	$fileName = $_POST['name'];
+	$filePath = $_POST['path'];
+	$file = $_FILES['file'];
+	echo $filePath.$fileName;
+}
