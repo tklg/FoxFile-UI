@@ -37,11 +37,11 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
             this.router.on('route:loadPath', function(filePath) {
                 if (filePath.lastIndexOf('/') == filePath.length - 1)
                     filePath = filePath.substr(0, filePath.length - 1);
-                console.log("Preloading path: " + filePath);
+                //console.log("Preloading path: " + filePath);
                 var loadQueue = filePath.split('/');
                 if (loadQueue.length > 1) {
                     for (i = 1; i < loadQueue.length; i++) {
-                        console.log(loadQueue[i]);
+                        //console.log(loadQueue[i]);
                         fm.open(loadQueue[i]);
                     }
                 }
@@ -49,23 +49,17 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
             this.router.on('route:openShared', function(filePath) {
                 $('.pages #shared').addClass('active').css('z-index', 401).siblings().css('z-index', 400);
                 $('.pages #shared').siblings().removeClass('active');
-                /*setTimeout(function() {
-                }, 500);*/
-                console.log("Switched to page shared");
+                //console.log("Switched to page shared");
             });
             this.router.on('route:openTrash', function(sort) {
                 $('.pages #trash').addClass('active').css('z-index', 401).siblings().css('z-index', 400);
                 $('.pages #trash').siblings().removeClass('active');
-                /*setTimeout(function() {
-                }, 500);*/
-                console.log("Switched to page trash");
+                //console.log("Switched to page trash");
             });
             this.router.on('route:openTransfers', function(sort) {
                 $('.pages #transfers').addClass('active').css('z-index', 401).siblings().css('z-index', 400);
                 $('.pages #transfers').siblings().removeClass('active');
-                /*setTimeout(function() {
-                }, 500);*/
-                console.log("Switched to page transfers");
+                //console.log("Switched to page transfers");
             });
             Backbone.history.start();
         }
@@ -86,7 +80,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
             var curWidth = (this.width / 5) - 1;
             minWidth = Math.max(minWidth, curWidth);
             var activeBarWidth = this.width / 6;
-            console.log("Active bar width should be " + activeBarWidth + "px");
+            //console.log("Active bar width should be " + activeBarWidth + "px");
             var barsActive = 0;
             while(barsActive * minWidth < (this.width - activeBarWidth)) {
                 barsActive++;
@@ -96,7 +90,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
             fm.numBarsCanBeActive = this.numBarsCanBeActive;
             fm.barWidth = minWidth;
             fm.activeBarWidth = this.width - ((this.numBarsCanBeActive - 1) * minWidth);
-            console.log('Calculated '+barsActive+' bars active on this screen size ('+this.width+'px), each ' + fm.barWidth + "px wide");
+            //console.log('Calculated '+barsActive+' bars active on this screen size ('+this.width+'px), each ' + fm.barWidth + "px wide");
             return barsActive;
         },
         updateFMToFitSize: function() {
@@ -144,6 +138,9 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
         } else {
             fm.isActive = false;
             foxfile.routerbox.router.navigate($(this).attr('id'), {trigger: true, replace: true});
+            if ($(this).attr('id') == 'transfers') {
+                $('#transfers #badge-transfers').removeClass('new');
+            }
         }
     });
     $(document).on('click', '.user-menu, .nav-right-active-cover, #nav-right .closeOnClick', function(e) {
@@ -231,7 +228,7 @@ header3 font
             },
             success: function(result) {
                 var json = JSON.parse(result);
-                console.log("fm.open("+fHash+") [1] Got response from server: ");
+                //  console.log("fm.open("+fHash+") [1] Got response from server: ");
                 var name; 
                 var hash;
                 var parent;
@@ -259,8 +256,8 @@ header3 font
                         },
                         success: function(result) {
                             var json = JSON.parse(result);
-                            console.log("fm.open("+fHash+") [2] Got response from server: ");
-                            console.log(json);
+                            // console.log("fm.open("+fHash+") [2] Got response from server: ");
+                            // console.log(json);
                             var hasMore = json['more'];
                             var resultsRemaining = json['remaining'];
                             var res = json['results'];
@@ -300,8 +297,8 @@ header3 font
                         },
                         success: function(result) {
                             var json = JSON.parse(result);
-                            console.log("fm.open("+fHash+") [2] Got response from server: ");
-                            console.log(json);
+                            // console.log("fm.open("+fHash+") [2] Got response from server: ");
+                            // console.log(json);
                             file = new File(json.name,
                                                 json.parent,
                                                 json.icon,
@@ -337,7 +334,7 @@ header3 font
         return filePath;
     }
     fm.add = function(barItem) {
-        console.log("adding barItem: " + barItem.getHash());
+        // console.log("adding barItem: " + barItem.getHash());
 
         document.title = barItem.name + " - FoxFile";
 
@@ -433,6 +430,7 @@ header3 font
         }
     }
     var FolderBar = function(name, hash, parent) {
+        this.dd;
         this.name = name;
         this.hash = hash;
         this.parent = parent;
@@ -445,7 +443,7 @@ header3 font
         this.getFiles = function() {return this.files;}
         this.setFiles = function(fileGroup) {this.files = fileGroup;}
         this.loadContent = function() {
-            console.log("Loading bar " + this.hash + " content: " + this.files.length + " files");
+            // console.log("Loading bar " + this.hash + " content: " + this.files.length + " files");
             if (this.files.length > 0) {
                 var template = _.template($('#fm-file').html());
                 $('#bar-'+this.hash+' .file-list').empty();
@@ -503,7 +501,7 @@ header3 font
             return this.file.getType();
         }
         this.loadContent = function() {
-            console.log("Loading bar " + this.hash + " content");
+            // console.log("Loading bar " + this.hash + " content");
             /*var template = _.template($('#fm-file-view').html());
             for (i = 0; i < this.files.length; i++) {
                 $('#bar-'+this.hash+' .file-view').append(template(this.files[i]));
@@ -551,12 +549,13 @@ header3 font
             return this.lastmod.toLocaleTimeString();
         }
     }
-    $(document).on('click', '.file-manager .file-multiselect-checkbox-container', function(e) {
-        e.stopPropogation();
-    });
     $(document).on('click', '.file-manager .menubar-content:not(.btn-ctrlbar)', function(e) {
-        var dest = $(this).attr('hash');
-        fm.open(dest);
+        if($(e.target).parents('.file-multiselect-checkbox-container').length > 0) {
+            //checkbox
+        } else {
+            var dest = $(this).attr('hash');
+            fm.open(dest);
+        }
     });
     $(document).on('click', '.file-manager .btn-back', function(e) {
         fm.back();
@@ -577,20 +576,27 @@ header3 font
 (function(dd, $, undefined) {
     var timer;
     var internal = true;
-    var traversalDone = true;
     var hovering = false;
     var queue;
+    var linearQueue;
+    dd.numFilesToUpload = 0;
+    dd.ignoredFiles = [
+        'desktop.ini',
+        'Thumbs.db'
+    ];
     dd.init = function() {
-        console.info("Initializing dragdrop");
-        $('body').append('<input type="file" class="dd-input-hidden" id="dd-file-upload" multiple="" />')
+        console.info("Initialize dragdrop");
+        droppedOn = foxfile_root;
+       /* $('body').append('<input type="file" class="dd-input-hidden" id="dd-file-upload" multiple="" />')
                  .on('change', function(e) {
                     startFileDrop(e, this);
                  });
         $('body').append('<input type="file" class="dd-input-hidden" id="dd-folder-upload" multiple webkitdirectory="" directory="" />')
                  .on('change', function(e) {
                     startFolderDrop(e, this);
-                 });
-        queue = new UploadQueue();
+                 });*/
+        queue = new TreeQueue();
+        linearQueue = new LinearQueue();
     }
     dd.addListener = function(folder) {
         var hash = folder.getHash();
@@ -651,7 +657,19 @@ header3 font
         console.log("Dropped a file on " + $(elem).attr('id'));
         //e.stopPropogation();
         e.preventDefault();
-        console.log(e.dataTransfer);
+        var hash = $(elem).attr('hash');
+        var parent;
+        for (i = 0; i < fm.getHashTree().length; i++) {
+            if (fm.getHashTree()[i] == hash) 
+                parent = fm.getFileTree()[i];
+        }
+        var nextAvailablePositionInQueue = queue.getNextPos();
+        var tempFolder = new Folder(nextAvailablePositionInQueue, parent.getName(), parent.getHash(), parent.getParent(), true);
+        tempFolder.hash = parent.getHash();
+        //console.log("next available tree queue position: " + nextAvailablePositionInQueue);
+        queue.add(tempFolder);
+
+        // console.log(e.dataTransfer);
         var dataTransfer = e.dataTransfer;
         var files = e.target.files || (dataTransfer && dataTransfer.files);
         if (!files || files.length == 0) {
@@ -666,11 +684,7 @@ header3 font
                 if (items[i].webkitGetAsEntry) {
                     var item = items[i].webkitGetAsEntry();
                     if (item) {
-                        if (i == items.length - 1) {
-                            //traversalDone = true;
-                        }
-                        console.log("starting tree traversal");
-                        traverseFileTree(item);
+                        traverseFileTree(nextAvailablePositionInQueue, item, tempFolder);
                     }
                 }
             }
@@ -679,11 +693,7 @@ header3 font
                 for (var i = 0, m = e.dataTransfer.mozItemCount; i < m; ++i) {
                     var file = e.dataTransfer.mozGetDataAt("application/x-moz-file", i);
                     if (file instanceof Ci.nsIFile) {
-                        if (i == m - 1) {
-                            //traversalDone = true;
-                        }
-                        console.log("starting tree traversal");
-                        traverseFileTree(new mozDirtyGetAsEntry(file));
+                        traverseFileTree(nextAvailablePositionInQueue, new mozDirtyGetAsEntry(file), tempFolder);
                     }
                     else {
                         console.log('dd.fileDragDrop: Not a nsIFile', file);
@@ -696,87 +706,319 @@ header3 font
         } else if (ua.ua == 'safari' && e.dataTransfer ) {
             // same as for chrome, but replace webkitGetAsEntry with getAsEntry
             // I think
+            var items = e.dataTransfer.items;
+            for (var i = 0; i < items.length; i++) {
+                if (items[i].getAsEntry) {
+                    var item = items[i].getAsEntry();
+                    if (item) {
+                        traverseFileTree(nextAvailablePositionInQueue, item, tempFolder);
+                    }
+                }
+            }
         }
 
     }
-    function traverseFileTree(item, path) {
+    /*
+    @param item     the file item
+    @param parent   the folder object, or the string hash of the root folder
+    @param path     the path of the file item
+    */
+    function traverseFileTree(posInQueue, item, parent, path) {
         path = path || "";
         if (item.isFile) {
             item.file(function(file) {
-                //console.log("File: ", path + file.name);
-                queue.add(new SmallFile(file, path));
+                if (!_.contains(dd.ignoredFiles, file.name)) {
+                    //console.log("%cfound file to add: " + file.name + ", adding to " + parent.name, "color: green;");
+                    parent.addChild(new SmallFile(posInQueue, file, file.name, path, parent));
+                    queue.triggerStart(posInQueue);
+                }
             });
         } else if (item.isDirectory) {
             var dirReader = item.createReader();
             dirReader.readEntries(function(entries) {
+                //console.log("%cfound folder to add: " + item.name + ", adding to " + parent.name, "color: orange;");
+                var newFolder = new Folder(posInQueue, item.name, path + item.name + "/", parent, false);
+                parent.addChild(newFolder);
+                queue.triggerStart(posInQueue);
                 for (i = 0; i < entries.length; i++) {
-                    traverseFileTree(entries[i], path + item.name + "/");
+                    //traverseFileTree(entries[i], item.name, path + item.name + "/");
+                    traverseFileTree(posInQueue, entries[i], newFolder, path + item.name + "/");
                 }
             });
         }
     }
-    function SmallFile(item, path) {
-        this.item = item;
+    function Folder(posInQueue, name, path, parent, sysf) {
+        this.sysf = sysf;
+        this.posInQueue = posInQueue;
+        this.name = name;
         this.path = path;
-        this.id = 'unset';
+        this.parent = parent;
+        this.id = queue.getNextId();
+        this.hash = null;
+        this.children = [];
+        this.state = 0;
+        //this.uploaded = [];
+        this.getParentAndUpload = function() {
+            this.create();
+        }
+        this.getSize = function() {
+           return null;
+        }
+        this.getPath = function() {
+            return this.path;
+        }
+        this.getName = function(includePath) {
+            if (includePath) return this.path;
+            else return this.name;
+        }
+        this.getType = function() {
+            return 'Folder';
+        }
+        this.addChild = function(item) {
+            this.children.push(item);
+            //this.uploaded.push(false);
+        }
+        this.recursiveHash = function() {
+            if (!this.sysf)
+                if (this.hash == null) this.generateHash();
+
+            // sort the list of children
+            var tmp = [];
+            for (i = 0; i < this.children.length; i++) 
+                if (this.children[i] instanceof Folder) 
+                    tmp.push(this.children[i]);
+            for (i = 0; i < this.children.length; i++) 
+                if (this.children[i] instanceof SmallFile)
+                    tmp.push(this.children[i]);
+
+            this.children = tmp;
+            //console.log("Contents of folder ["+this.name+"]:");
+            //console.table(this.children);
+            
+            //var i = 0; // APPARENTLY THIS IS REQUIRED TO MAKE IT NOT LOOP ENDLESSLY OR SKIP THINGS????
+            for (var i = 0; i < this.children.length; i++) {
+                if (this.children[i] instanceof Folder)
+                    this.children[i].recursiveHash();
+                else 
+                    this.children[i].generateHash();
+            }
+        }
+        this.generateHash = function() {
+            //console.log("Generating hash for FOLDER: " + this.name + " with parent " + this.parent.name);
+            if (this.hash == null) {
+                this.addToTransfersPage();
+                var _this = this;
+                $.ajax({
+                    type: "POST",
+                    url: "./api/files/uniqid",
+                    success: function(result) {
+                        var json = JSON.parse(result);
+                        _this.hash = json.message;
+                        queue.triggerDone(_this.posInQueue);
+                        $('#transfers .file-list #tfile-'+_this.id).attr('hash', _this.hash);
+                        //console.log("hash for " + _this.name+": "+json.response);
+                    },
+                    error: function(request, error) {
+                        //console.error(request, error);
+                    }
+                });
+            }
+        }
+        this.fakeUpload = function() {
+            this.state = 1;
+            var _this = this;
+            $('#transfers .file-list #tfile-'+_this.id+' .nameandprogress').addClass('active');
+            $('#transfers .file-list #tfile-'+_this.id+' .file-upload-status').text("Uploading");
+            setTimeout(function() {
+                $('#transfers .file-list #tfile-'+_this.id+' .nameandprogress').removeClass('active');
+                $('#transfers .file-list #tfile-'+_this.id+' .file-upload-status').text("Done");
+                $('#transfers #badge-transfers .badgeval').text(--dd.numFilesToUpload);    
+                _this.state = 2;
+                linearQueue.start(true);
+            }, 400);
+        }
+        this.upload = function() {
+            var _this = this;
+            this.state = 1;
+            $.ajax({
+                url: './api/files/new_folder',
+                type: 'POST',
+                enctype: 'multipart/form-data',
+                data: {
+                    name: _this.name,
+                    hash: _this.hash,
+                    parent: _this.parent.hash
+                },
+                beforeSend: function() {
+                    console.log(_this.name);
+                    $('#transfers .file-list #tfile-'+_this.id+' .nameandprogress').addClass('active');
+                    $('#transfers .file-list #tfile-'+_this.id+' .file-upload-status').text("Creating");
+                },
+                success: function(result, status, xhr) {
+                    console.log("Upload success response: " + result);
+                    //var json = JSON.parse(result);
+                    $('#transfers .file-list #tfile-'+_this.id+' .nameandprogress').removeClass('active');
+                    $('#transfers .file-list #tfile-'+_this.id+' .file-upload-status').text("Done");
+                    $('#transfers #badge-transfers .badgeval').text(--dd.numFilesToUpload);
+                    _this.state = 2;
+                    //_this.startNextUpload();
+                    linearQueue.start();
+                },
+                error: function(xhr, status, e) {
+                    console.log("onError: " + status + " " + e);
+                    $('#transfers .file-list #tfile-'+_this.id+' .nameandprogress').removeClass('active').addClass('failed');
+                    $('#transfers .file-list #tfile-'+_this.id+' .file-upload-status').text("Failed");
+                    _this.state = 3;
+                    //_this.startNextUpload();
+                    linearQueue.start();
+                }
+            });
+        }
+        this.addToTransfersPage = function() {
+            var template = _.template($('#fm-file-transferring').html());
+            $('#transfers .file-list ul').append(template(this));
+            $('#transfers #badge-transfers').addClass('new');
+            $('#transfers #badge-transfers .badgeval').text(++dd.numFilesToUpload);
+        }
+        this.debug = function() {
+            if (!this.sysf) {
+                if (this.hash == null) this.generateHash();
+            } else 
+                console.log("This is a system folder (" + this.name + "), no hash will be generated");
+            var tmp = [];
+            for (i = 0; i < this.children.length; i++) if (this.children[i] instanceof Folder) tmp.push(this.children[i]);
+            for (i = 0; i < this.children.length; i++) if (this.children[i] instanceof SmallFile) tmp.push(this.children[i]);
+            this.children = tmp;
+            console.log("Contents of folder ["+this.name+"]:");
+            console.table(this.children);
+            for (var i = 0; i < this.children.length; i++) {
+                if (this.children[i] instanceof Folder)
+                    this.children[i].debug();
+            }
+        }
+        this.addToLinearQueue = function() {
+            if (!this.sysf) {
+                linearQueue.add(this);
+            } 
+            var tmp = [];
+            for (i = 0; i < this.children.length; i++) if (this.children[i] instanceof Folder) tmp.push(this.children[i]);
+            for (i = 0; i < this.children.length; i++) if (this.children[i] instanceof SmallFile) tmp.push(this.children[i]);
+            this.children = tmp;
+            for (var i = 0; i < this.children.length; i++) {
+                this.children[i].addToLinearQueue();
+            }
+        }
+    }
+    function SmallFile(posInQueue, item, name, path, parent) {
+        this.posInQueue = posInQueue;
+        this.item = item;
+        this.name = name;
+        this.hash = null;
+        this.parent = parent;
+        this.path = path;
+        this.id = queue.getNextId();
         this.state = 0;
         this.progress = 0;
         this.getSize = function() {
            var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-           if (this.item.size == 0) return '0 Byte';
+           if (this.item.size == 0) return '0 Bytes';
            var i = parseInt(Math.log(this.item.size) / Math.log(1024));
            return (this.item.size / Math.pow(1024, i)).toFixed(2) + ' ' + sizes[i];
         }
-        this.getName = function() {
-            return this.path + this.item.name;
+        this.getName = function(includePath) {
+            if (includePath) 
+                return this.path + this.item.name;
+            else
+                return this.name;
         }
         this.getType = function() {
-            return getType(this.item.name);
+            //return getType(this.item.name);
+            return "File";
         }
-        this.startUpload = function() {
-            var id = this.id;
+        this.generateHash = function() {
+            //console.log("Generating hash for FILE: " + this.name + " with parent " + this.parent.name);
+            if (this.hash == null) {
+                this.addToTransfersPage();
+                var _this = this;
+                $.ajax({
+                    type: "POST",
+                    url: "./api/files/uniqid",
+                    success: function(result) {
+                        var json = JSON.parse(result);
+                        _this.hash = json.message;
+                        queue.triggerDone(_this.posInQueue);
+                        $('#transfers .file-list #tfile-'+_this.id).attr('hash', _this.hash);
+                        //console.log("hash for " + _this.name+": "+json.response);
+                    },
+                    error: function(request, error) {
+                        //console.error(request, error);
+                    }
+                });
+            }
+        }
+        this.fakeUpload = function() {
+            this.state = 1;
+            var _this = this;
+            $('#transfers .file-list #tfile-'+_this.id+' .nameandprogress').addClass('active');
+            $('#transfers .file-list #tfile-'+_this.id+' .file-upload-status').text("Uploading");
+            setTimeout(function() {
+                $('#transfers .file-list #tfile-'+_this.id+' .nameandprogress').removeClass('active');
+                $('#transfers .file-list #tfile-'+_this.id+' .file-upload-status').text("Done");
+                $('#transfers #badge-transfers .badgeval').text(--dd.numFilesToUpload);    
+                _this.state = 2;
+                linearQueue.start(true);
+            }, 600);
+        }
+        this.upload = function() {
+            this.state = 1;
+            var _this = this;
+            var formData = new FormData();
+            formData.append('file', this.item);
+            formData.append('hash', this.hash);
+            formData.append('parent', this.parent.hash);
             $.ajax({
                 xhr: function() {
                     var xhr = $.ajaxSettings.xhr();
                     //var xhr = new window.XMLHttpRequest();
-                    var elem = $('#transfers .file-list #tfile-'+id+' .file-upload-progress-bar');
+                    var elem = $('#transfers .file-list #tfile-'+_.id+' .file-upload-progress-bar');
                     if(xhr.upload){
                         xhr.upload.addEventListener('progress', function(e) {
                             if(e.lengthComputable) {
                                 elem.css({
                                     width: ((e.loaded / e.total) * 100) + '%'
                                 }).attr({value: e.loaded, max: e.total});
-                                console.log(e.loaded);
                             }
                         }, false);
                     }
                     return xhr;
                 },
-                url: './api/files/new',
                 type: 'POST',
-                enctype: 'multipart/form-data',
-                data: {
-                    file: this.item,
-                    name: this.item.name,
-                    parent: this.path.split('/')[this.path.split('/').length - 2],
-                    path: this.path
-                },
+                url: './api/files/new_file',
+                data: formData,
+                processData: false,
+                contentType: false,
                 beforeSend: function() {
-                    $('#transfers .file-list #tfile-'+id+' .nameandprogress').addClass('active');
-                    $('#transfers .file-list #tfile-'+id+' .file-upload-status').text("Uploading");
+                    $('#transfers .file-list #tfile-'+_this.id+' .nameandprogress').addClass('active');
+                    $('#transfers .file-list #tfile-'+_this.id+' .file-upload-status').text("Uploading");
                 },
-                success: function(xhr, result, e) {
-                    $('#transfers .file-list #tfile-'+id+' .nameandprogress').removeClass('active');
-                    $('#transfers .file-list #tfile-'+id+' .file-upload-status').text("Done");
-                    queue.start();
+                success: function(result, status, xhr) {
+                    console.log("Upload success response: " + result);
+                    //var json = JSON.parse(result);
+                    $('#transfers .file-list #tfile-'+_this.id+' .nameandprogress').removeClass('active');
+                    $('#transfers .file-list #tfile-'+_this.id+' .file-upload-status').text("Done");
+                    $('#transfers #badge-transfers .badgeval').text(--dd.numFilesToUpload);
+                    _this.state = 2;
+                    //_this.parent.startNextUpload();
+                    linearQueue.start();
                 },
-                error: function(xhr, result, e) {
-                    console.log("onError: " + result + " " + e);
-                    $('#transfers .file-list #tfile-'+id+' .nameandprogress').removeClass('active').addClass('failed');
-                    $('#transfers .file-list #tfile-'+id+' .file-upload-status').text("Failed");
-                    queue.start();
-                },
-                processData: false
+                error: function(xhr, status, e) {
+                    console.log("onError: " + status + " " + e);
+                    $('#transfers .file-list #tfile-'+_this.id+' .nameandprogress').removeClass('active').addClass('failed');
+                    $('#transfers .file-list #tfile-'+_this.id+' .file-upload-status').text("Failed");
+                    _this.state = 3;
+                    //_this.parent.startNextUpload();
+                    linearQueue.start();
+                }
             });
         }
         this.remove = function() {
@@ -785,62 +1027,106 @@ header3 font
         this.addToTransfersPage = function() {
             var template = _.template($('#fm-file-transferring').html());
             $('#transfers .file-list ul').append(template(this));
+            $('#transfers #badge-transfers').addClass('new');
+            $('#transfers #badge-transfers .badgeval').text(++dd.numFilesToUpload);
+        }
+        this.addToLinearQueue = function() {
+            linearQueue.add(this);
         }
     }
-    function ChunkedFile(item, path) {
-        this.item = item;
-        this.path = path;
-        this.id = 'unset';
-        this.state = 0;
-        this.startUpload = function() {
-
-        }
-        this.nextChunk = function() {
-
-        }
-        this.finishUpload = function() {
-
-        }
-        this.remove = function() {
-
-        }
+    function TreeItem(root) {
+        this.root = root;
+        this.started = false;
+        this.done = false;
     }
-    var qLen = 0;
-    function UploadQueue() {
-        this.queue = [];
-        this.numToRunAtOnce = 1; // unused
-        this.timer;
-        this.genID = function() {
-            return 'q-'+qLen;
+    function TreeQueue() {
+        this.trees = [];
+        this.nextID = 0;
+        this.startTimer;
+        this.stopTimer;
+        this.getNextPos = function() {
+            return this.trees.length;
         }
-        this.start = function() {
-            if (this.queue.length > 0) {
-                console.log("File upload started");
-                this.queue.shift().startUpload();
-            } else {
-                console.log("Upload queue finished");
-                this.finish();
+        this.getNextId = function() {
+            return this.nextID++;
+        }
+        this.add = function(tree) {
+            //console.log('TreeQueue.add()');
+            this.trees.push(new TreeItem(tree));
+        }
+        this.triggerStart = function(posInQueue) {
+            var _this = this;
+            if (this.startTimer) clearTimeout(this.startTimer);
+            this.startTimer = null;
+            this.startTimer = setTimeout(function() {
+                _this.start(posInQueue);
+            }, 500);
+        }
+        this.start = function(posInQueue) {
+            if (!this.trees[posInQueue].started) { // not needed, because setTimeout SHOULD work
+                console.log("%cStarting %cTree traversal of tree ["+posInQueue+"]", "color: green;font-weight:bold", "color: gray");
+                this.trees[posInQueue].started = true;
+                this.trees[posInQueue].root.recursiveHash();
             }
         }
-        this.finish = function() {
-            console.log("File upload queue done");
-        }
-        this.add = function(file) {
-            file.id = this.genID();
-            console.log("Added file " + file.id + " to queue");
-            file.addToTransfersPage();
-            this.queue.push(file);
+        this.triggerDone = function(posInQueue) {
             var _this = this;
-            clearTimeout(timer);
-            timer = setTimeout(function() {
-                _this.start();
-            }, 100);
+            if (this.stopTimer) clearTimeout(this.stopTimer);
+            this.stopTimer = null;
+            this.stopTimer = setTimeout(function() {
+                _this.finish(posInQueue);
+            }, 500);
         }
-        this.pause = function() {
-
+        this.finish = function(posInQueue) {
+            console.log("%cFinishing %cTree traversal of tree ["+posInQueue+"]" , "color: red;font-weight:bold", "color: gray");
+            this.trees[posInQueue].done = true;
+            //this.trees[posInQueue].root.debug();
+            this.trees[posInQueue].root.addToLinearQueue();
+            //start uploading
+            linearQueue.sort();
+            //linearQueue.debug();
+            linearQueue.start();
+            //linearQueue.clean();
+            //linearQueue.debug();
         }
-        this.empty = function() {
-
+    }
+    function LinearQueue() {
+        this.trees = [];
+        this.add = function(item) {
+            this.trees.push(item);
+        }
+        this.sort = function() {
+            var tmp = [];
+            for (i = 0; i < this.trees.length; i++) 
+                if (this.trees[i] instanceof Folder) tmp.push(this.trees[i]);
+            for (i = 0; i < this.trees.length; i++) 
+                if (this.trees[i] instanceof SmallFile) tmp.push(this.trees[i]);
+            this.trees = tmp;
+        }
+        this.next = function() {
+            return this.trees.shift();
+        }
+        this.start = function(fake) {
+            if (this.trees.length == 0) {
+                console.log("%cFinishing %cupload of LinearQueue","color:red","color:gray");
+            } else {
+                if (fake) {
+                    console.log("%cStarting %cfake upload of LinearQueue","color:green","color:gray");
+                    this.next().fakeUpload();
+                } else {
+                    console.log("%cStarting %cupload of LinearQueue","color:green","color:gray");
+                    this.next().upload();
+                }
+            }
+        }
+        this.clean = function() {
+            for (var i = 0; i < this.trees.length; i++) {
+                if (this.trees[i].state > 0) this.trees = _.without(this.trees, this.trees[i]);
+            }
+        }
+        this.debug = function() {
+            console.info("Linear queue contents:");
+            console.table(this.trees);
         }
     }
 

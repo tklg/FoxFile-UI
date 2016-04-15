@@ -38,6 +38,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 		<nav class="nav-horiz-buttons">
 			<a class="btn nav-horiz-item float" href="tos">Terms of service<link class="rippleJS"/></a>
 			<a class="btn nav-horiz-item float" href="privacy">Privacy policy<link class="rippleJS"/></a>
+<!-- 			<a class="btn nav-horiz-item float" href="dmca">DMCA Policy<link class="rippleJS"/></a> -->
 		</nav>
 	</header>
 	<main class="main">

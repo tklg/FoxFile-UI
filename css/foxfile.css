@@ -777,7 +777,7 @@ main {
 	height: 0;
 	background: rgba(0,0,0,.06);
 	flex: 1 0 auto;
-	transition: all 0.45s ease-in-out;
+	transition: all 0.25s ease-in-out;
 }
 .bar-transfers .nameandprogress.active .file-upload-progress {
 	height: 4px;
@@ -874,4 +874,28 @@ main {
 	left: 0;
 	height: 0;
 	width: 0;
+}
+.badge {
+	display: inline-block;
+	width: 60px;
+	text-align: center;
+	pointer-events: none;
+}
+.badge .badgeval {
+	display: inline-block;
+	height: 22px;
+	width: 40px;
+	line-height: 22px;
+	/*padding: 0 10px;*/
+	border-radius: 4px;
+	margin: auto 0;
+	font-size: 10pt;
+	color: rgba(0,0,0,.54);
+	text-overflow: ellipsis;
+	word-wrap: break-word;
+	/*background: rgba(0,0,0,.1);*/
+}
+.badge.new .badgeval {
+	background: #E64A19;
+	color: white;
 }

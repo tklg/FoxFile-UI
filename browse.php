@@ -40,7 +40,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 	<link href='https://fonts.googleapis.com/css?family=Roboto:300,400,700' rel='stylesheet' type='text/css'>
 	<link async rel="stylesheet" href="css/foxfile.css">
 	<link href="css/materialdesignicons.min.css" media="all" rel="stylesheet" type="text/css" />
-	<link rel="icon" type="image/ico" href="favicon.ico">
+	<link rel="icon" type="image/ico" href="img/favicon.png">
 		
 	<!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
@@ -74,7 +74,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 		</form>
         <ul class="nav nav-horiz" id="folder-controls">
             <li>Upload</li>
-            <li>New folder</li>
+            <li>Create</li>
             <!-- <li>Show deleted items</li> -->
             <li class="btn-more"><i class="mdi mdi-unfold-more"></i><span>More</span></li>
         </ul>
@@ -107,7 +107,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 		<section class="transfers" id="transfers">
 			<section class="bar bar-transfers" id="bar-2" type="folder" folder="file-transfers">
 				<header>
-					<span class="filename">File uploads</span>
+					<span class="filename">File transfers</span>
 					<section class="file-actions-header">
 						<span><i class="mdi mdi-delete"></i></span>
 						<span><i class="mdi mdi-dots-vertical"></i></span>
@@ -117,38 +117,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 			    	<div class="indeterminate"></div>
 			  	</div>
 				<nav class="file-list">
-					<ul class="">
-						<!-- <li class="menubar-content floatb" container="<%= model.get('container') %>" type="<%= model.get('basicFileType') %>" filehash="<%= model.get('hash_self') %>" id="<%= model.get('fileID') %>" name="<%= model.get('fileName') %>" pos="" fileparent="<%= model.get('hash_parent') %>">
-							<span class="file-upload-status">Waiting</span>
-							<div class="nameandprogress">
-								<span class="file-name">File name 1</span>
-								<span class="file-upload-progress"></span>
-							</div>
-							<div class="file-info">
-								<span class="file-info-item" id="filedet"><span class="filetype">type</span><br><span id="filesize" unit="<%= model.get('units') %>">size</span></span>
-							</div>
-						</li>
-						<li class="menubar-content floatb" container="<%= model.get('container') %>" type="<%= model.get('basicFileType') %>" filehash="<%= model.get('hash_self') %>" id="<%= model.get('fileID') %>" name="<%= model.get('fileName') %>" pos="" fileparent="<%= model.get('hash_parent') %>">
-							<span class="file-upload-status">Uploading</span>
-							<div class="nameandprogress active">
-								<span class="file-name">File name 2</span>
-								<span class="file-upload-progress"></span>
-							</div>
-							<div class="file-info">
-								<span class="file-info-item" id="filedet"><span class="filetype">type</span><br><span id="filesize" unit="<%= model.get('units') %>">size</span></span>
-							</div>
-						</li>
-						<li class="menubar-content floatb" container="<%= model.get('container') %>" type="<%= model.get('basicFileType') %>" filehash="<%= model.get('hash_self') %>" id="<%= model.get('fileID') %>" name="<%= model.get('fileName') %>" pos="" fileparent="<%= model.get('hash_parent') %>">
-							<span class="file-upload-status">Done</span>
-							<div class="nameandprogress">
-								<span class="file-name">File name 4</span>
-								<span class="file-upload-progress"></span>
-							</div>
-							<div class="file-info">
-								<span class="file-info-item" id="filedet"><span class="filetype">type</span><br><span id="filesize" unit="<%= model.get('units') %>">size</span></span>
-							</div>
-						</li> -->
-					</ul>
+					<ul class=""></ul>
 				</nav>
 			</section>
 		</section>
@@ -237,15 +206,19 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 				<ul class="">
 					<li class="menubar-content floatb btn-ctrlbar active" id="files" hash="<?php echo $user_uhd; ?>">
 						<i class="nocheckbox-icon mdi mdi-folder-multiple-outline"></i><span class="file-name">My files</span>
+						<!-- <span class="badge" id="badge-files"><span class="badgeval">a</span></span> -->
 					</li>
 					<li class="menubar-content floatb btn-ctrlbar" id="shared">
 						<i class="nocheckbox-icon mdi mdi-account-multiple"></i><span class="file-name">Shared with me</span>
+						<!-- <span class="badge" id="badge-shared"><span class="badgeval">10</span></span> -->
 					</li>
 					<li class="menubar-content floatb btn-ctrlbar" id="trash">
 						<i class="nocheckbox-icon mdi mdi-delete"></i><span class="file-name">Trash</span>
+						<!-- <span class="badge new" id="badge-trash"><span class="badgeval">3000</span></span> -->
 					</li>
 					<li class="menubar-content floatb btn-ctrlbar" id="transfers">
 						<i class="nocheckbox-icon mdi mdi-transfer"></i><span class="file-name">File transfers</span>
+						<span class="badge" id="badge-transfers"><span class="badgeval"></span></span>
 					</li>
 				</ul>
 			</nav>
@@ -317,13 +290,13 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 <li class="menubar-content floatb" hash="<%= id %>" id="tfile-<%= id %>" name="<%= name %>">
 	<span class="file-upload-status">Waiting</span>
 	<div class="nameandprogress">
-		<span class="file-name"><%= getName() %></span>
+		<span class="file-name"><%= getName(true) %></span>
 		<span class="file-upload-progress">
 			<div class="file-upload-progress-bar"></div>
 		</span>
 	</div>
 	<div class="file-info">
-		<span class="file-info-item" id="filedet"><span class="filetype">File</span><br><span id="filesize"><%= getSize() %></span></span>
+		<span class="file-info-item" id="filedet"><span class="filetype"><%= getType() %></span><br><span id="filesize"><%= getSize() %></span></span>
 	</div>
 </li>
 </script>
