@@ -1,7 +1,7 @@
 <?php
 session_start();
 require('../includes/user.php');
-require('../includes/cfgvars.php');
+//require('../includes/cfgvars.php');
 
 $uri = $_SERVER['REQUEST_URI'];
 if (strpos($uri, '/') !== false) {
@@ -114,6 +114,8 @@ if ($pageID == 'list_files') {
 	$fileParent = sanitize($_POST['hash']);
 	$offset = (int) $_POST['offset'];
 	$limit = (int) $_POST['limit'];
+	$sortBy = 'is_folder DESC, name, lastmod DESC';
+	if (isset($_POST['sortby'])) $sortBy = $_POST['sortby'];
 	$sql = "SELECT COUNT(*) as total from FILES WHERE parent = '$fileParent' AND owner_id = '$uid'";
 	if ($result = mysqli_query($db, $sql)) {
 		$total = mysqli_fetch_array($result)['total'];
@@ -121,7 +123,9 @@ if ($pageID == 'list_files') {
 		$remaining = $total - $limit;
 		$more = false;
 		if ($remaining > 0) $more = true;
-		$sql = "SELECT * FROM FILES WHERE parent = '$fileParent' AND owner_id = '$uid' LIMIT $limit OFFSET $offset";
+		//$sql = "SELECT hash, max(lastmod) as last_modified FROM (SELECT * FROM FILES WHERE parent = '$fileParent' AND owner_id = '$uid' group by name LIMIT $limit OFFSET $offset) as sub INNER JOIN FILES as f on f.hash = sub.hash and f.lastmod = sub.last_modified ORDER BY $sortBy";
+		//$sql = "SELECT * FROM FILES WHERE parent = '$fileParent' AND owner_id = '$uid' ORDER BY $sortBy LIMIT $limit OFFSET $offset";
+		$sql = "SELECT is_folder, hash, parent, name, size, is_trashed, is_shared, is_public, max(lastmod) as lastmod FROM FILES WHERE parent = '$fileParent' AND owner_id = '$uid' GROUP BY name ORDER BY $sortBy LIMIT $limit OFFSET $offset";
 		if ($result = mysqli_query($db, $sql)) {
 			$rows = array();
 			while ($row = mysqli_fetch_object($result)) {
@@ -161,116 +165,13 @@ if ($pageID == 'get_file_info') {
 		resp(500, 'Failed to retrieve file details: '.$self);
 	}
 }
-function mkdbdirs($selfPath, $fileParentHash) {
-	global $uem, $uid;
-	$pos = strpos($selfPath, '/');
-	/*if ($pos === false) {
-		$fileName = $selfPath;
-		$path = '';
-	} else {
-		$fileName = substr($selfPath, 0, $pos + 1); // get current base path
-		$path = substr($selfPath, $pos + 1); // get rest of path
-	}*/
-	$parentPath = getPath($fileParentHash);
-
-	/*
-	if first in path (from root) does not exist in database, (it will exist because its the user root), then add it to the database
-
-	cant use hashes because they dont exist yet, so will need to check for the folder names instead in the fs and db
-	*/
-	/*
-	if first in path (of file) exists in filesystem, start from next in path
-	or something... I dont know
-	*/
-	/*
-	change this to be simpler and just store the files relative path as file names (not hashes) in the db
-	then just find the folder with the matching path and use that as relative root
-	*/
-
-	if (strlen($path) > 0) {
-		$folderList = explode($path, '/');
-		$folderPath = $folderList[0];
-		$fileParent = '';
-		for ($i = 0; $i < sizeof($folderList) - 1; $i++) {
-			// redo this to use recursion with indexes along the path
-			$folderName = $folderList[i];
-			$fileParent = $fileParentHash;
-			$md5id = md5($folderName);
-			$fileHash = getUniqId();
-
-			$sql = "SELECT COUNT(*) as total from FILES WHERE name = '$folderName' AND owner_id = '$uid' LIMIT 1";
-			if ($result = mysqli_query($db, $sql)) {
-				$total = mysqli_fetch_array($result)['total'];
-				if ($total > 0) { // exists in db already, so get its hash to use as parent
-					$sql = "SELECT hash from FILES where name = '$folderName' AND owner_id = '$uid' LIMIT 1";
-					if ($result = mysqli_query($db, $sql)) {
-						$fileParent = mysqli_fetch_array($result)['hash'];
-					}
-				} else { // does not
-					if (mkdir($parentPath.'/'.$folderPath, 0660, true)) { // create it
-						// and create folder in db, giving it a name and generating a new hash for it
-						$sql = "INSERT INTO FILES (owner_email, owner_id, is_folder, hash, md5id, parent, name) VALUES
-							('$uem',
-							'$uid',
-							'1',
-							'$fileHash',
-							'$md5id',
-							'$fileParent',
-							'$fileName')";
-						if (mysqli_query($db, $sql)) {
-							$fileParent = $fileHash;
-						} else {
-							resp(500, 'SQL folder insert failed');
-						}
-					}
-				}
-			} else { // sql failed
-				resp(500, 'SQL folder exists search failed');
-			}
-			$folderPath .= '/'.$folderList[$i + 1];
-		}
-		return $fileParent;
-	} else {
-		$sql = "SELECT COUNT(*) as total from FILES WHERE name = '$fileName' AND owner_id = '$uid' LIMIT 1";
-		if ($result = mysqli_query($db, $sql)) {
-			$total = mysqli_fetch_array($result)['total'];
-				if ($total > 0) { // exists in db already, so get its hash to use as parent
-				$sql = "SELECT hash from FILES where name = '$folderName' AND owner_id = '$uid' LIMIT 1";
-				if ($result = mysqli_query($db, $sql)) {
-					return mysqli_fetch_array($result)['hash'];
-				}
-			} else {
-				if (mkdir($parentPath.'/'.$fileName, 0660)) {
-					$fileHash = getUniqId();
-					$md5id = md5($fileName);
-					$fileParent = $fileParentHash;
-					$sql = "INSERT INTO FILES (owner_email, owner_id, is_folder, hash, md5id, parent, name) VALUES
-								('$uem',
-								'$uid',
-								'1',
-								'$fileHash',
-								'$md5id',
-								'$fileParent',
-								'$fileName')";
-					if (mysqli_query($db, $sql)) {
-						return $fileHash;
-					} else {
-						resp(500, 'SQL folder insert failed');
-					}
-				}
-			}
-		}
-	}
-}
 if ($pageID == 'uniqid') {
 	resp(200, getUniqId());
 }
 if ($pageID == 'new_file') {
 	if (!isset($_FILES['file']) || !isset($_POST['parent']) || !isset($_POST['hash'])) 
 		resp(422, "missing parameters");
-	//$fileName = sanitize($_POST['name']);
-	//$fPath = $_POST['filepath'];
-	//$filePath = $fPath;
+
 	$fileParent = sanitize($_POST['parent']);
 	$fileHash = sanitize($_POST['hash']);
 	$file = $_FILES['file'];
@@ -282,21 +183,9 @@ if ($pageID == 'new_file') {
 
 	if ($fileParent == '' || !$file) resp(422, "missing parameters");
 
-	//$parentPath = realpath(getPath($fileParent));
-	//$selfPath = $filePath;
-	//$dest = $parentPath.'/'.$selfPath;
-
-	/*if (strpos($rPath, '/') === false) { // uploading a file
-
-	} else { // uploading a folder, which needs folders to be created for it first
-		if (!file_exists($dest)) {
-			if (mkdir($dest, 0660, true)) {
-				$dest = $parentPath.'/'.mkdbdirs($selfPath, $fileParent);
-			}
-		}
-	}*/
-	$dest = getPath($fileParent).'/'.$fileHash;
-	//$md5id = md5($dest.'/'.$_FILES['file']['name']);
+	$parentPath = getPath($fileParent);
+	if (!is_dir($parentPath)) mkdir($parentPath, 0770, true);
+	$dest = $parentPath.'/'.$fileHash;
 	/*$sql = "SELECT * from files WHERE name = '$fName' AND parent = '$fileParent' AND owner_id = '$uid' LIMIT 1";
 	if ($result = mysqli_query($db, $sql)) {
 		$total = mysqli_num_rows($result);
@@ -310,7 +199,7 @@ if ($pageID == 'new_file') {
 					'$fileParent',
 					'$fName',
 					'$fSize')";
-				if (mysqli_query($db, $sql)) {
+				if (mysqli_query($db, $sql)) {	// put some sort of versioning systen instead of just displaying every version as a separate file
 					echo json_encode(array('status' => 200, 'hash' => $fileHash));
 				} else {
 					resp(500, 'SQL file insert failed');
@@ -375,5 +264,38 @@ if ($pageID == 'new_folder') {
 		}
 	} else {
 		resp(500, 'Folder creation failed');
+	}
+}
+if ($pageID == 'list_trash') {
+	$fileParent = sanitize($_POST['hash']);
+	$offset = (int) $_POST['offset'];
+	$limit = (int) $_POST['limit'];
+	$sortBy = 'is_folder DESC, name';
+	if (isset($_POST['sortby'])) $sortBy = $_POST['sortby'];
+	$sql = "SELECT COUNT(*) as total from FILES WHERE parent = '$fileParent' AND owner_id = '$uid'";
+	if ($result = mysqli_query($db, $sql)) {
+		$total = mysqli_fetch_array($result)['total'];
+		$total -= $offset * $limit;
+		$remaining = $total - $limit;
+		$more = false;
+		if ($remaining > 0) $more = true;
+		$sql = "SELECT is_folder, hash, parent, name, size, is_trashed, is_shared, is_public, max(lastmod) as lastmod FROM FILES WHERE owner_id = '$uid' AND is_trashed = 1 GROUP BY name ORDER BY $sortBy LIMIT $limit OFFSET $offset";
+		if ($result = mysqli_query($db, $sql)) {
+			$rows = array();
+			while ($row = mysqli_fetch_object($result)) {
+				$rows[] = $row;
+			}
+			$final = array(
+				'total_rows' => $total,
+				'more' => $more,
+				'remaining' => $remaining > 0 ? $remaining : 0,
+				'results' => $rows
+			);
+			echo json_encode($final);
+		} else {
+			resp(500, 'Failed to retrieve contents of folder '.$fileParent);
+		}
+	} else {
+		resp(500, 'Failed to count contents of folder '.$fileParent);
 	}
 }

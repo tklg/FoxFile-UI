@@ -47,18 +47,22 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
                 }
             });
             this.router.on('route:openShared', function(filePath) {
+                document.title = 'Shared - FoxFile';
                 $('.pages #shared').addClass('active').css('z-index', 401).siblings().css('z-index', 400);
                 $('.pages #shared').siblings().removeClass('active');
                 //console.log("Switched to page shared");
             });
             this.router.on('route:openTrash', function(sort) {
+                document.title = 'Trash - FoxFile';
                 $('.pages #trash').addClass('active').css('z-index', 401).siblings().css('z-index', 400);
                 $('.pages #trash').siblings().removeClass('active');
                 //console.log("Switched to page trash");
             });
             this.router.on('route:openTransfers', function(sort) {
+                document.title = 'Transfers - FoxFile';
                 $('.pages #transfers').addClass('active').css('z-index', 401).siblings().css('z-index', 400);
                 $('.pages #transfers').siblings().removeClass('active');
+                $('#transfers #badge-transfers').removeClass('new');
                 //console.log("Switched to page transfers");
             });
             Backbone.history.start();
@@ -125,6 +129,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     $(document).on('click', '.btn-ctrlbar', function(e) {
     	$(this).addClass('active').siblings().removeClass('active');
         if ($(this).attr('id') == 'files') {
+            document.title = 'My Files - FoxFile';
             $('.pages').children().removeClass('active').css('z-index', 400);
             if (fm.isActive) { // switch to root
                 fm.back('all');
@@ -138,9 +143,6 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
         } else {
             fm.isActive = false;
             foxfile.routerbox.router.navigate($(this).attr('id'), {trigger: true, replace: true});
-            if ($(this).attr('id') == 'transfers') {
-                $('#transfers #badge-transfers').removeClass('new');
-            }
         }
     });
     $(document).on('click', '.user-menu, .nav-right-active-cover, #nav-right .closeOnClick', function(e) {
@@ -176,6 +178,14 @@ header3 font
     var fileTree = [];
     var currentFilePath = '';
     var width = 0;
+    fm.btnStatus = {
+        m1: false,
+        m2: false,
+        m3: false,
+        shift: false,
+        ctrl: false,
+        scrollingTabs: false
+    };
     fm.init = function() {
         console.info("Initialize FileManager");
         this.width = $(window).width();
@@ -218,7 +228,7 @@ header3 font
         var item = null;
         //var resType = type;
         var fHash = hash;
-        var isRoot = null;
+        var isRoot = false;
         if (hash == foxfile_root) isRoot = true;
         $.ajax({
             type: "POST",
@@ -227,6 +237,7 @@ header3 font
                 hash: fHash
             },
             success: function(result) {
+
                 var json = JSON.parse(result);
                 //  console.log("fm.open("+fHash+") [1] Got response from server: ");
                 var name; 
@@ -244,81 +255,12 @@ header3 font
                     parent = json.parent;
                     isFolder = json.is_folder == '1' ? true : false;
                 }
-                if (isFolder) {
-                    item = new FolderBar(name, hash, parent);
-                    $.ajax({
-                        type: "POST",
-                        url: "./api/files/list_files",
-                        data: {
-                            hash: hash,
-                            offset: 0,
-                            limit: 30
-                        },
-                        success: function(result) {
-                            var json = JSON.parse(result);
-                            // console.log("fm.open("+fHash+") [2] Got response from server: ");
-                            // console.log(json);
-                            var hasMore = json['more'];
-                            var resultsRemaining = json['remaining'];
-                            var res = json['results'];
-                            var files = [];
-                            $.each(res, function(i) {
-                                // name, parent, icon, hash, type, btype, size, lastmod, shared, public
-                                files.push(new File(res[i].name,
-                                                    res[i].parent,
-                                                    res[i].icon,
-                                                    res[i].hash,
-                                                    res[i].type,
-                                                    res[i].is_folder == '1' ? "folder" : "file",
-                                                    res[i].size,
-                                                    res[i].lastmod,
-                                                    res[i].is_shared,
-                                                    res[i].is_public));
-                            });
-                            item.setFiles(files);
-                            item.setRemaining(resultsRemaining);
-                            item.setHasMore(hasMore);
-                            fm.add(item);
-                            // get the current file path so that the router can append this to it
-                            var path = fm.calcFilePath()/* + dest*/;
-                            foxfile.routerbox.router.navigate('files/'+path, {/*trigger: true, */replace: true});
-                        },
-                        error: function(request, error) {
-                            //console.error(request, error);
-                        }
-                    });
-                } else if (!isFolder) {
-                    item = new FileBar(name, hash, parent);
-                    $.ajax({
-                        type: "POST",
-                        url: "./api/files/get_file",
-                        data: {
-                            hash: hash
-                        },
-                        success: function(result) {
-                            var json = JSON.parse(result);
-                            // console.log("fm.open("+fHash+") [2] Got response from server: ");
-                            // console.log(json);
-                            file = new File(json.name,
-                                                json.parent,
-                                                json.icon,
-                                                json.hash,
-                                                json.type,
-                                                json.size,
-                                                json.lastmod,
-                                                json.is_shared,
-                                                json.is_public);
-                            item.setFile(file);
-                            fm.add(item);
-                            // get the current file path so that the router can append this to it
-                            var path = fm.calcFilePath()/* + dest*/;
-                            foxfile.routerbox.router.navigate('files/'+path, {/*trigger: true, */replace: true});
-                        },
-                        error: function(request, error) {
-                            //console.error(request, error);
-                        }
-                    });
-                }
+                if (isFolder) item = new FolderBar(name, hash, parent);
+                else item = new FileBar(name, hash, parent);
+
+                fm.add(item);
+                item.refresh();
+
             },
             error: function(request, error) {
                 //console.error(request, error);
@@ -358,11 +300,7 @@ header3 font
             return;
         }
         $('.file-manager').append(template(barItem));
-        $('.file-manager .bar[hash='+barItem.getHash()+']').removeClass('loading');
         if (fileTree.length > 1) fileTree[fileTree.length - 2].setWidth(fm.barWidth);
-        
-        barItem.loadContent();
-        dd.addListener(barItem);
 
         if (fileTree.length > fm.numBarsCanBeActive) {
             $('.file-manager .bar[hash='+(fileTree[(fileTree.length - 1) - fm.numBarsCanBeActive].getHash())+']').addClass('leftmost').siblings().removeClass('leftmost');
@@ -442,6 +380,55 @@ header3 font
         this.getParent = function() {return this.parent;}
         this.getFiles = function() {return this.files;}
         this.setFiles = function(fileGroup) {this.files = fileGroup;}
+        this.refresh = function() {
+            //item = new FolderBar(name, hash, parent);
+            var _this = this;
+            $.ajax({
+                type: "POST",
+                url: "./api/files/list_files",
+                data: {
+                    hash: _this.hash,
+                    offset: 0,
+                    limit: 30
+                },
+                success: function(result) {
+                    var json = JSON.parse(result);
+                        // console.log("fm.open("+fHash+") [2] Got response from server: ");
+                        // console.log(json);
+                    var hasMore = json['more'];
+                    var resultsRemaining = json['remaining'];
+                    var res = json['results'];
+                    var files = [];
+                    $.each(res, function(i) {
+                        // name, parent, icon, hash, type, btype, size, lastmod, shared, public
+                        files.push(new File(res[i].name,
+                                            res[i].parent,
+                                            res[i].icon,
+                                            res[i].hash,
+                                            res[i].type,
+                                            res[i].is_folder == '1' ? "folder" : "file",
+                                            res[i].size,
+                                            res[i].lastmod,
+                                            res[i].is_shared,
+                                            res[i].is_public));
+                    });
+                    _this.setFiles(files);
+                    _this.setRemaining(resultsRemaining);
+                    _this.setHasMore(hasMore);
+
+                    $('.file-manager .bar[hash='+_this.hash+']').removeClass('loading');
+                    _this.loadContent();
+                    dd.addListener(_this);
+                    //fm.add(item);
+                    // get the current file path so that the router can append this to it
+                    var path = fm.calcFilePath()/* + dest*/;
+                    foxfile.routerbox.router.navigate('files/'+path, {/*trigger: true, */replace: true});
+                },
+                error: function(request, error) {
+                    //console.error(request, error);
+                }
+            });
+        }
         this.loadContent = function() {
             // console.log("Loading bar " + this.hash + " content: " + this.files.length + " files");
             if (this.files.length > 0) {
@@ -497,15 +484,50 @@ header3 font
         this.setFile = function(fileItem) {
             this.file = fileItem;
         }
-        this.getType = function() {
-            return this.file.getType();
+        this.setType = function() {
+            this.type = this.file.getType();
+            //$('.bar#file-detail'+this.hash).attr('type', this.type);
+            //console.log(this.type);
         }
         this.loadContent = function() {
-            // console.log("Loading bar " + this.hash + " content");
-            /*var template = _.template($('#fm-file-view').html());
-            for (i = 0; i < this.files.length; i++) {
-                $('#bar-'+this.hash+' .file-view').append(template(this.files[i]));
-            }*/
+            // file preview
+        }
+        this.refresh = function() {
+            item = new FileBar(name, hash, parent);
+            var _this = this;
+            $.ajax({
+                type: "POST",
+                url: "./api/files/get_file",
+                data: {
+                    hash: _this.hash
+                },
+                success: function(result) {
+                    var json = JSON.parse(result);
+                    // console.log("fm.open("+fHash+") [2] Got response from server: ");
+                    // console.log(json);
+                    file = new File(json.name,
+                            json.parent,
+                            json.icon,
+                            json.hash,
+                            json.type,
+                            json.size,
+                            json.lastmod,
+                            json.is_shared,
+                            json.is_public);
+                    _this.setFile(file);
+                    _this.setType();
+
+                    $('.file-manager .bar[hash='+_this.hash+']').removeClass('loading');
+                    _this.loadContent();
+
+                    // get the current file path so that the router can append this to it
+                    var path = fm.calcFilePath()/* + dest*/;
+                    foxfile.routerbox.router.navigate('files/'+path, {/*trigger: true, */replace: true});
+                },
+                error: function(request, error) {
+                    //console.error(request, error);
+                }
+            });
         }
     }
     var File = function(name, parent, icon, hash, type, btype, size, lastmod, shared, public) {
@@ -559,6 +581,16 @@ header3 font
     });
     $(document).on('click', '.file-manager .btn-back', function(e) {
         fm.back();
+    });
+    $(document).on("keydown", function(e) {
+        if (e.which == 16) {
+            fm.btnStatus.shift = true;
+        }
+    });
+    $(document).on("keyup", function(e) {
+        if (e.which == 16) {
+            fm.btnStatus.shift = false;
+        }
     });
 })(window.fm = window.fm || {}, jQuery);
 
@@ -624,7 +656,7 @@ header3 font
         });
     }
     function fileDragHover(e, elem) {
-        //e.stopPropogation();
+        e.stopPropagation();
         e.preventDefault();
         window.clearTimeout(timer);
         var hash = $(elem).attr('hash');
@@ -641,7 +673,7 @@ header3 font
         }
     }
     function fileDragLeave(e, elem) {
-        //e.stopPropogation();
+        e.stopPropagation();
         e.preventDefault();
         timer = window.setTimeout(function() {
             var hash = $(elem).attr('hash');
@@ -655,7 +687,7 @@ header3 font
     }
     function fileDragDrop(e, elem) {
         console.log("Dropped a file on " + $(elem).attr('id'));
-        //e.stopPropogation();
+        e.stopPropagation();
         e.preventDefault();
         var hash = $(elem).attr('hash');
         var parent;
@@ -860,8 +892,10 @@ header3 font
                     $('#transfers .file-list #tfile-'+_this.id+' .nameandprogress').removeClass('active');
                     $('#transfers .file-list #tfile-'+_this.id+' .file-upload-status').text("Done");
                     $('#transfers #badge-transfers .badgeval').text(--dd.numFilesToUpload);
+                    /*var template = _.template($('#fm-file-basic').html());
+                    $('#bar-'+_this.parent.hash+' .file-list').append(template(_this));*/
+                    //refresh bar _this.parent.hash
                     _this.state = 2;
-                    //_this.startNextUpload();
                     linearQueue.start();
                 },
                 error: function(xhr, status, e) {
@@ -869,7 +903,6 @@ header3 font
                     $('#transfers .file-list #tfile-'+_this.id+' .nameandprogress').removeClass('active').addClass('failed');
                     $('#transfers .file-list #tfile-'+_this.id+' .file-upload-status').text("Failed");
                     _this.state = 3;
-                    //_this.startNextUpload();
                     linearQueue.start();
                 }
             });
@@ -1007,8 +1040,10 @@ header3 font
                     $('#transfers .file-list #tfile-'+_this.id+' .nameandprogress').removeClass('active');
                     $('#transfers .file-list #tfile-'+_this.id+' .file-upload-status').text("Done");
                     $('#transfers #badge-transfers .badgeval').text(--dd.numFilesToUpload);
+                    /*var template = _.template($('#fm-file-basic').html());
+                    $('#bar-'+_this.parent.hash+' .file-list').append(template(_this));*/
+                    //refresh bar _this.parent.hash
                     _this.state = 2;
-                    //_this.parent.startNextUpload();
                     linearQueue.start();
                 },
                 error: function(xhr, status, e) {
@@ -1016,7 +1051,6 @@ header3 font
                     $('#transfers .file-list #tfile-'+_this.id+' .nameandprogress').removeClass('active').addClass('failed');
                     $('#transfers .file-list #tfile-'+_this.id+' .file-upload-status').text("Failed");
                     _this.state = 3;
-                    //_this.parent.startNextUpload();
                     linearQueue.start();
                 }
             });
@@ -1131,6 +1165,122 @@ header3 font
     }
 
 })(window.dd = window.dd || {}, jQuery);
+
+/*
+   ____   ___       ___
+  6MMMMb/ `MMb     dMM'
+ 8P    YM  MMM.   ,PMM 
+6M      Y  M`Mb   d'MM 
+MM         M YM. ,P MM 
+MM         M `Mb d' MM 
+MM         M  YM.P  MM 
+MM         M  `Mb'  MM 
+YM      6  M   YP   MM 
+ 8b    d9  M   `'   MM 
+  YMMMM9  _M_      _MM_
+*/
+
+(function(cm, $, undefined) {
+    var menu = null;
+    function ClickMenu(x, y) {
+        this.x = x;
+        this.y = y;
+        this.width = 200;
+        this.itemsCount = 0;
+        this.create = function() {
+            if (menu != null) menu.destroy();
+            var menuTemplate = _.template($('#contextmenu').html());
+            $('body').append(menuTemplate());
+            $('.clickmenu').css({
+                'top': this.y,
+                'left': this.x
+            });
+        }
+        this.destroy = function() {
+            $('.clickmenu').remove();
+            menu = null;
+        }
+        this.append = function(item) {
+            $('.clickmenu ul').append(item);
+        }
+        this.appendDivider = function() {
+            $('.clickmenu ul').append('<li class=\"divider\"></li>');
+        }
+        this.create();
+    }
+    function MenuItem(parent, content, icon, fn) {
+        this.itemTemplate = _.template($('#menuitem').html());
+        this.get = function() {
+            return this.itemTemplate({id: parent.itemsCount++, content: content, icon: icon, fn: fn});
+        }
+    }
+    $(document).on("contextmenu", ".file-list:not(#bar-0 .file-list)", function(e) {
+        e.stopPropagation();
+        if (!fm.btnStatus.shift) {
+            var parent = $(this).parent();
+            e.preventDefault();
+            //e.stopPropagation();
+            menu = new ClickMenu(e.pageX, e.pageY);
+            if (parent.attr('hash') == foxfile_root) {
+                menu.append(new MenuItem(menu, "Upload", "", "fn2").get());
+                menu.append(new MenuItem(menu, "New Folder", "", "fn2").get());
+                menu.append('<hr class="nav-vert-divider">');
+                menu.append(new MenuItem(menu, "Refresh", "", "fn2").get());
+            } else {
+                menu.append(new MenuItem(menu, "Delete", "", "fn2").get());
+                menu.append(new MenuItem(menu, "Rename", "", "fn2").get());
+                menu.append(new MenuItem(menu, "Upload", "", "fn2").get());
+                menu.append(new MenuItem(menu, "Download", "", "fn2").get());
+                menu.append(new MenuItem(menu, "New Folder", "", "fn2").get());
+                menu.append('<hr class="nav-vert-divider">');
+                menu.append(new MenuItem(menu, "Share", "", "fn2").get());
+                menu.append(new MenuItem(menu, "Move", "", "fn2").get());
+                menu.append(new MenuItem(menu, "Refresh", "", "fn2").get());
+            }
+        }
+    });
+    $(document).on("contextmenu", ".menubar-content:not(.btn-ctrlbar)", function(e) {
+        e.stopPropagation();
+        if (!fm.btnStatus.shift) {
+            var self = $(this);
+            if (self.attr('btype') == 'folder') {
+                e.preventDefault();
+                //e.stopPropagation();
+                menu = new ClickMenu(e.pageX, e.pageY);
+                menu.append(new MenuItem(menu, "Delete", "", "fn2").get());
+                menu.append(new MenuItem(menu, "Rename", "", "fn2").get());
+                menu.append(new MenuItem(menu, "Upload", "", "fn2").get());
+                menu.append(new MenuItem(menu, "Download", "", "fn2").get());
+                menu.append(new MenuItem(menu, "New Folder", "", "fn2").get());
+                menu.append('<hr class="nav-vert-divider">');
+                menu.append(new MenuItem(menu, "Share", "", "fn2").get());
+                menu.append(new MenuItem(menu, "Move", "", "fn2").get());
+                menu.append(new MenuItem(menu, "Refresh", "", "fn2").get());
+            } else if (self.attr('btype') == 'file') {
+                e.preventDefault();
+                //e.stopPropagation();
+                menu = new ClickMenu(e.pageX, e.pageY);
+                menu.append(new MenuItem(menu, "Delete", "", "fn2").get());
+                menu.append(new MenuItem(menu, "Rename", "", "fn2").get());
+                menu.append(new MenuItem(menu, "Download", "", "fn2").get());
+                menu.append('<hr class="nav-vert-divider">');
+                menu.append(new MenuItem(menu, "Share", "", "fn2").get());
+                menu.append(new MenuItem(menu, "Move", "", "fn2").get());
+                menu.append(new MenuItem(menu, "Refresh", "", "fn2").get());
+            }
+        }
+    });
+    $(document).on('mousedown', function(e) {
+    if (e.which != 3) {
+        if (menu != null) {
+            setTimeout(function() {
+                menu.destroy();
+            }, 100)
+        }
+    }
+});
+})(window.cm = window.cm || {}, jQuery);
+
 
 /*
 888     888       d8888 

@@ -608,6 +608,9 @@ main {
 .menubar-content .file-multiselect-checkbox-container input:checked ~ .label-checked {
 	display: block;
 }
+.menubar-content .file-multiselect-checkbox-container input:checked ~ .label-checked {
+	color: #FF5722;
+}
 .menubar-content .file-multiselect-checkbox-container:hover input:checked ~ .label {
 	display: none;
 }
@@ -898,4 +901,52 @@ main {
 .badge.new .badgeval {
 	background: #E64A19;
 	color: white;
+}
+/*
+   ____   ___       ___
+  6MMMMb/ `MMb     dMM'
+ 8P    YM  MMM.   ,PMM 
+6M      Y  M`Mb   d'MM 
+MM         M YM. ,P MM 
+MM         M `Mb d' MM 
+MM         M  YM.P  MM 
+MM         M  `Mb'  MM 
+YM      6  M   YP   MM 
+ 8b    d9  M   `'   MM 
+  YMMMM9  _M_      _MM_
+*/
+.clickmenu {
+	padding: 0;
+	width: 200px;
+	background: white;
+	position: absolute;
+	top: 10px;
+	left: 10px;
+	z-index: 99999999;
+	box-shadow: 0 -1px 0 #e5e5e5,0 0 2px rgba(0,0,0,.12),0 2px 4px rgba(0,0,0,.24);
+}
+.clickmenu ul {
+	padding: 0;
+}
+.clickmenu li span {
+	position: relative;
+	display: block;
+	padding: 10px 20px;
+	color: rgba(0,0,0,.87);
+	text-decoration: none;
+}
+.clickmenu li.divider {
+	height: 2px;
+	padding: 0;
+	margin: 6px 0;
+	background: rgba(0,0,0,.1);
+	cursor: default;
+}
+.clickmenu li i {
+	height: 24px;
+	width: 24px;
+	padding: 0;
+	vertical-align: middle;
+	margin-top: -3px;
+	margin-right: 12px;
 }

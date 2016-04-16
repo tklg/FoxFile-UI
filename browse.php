@@ -314,6 +314,12 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 	</div>
 </li>
 </script>
+<script type="text/template" id="contextmenu">
+<section class="clickmenu"><ul class="nav-vert"></ul></section>
+</script>
+<script type="text/template" id="menuitem">
+<li id="<%= id %>" onclick="<%= fn %>"><span><%= content %></span></li>
+</script>
 	<script type="text/javascript" src="//code.jquery.com/jquery-2.1.4.min.js"></script>
 	<script src="//code.jquery.com/ui/1.11.4/jquery-ui.min.js"></script>
 	<!-- <link async rel="stylesheet" type="text/css" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.7.1/themes/base/jquery-ui.css"/> -->
