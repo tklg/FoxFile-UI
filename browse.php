@@ -306,16 +306,19 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 <script type="text/template" id="fm-file-trash">
 <li class="menubar-content floatb" btype="<%= btype %>" hash="<%= hash %>" id="bfile-<%= hash %>" name="<%= name %>" parent="<%= parent %>">
 	<span class="file-multiselect-checkbox-container">
-	<input type="checkbox" id="cb-<%= id %>" value="<%= hash %>" />
-	<label class="label" for="cb-<%= id %>"><i class="mdi mdi-checkbox-blank-outline"></i></label>
-	<label class="label-checked" for="cb-<%= id %>"><i class="mdi mdi-checkbox-marked"></i></label>
-	<label class="label-icon" for="cb-<%= id %>"><i class="mdi <%= getIcon() %>"></i></label>
+	<input type="checkbox" id="cb-<%= hash %>" value="<%= hash %>" />
+	<label class="label" for="cb-<%= hash %>"><i class="mdi mdi-checkbox-blank-outline"></i></label>
+	<label class="label-checked" for="cb-<%= hash %>"><i class="mdi mdi-checkbox-marked"></i></label>
+	<label class="label-icon" for="cb-<%= hash %>"><i class="mdi <%= getIcon() %>"></i></label>
 	</span>
 	<span class="file-name"><%= name %></span>
+	<span class="file-controls">
+		<span onclick="fm.restore('<%= hash %>')"><i class="mdi mdi-backup-restore"></i></span>
+		<span onclick="fm.dialog.delete.show('<%= name %>','<%= hash %>')"><i class="mdi mdi-delete-forever"></i></span>
+	</span>
 	<div class="file-info">
 		<span class="file-info-item" id="filedet"><span class="filetype"><%= getType() %></span><br><span id="filesize"><%= getSize() %></span></span>
 	</div>
-	<span class="file-controls"><i class="mdi mdi-delete-forever"></i></span>
 </li>
 </script>
 <script type="text/template" id="contextmenu">

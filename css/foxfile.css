@@ -63,6 +63,10 @@ body {
 .float-4 {box-shadow: 0 10px 20px rgba(0, 0, 0, 0.22), 0 14px 56px rgba(0, 0, 0, 0.25);}
 .float-5 {box-shadow: 0 15px 24px rgba(0, 0, 0, 0.22), 0 19px 76px rgba(0, 0, 0, 0.3);}
 .floatb::before, .floatb-1::before {position: absolute; content: ''; display: block; top: 0; bottom: 0; left: 0; right: 0; pointer-events: none; box-shadow: 0 -1px 0 #e5e5e5,0 0 2px rgba(0,0,0,.12),0 2px 4px rgba(0,0,0,.24); } .floatb-2::before {position: absolute; content: ''; display: block; top: 0; bottom: 0; left: 0; right: 0; pointer-events: none; box-shadow: 0 0 4px rgba(0,0,0,.14),0 4px 8px rgba(0,0,0,.28); } .floatb-3::before {position: absolute; content: ''; display: block; top: 0; bottom: 0; left: 0; right: 0; pointer-events: none; box-shadow: 0 8px 17px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19); }
+::selection {
+	background: #2DA4FE;
+	color: white;
+}
 img {
 	max-height: 100%;
 	max-width: 100%;
@@ -810,6 +814,50 @@ main {
 	/*text-align: center;*/
 	padding: 0 20px;
 }
+.bar-trash .file-controls i {
+	height: 40px;
+	line-height: 40px;
+	color: rgba(0,0,0,.54);
+	font-size: 20px;
+}
+.bar-trash .file-controls {
+	margin-right: 10px;
+	height: 40px;
+	line-height: 40px;
+	display: none;
+	transition: all 0.1s ease-in-out;
+}
+.bar-trash .menubar-content:hover .file-controls {
+	display: inline-block;
+}
+.bar-trash .file-controls span {
+	position: relative;
+	display: inline-block;
+	font-size: 21px;
+	color: rgba(0,0,0,.54);
+	height: 36px;
+	line-height: 36px;
+	width: 36px;
+	margin: 2px 0;
+	border-radius: 50%;
+	cursor: pointer;
+	transition: all .15s ease-in-out;
+}
+.bar-trash .file-controls i {
+	display: inline-block;
+	height: 36px;
+	width: 36px;
+	margin: 0;
+	padding: 0;
+	/*vertical-align: middle;*/
+	line-height: 36px;
+	text-align: center;
+	border-radius: 50%;
+	transition: all 0.1s ease-in-out
+}
+.bar-trash .file-controls i:hover {
+	box-shadow: 0 -1px 0 #e5e5e5,0 0 2px rgba(0,0,0,.12),0 2px 4px rgba(0,0,0,.24);
+}
 .progress {
 	display: none;
 }
@@ -929,6 +977,9 @@ main {
 	font-size: 100%;
 	outline: 0 none;
 	margin-top: 10px;
+}
+.dialog header + article input {
+	margin: 0;
 }
 .dialog article input:focus {
 	border-bottom: 2px solid #FF5722;

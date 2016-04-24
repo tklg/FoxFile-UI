@@ -301,7 +301,11 @@ if ($pageID == 'list_files') {
 	$offset = (int) $_POST['offset'];
 	$limit = (int) $_POST['limit'];
 	$sortBy = 'is_folder DESC, name, lastmod DESC';
-	if (isset($_POST['sortby'])) $sortBy = $_POST['sortby'];
+	if (isset($_POST['sortby'])) {
+		$sortBy = '';
+		if ($_POST['sortby'] == 'name') $sortBy .= 'name';
+		if ($_POST['sortby_direction'] == 'asc') $sortBy .= ' ASC';
+	}
 	$sql = "SELECT COUNT(*) as total from FILES WHERE parent = '$fileParent' AND owner_id = '$uid'";
 	if ($result = mysqli_query($db, $sql)) {
 		$total = mysqli_fetch_array($result)['total'];
@@ -367,7 +371,7 @@ if ($pageID == 'new_file') {
 	$fType = $_FILES['file']['type'];
 	$fSize = $_FILES['file']['size'];
 
-	if ($fileParent == '' || !$file) resp(422, "missing parameters");
+	if ($fileParent == '' || !$file) resp(422, "missing parameters, or file chunk is too big");
 
 	$parentPath = getPath($fileParent);
 	if (!is_dir($parentPath)) mkdir($parentPath, 0770, true);
@@ -410,12 +414,12 @@ if ($pageID == 'new_file') {
 	}*/
 }
 if ($pageID == 'new_folder') {
-	if (!isset($_POST['name']) || !isset($_POST['parent']) || !isset($_POST['hash'])) 
+	if (!isset($_POST['name']) || !isset($_POST['parent']))
 		resp(422, "missing parameters");
 
 	$fileName = sanitize($_POST['name']);
 	$fileParent = sanitize($_POST['parent']);
-	$fileHash = sanitize($_POST['hash']);
+	$fileHash = isset($_POST['hash']) ? sanitize($_POST['hash']) : getUniqId();
 	$tgtpath = getPath($fileParent);
 	$realtgtpath = realpath($tgtpath);
 	if (!is_dir($realtgtpath))
@@ -427,7 +431,7 @@ if ($pageID == 'new_folder') {
 		if ($result = mysqli_query($db, $sql)) {
 			$total = mysqli_num_rows($result);
 			if ($total == 0) {
-				$sql = "INSERT INTO files ( owner_id, is_folder, hash, parent, name) VALUES
+				$sql = "INSERT INTO files (owner_id, is_folder, hash, parent, name) VALUES
 							('$uid',
 							'1',
 							'$fileHash',
@@ -451,19 +455,22 @@ if ($pageID == 'new_folder') {
 	}
 }
 if ($pageID == 'list_trash') {
-	$fileParent = sanitize($_POST['hash']);
 	$offset = (int) $_POST['offset'];
 	$limit = (int) $_POST['limit'];
 	$sortBy = 'is_folder DESC, name';
-	if (isset($_POST['sortby'])) $sortBy = $_POST['sortby'];
-	$sql = "SELECT COUNT(*) as total from FILES WHERE parent = '$fileParent' AND owner_id = '$uid'";
+	if (isset($_POST['sortby'])) {
+		$sortBy = '';
+		if ($_POST['sortby'] == 'name') $sortBy .= 'name';
+		if ($_POST['sortby_direction'] == 'asc') $sortBy .= ' ASC';
+	}
+	$sql = "SELECT COUNT(*) as total from FILES WHERE is_trashed=1 AND owner_id = '$uid'";
 	if ($result = mysqli_query($db, $sql)) {
 		$total = mysqli_fetch_array($result)['total'];
 		$total -= $offset * $limit;
 		$remaining = $total - $limit;
 		$more = false;
 		if ($remaining > 0) $more = true;
-		$sql = "SELECT is_folder, hash, parent, name, size, is_shared, is_public, max(lastmod) as lastmod FROM FILES WHERE owner_id = '$uid' AND is_trashed=1 GROUP BY name ORDER BY $sortBy LIMIT $limit OFFSET $offset";
+		$sql = "SELECT is_folder, hash, parent, name, size, is_shared, is_public, max(lastmod) as lastmod FROM FILES WHERE owner_id = '$uid' AND is_trashed=1 GROUP BY name ORDER BY $sortBy";
 		if ($result = mysqli_query($db, $sql)) {
 			$rows = array();
 			while ($row = mysqli_fetch_object($result)) {
@@ -515,7 +522,7 @@ if($pageID == 'trash') {
 			if ($name = mysqli_query($db, "SELECT name FROM files WHERE hash='$hash' LIMIT 1")) {
 				$name = mysqli_fetch_object($name)->name;
 				//if (mysqli_query($db, "UPDATE files SET is_trashed=1 WHERE name=(SELECT name FROM files WHERE hash='$hash' LIMIT 1) AND owner_id = '$uid'"))
-				if (mysqli_query($db, "UPDATE files SET is_trashed=1 WHERE name='$name' AND owner_id = '$uid'"))
+				if (mysqli_query($db, "UPDATE files SET is_trashed=1, is_shared=0, is_public=0 WHERE name='$name' AND owner_id = '$uid'"))
 					resp(200, 'moved files to trash');
 				else
 					resp(500, 'failed to delete files');
@@ -525,112 +532,68 @@ if($pageID == 'trash') {
 		}
 	}
 }
-if($pageID == 'delete') {
-		$hash = sanitize($_POST['file_id']);
-		if ($hash == $uhd) {
-			resp(400, 'Cannot delete the home directory!');
-		} else {
-			$delItems = '';
-			$type = '';
-			$query = mysqli_query($db, "SELECT type FROM files WHERE hash='$hash'");
-			while($row = mysqli_fetch_array($query)) {
-				$type = $row['type'];
-			}
-			$delTree = [$hash];
-			$pointer = 0;
-			$isOwner = true;
-			function recursiveDelete($self) {
-				global $db, $filetable, $delTree, $pointer, $isOwner, $uid;
-				$curPos = array();
-				$query = mysqli_query($db, "SELECT * FROM files WHERE parent='$self' AND owner_id='$uid'");
-					while($row = mysqli_fetch_array($query)) {
-					$delTree[] = $row['hash']; //get self ids from all files within target
-					$curPos[] = $row['hash'];
-					if ($row['owner_id'] !== $uid) {
-						$isOwner = false;
-					}
-				}
-					foreach ($curPos as $key => $value) {
-					recursiveDelete($value);
-					//echo $pointer . ' - ' . $value . '<br>';
-					$pointer++;
-				}
-			}
-			recursiveDelete($hash);
-			//echo '<br>';
-			$pointer = 0;
-			foreach ($delTree as $key => $value) {
-				//echo 'deleting - ' . $value . '<br>';
-				if ($pointer != sizeof($delTree) - 1) {
-					$delItems .= '\'' . $value . '\', ';
-				} else {
-					$delItems .= '\'' . $value . '\'';
-				}
-				$pointer++;
-			}
-			//echo 'with src directory - ' . $hash_self . '<br>';
-			//echo $delItems . '<br>';
-			if ($isOwner) {
-				if ($type == 'folder') {
-					deleteFolder($hash);
-				} else {
-					deleteFile($hash);
-				}
-				if(mysqli_query($db, "DELETE FROM $filetable WHERE hash IN ($delItems)")) {
-					resp(200, 'Deleted file or folder');
-				} else {
-					resp(500, 'failed to delete file or folder');
-				}
+if($pageID == 'untrash') {
+	$hashlist = sanitize($_POST['hashlist']);
+	if (strpos($hashlist, $uhd) !== false) {
+		resp(400, 'Cannot undelete the home directory! You cant delete it either, so why are you trying this?');
+	} else {
+		foreach (explode(',', $hashlist) as $hash) {
+			if ($name = mysqli_query($db, "SELECT name FROM files WHERE hash='$hash' LIMIT 1")) {
+				$name = mysqli_fetch_object($name)->name;
+				if (mysqli_query($db, "UPDATE files SET is_trashed=0 WHERE name='$name' AND owner_id = '$uid'"))
+					resp(200, 'removed files from trash');
+				else
+					resp(500, 'failed to remove files from trash');
 			} else {
-				resp(401, "you do not own this file or folder");
+				resp(500, 'failed to remove files from trash');
 			}
 		}
+	}
 }
-//100% efficient not bad function that definitely doesnt pass 1 query per file to delete in the group
-// use this instead of the single delete function because it should wokr for everything
-if(isset($_POST['multi_delete'])) {
-	if ($alvl > 0) {
-		$hash_self_array = sanitize($_POST['file_multi']);
+if($pageID == 'delete') {
+		$hashlist = sanitize($_POST['hashlist']);
 		//echo 'hash '.$hash_self_array . '<br>';
-		if (strpos($hash_self_array, $uhd) !== false) { 
-			echo 'Cannot delete the home directory!';
+		if (strpos($hashlist, $uhd) !== false) { 
+			resp(400, 'Cannot delete the home directory!');
 		} else {
-			foreach (explode(',', $hash_self_array) as $value) {
-				$hash_self = $value;
-				//echo 'foreach '.$hash_self.'<br>';
+			foreach (explode(',', $hashlist) as $hash) {
+				//echo 'foreach '.$hash.'<br>';
 				$delItems = '';
-				$type = '';
-				$query = mysqli_query($db, "SELECT file_type FROM $filetable WHERE file_self='$hash_self'");
-				while($row = mysqli_fetch_array($query)) {
-					$type = $row['file_type'];
-				}
-				$delTree = [$hash_self];
+				$delTree = [$hash];
 				$pointer = 0;
 				$isOwner = true;
+				$type = '';
+				$query = mysqli_query($db, "SELECT is_folder FROM files WHERE hash='$hash' AND owner_id='$uid' LIMIT 1");
+				$type = mysqli_fetch_object($query)->is_folder == 1 ? 'folder' : 'file';
+
+
+				// repeat this for all older versions of the files with the same name and parent as this one
+
+
 				if (!function_exists('recursiveDelete')) { //only declare the function once
 					function recursiveDelete($self) {
-						global $db, $filetable, $delTree, $pointer, $isOwner, $uid;
+						global $db, $delTree, $pointer, $isOwner, $uid;
 						$curPos = array();
-						$query = mysqli_query($db, "SELECT * FROM $filetable WHERE file_parent='$self'");
-							while($row = mysqli_fetch_array($query)) {
-								$delTree[] = $row['file_self']; //get self ids from all files within target
-								$curPos[] = $row['file_self'];
-								if ($row['owner'] !== $uid) {
-									$isOwner = false;
-								}
+						$query = mysqli_query($db, "SELECT hash, owner_id FROM files WHERE parent='$self' AND owner_id='$uid'");
+						while($row = mysqli_fetch_array($query)) {
+							$delTree[] = $row['hash']; //get self ids from all files within target
+							$curPos[] = $row['hash'];
+							if ($row['owner_id'] !== $uid) {
+								$isOwner = false;
 							}
-							foreach ($curPos as $key => $value) {
-								recursiveDelete($value);
-								//echo $pointer . ' - ' . $value . '<br>';
-								$pointer++;
+						}
+						//$query = mysqli_query($db, "SELECT self FROM files where name="
+						foreach ($curPos as $key => $value) {
+							recursiveDelete($value);
+							$pointer++;
 						}
 					}
 				}
-				recursiveDelete($hash_self);
-				//echo '<br>';
+				if ($type == 'folder') {
+					recursiveDelete($hash);
+				}
 				$pointer = 0;
 				foreach ($delTree as $key => $value) {
-					//echo 'deleting - ' . $value . '<br>';
 					if ($pointer != sizeof($delTree) - 1) {
 						$delItems .= '\'' . $value . '\', ';
 					} else {
@@ -638,32 +601,27 @@ if(isset($_POST['multi_delete'])) {
 					}
 					$pointer++;
 				}
-				//echo 'with src directory - ' . $hash_self . '<br>';
-				//echo $delItems . '<br>';
 				if ($isOwner) {
 					if ($type == 'folder') {
-						//echo 'deleting folder ' . $hash_self.'<br>';
-						deleteFolder($hash_self);
+						deleteFolder($hash);
 					} else {
-						//echo 'deleting file ' . $hash_self.'<br>';
-						deleteFile($hash_self);
+						deleteFile($hash);
 					}
 					$success = true;
 					$fails = 0;
-					if(mysqli_query($db, "DELETE FROM $filetable WHERE file_self IN ($delItems)")) {
+					if(mysqli_query($db, "DELETE FROM files WHERE hash IN ($delItems) AND owner_id='$uid'")) {
 						
 					} else {
 						$success = false;
 						$fails++;
 					}
-						if ($success) echo '';
-						else echo "Failed to delete " . $fails . ' items.';
+					if ($success) resp(200, 'deleted files and folders');
+					else resp(500, "Failed to delete " . $fails . ' items.');
 				} else {
-					echo "You do not own this file.";
+					resp(401, "You do not own this file.");
 				}
 			}
 		}
-	}
 }
 if (isset($_POST['move'])) {
 	$file_multi = sanitize($_POST['file_multi']);

@@ -56,6 +56,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
                 document.title = 'Trash - FoxFile';
                 $('.pages #trash').addClass('active').css('z-index', 401).siblings().css('z-index', 400);
                 $('.pages #trash').siblings().removeClass('active');
+                fm.loadTrash();
                 //console.log("Switched to page trash");
             });
             this.router.on('route:openTransfers', function(sort) {
@@ -451,7 +452,7 @@ header3 font
                 fm.dialog.dialog = new fm.dialog.Dialog(
                     this.id,
                     null,
-                    '<p>Delete <em>' + file + '</em>?</p>',
+                    '<p>Permanently delete <em>' + file + '</em> ?</p>',
                     footer.html()
                 );
                 fm.dialog.dialog.show();
@@ -486,11 +487,25 @@ header3 font
             }
         },
         newFolder: {
+            id: '',
             show: function(file, id) {
-
+                this.id = id;
+                var footer = new fm.dialog.DialogFooter();
+                footer.addOpt(new fm.dialog.DialogFooterOption('Cancel', 'default', 'fm.dialog.newFolder.hide()'));
+                footer.addOpt(new fm.dialog.DialogFooterOption('Create', 'default', 'fm.newFolder($(\'#'+this.id+' .dialog input\').val(),\''+this.id+'\')'));
+                fm.dialog.dialog = new fm.dialog.Dialog(
+                    this.id,
+                    'Enter a name for the folder',
+                    '<input type="text" id="'+id+'" placeholder="Folder name" value="" autofocus />',
+                    footer.html()
+                );
+                fm.dialog.dialog.show();
+                cm.destroy();
+                fm.dialog.dialogActive = true;
             },
             hide: function() {
-
+                fm.dialog.dialog.hide();
+                fm.dialog.dialogActive = false;
             }
         },
         move: {
@@ -581,31 +596,32 @@ header3 font
         });
     }
     fm.delete = function(hash) {
-        // change this so it works like the multiMove function instead of having separate functions
-        if (fm.multiSelect.selected.length > 1) {
-                files.multiDelete(fm.multiSelect.selected);
+        if (fm.multiSelect.numSelected > 1) {
+            hash = fm.multiSelect.selected;
         } else {
-            //files.unshare(file, id);
-            var parent = $('#file-'+hash+'.menubar-content').attr('parent');
-            $.ajax({
-                type: "POST",
-                url: "./api/files/delete",
-                data: {
-                    hash: hash
-                },
-                success: function(result) {
-                    var json = JSON.parse(result);
-                    fm.dialog.hideCurrentlyActive();
-                    fm.refresh(parent);
-                },
-                error: function(request, error) {
-                    
-                }
-            });
+            hash = [hash];
         }
+        var hashes = _.uniq(hash);
+        var hashlist = hashes.toString();
+        //files.unshare(file, id);
+        var parent = $('#file-'+hashes[0]+'.menubar-content').attr('parent');
+        $.ajax({
+            type: "POST",
+            url: "./api/files/delete",
+            data: {
+                hashlist: hashlist
+            },
+            success: function(result) {
+                fm.dialog.hideCurrentlyActive();
+                fm.loadTrash();
+                fm.multiSelect.clear();
+            },
+            error: function(request, error) {
+                    
+            }
+        });
     }
     fm.trash = function(hash) {
-        // change this so it works like the multiMove function instead of having separate functions
         if (fm.multiSelect.numSelected > 1) {
             hash = fm.multiSelect.selected;
         } else {
@@ -632,28 +648,30 @@ header3 font
             }
         });
     }
-    fm.newFolder = function(name, parentHash) {
+    fm.newFolder = function(name, parent) {
         if (name == "") {
             console.warn("Folder name cannot be blank.");
         } else {
-            //show creation spinny
             $.ajax({
-                type: "POST",
-                url: "./api/files/rename",
+                url: './api/files/new_folder',
+                type: 'POST',
                 data: {
-                    hash: hash
+                    name: name,
+                    parent: parent
                 },
-                success: function(result) {
+                success: function(result, status, xhr) {
                     var json = JSON.parse(result);
-                    fm.refresh(_this.parent.hash);
+                    fm.dialog.hideCurrentlyActive();
+                    fm.refresh(parent);
+                    fm.multiSelect.clear();
                 },
-                error: function(request, error) {
-                    
+                error: function(xhr, status, e) {
+
                 }
             });
         }
     }
-    fm.multiMove = function(file, target) { //handles moving both single and multiple files
+    fm.move = function(file, target) { //handles moving both single and multiple files
         if (multiSelect.numSelected < 2) {
             if (!_.isArray(file)) { //if its a single thing
                 var tmp = [file];
@@ -681,29 +699,6 @@ header3 font
                 d.error(result);
             }
             //files.refresh(bar);
-        });
-    }
-    fm.multiDelete =  function(file) {
-        var hashes = _.uniq(file);
-        //d.info(hashes.toString());
-        $.post('dbquery.php',
-        {
-            multi_delete: 'delete',
-            file_multi: hashes.toString()
-        },
-        function(result) {
-            if (result == '') {
-                //worked
-                d.info("Deleted items.");
-            } else {
-                d.error(result);
-                console.log(result);
-            }
-            //files.refresh(bar);
-            files.deleteGUI.hide();
-            bar.refreshSelected();
-            //bar.selected = [];
-            multiSelect.reset();
         });
     }
     fm.share = function(file, id) {
@@ -752,6 +747,51 @@ header3 font
                 d.error(result);
             }
         });
+    }
+    fm.loadTrash = function() {
+        $('.pages .bar-trash').addClass('loading');
+        $.ajax({
+            type: "POST",
+            url: "./api/files/list_trash",
+            data: {
+                offset: 0,
+                limit: 30
+            },
+            success: function(result) {
+                $('.pages .bar-trash').removeClass('loading');
+                var json = JSON.parse(result);
+                    // console.log("fm.open("+fHash+") [2] Got response from server: ");
+                    // console.log(json);
+                var hasMore = json['more'];
+                var resultsRemaining = json['remaining'];
+                var res = json['results'];
+                var template = _.template($('#fm-file-trash').html());
+                $('.pages .bar-trash .file-list').empty();
+                $.each(res, function(i) {
+                    // name, parent, icon, hash, type, btype, size, lastmod, shared, public
+                    var f = new File(res[i].name,
+                                        res[i].parent,
+                                        res[i].icon,
+                                        res[i].hash,
+                                        res[i].type,
+                                        res[i].is_folder == '1' ? "folder" : "file",
+                                        res[i].size,
+                                        res[i].lastmod,
+                                        res[i].is_shared,
+                                        res[i].is_public);
+                    $('.pages .bar-trash .file-list').append(template(f));
+                });
+            },
+            error: function(request, error) {
+                //console.error(request, error);
+            }
+        });
+    }
+    fm.restore = function(hash) {
+
+    }
+    fm.loadShared = function() {
+
     }
     var FolderBar = function(name, hash, parent) {
         this.dd;
@@ -1214,10 +1254,6 @@ header3 font
         this.hash = null;
         this.children = [];
         this.state = 0;
-        //this.uploaded = [];
-        this.getParentAndUpload = function() {
-            this.create();
-        }
         this.getSize = function() {
            return null;
         }
@@ -1568,6 +1604,7 @@ header3 font
         this.start = function(fake) {
             if (this.trees.length == 0) {
                 console.log("%cFinishing %cupload of LinearQueue","color:red","color:gray");
+                fm.refreshAll();
             } else {
                 if (fake) {
                     console.log("%cStarting %cfake upload of LinearQueue","color:green","color:gray");
@@ -1642,7 +1679,7 @@ YM      6  M   YP   MM
             this.menu.destroy();
         }
     }
-    $(document).on("contextmenu", ".file-list:not(#bar-0 .file-list)", function(e) {
+    $(document).on("contextmenu", ".file-manager .file-list:not(#bar-0 .file-list)", function(e) {
         e.stopPropagation();
         if (!fm.btnStatus.shift) {
             var parent = $(this).parent();
@@ -1656,7 +1693,7 @@ YM      6  M   YP   MM
             if (hash == foxfile_root) {
                 cm.menu.append(new MenuItem(cm.menu, "Upload File", "upload", "$('#dd-file-upload').attr('hash','"+hash+"').click()").get());
                 cm.menu.append(new MenuItem(cm.menu, "Upload Folder", "folder-upload", "$('#dd-folder-upload').attr('hash','"+hash+"').click()").get());
-                cm.menu.append(new MenuItem(cm.menu, "New Folder", "folder-plus", "fm.dialog.newFolder.show('"+hash+"')", "Alt+N").get());
+                cm.menu.append(new MenuItem(cm.menu, "New Folder", "folder-plus", "fm.dialog.newFolder.show('"+name+"','"+hash+"')", "Alt+N").get());
                 cm.menu.append('<hr class="nav-vert-divider">');
                 cm.menu.append(new MenuItem(cm.menu, "Refresh", "refresh", "fm.refresh('"+hash+"')", "Alt+R").get());
             } else {
@@ -1665,7 +1702,7 @@ YM      6  M   YP   MM
                 cm.menu.append(new MenuItem(cm.menu, "Download", "download", "fm.download('"+hash+"')").get());
                 cm.menu.append(new MenuItem(cm.menu, "Upload File", "upload", "$('#dd-file-upload').click()").get());
                 cm.menu.append(new MenuItem(cm.menu, "Upload Folder", "folder-upload", "$('#dd-folder-upload').click()").get());
-                cm.menu.append(new MenuItem(cm.menu, "New Folder", "folder-plus", "fm.dialog.newFolder.show('"+hash+"')", "Alt+N").get());
+                cm.menu.append(new MenuItem(cm.menu, "New Folder", "folder-plus", "fm.dialog.newFolder.show('"+name+"','"+hash+"')", "Alt+N").get());
                 cm.menu.append('<hr class="nav-vert-divider">');
                 cm.menu.append(new MenuItem(cm.menu, "Share", "share", "fm.dialog.share.show('"+hash+"')", ".").get());
                 cm.menu.append(new MenuItem(cm.menu, "Move", "folder-move", "fm.dialog.move.show('"+hash+"')", "m").get());
@@ -1673,7 +1710,7 @@ YM      6  M   YP   MM
             }
         }
     });
-    $(document).on("contextmenu", ".menubar-content:not(.btn-ctrlbar)", function(e) {
+    $(document).on("contextmenu", ".file-manager .menubar-content:not(.btn-ctrlbar)", function(e) {
         e.stopPropagation();
         if (!fm.btnStatus.shift) {
             var self = $(this);
@@ -1691,7 +1728,7 @@ YM      6  M   YP   MM
                 cm.menu.append(new MenuItem(cm.menu, "Download", "download", "fm.download('"+hash+"')").get());
                 cm.menu.append(new MenuItem(cm.menu, "Upload File", "upload", "$('#dd-file-upload').attr('hash','"+hash+"').click()").get());
                 cm.menu.append(new MenuItem(cm.menu, "Upload Folder", "folder-upload", "$('#dd-folder-upload').attr('hash','"+hash+"').click()").get());
-                cm.menu.append(new MenuItem(cm.menu, "New Folder", "folder-plus", "fm.dialog.newFolder.show('"+hash+"')", "Alt+N").get());
+                cm.menu.append(new MenuItem(cm.menu, "New Folder", "folder-plus", "fm.dialog.newFolder.show('"+name+"','"+hash+"')", "Alt+N").get());
                 cm.menu.append('<hr class="nav-vert-divider">');
                 cm.menu.append(new MenuItem(cm.menu, "Share", "share", "fm.dialog.share.show('"+hash+"')", ".").get());
                 cm.menu.append(new MenuItem(cm.menu, "Move", "folder-move", "fm.dialog.move.show('"+hash+"')", "m").get());
