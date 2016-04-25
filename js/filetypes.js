@@ -17,7 +17,7 @@ var extensions = {
     'graphic': [['gif', 'tiff', 'tif', 'bmp', 'png', 'tga'], 'Image', 'mdi-file-image'],
     'html': [['html', 'htm', 'dhtml', 'xhtml'], 'HTML', 'mdi-code-tags'],
     'illustrator': [['ai', 'ait'], 'Adobe Illustrator', 'mdi-file-outline'],
-    'image': [['jpg', 'jpeg'], 'Image'],
+    'image': [['jpg', 'jpeg'], 'Image', 'mdi-file-image'],
     'indesign': [['indd'], 'Adobe InDesign', 'mdi-file-outline'],
     'java': [['jar', 'java', 'class'], 'Java', 'mdi-code-tags'],
     'midi': [['mid', 'midi'], 'Midi', 'mdi-file-music'],

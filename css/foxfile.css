@@ -60,7 +60,13 @@ body {
 .float, .float-1 {box-shadow: 0 -1px 0 #e5e5e5,0 0 2px rgba(0,0,0,.12),0 2px 4px rgba(0,0,0,.24); }
 .float-2 {box-shadow: 0 0 4px rgba(0,0,0,.14),0 4px 8px rgba(0,0,0,.28); }
 .float-3 {box-shadow: 0 8px 17px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19); }
+.float-4 {box-shadow: 0 10px 20px rgba(0, 0, 0, 0.22), 0 14px 56px rgba(0, 0, 0, 0.25);}
+.float-5 {box-shadow: 0 15px 24px rgba(0, 0, 0, 0.22), 0 19px 76px rgba(0, 0, 0, 0.3);}
 .floatb::before, .floatb-1::before {position: absolute; content: ''; display: block; top: 0; bottom: 0; left: 0; right: 0; pointer-events: none; box-shadow: 0 -1px 0 #e5e5e5,0 0 2px rgba(0,0,0,.12),0 2px 4px rgba(0,0,0,.24); } .floatb-2::before {position: absolute; content: ''; display: block; top: 0; bottom: 0; left: 0; right: 0; pointer-events: none; box-shadow: 0 0 4px rgba(0,0,0,.14),0 4px 8px rgba(0,0,0,.28); } .floatb-3::before {position: absolute; content: ''; display: block; top: 0; bottom: 0; left: 0; right: 0; pointer-events: none; box-shadow: 0 8px 17px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19); }
+::selection {
+	background: #2DA4FE;
+	color: white;
+}
 img {
 	max-height: 100%;
 	max-width: 100%;
@@ -91,7 +97,7 @@ img {
 .logo-text {
 	display: inline-block;
 	float: left;
-	font-size: 24pt;
+	font-size: 34px;
 	height: 60px;
 	min-width: 20%;
 	line-height: 60px;
@@ -160,7 +166,7 @@ nav ul {
 }
 #nav-header .input-text-icon i {
     height: 36px;
-    font-size: 20pt;
+    font-size: 28px;
     line-height: 36px;
     color: rgba(255,255,255,.7);
     transition: all .15s ease-in-out;
@@ -172,7 +178,7 @@ nav ul {
 	position: relative;
 	height: 60px;
 	line-height: 60px;
-	font-size: 12pt;
+	font-size: 16px;
 	white-space: nowrap;
 	flex: none;
 }
@@ -196,7 +202,7 @@ nav ul {
 	transition: 0.1s all ease-in-out;
 	cursor: pointer;
 	padding: 0 10px;
-	margin-right: 10px;
+	margin: 0 10px;
 }
 #nav-header .user-menu:hover {
 	background: #D84315;
@@ -219,7 +225,6 @@ nav ul {
 	margin-left: 10px;
 }
 .nav-horiz .btn-more i {
-	/*font-size: 14pt;*/
 	height: 60px;
 	line-height: 60px;
 }
@@ -247,7 +252,7 @@ nav ul {
 .nav-right-active-cover {
 	position: absolute;
 	display: inline-block;
-	background: rgba(0,0,0,.54);
+	background: rgba(0,0,0,.38);
 	top: 0;
 	right: 0;
 	left: 0;
@@ -281,7 +286,7 @@ nav ul {
 	text-decoration: none;
 }
 .nav-vert li:hover {
-	background: rgba(0,0,0,.12);
+	background: rgba(0,0,0,.06);
 	box-shadow: 0 -1px 0 #e5e5e5,0 0 2px rgba(0,0,0,.12),0 2px 4px rgba(0,0,0,.24);
 }
 .nav-vert li:active {
@@ -325,7 +330,7 @@ nav ul {
 	width: calc(100% - 70px);
 	float: right;
 	padding: 20px 0;
-	font-size: 12pt;
+	font-size: 16px;
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
@@ -340,7 +345,7 @@ nav ul {
 }
 .nav-header-email {
 	color: rgba(0,0,0,.54);
-	font-size: 10pt;
+	font-size: 14px;
 }
 main {
 	height: calc(100% - 60px);
@@ -403,7 +408,7 @@ main {
 .bar header .filename {
 	font-weight: normal;
 	margin: 0;
-	font-size: 14pt;
+	font-size: 19px;
 	height: 60px;
 	line-height: 60px;
 	padding: 0 20px;
@@ -420,7 +425,7 @@ main {
 	display: block;
 	height: 40px;
 	padding: 10px 20px;
-	font-size: 12pt;
+	font-size: 16px;
 }
 .bar header .header-name,
 .bar header .header-email {
@@ -454,7 +459,7 @@ main {
 	height: 30px;
 	line-height: 30px;
 	width: 30px;
-	font-size: 16pt;
+	font-size: 21px;
 	text-align: center;
 	color: rgba(0,0,0,.38);
 	border-radius: 50%;
@@ -472,7 +477,7 @@ main {
 	line-height: 20px;
 	right: 0;
 	bottom: 0;
-	font-size: 9pt;
+	font-size: 12px;
 }
 .bar[type=folder]:last-of-type .file-det-header {
 	display: inline-block;
@@ -510,7 +515,7 @@ main {
 	/*cursor: default;*/
 	white-space: nowrap;
 	line-height: 40px;
-	font-size: 11pt;
+	font-size: 15px;
 	display: flex;
 	flex-direction: row;
 	-webkit-touch-callout: none;-webkit-user-select: none;-khtml-user-select: none;-moz-user-select: none;-ms-user-select: none;user-select: none;
@@ -556,13 +561,22 @@ main {
 	/*background: #e6e6e6;*/
 	background: rgba(0,0,0,.12);
 }
+.menubar-content[btype=folder]:after {
+	position: absolute;
+	/* right chevron */
+	content: '\203a';
+	font-size: 20px;
+	top: -2px;
+	color: rgba(0,0,0,.38);
+	right: 6px;
+}
 .menubar-content .nocheckbox-icon {
 	display: inline-block;
 	line-height: 40px;
 	height: 40px;
 	color: rgba(0,0,0,.54);
 	flex: none;
-	font-size: 16pt;
+	font-size: 21px;
 	/*padding: 0 14px;*/
 	padding: 0 10px;
 }
@@ -582,7 +596,7 @@ main {
 	display: none;
 }
 .menubar-content .file-multiselect-checkbox-container label {
-	font-size: 16pt;
+	font-size: 21px;
 	display: block;
 	height: 34px;
 	line-height: 34px;
@@ -616,11 +630,8 @@ main {
 }
 .menubar-content .file-info {
 	height: 40px;
-	font-size: 9pt;
-	/*float: right;*/
-	/*flex: none;*/
+	font-size: 12px;
 	align-self: flex-end;
-	/*color: rgba(0,0,0,.54);*/
 }
 .menubar-content .file-info-item {
 	display: inline-block;
@@ -629,20 +640,17 @@ main {
 	width: 100px;
 }
 .menubar-content #fileshared {
-	/*display: none;*/
 	visibility: hidden;
 }
 .menubar-content[shared=true] #fileshared {
-	/*display: inline-block;*/
 	visibility: visible;
 }
-.bar header .file-actions-header {
+/*.bar header .file-actions-header {
 	display: none;
-}
-.bar:last-of-type header .file-actions-header {
-	/*position: relative;*/
+}*/
+/*.bar:last-of-type header .file-actions-header,*/
+.bar header .file-actions-header {
 	display: inline-block;
-	/*right: 10px;*/
 	margin-right: 10px;
 	margin-top: 4px;
 	height: 60px;
@@ -653,7 +661,7 @@ main {
 .bar .file-actions-header span {
 	position: relative;
 	display: inline-block;
-	font-size: 16pt;
+	font-size: 21px;
 	color: rgba(0,0,0,.54);
 	height: 36px;
 	line-height: 36px;
@@ -711,7 +719,7 @@ main {
 	text-align: center;
 }
 .bar .folder-empty i {
-	font-size: 120pt;
+	font-size: 170px;
 	color: rgba(0,0,0,.12);
 	/*display: block;*/
 }
@@ -806,6 +814,50 @@ main {
 	/*text-align: center;*/
 	padding: 0 20px;
 }
+.bar-trash .file-controls i {
+	height: 40px;
+	line-height: 40px;
+	color: rgba(0,0,0,.54);
+	font-size: 20px;
+}
+.bar-trash .file-controls {
+	margin-right: 10px;
+	height: 40px;
+	line-height: 40px;
+	display: none;
+	transition: all 0.1s ease-in-out;
+}
+.bar-trash .menubar-content:hover .file-controls {
+	display: inline-block;
+}
+.bar-trash .file-controls span {
+	position: relative;
+	display: inline-block;
+	font-size: 21px;
+	color: rgba(0,0,0,.54);
+	height: 36px;
+	line-height: 36px;
+	width: 36px;
+	margin: 2px 0;
+	border-radius: 50%;
+	cursor: pointer;
+	transition: all .15s ease-in-out;
+}
+.bar-trash .file-controls i {
+	display: inline-block;
+	height: 36px;
+	width: 36px;
+	margin: 0;
+	padding: 0;
+	/*vertical-align: middle;*/
+	line-height: 36px;
+	text-align: center;
+	border-radius: 50%;
+	transition: all 0.1s ease-in-out
+}
+.bar-trash .file-controls i:hover {
+	box-shadow: 0 -1px 0 #e5e5e5,0 0 2px rgba(0,0,0,.12),0 2px 4px rgba(0,0,0,.24);
+}
 .progress {
 	display: none;
 }
@@ -861,6 +913,102 @@ main {
   animation-delay: 1.15s;
 }
 @-webkit-keyframes indeterminate {0% {left: -35%; right: 100%; } 60% {left: 100%; right: -90%; } 100% {left: 100%; right: -90%; } } @keyframes indeterminate {0% {left: -35%; right: 100%; } 60% {left: 100%; right: -90%; } 100% {left: 100%; right: -90%; } } @-webkit-keyframes indeterminate-short {0% {left: -200%; right: 100%; } 60% {left: 107%; right: -8%; } 100% {left: 107%; right: -8%; } } @keyframes indeterminate-short {0% {left: -200%; right: 100%; } 60% {left: 107%; right: -8%; } 100% {left: 107%; right: -8%; } }
+/* ---------------------------------------------------------------------------------------------------------
+=====================================   DIALOGS AND STUFF   ================================================
+----------------------------------------------------------------------------------------------------------*/
+.dialog-cover {
+	position: absolute;
+	background: rgba(0,0,0,.38);
+	height: 100%;
+	width: 100%;
+	top: 0;
+	left: 0;
+	z-index: 1999;
+	opacity: 0;
+	transition: all 0.15s ease-in-out;
+	pointer-events: none;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+	margin: 0;
+}
+.dialog-cover.active {
+	opacity: 1;
+	pointer-events: all;
+}
+.dialog {
+	/*position: absolute;*/
+	width: 300px;
+	height: auto;
+	/*margin-top: -100%;*/
+	/*height: 300px;*/
+	display: inline-block;
+	/*flex: 1 0 auto;*/
+	background: white;
+	border-radius: 4px;
+	box-shadow: 0 15px 24px rgba(0, 0, 0, 0.22), 0 19px 76px rgba(0, 0, 0, 0.3);
+}
+.dialog header {
+	height: 60px;
+	line-height: 60px;
+	padding: 0 20px;
+	font-weight: bold;
+	/*border-bottom: 1px solid rgba(0,0,0,.1);*/
+}
+.dialog .dialog-noheader-padding {
+	height: -10px;
+	display: inline-block;
+}
+.dialog article {
+	padding: 0 20px;
+	color: rgba(0,0,0,.54);
+}
+.dialog article input {
+	width: 100%;
+	height: 40px;
+	line-height: 40px;
+	padding: 0;
+	border: none;
+	border-bottom: 2px solid rgba(0,0,0,.12);
+	text-indent: 10px;
+	transition: all 0.1s ease-in-out;
+	font-size: 100%;
+	outline: 0 none;
+	margin-top: 10px;
+}
+.dialog header + article input {
+	margin: 0;
+}
+.dialog article input:focus {
+	border-bottom: 2px solid #FF5722;
+}
+.dialog footer {
+	height: 60px;
+	line-height: 60px;
+	padding: 0 20px;
+	text-align: right;
+}
+.dialog footer button {
+	position: relative;
+	height: 40px;
+	line-height: 40px;
+	background: transparent;
+	border: none;
+	outline: 0 none;
+	cursor: pointer;
+	color: #FF5722;
+	text-transform: uppercase;
+	border-radius: 4px;
+	transition: all 0.1s ease-in-out;
+}
+.dialog footer button:hover {
+	box-shadow: 0 -1px 0 #e5e5e5,0 0 2px rgba(0,0,0,.12),0 2px 4px rgba(0,0,0,.24);	
+}
+.dialog footer button + button {
+	margin-left: 10px;
+}
 /*
 8888888b.  8888888b.  
 888  "Y88b 888  "Y88b 
@@ -892,7 +1040,7 @@ main {
 	/*padding: 0 10px;*/
 	border-radius: 4px;
 	margin: auto 0;
-	font-size: 10pt;
+	font-size: 14px;
 	color: rgba(0,0,0,.54);
 	text-overflow: ellipsis;
 	word-wrap: break-word;
@@ -923,17 +1071,27 @@ YM      6  M   YP   MM
 	top: 10px;
 	left: 10px;
 	z-index: 99999999;
+	overflow: hidden;
 	box-shadow: 0 -1px 0 #e5e5e5,0 0 2px rgba(0,0,0,.12),0 2px 4px rgba(0,0,0,.24);
 }
 .clickmenu ul {
 	padding: 0;
+	color: rgba(0,0,0,.87);
+	margin: 6px 0;
+}
+.clickmenu li {
+	height: 30px;
+	line-height: 30px;
 }
 .clickmenu li span {
 	position: relative;
-	display: block;
-	padding: 10px 20px;
+	display: inline-block;
+	/*padding: 0 10px;*/
+	height: 30px;
+	line-height: 30px;
 	color: rgba(0,0,0,.87);
 	text-decoration: none;
+	font-size: 15px;
 }
 .clickmenu li.divider {
 	height: 2px;
@@ -945,8 +1103,20 @@ YM      6  M   YP   MM
 .clickmenu li i {
 	height: 24px;
 	width: 24px;
+	line-height: 24px;
 	padding: 0;
 	vertical-align: middle;
-	margin-top: -3px;
-	margin-right: 12px;
+	text-align: center;
+	margin: 0 6px;
+	margin-top: -1px;
+	font-size: 20px;
+	color: rgba(0,0,0,.54);
+}
+.clickmenu li .kbs-hint {
+	color: rgba(0,0,0,.38);
+	font-size: 12px;
+	height: 30px;
+	line-height: 30px;
+	float: right;
+	margin: 0 10px 0 0;
 }

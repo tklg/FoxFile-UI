@@ -56,6 +56,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
                 document.title = 'Trash - FoxFile';
                 $('.pages #trash').addClass('active').css('z-index', 401).siblings().css('z-index', 400);
                 $('.pages #trash').siblings().removeClass('active');
+                fm.loadTrash();
                 //console.log("Switched to page trash");
             });
             this.router.on('route:openTransfers', function(sort) {
@@ -317,7 +318,8 @@ header3 font
             hashTree.pop();
         } else {
             console.log("removing all after ("+fm.getLast().getHash()+"), inclusive");
-            for (i = _.indexOf(fileTree, barItem); i < fileTree.length; i++) {
+            var ftl = fileTree.length - 1;
+            for (i = _.indexOf(fileTree, barItem); i < ftl; i++) {
                 $('.file-manager .bar[hash='+fileTree.pop().getHash()+']').remove();
                 hashTree.pop();
             }
@@ -367,6 +369,430 @@ header3 font
             });
         }
     }
+    fm.dialog = {
+        dialog: null,
+        dialogActive: false,
+        Dialog: function(id, header, content, footer) {
+            this.id = id;
+            this.header = (header != null) ? '<header>'+header+'</header>' : '';
+            this.content = (content != null) ? content : '';
+            this.footer = footer || new DialogFooter();
+            this.show = function() {
+                var template = _.template($('#template-dialog').html());
+                $('body').append(template(this));
+                var _this = this;
+                setTimeout(function() {
+                    $('#'+_this.id+'.dialog-cover').addClass('active');
+                    $('#'+_this.id+'.dialog-cover input').focus().select();
+                }, 150);
+            }
+            this.hide = function() {
+                $('#'+this.id+'.dialog-cover').addClass('removing').removeClass('active');
+                var _this = this;
+                setTimeout(function() {
+                    $('#'+_this.id+'.dialog-cover').remove();
+                }, 1000);
+            }
+        },
+        DialogFooterOption: function(name, type, fn) {
+            this.name = name;
+            this.type = type;
+            this.fn = fn;
+        },
+        DialogFooter: function() {
+            this.opts = [];
+            this.addOpt = function(opt) {
+                this.opts.push(opt);
+                return this;
+            }
+            this.opts2html = function() {
+                var template = _.template($('#template-dialog-footer-opt').html());
+                var res = '';
+                for (i = 0; i < this.opts.length; i++) {
+                    res += template(this.opts[i]);
+                }
+                return res;
+            }
+            this.html = function() {
+                return this.opts2html();
+            }
+        },
+        hideCurrentlyActive: function() {
+            this.dialog.hide();
+        },
+        rename: {
+            id: '',
+            show: function(file, id) {
+                this.id = id;
+                var footer = new fm.dialog.DialogFooter();
+                footer.addOpt(new fm.dialog.DialogFooterOption('Cancel', 'default', 'fm.dialog.rename.hide()'));
+                footer.addOpt(new fm.dialog.DialogFooterOption('Rename', 'default', 'fm.rename(\''+this.id+'\', $(\'#'+this.id+' .dialog input\').val())'));
+                fm.dialog.dialog = new fm.dialog.Dialog(
+                    id,
+                    null,
+                    '<input type="text" id="'+id+'" placeholder="Enter a name" value="'+file+'" autofocus />',
+                    footer.html()
+                );
+                fm.dialog.dialog.show();
+                cm.destroy();
+                fm.dialog.dialogActive = true;
+            },
+            hide: function() {
+                fm.dialog.dialog.hide();
+                fm.dialog.dialogActive = false;
+            }
+        },
+        delete: {
+            id: '',
+            show: function(file, id) {
+                this.id = id;
+                var footer = new fm.dialog.DialogFooter();
+                footer.addOpt(new fm.dialog.DialogFooterOption('Cancel', 'default', 'fm.dialog.delete.hide()'));
+                footer.addOpt(new fm.dialog.DialogFooterOption('Delete', 'default', 'fm.delete(\''+this.id+'\')'));
+                fm.dialog.dialog = new fm.dialog.Dialog(
+                    this.id,
+                    null,
+                    '<p>Permanently delete <em>' + file + '</em> ?</p>',
+                    footer.html()
+                );
+                fm.dialog.dialog.show();
+                cm.destroy();
+                fm.dialog.dialogActive = true;
+            },
+            hide: function() {
+                fm.dialog.dialog.hide();
+                fm.dialog.dialogActive = false;
+            }
+        },
+        trash: {
+            id: '',
+            show: function(file, id) {
+                this.id = id;
+                var footer = new fm.dialog.DialogFooter();
+                footer.addOpt(new fm.dialog.DialogFooterOption('Cancel', 'default', 'fm.dialog.trash.hide()'));
+                footer.addOpt(new fm.dialog.DialogFooterOption('Delete', 'default', 'fm.trash(\''+this.id+'\')'));
+                fm.dialog.dialog = new fm.dialog.Dialog(
+                    this.id,
+                    null,
+                    '<p>Move <em>' + file + '</em> to the trash?</p>',
+                    footer.html()
+                );
+                fm.dialog.dialog.show();
+                cm.destroy();
+                fm.dialog.dialogActive = true;
+            },
+            hide: function() {
+                fm.dialog.dialog.hide();
+                fm.dialog.dialogActive = false;
+            }
+        },
+        newFolder: {
+            id: '',
+            show: function(file, id) {
+                this.id = id;
+                var footer = new fm.dialog.DialogFooter();
+                footer.addOpt(new fm.dialog.DialogFooterOption('Cancel', 'default', 'fm.dialog.newFolder.hide()'));
+                footer.addOpt(new fm.dialog.DialogFooterOption('Create', 'default', 'fm.newFolder($(\'#'+this.id+' .dialog input\').val(),\''+this.id+'\')'));
+                fm.dialog.dialog = new fm.dialog.Dialog(
+                    this.id,
+                    'Enter a name for the folder',
+                    '<input type="text" id="'+id+'" placeholder="Folder name" value="" autofocus />',
+                    footer.html()
+                );
+                fm.dialog.dialog.show();
+                cm.destroy();
+                fm.dialog.dialogActive = true;
+            },
+            hide: function() {
+                fm.dialog.dialog.hide();
+                fm.dialog.dialogActive = false;
+            }
+        },
+        move: {
+            show: function(file, id) {
+                //d.info(file+'<br>'+id);
+                $('.modal-move').addClass('modal-active');
+                if (multiSelect.numSelected < 2) {
+                    $('.modal-move .modal-header #modal-header-name').text(file);
+                } else {
+                    $('.modal-move .modal-header #modal-header-name').text(file + " and " + (multiSelect.numSelected - 1) + " others");
+                }
+                $('.modal-move #modal-file-id-move').val(id);
+                //$('.modal-move #modal-bar-id-move').val(bar);
+                $('.modal-move .minibar-file-id').attr({
+                    'filehash': id,
+                    'filename': file
+                });
+                $('.modal-move').fadeIn();
+                $('.modal-move .modal-content').css({
+                    'height':  parseInt($('.modal-move .modal').css('height')) - (parseInt($('.modal-move .modal-header').css('height')) + parseInt($('.modal-move .modal-footer').css('height'))) - 22 + 'px'
+                });
+                if (minibar.open(userRoot, file, id)) {
+                    //
+                }
+                modalActive = true;
+            },
+            hide: function() {
+                $('.modal-move').fadeOut();
+                minibar.reset();
+                modalActive = false;
+            }
+        },
+        share: {
+            show: function(file, id) {
+
+            }, 
+            hide: function() {
+
+            }
+        }
+    }
+    fm.snackbar = {
+
+    }
+    fm.multiSelect = {
+        selected: [],
+        dedup: function() {
+            this.selected = _.uniq(this.selected);
+        },
+        add: function(hash) {
+            this.selected.push(hash);
+        },
+        remove: function(hash) {
+            this.selected = _.without(this.selected, hash);
+        },
+        clear: function() {
+            this.selected = [];
+        }
+    }
+    fm.refresh = function(hash) {
+        console.log("refreshing bar " + hash);
+        fm.getFromHash(hash).refresh();
+        cm.destroy();
+    }
+    fm.refreshAll = function() {
+        console.log("refreshing all open bars");
+        for (i = 0; i < fileTree.length; i++) {
+            fileTree[i].refresh();
+        }
+    }
+    fm.rename = function(hash, name) {
+        var parent = $('#file-'+hash+'.menubar-content').attr('parent');
+        $.ajax({
+            type: "POST",
+            url: "./api/files/rename",
+            data: {
+                hash: hash,
+                name: name
+            },
+            success: function(result) {
+                var json = JSON.parse(result);
+                fm.dialog.hideCurrentlyActive();
+                fm.refresh(parent);
+            },
+            error: function(request, error) {
+                
+            }
+        });
+    }
+    fm.delete = function(hash) {
+        if (fm.multiSelect.numSelected > 1) {
+            hash = fm.multiSelect.selected;
+        } else {
+            hash = [hash];
+        }
+        var hashes = _.uniq(hash);
+        var hashlist = hashes.toString();
+        //files.unshare(file, id);
+        var parent = $('#file-'+hashes[0]+'.menubar-content').attr('parent');
+        $.ajax({
+            type: "POST",
+            url: "./api/files/delete",
+            data: {
+                hashlist: hashlist
+            },
+            success: function(result) {
+                fm.dialog.hideCurrentlyActive();
+                fm.loadTrash();
+                fm.multiSelect.clear();
+            },
+            error: function(request, error) {
+                    
+            }
+        });
+    }
+    fm.trash = function(hash) {
+        if (fm.multiSelect.numSelected > 1) {
+            hash = fm.multiSelect.selected;
+        } else {
+            hash = [hash];
+        }
+        var hashes = _.uniq(hash);
+        var hashlist = hashes.toString();
+        //files.unshare(file, id);
+        var parent = $('#file-'+hashes[0]+'.menubar-content').attr('parent');
+        $.ajax({
+            type: "POST",
+            url: "./api/files/trash",
+            data: {
+                hashlist: hashlist
+            },
+            success: function(result) {
+                var json = JSON.parse(result);
+                fm.dialog.hideCurrentlyActive();
+                fm.refresh(parent);
+                fm.multiSelect.clear();
+            },
+            error: function(request, error) {
+                    
+            }
+        });
+    }
+    fm.newFolder = function(name, parent) {
+        if (name == "") {
+            console.warn("Folder name cannot be blank.");
+        } else {
+            $.ajax({
+                url: './api/files/new_folder',
+                type: 'POST',
+                data: {
+                    name: name,
+                    parent: parent
+                },
+                success: function(result, status, xhr) {
+                    var json = JSON.parse(result);
+                    fm.dialog.hideCurrentlyActive();
+                    fm.refresh(parent);
+                    fm.multiSelect.clear();
+                },
+                error: function(xhr, status, e) {
+
+                }
+            });
+        }
+    }
+    fm.move = function(file, target) { //handles moving both single and multiple files
+        if (multiSelect.numSelected < 2) {
+            if (!_.isArray(file)) { //if its a single thing
+                var tmp = [file];
+                file = tmp;
+            }
+        } else {
+            file = multiSelect.selected;
+        }
+        var hashes = _.uniq(file);
+        var filesList = hashes.toString();
+        //d.info("moving " + filesList + " to " + target);
+        $.post('dbquery.php',
+        {
+            move: 'move',
+            file_multi: filesList,
+            file_target: target
+        },
+        function(result) {
+            if (result == '') {
+                //worked
+                bar.refreshAll();
+                multiSelect.reset();
+                files.moveGUI.hide();
+            } else {
+                d.error(result);
+            }
+            //files.refresh(bar);
+        });
+    }
+    fm.share = function(file, id) {
+        $.post('dbquery.php',
+        {
+            modifyshared: 'yes',
+            action: 'add',
+            file: id
+        },
+        function(result) {
+            if (result.includes('success')) {
+                //d.info(result);
+                var urla = window.location.href.toString().split('/');
+                var url = '';
+                for (i = 0; i < urla.length - 1; i++) {
+                    url += urla[i] + '/';
+                }
+                //var key = location.hostname + '/foxfile/share?id=' + result.split("|-=-|")[1];
+                var key = url + 'share?id=' + result.split("|-=-|")[1];
+                $('.modal-share #modal-file-name-share').val(key).select();
+
+                if (!result.includes("no new"))
+                    bar.refreshAll();
+                //$('.modal-share #modal-file-name-share').select();
+            } else {
+                d.error(result);
+            }
+        });
+    },
+    fm.unshare = function(file, id) {
+        //d.warning(file + " " + id);
+        $.post('dbquery.php',
+        {
+            modifyshared: 'yes',
+            action: 'remove',
+            file: id
+        },
+        function(result) {
+            if (result.includes('success')) {
+                $('.modal-share #modal-file-name-share').val("Link removed");
+                //d.info(result);
+                d.info("Unshared");
+                bar.refreshAll();
+                files.shareGUI.hide();
+            } else {
+                d.error(result);
+            }
+        });
+    }
+    fm.loadTrash = function() {
+        $('.pages .bar-trash').addClass('loading');
+        $.ajax({
+            type: "POST",
+            url: "./api/files/list_trash",
+            data: {
+                offset: 0,
+                limit: 30
+            },
+            success: function(result) {
+                $('.pages .bar-trash').removeClass('loading');
+                var json = JSON.parse(result);
+                    // console.log("fm.open("+fHash+") [2] Got response from server: ");
+                    // console.log(json);
+                var hasMore = json['more'];
+                var resultsRemaining = json['remaining'];
+                var res = json['results'];
+                var template = _.template($('#fm-file-trash').html());
+                $('.pages .bar-trash .file-list').empty();
+                $.each(res, function(i) {
+                    // name, parent, icon, hash, type, btype, size, lastmod, shared, public
+                    var f = new File(res[i].name,
+                                        res[i].parent,
+                                        res[i].icon,
+                                        res[i].hash,
+                                        res[i].type,
+                                        res[i].is_folder == '1' ? "folder" : "file",
+                                        res[i].size,
+                                        res[i].lastmod,
+                                        res[i].is_shared,
+                                        res[i].is_public);
+                    $('.pages .bar-trash .file-list').append(template(f));
+                });
+            },
+            error: function(request, error) {
+                //console.error(request, error);
+            }
+        });
+    }
+    fm.restore = function(hash) {
+
+    }
+    fm.loadShared = function() {
+
+    }
     var FolderBar = function(name, hash, parent) {
         this.dd;
         this.name = name;
@@ -381,7 +807,6 @@ header3 font
         this.getFiles = function() {return this.files;}
         this.setFiles = function(fileGroup) {this.files = fileGroup;}
         this.refresh = function() {
-            //item = new FolderBar(name, hash, parent);
             var _this = this;
             $.ajax({
                 type: "POST",
@@ -576,11 +1001,18 @@ header3 font
             //checkbox
         } else {
             var dest = $(this).attr('hash');
+            $(this).addClass('active').siblings().removeClass('active');
             fm.open(dest);
         }
     });
     $(document).on('click', '.file-manager .btn-back', function(e) {
         fm.back();
+    });
+    $(document).on('click', '.dialog', function(e) {
+        e.stopPropagation();
+    });
+    $(document).on('click', '.dialog-cover', function(e) {
+        fm.dialog.hideCurrentlyActive();
     });
     $(document).on("keydown", function(e) {
         if (e.which == 16) {
@@ -619,14 +1051,16 @@ header3 font
     dd.init = function() {
         console.info("Initialize dragdrop");
         droppedOn = foxfile_root;
-       /* $('body').append('<input type="file" class="dd-input-hidden" id="dd-file-upload" multiple="" />')
-                 .on('change', function(e) {
-                    startFileDrop(e, this);
-                 });
-        $('body').append('<input type="file" class="dd-input-hidden" id="dd-folder-upload" multiple webkitdirectory="" directory="" />')
-                 .on('change', function(e) {
-                    startFolderDrop(e, this);
-                 });*/
+        $('body').append('<input type="file" class="dd-input-hidden" id="dd-file-upload" multiple="" />');
+        $('#dd-file-upload').on('change', function(e) {
+            cm.destroy();
+            fileDragDrop(e.originalEvent, this);
+        });
+        $('body').append('<input type="file" class="dd-input-hidden" id="dd-folder-upload" webkitdirectory directory multiple />');
+        $('#dd-folder-upload').on('change', function(e) {
+            cm.destroy();
+            fileDragDrop(e.originalEvent, this);
+        });
         queue = new TreeQueue();
         linearQueue = new LinearQueue();
     }
@@ -658,7 +1092,7 @@ header3 font
     function fileDragHover(e, elem) {
         e.stopPropagation();
         e.preventDefault();
-        window.clearTimeout(timer);
+        //window.clearTimeout(timer);
         var hash = $(elem).attr('hash');
         var barItem;
         for (i = 0; i < fm.getHashTree().length; i++) {
@@ -666,6 +1100,7 @@ header3 font
                 barItem = fm.getFileTree()[i];
         }
         console.log("Hover entered bar " + barItem.getHash());
+        $('#bar-'+hash).addClass('hovering');
         if (!internal) { // uploading a new file or folder  
             console.log('new');
         } else { // moving a file or folder
@@ -675,7 +1110,7 @@ header3 font
     function fileDragLeave(e, elem) {
         e.stopPropagation();
         e.preventDefault();
-        timer = window.setTimeout(function() {
+        //timer = window.setTimeout(function() {
             var hash = $(elem).attr('hash');
             var barItem;
             for (i = 0; i < fm.getHashTree().length; i++) {
@@ -683,10 +1118,11 @@ header3 font
                     barItem = fm.getFileTree()[i];
             }
             console.log("Hover left bar " + barItem.getHash());
-        }, 25);
+            $('#bar-'+barItem.getHash()).removeClass('hovering');
+        //}, 25);
     }
     function fileDragDrop(e, elem) {
-        console.log("Dropped a file on " + $(elem).attr('id'));
+        console.log("Dropped a file on " + $(elem).attr('hash'));
         e.stopPropagation();
         e.preventDefault();
         var hash = $(elem).attr('hash');
@@ -695,55 +1131,84 @@ header3 font
             if (fm.getHashTree()[i] == hash) 
                 parent = fm.getFileTree()[i];
         }
+        $('#bar-'+parent.getHash()).removeClass('hovering');
         var nextAvailablePositionInQueue = queue.getNextPos();
         var tempFolder = new Folder(nextAvailablePositionInQueue, parent.getName(), parent.getHash(), parent.getParent(), true);
         tempFolder.hash = parent.getHash();
         //console.log("next available tree queue position: " + nextAvailablePositionInQueue);
         queue.add(tempFolder);
+ 
+        if (elem instanceof HTMLInputElement) {
 
-        // console.log(e.dataTransfer);
-        var dataTransfer = e.dataTransfer;
-        var files = e.target.files || (dataTransfer && dataTransfer.files);
-        if (!files || files.length == 0) {
-            return false;
-        }
-        if (ua.ua == 'chrome' 
-                && e.dataTransfer
-                && e.dataTransfer.items
-                && e.dataTransfer.items.length > 0 && e.dataTransfer.items[0].webkitGetAsEntry) {
-            var items = e.dataTransfer.items;
-            for (var i = 0; i < items.length; i++) {
-                if (items[i].webkitGetAsEntry) {
-                    var item = items[i].webkitGetAsEntry();
-                    if (item) {
-                        traverseFileTree(nextAvailablePositionInQueue, item, tempFolder);
+            var files = e.target.files;
+            console.log(files);
+            if (!files || files.length == 0) {
+                console.log('input was empty');
+                return false;
+            }
+
+            if (ua.ua == 'chrome') {
+                console.log('starting tree traversal');
+                for (var i = 0; i < files.length; i++) {
+                    if (files[i].webkitGetAsEntry) {
+                        var item = files[i].webkitGetAsEntry();
+                        if (item) {
+                            traverseFileTree(nextAvailablePositionInQueue, item, tempFolder);
+                        }
                     }
                 }
+            } else if (ua.ua == 'firefox') {
+
+            } else if (ua.ua == 'safari') {
+
             }
-        } else if (ua.ua == 'firefox' && e.dataTransfer) {
-            try {
-                for (var i = 0, m = e.dataTransfer.mozItemCount; i < m; ++i) {
-                    var file = e.dataTransfer.mozGetDataAt("application/x-moz-file", i);
-                    if (file instanceof Ci.nsIFile) {
-                        traverseFileTree(nextAvailablePositionInQueue, new mozDirtyGetAsEntry(file), tempFolder);
-                    }
-                    else {
-                        console.log('dd.fileDragDrop: Not a nsIFile', file);
+
+
+        } else {
+            // console.log(e.dataTransfer);
+            var dataTransfer = e.dataTransfer;
+            var files = e.target.files || (dataTransfer && dataTransfer.files);
+            if (!files || files.length == 0) {
+                return false;
+            }
+            if (ua.ua == 'chrome' 
+                    && e.dataTransfer
+                    && e.dataTransfer.items
+                    && e.dataTransfer.items.length > 0 && e.dataTransfer.items[0].webkitGetAsEntry) {
+                var items = e.dataTransfer.items;
+                for (var i = 0; i < items.length; i++) {
+                    if (items[i].webkitGetAsEntry) {
+                        var item = items[i].webkitGetAsEntry();
+                        if (item) {
+                            traverseFileTree(nextAvailablePositionInQueue, item, tempFolder);
+                        }
                     }
                 }
-            }
-            catch (e) {
-                console.warn(e.getMessage());
-            }
-        } else if (ua.ua == 'safari' && e.dataTransfer ) {
-            // same as for chrome, but replace webkitGetAsEntry with getAsEntry
-            // I think
-            var items = e.dataTransfer.items;
-            for (var i = 0; i < items.length; i++) {
-                if (items[i].getAsEntry) {
-                    var item = items[i].getAsEntry();
-                    if (item) {
-                        traverseFileTree(nextAvailablePositionInQueue, item, tempFolder);
+            } else if (ua.ua == 'firefox' && e.dataTransfer) {
+                try {
+                    for (var i = 0, m = e.dataTransfer.mozItemCount; i < m; ++i) {
+                        var file = e.dataTransfer.mozGetDataAt("application/x-moz-file", i);
+                        if (file instanceof Ci.nsIFile) {
+                            traverseFileTree(nextAvailablePositionInQueue, new mozDirtyGetAsEntry(file), tempFolder);
+                        }
+                        else {
+                            console.log('dd.fileDragDrop: Not a nsIFile', file);
+                        }
+                    }
+                }
+                catch (e) {
+                    console.warn(e.getMessage());
+                }
+            } else if (ua.ua == 'safari' && e.dataTransfer ) {
+                // same as for chrome, but replace webkitGetAsEntry with getAsEntry
+                // I think
+                var items = e.dataTransfer.items;
+                for (var i = 0; i < items.length; i++) {
+                    if (items[i].getAsEntry) {
+                        var item = items[i].getAsEntry();
+                        if (item) {
+                            traverseFileTree(nextAvailablePositionInQueue, item, tempFolder);
+                        }
                     }
                 }
             }
@@ -789,10 +1254,6 @@ header3 font
         this.hash = null;
         this.children = [];
         this.state = 0;
-        //this.uploaded = [];
-        this.getParentAndUpload = function() {
-            this.create();
-        }
         this.getSize = function() {
            return null;
         }
@@ -1013,7 +1474,7 @@ header3 font
                 xhr: function() {
                     var xhr = $.ajaxSettings.xhr();
                     //var xhr = new window.XMLHttpRequest();
-                    var elem = $('#transfers .file-list #tfile-'+_.id+' .file-upload-progress-bar');
+                    var elem = $('#transfers .file-list #tfile-'+_this.id+' .file-upload-progress-bar');
                     if(xhr.upload){
                         xhr.upload.addEventListener('progress', function(e) {
                             if(e.lengthComputable) {
@@ -1143,6 +1604,7 @@ header3 font
         this.start = function(fake) {
             if (this.trees.length == 0) {
                 console.log("%cFinishing %cupload of LinearQueue","color:red","color:gray");
+                fm.refreshAll();
             } else {
                 if (fake) {
                     console.log("%cStarting %cfake upload of LinearQueue","color:green","color:gray");
@@ -1181,104 +1643,140 @@ YM      6  M   YP   MM
 */
 
 (function(cm, $, undefined) {
-    var menu = null;
+    this.menu = null;
     function ClickMenu(x, y) {
         this.x = x;
         this.y = y;
         this.width = 200;
         this.itemsCount = 0;
         this.create = function() {
-            if (menu != null) menu.destroy();
+            if (cm.menu != null) cm.destroy();
             var menuTemplate = _.template($('#contextmenu').html());
             $('body').append(menuTemplate());
             $('.clickmenu').css({
-                'top': this.y,
-                'left': this.x
+                'top': this.y - 40,
+                'left': this.x - 40
             });
         }
         this.destroy = function() {
             $('.clickmenu').remove();
-            menu = null;
+            cm.menu = null;
         }
         this.append = function(item) {
             $('.clickmenu ul').append(item);
         }
-        this.appendDivider = function() {
-            $('.clickmenu ul').append('<li class=\"divider\"></li>');
-        }
         this.create();
     }
-    function MenuItem(parent, content, icon, fn) {
+    function MenuItem(parent, content, icon, fn, hint) {
         this.itemTemplate = _.template($('#menuitem').html());
+        hint = hint || '';
         this.get = function() {
-            return this.itemTemplate({id: parent.itemsCount++, content: content, icon: icon, fn: fn});
+            return this.itemTemplate({id: parent.itemsCount++, content: content, icon: icon, fn: fn, kbsHint: hint});
         }
     }
-    $(document).on("contextmenu", ".file-list:not(#bar-0 .file-list)", function(e) {
+    cm.destroy = function() {
+        if (this.menu != null) {
+            this.menu.destroy();
+        }
+    }
+    $(document).on("contextmenu", ".file-manager .file-list:not(#bar-0 .file-list)", function(e) {
         e.stopPropagation();
         if (!fm.btnStatus.shift) {
             var parent = $(this).parent();
             e.preventDefault();
             //e.stopPropagation();
-            menu = new ClickMenu(e.pageX, e.pageY);
-            if (parent.attr('hash') == foxfile_root) {
-                menu.append(new MenuItem(menu, "Upload", "", "fn2").get());
-                menu.append(new MenuItem(menu, "New Folder", "", "fn2").get());
-                menu.append('<hr class="nav-vert-divider">');
-                menu.append(new MenuItem(menu, "Refresh", "", "fn2").get());
+            cm.destroy();
+            cm.menu = new ClickMenu(e.pageX, e.pageY);
+            var menu = cm.menu;
+            var hash = parent.attr('hash');
+            var name = parent.attr('name');
+            if (hash == foxfile_root) {
+                cm.menu.append(new MenuItem(cm.menu, "Upload File", "upload", "$('#dd-file-upload').attr('hash','"+hash+"').click()").get());
+                cm.menu.append(new MenuItem(cm.menu, "Upload Folder", "folder-upload", "$('#dd-folder-upload').attr('hash','"+hash+"').click()").get());
+                cm.menu.append(new MenuItem(cm.menu, "New Folder", "folder-plus", "fm.dialog.newFolder.show('"+name+"','"+hash+"')", "Alt+N").get());
+                cm.menu.append('<hr class="nav-vert-divider">');
+                cm.menu.append(new MenuItem(cm.menu, "Refresh", "refresh", "fm.refresh('"+hash+"')", "Alt+R").get());
             } else {
-                menu.append(new MenuItem(menu, "Delete", "", "fn2").get());
-                menu.append(new MenuItem(menu, "Rename", "", "fn2").get());
-                menu.append(new MenuItem(menu, "Upload", "", "fn2").get());
-                menu.append(new MenuItem(menu, "Download", "", "fn2").get());
-                menu.append(new MenuItem(menu, "New Folder", "", "fn2").get());
-                menu.append('<hr class="nav-vert-divider">');
-                menu.append(new MenuItem(menu, "Share", "", "fn2").get());
-                menu.append(new MenuItem(menu, "Move", "", "fn2").get());
-                menu.append(new MenuItem(menu, "Refresh", "", "fn2").get());
+                cm.menu.append(new MenuItem(cm.menu, "Rename", "rename-box", "fm.dialog.rename.show('"+name+"','"+hash+"')", "r or f2").get());
+                cm.menu.append(new MenuItem(cm.menu, "Delete", "delete", "fm.dialog.trash.show('"+name+"','"+hash+"')", "Del").get());
+                cm.menu.append(new MenuItem(cm.menu, "Download", "download", "fm.download('"+hash+"')").get());
+                cm.menu.append(new MenuItem(cm.menu, "Upload File", "upload", "$('#dd-file-upload').click()").get());
+                cm.menu.append(new MenuItem(cm.menu, "Upload Folder", "folder-upload", "$('#dd-folder-upload').click()").get());
+                cm.menu.append(new MenuItem(cm.menu, "New Folder", "folder-plus", "fm.dialog.newFolder.show('"+name+"','"+hash+"')", "Alt+N").get());
+                cm.menu.append('<hr class="nav-vert-divider">');
+                cm.menu.append(new MenuItem(cm.menu, "Share", "share", "fm.dialog.share.show('"+hash+"')", ".").get());
+                cm.menu.append(new MenuItem(cm.menu, "Move", "folder-move", "fm.dialog.move.show('"+hash+"')", "m").get());
+                cm.menu.append(new MenuItem(cm.menu, "Refresh", "refresh", "fm.refresh('"+hash+"')", "Alt+R").get());
             }
         }
     });
-    $(document).on("contextmenu", ".menubar-content:not(.btn-ctrlbar)", function(e) {
+    $(document).on("contextmenu", ".file-manager .menubar-content:not(.btn-ctrlbar)", function(e) {
         e.stopPropagation();
         if (!fm.btnStatus.shift) {
             var self = $(this);
+            var hash = self.attr('hash');
+            var parentHash = self.attr('parent');
+            var name = self.attr('name');
+            cm.destroy();
+            cm.menu = new ClickMenu(e.pageX, e.pageY);
+            var menu = cm.menu;
             if (self.attr('btype') == 'folder') {
                 e.preventDefault();
                 //e.stopPropagation();
-                menu = new ClickMenu(e.pageX, e.pageY);
-                menu.append(new MenuItem(menu, "Delete", "", "fn2").get());
-                menu.append(new MenuItem(menu, "Rename", "", "fn2").get());
-                menu.append(new MenuItem(menu, "Upload", "", "fn2").get());
-                menu.append(new MenuItem(menu, "Download", "", "fn2").get());
-                menu.append(new MenuItem(menu, "New Folder", "", "fn2").get());
-                menu.append('<hr class="nav-vert-divider">');
-                menu.append(new MenuItem(menu, "Share", "", "fn2").get());
-                menu.append(new MenuItem(menu, "Move", "", "fn2").get());
-                menu.append(new MenuItem(menu, "Refresh", "", "fn2").get());
+                cm.menu.append(new MenuItem(cm.menu, "Rename", "rename-box", "fm.dialog.rename.show('"+name+"','"+hash+"')", "r or f2").get());
+                cm.menu.append(new MenuItem(cm.menu, "Delete", "delete", "fm.dialog.trash.show('"+name+"','"+hash+"')", "Del").get());
+                cm.menu.append(new MenuItem(cm.menu, "Download", "download", "fm.download('"+hash+"')").get());
+                cm.menu.append(new MenuItem(cm.menu, "Upload File", "upload", "$('#dd-file-upload').attr('hash','"+hash+"').click()").get());
+                cm.menu.append(new MenuItem(cm.menu, "Upload Folder", "folder-upload", "$('#dd-folder-upload').attr('hash','"+hash+"').click()").get());
+                cm.menu.append(new MenuItem(cm.menu, "New Folder", "folder-plus", "fm.dialog.newFolder.show('"+name+"','"+hash+"')", "Alt+N").get());
+                cm.menu.append('<hr class="nav-vert-divider">');
+                cm.menu.append(new MenuItem(cm.menu, "Share", "share", "fm.dialog.share.show('"+hash+"')", ".").get());
+                cm.menu.append(new MenuItem(cm.menu, "Move", "folder-move", "fm.dialog.move.show('"+hash+"')", "m").get());
+                cm.menu.append(new MenuItem(cm.menu, "Refresh", "refresh", "fm.refresh('"+parentHash+"')", "Alt+R").get());
             } else if (self.attr('btype') == 'file') {
                 e.preventDefault();
                 //e.stopPropagation();
-                menu = new ClickMenu(e.pageX, e.pageY);
-                menu.append(new MenuItem(menu, "Delete", "", "fn2").get());
-                menu.append(new MenuItem(menu, "Rename", "", "fn2").get());
-                menu.append(new MenuItem(menu, "Download", "", "fn2").get());
-                menu.append('<hr class="nav-vert-divider">');
-                menu.append(new MenuItem(menu, "Share", "", "fn2").get());
-                menu.append(new MenuItem(menu, "Move", "", "fn2").get());
-                menu.append(new MenuItem(menu, "Refresh", "", "fn2").get());
+                cm.menu = new ClickMenu(e.pageX, e.pageY);
+                cm.menu.append(new MenuItem(cm.menu, "Rename", "rename-box", "fm.dialog.rename.show('"+name+"','"+hash+"')", "r or f2").get());
+                cm.menu.append(new MenuItem(cm.menu, "Delete", "delete", "fm.dialog.trash.show('"+name+"','"+hash+"')", "Del").get());
+                cm.menu.append(new MenuItem(cm.menu, "Download", "download", "fm.download('"+hash+"')").get());
+                cm.menu.append('<hr class="nav-vert-divider">');
+                cm.menu.append(new MenuItem(cm.menu, "Share", "share", "fm.dialog.share.show('"+hash+"')", ".").get());
+                cm.menu.append(new MenuItem(cm.menu, "Move", "folder-move", "fm.dialog.move.show('"+hash+"')", "m").get());
+                cm.menu.append(new MenuItem(cm.menu, "Refresh", "refresh", "fm.refresh('"+parentHash+"')", "Alt+R").get());
             }
         }
     });
-    $(document).on('mousedown', function(e) {
-    if (e.which != 3) {
-        if (menu != null) {
-            setTimeout(function() {
-                menu.destroy();
-            }, 100)
+    $(document).on("contextmenu", ".bar[id^='file-detail-']", function(e) {
+        e.stopPropagation();
+        if (!fm.btnStatus.shift) {
+            var self = $(this);
+            var hash = self.attr('hash');
+            var parentHash = self.attr('parent');
+            e.preventDefault();
+            //e.stopPropagation();
+            cm.destroy();
+            cm.menu = new ClickMenu(e.pageX, e.pageY);
+            cm.menu.append(new MenuItem(cm.menu, "Rename", "rename-box", "fm.dialog.rename.show('"+name+"','"+hash+"')", "r or f2").get());
+            cm.menu.append(new MenuItem(cm.menu, "Delete", "delete", "fm.dialog.trash.show('"+hash+"')", "Del").get());
+            cm.menu.append(new MenuItem(cm.menu, "Download", "download", "fm.download('"+hash+"')").get());
+            cm.menu.append('<hr class="nav-vert-divider">');
+            cm.menu.append(new MenuItem(cm.menu, "Share", "share", "fm.dialog.share.show('"+hash+"')", ".").get());
+            cm.menu.append(new MenuItem(cm.menu, "Move", "folder-move", "fm.dialog.move.show('"+hash+"')", "m").get());
+            cm.menu.append(new MenuItem(cm.menu, "Refresh", "refresh", "fm.refresh('"+parentHash+"')", "Alt+R").get());
         }
-    }
-});
+    });
+    $(document).on('mousedown', function(e) {
+        if (e.which != 3) {
+            if ($(e.target).parents('.clickmenu').length < 1) {
+                if (cm.menu != null) {
+                    setTimeout(function() {
+                        cm.menu.destroy();
+                    }, 150)
+                }
+            }
+        }
+    });
 })(window.cm = window.cm || {}, jQuery);
 
 

@@ -72,12 +72,11 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 			<label class="input-text-icon" for="search"><i class="mdi mdi-magnify"></i></label>
 			<label class="input-text-placeholder" for="search">Search</label>
 		</form>
-        <ul class="nav nav-horiz" id="folder-controls">
+        <!-- <ul class="nav nav-horiz" id="folder-controls">
             <li>Upload</li>
             <li>Create</li>
-            <!-- <li>Show deleted items</li> -->
             <li class="btn-more"><i class="mdi mdi-unfold-more"></i><span>More</span></li>
-        </ul>
+        </ul> -->
         <div class="user-menu">
         	<span class="user-menu-msg">Hello, <?php echo $user_first; ?></span>
         	<img class="img user-menu-img" src="//gravatar.com/avatar/<?php echo $user_md5; ?>?r=r" alt="user gravatar" />
@@ -169,7 +168,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 					<span class="filename">Deleted files</span>
 					<section class="file-actions-header">
 						<span><i class="mdi mdi-backup-restore"></i></span>
-						<span><i class="mdi mdi-delete"></i></span>
+						<span><i class="mdi mdi-delete-sweep"></i></span>
 					</section>
 				</header>
 				<div class="progress">
@@ -188,6 +187,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 							<div class="file-info">
 								<span class="file-info-item" id="filedet"><span class="filetype">type</span><br><span id="filesize" unit="<%= model.get('units') %>">size</span></span>
 							</div>
+							<i class="mdi mdi-delete-forever"></i>
 						</li>
 					</ul>
 				</nav>
@@ -235,6 +235,9 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 			<span>Shared</span>
 			<span>File info</span>
 			<span>Modified</span>
+		</section>
+		<section class="file-actions-header">
+			<span><i class="mdi mdi-dots-vertical"></i><link class="rippleJS lightgray" /></span>
 		</section>
 	</header>
 	<div class="progress">
@@ -300,15 +303,19 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 	</div>
 </li>
 </script>
-<script type="text/template" id="fm-file-basic">
+<script type="text/template" id="fm-file-trash">
 <li class="menubar-content floatb" btype="<%= btype %>" hash="<%= hash %>" id="bfile-<%= hash %>" name="<%= name %>" parent="<%= parent %>">
 	<span class="file-multiselect-checkbox-container">
-	<input type="checkbox" id="cb-<%= id %>" value="<%= hash %>" />
-	<label class="label" for="cb-<%= id %>"><i class="mdi mdi-checkbox-blank-outline"></i></label>
-	<label class="label-checked" for="cb-<%= id %>"><i class="mdi mdi-checkbox-marked"></i></label>
-	<label class="label-icon" for="cb-<%= id %>"><i class="mdi <%= getIcon() %>"></i></label>
+	<input type="checkbox" id="cb-<%= hash %>" value="<%= hash %>" />
+	<label class="label" for="cb-<%= hash %>"><i class="mdi mdi-checkbox-blank-outline"></i></label>
+	<label class="label-checked" for="cb-<%= hash %>"><i class="mdi mdi-checkbox-marked"></i></label>
+	<label class="label-icon" for="cb-<%= hash %>"><i class="mdi <%= getIcon() %>"></i></label>
 	</span>
 	<span class="file-name"><%= name %></span>
+	<span class="file-controls">
+		<span onclick="fm.restore('<%= hash %>')"><i class="mdi mdi-backup-restore"></i></span>
+		<span onclick="fm.dialog.delete.show('<%= name %>','<%= hash %>')"><i class="mdi mdi-delete-forever"></i></span>
+	</span>
 	<div class="file-info">
 		<span class="file-info-item" id="filedet"><span class="filetype"><%= getType() %></span><br><span id="filesize"><%= getSize() %></span></span>
 	</div>
@@ -318,7 +325,19 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 <section class="clickmenu"><ul class="nav-vert"></ul></section>
 </script>
 <script type="text/template" id="menuitem">
-<li id="<%= id %>" onclick="<%= fn %>"><span><%= content %></span></li>
+<li id="<%= id %>" onclick="<%= fn %>"><i class="mdi mdi-<%= icon %>"></i><span><%= content %></span><span class="kbs-hint"><%= kbsHint %></span></li>
+</script>
+<script type="text/template" id="template-dialog">
+<div class="dialog-cover" id="<%= id %>">
+	<div class="dialog">
+		<%= header %>
+		<article><%= content %></article>
+		<footer><%= footer %></footer>
+	</div>
+</div>
+</script>
+<script type="text/template" id="template-dialog-footer-opt">
+<button class="btn dialog-btn dialog-btn-<%= type %>" onclick="<%= fn %>"><%= name %><link class="rippleJS" /></button>
 </script>
 	<script type="text/javascript" src="//code.jquery.com/jquery-2.1.4.min.js"></script>
 	<script src="//code.jquery.com/ui/1.11.4/jquery-ui.min.js"></script>

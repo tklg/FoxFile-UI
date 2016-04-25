@@ -99,7 +99,6 @@ $dbname = "' . $dbname . '";
 	$sql = 'CREATE TABLE FILES (
         PID INT NOT NULL AUTO_INCREMENT, 
         PRIMARY KEY(PID),
-		owner_email VARCHAR(128),
 		owner_id INT,
 		is_folder BOOLEAN,
 		hash CHAR(12),
