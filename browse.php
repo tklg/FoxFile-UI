@@ -55,10 +55,6 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
             'js/foxfile.js',
             'css/foxfile.css'
         ],
-        server: [
-            '*.php'
-        ],
-        path: 'plugins/reloadr.php',
         frequency: 1000
     });
 </script>
@@ -66,7 +62,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 <body>
 <header class="main">
     <nav class="floatb-2" id="nav-header">
-        <h1 class="logo-text"><span class="redfox">Fox</span>File</h1>
+        <h1 class="logo-text"><a href="./"><span class="redfox">Fox</span>File</a></h1>
         <form class="user-input-box file-search">
 			<input class="user-input input-text input-search" type="text" id="search" />
 			<label class="input-text-icon" for="search"><i class="mdi mdi-magnify"></i></label>
@@ -77,9 +73,11 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
             <li>Create</li>
             <li class="btn-more"><i class="mdi mdi-unfold-more"></i><span>More</span></li>
         </ul> -->
-        <div class="user-menu">
-        	<span class="user-menu-msg">Hello, <?php echo $user_first; ?></span>
-        	<img class="img user-menu-img" src="//gravatar.com/avatar/<?php echo $user_md5; ?>?r=r" alt="user gravatar" />
+        <div class="user-menu-box">
+	        <div class="user-menu">
+	        	<span class="user-menu-msg">Hello, <?php echo $user_first; ?></span>
+	        	<img class="img user-menu-img" src="//gravatar.com/avatar/<?php echo $user_md5; ?>?r=r" alt="user gravatar" />
+	        </div>
         </div>
     </nav>
     <nav class="floatb-2 nav-right " id="nav-right">
@@ -106,7 +104,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 		<section class="transfers" id="transfers">
 			<section class="bar bar-transfers" id="bar-2" type="folder" folder="file-transfers">
 				<header>
-					<span class="filename">File transfers</span>
+					<span class="filename">File uploads</span>
 					<section class="file-actions-header">
 						<span><i class="mdi mdi-delete"></i></span>
 						<span><i class="mdi mdi-dots-vertical"></i></span>
@@ -167,29 +165,15 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 				<header>
 					<span class="filename">Deleted files</span>
 					<section class="file-actions-header">
-						<span><i class="mdi mdi-backup-restore"></i></span>
-						<span><i class="mdi mdi-delete-sweep"></i></span>
+						<span title="Restore all"><i class="mdi mdi-backup-restore"></i></span>
+						<span title="Delete all"><i class="mdi mdi-delete-sweep"></i></span>
 					</section>
 				</header>
 				<div class="progress">
 			    	<div class="indeterminate"></div>
 			  	</div>
 				<nav class="file-list">
-					<ul class="">
-						<li class="menubar-content floatb" container="<%= model.get('container') %>" type="<%= model.get('basicFileType') %>" filehash="<%= model.get('hash_self') %>" id="<%= model.get('fileID') %>" name="<%= model.get('fileName') %>" pos="" fileparent="<%= model.get('hash_parent') %>">
-							<span class="file-multiselect-checkbox-container">
-							<input type="checkbox" id="cb-02" value="abcdef" />
-								<label class="label" for="cb-02"><i class="mdi mdi-checkbox-blank-outline"></i></label>
-								<label class="label-checked" for="cb-02"><i class="mdi mdi-checkbox-marked"></i></label>
-								<label class="label-icon" for="cb-02"><i class="mdi mdi-file-outline"></i></label>
-							</span>
-							<span class="file-name">File name 1</span>
-							<div class="file-info">
-								<span class="file-info-item" id="filedet"><span class="filetype">type</span><br><span id="filesize" unit="<%= model.get('units') %>">size</span></span>
-							</div>
-							<i class="mdi mdi-delete-forever"></i>
-						</li>
-					</ul>
+					<ul class=""></ul>
 				</nav>
 			</section>
 		</section>
@@ -217,7 +201,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 						<!-- <span class="badge new" id="badge-trash"><span class="badgeval">3000</span></span> -->
 					</li>
 					<li class="menubar-content floatb btn-ctrlbar" id="transfers">
-						<i class="nocheckbox-icon mdi mdi-transfer"></i><span class="file-name">File transfers</span>
+						<i class="nocheckbox-icon mdi mdi-transfer"></i><span class="file-name">File uploads</span>
 						<span class="badge" id="badge-transfers"><span class="badgeval"></span></span>
 					</li>
 				</ul>
@@ -227,7 +211,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 </main>	
 </body>
 <script type="text/template" id="fm-folder">
-<section class="bar loading" id="bar-<%= hash %>" type="folder" hash="<%= hash %>" parent="<%= parent %>">
+<section class="bar loading" id="bar-<%= hash %>" type="folder" hash="<%= hash %>" parent="<%= parent %>" name="<%= name %>">
 	<header>
 		<span class="btn-back"><i class="mdi mdi-chevron-left"></i></span>
 		<span class="filename"><%= name %></span>
@@ -265,21 +249,34 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 </li>
 </script>
 <script type="text/template" id="fm-file-detail">
-<section class="bar" spectype="<%= getType() %>" parent="<%= parent %>" type="<%= type %>" hash="<%= hash %>" id="file-detail-<%= hash %>" name="<%= name %>">
+<section class="bar loading" btype="" parent="" type="<%= type %>" hash="<%= hash %>" id="file-detail-<%= hash %>" name="<%= name %>">
 	<header>
 		<span class="filename"><%= name %></span>
 		<section class="file-actions-header">
-			<span><i class="mdi mdi-information-outline"></i><link class="rippleJS lightgray" /></span>
-			<span><i class="mdi mdi-download"></i><link class="rippleJS lightgray" /></span>
-			<span><i class="mdi mdi-rename-box"></i><link class="rippleJS lightgray" /></span>
-			<span><i class="mdi mdi-delete"></i><link class="rippleJS lightgray" /></span>
-			<span><i class="mdi mdi-folder-move"></i><link class="rippleJS lightgray" /></span>
-			<span><i class="mdi mdi-reload"></i><link class="rippleJS lightgray" /></span>
-			<span><i class="mdi mdi-dots-vertical"></i><link class="rippleJS lightgray" /></span>
+			<span title="Rename"><i class="mdi mdi-rename-box"></i><link class="rippleJS lightgray" /></span>
+			<span title="Move to trash"><i class="mdi mdi-delete"></i><link class="rippleJS lightgray" /></span>
+			<span title="Download"><i class="mdi mdi-download"></i><link class="rippleJS lightgray" /></span>
+			<span title="Share"><i class="mdi mdi-share"></i><link class="rippleJS lightgray" /></span>
+			<span title="Move"><i class="mdi mdi-folder-move"></i><link class="rippleJS lightgray" /></span>
+			<span title="Reload"><i class="mdi mdi-reload"></i><link class="rippleJS lightgray" /></span>
+			<span title="Information"><i class="mdi mdi-information-outline"></i><link class="rippleJS lightgray" /></span>
 		</section>
 	</header>
-	<section class="file-view">
-		<img src="//placehold.it/1500x1000" alt="placeholder image" />
+	<div class="progress">
+	   	<div class="indeterminate"></div>
+	</div>
+	<section class="file-detail-viewport">
+		<section class="file-preview active">
+
+		</section>
+		<section class="file-history">
+			<article class="file-history-info">
+
+			</article>
+			<ul class="file-list">
+
+			</ul>
+		</section>
 	</section>
 </section>
 </script>
@@ -288,6 +285,36 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 	<i class="mdi mdi-cloud-upload"></i>
 	<span>This folder is empty</span>
 </section>
+</script>
+<script type="text/template" id="fm-file-preview">
+<% if (!canPreview) { %>
+<section class="file-preview-icon">
+	<i class="mdi <%= getIcon() %>"></i>
+	<span>No preview available.</span>
+</section>
+<% } else { 
+	if (btype == 'text') { %>
+	<textarea id="editor" rows="10" cols="20"></textarea>
+	<% } else if (btype == 'image') { %>
+	<img src="./api/files/view?id=<%= hash %>" alt="<%= name %>" />
+	<% } else if (btype == 'audio') { %>
+	<audio autoplay controls>
+	<source src="./api/files/view?id=<%= hash %>" />
+	</audio>
+	<!-- <div id="waveform"></div>
+	<div class="wavesurfer-controls">
+		<button class="btn ws-btn" id="play" onclick="fm.wavesurfer.pause()">pause</button>
+		<button class="btn ws-btn" id="stop" onclick="fm.wavesurfer.stop()">stop</button>
+		<input type="range" min="0" max="1" step="0.1" value="0.5" class="range ws-range" id="ws-volume" name="ws-volume"></input>
+	</div> -->
+	<% } else if (btype == 'video') { %>
+	<video autoplay controls poster="">
+	<source src="./api/files/view?id=<%= hash %>" />
+	</video>
+	<% } else if (btype == 'flash') { %>
+	<embed src="./api/files/view?id=<%= hash %>"></embed>
+	<% } 
+} %>
 </script>
 <script type="text/template" id="fm-file-transferring">
 <li class="menubar-content floatb" hash="<%= id %>" id="tfile-<%= id %>" name="<%= name %>">
@@ -313,13 +340,31 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 	</span>
 	<span class="file-name"><%= name %></span>
 	<span class="file-controls">
-		<span onclick="fm.restore('<%= hash %>')"><i class="mdi mdi-backup-restore"></i></span>
-		<span onclick="fm.dialog.delete.show('<%= name %>','<%= hash %>')"><i class="mdi mdi-delete-forever"></i></span>
+		<span title="Restore" onclick="fm.restore('<%= hash %>')"><i class="mdi mdi-backup-restore"></i></span>
+		<span title="Delete forever" onclick="fm.dialog.delete.show('<%= name %>','<%= hash %>')"><i class="mdi mdi-delete-forever"></i></span>
 	</span>
 	<div class="file-info">
 		<span class="file-info-item" id="filedet"><span class="filetype"><%= getType() %></span><br><span id="filesize"><%= getSize() %></span></span>
 	</div>
 </li>
+</script>
+<script type="text/template" id="fm-trash-empty">
+<section class="folder-empty trash-empty">
+	<i class="mdi mdi-delete-variant"></i>
+	<span>There are no files in the trash</span>
+</section>
+</script>
+<script type="text/template" id="fm-share-empty">
+<section class="folder-empty share-empty">
+	<i class="mdi mdi-account-multiple"></i>
+	<span>No files have been shared with you</span>
+</section>
+</script>
+<script type="text/template" id="fm-transfers-empty">
+<section class="folder-empty transfers-empty">
+	<i class="mdi mdi-transfer"></i>
+	<span>There are no files in the upload queue</span>
+</section>
 </script>
 <script type="text/template" id="contextmenu">
 <section class="clickmenu"><ul class="nav-vert"></ul></section>
@@ -344,9 +389,11 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 	<!-- <link async rel="stylesheet" type="text/css" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.7.1/themes/base/jquery-ui.css"/> -->
     <script src="js/underscore.min.js"></script>
     <script src="js/backbone.min.js"></script>
-    <script src="js/foxfile.js"></script>
     <script src="js/filetypes.js"></script>
+    <script src="js/foxfile.js"></script>
     <script type="text/javascript" src="js/ripple.js"></script>
+
+    <!-- <script src="//cdnjs.cloudflare.com/ajax/libs/wavesurfer.js/1.0.52/wavesurfer.min.js"></script> -->
     <script>
     var foxfile_root = '<?php echo $user_uhd; ?>';
     $(document).ready(function() {

@@ -27,8 +27,8 @@ offwhite #f2f2f2
 https://materialdesignicons.com/
 */
 :root {
-	--primary: #E64A19;
-	--secondary: #FF5722;
+	--primary: #FF5722;
+	--secondary: #E64A19;
 	--light: #FF8A65;
 	--dark: #BF360C;
 	--meddark: #D84315;
@@ -106,6 +106,10 @@ img {
 	font-weight: 300;
 	flex: none;
 }
+.logo-text a {
+	color: white;
+	text-decoration: none;
+}
 .redfox {
 	/*color: #BF360C;*/
 	color: #AF2900;
@@ -123,9 +127,12 @@ nav ul {
     min-width: 150px;
     display: flex;
     flex: 1;
+    /*max-width: 50%;*/
+    /*margin: 0 auto;*/
 }
 #nav-header .input-search {
 	border: none;
+	border-radius: 2px;
 	outline: none;
     position: relative;
     margin: 12px 0;
@@ -138,7 +145,8 @@ nav ul {
     font-size: 100%;
     transition: all .1s ease-in-out;
 }
-#nav-header .input-search:focus {
+#nav-header .input-search:focus,
+#nav-header .input-search.active {
     background: white;
     color: rgba(0,0,0,.87);
 }
@@ -192,6 +200,9 @@ nav ul {
 }
 #nav-header .nav-horiz li:hover {
 	background: #D84315;
+}
+#nav-header .user-menu-box {
+	min-width: 20%;
 }
 #nav-header .user-menu {
 	position: relative;
@@ -413,7 +424,9 @@ main {
 	line-height: 60px;
 	padding: 0 20px;
 	/*width: calc(100% - 40px);*/
-	flex: 1 0 auto;
+	/*max-width: 30px;*/
+	min-width: 0;
+	flex: auto;
 	overflow: hidden;
 	white-space: nowrap;
 	text-overflow: ellipsis;
@@ -505,19 +518,19 @@ main {
 	box-shadow: 0 -1px 0 #e5e5e5,0 0 2px -2px rgba(0,0,0,.12),0 2px 4px -4px rgba(0,0,0,.24);
 }
 .bar[type=folder] li {
-	display: block;
+	display: inline-block;
 	position: relative;
-	width: calc(100% - 10px);
+	width: 100%;
 	height: 40px;
 	margin: 0;
-	padding: 0 10px 0 0;
+	/*padding: 0 10px 0 0;*/
+	padding: 0;
 	background: #f2f2f2;
 	/*cursor: default;*/
 	white-space: nowrap;
 	line-height: 40px;
 	font-size: 15px;
 	display: flex;
-	flex-direction: row;
 	-webkit-touch-callout: none;-webkit-user-select: none;-khtml-user-select: none;-moz-user-select: none;-ms-user-select: none;user-select: none;
 }
 .bar[type=folder] li::before {
@@ -542,17 +555,28 @@ main {
 }
 .bar[type=folder]:last-of-type .file-info {
 	display: inline-block;
-	align-self: flex-end;
+	margin-right: 10px;
+	/*float: right;
+	position: absolute;
+	right: 10px;*/
+	/*width: 305px;*/
+	/*align-self: flex-end;*/
 }
 .bar[type=folder] .file-name {
-	cursor: default;
-	/*display: inline-block;*/
-	max-width: 100%;
+	/*flex: 1 0 auto;*/
+	min-width: 0;
+	/*max-width: calc(100% - 306px);*/
 	padding: 0 20px 0 0;
-	flex: 1 0 auto;
+	display: inline-block;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+	cursor: default;
+	flex: auto;
+}
+.bar[type=folder] .file-name span {
+	display: inline-block;
+	/*max-width: 50%;*/
 }
 .bar[type=folder]:last-of-type .file-name {
 	/*max-width: calc(100% - 370px);*/
@@ -631,6 +655,7 @@ main {
 .menubar-content .file-info {
 	height: 40px;
 	font-size: 12px;
+	flex: none;
 	align-self: flex-end;
 }
 .menubar-content .file-info-item {
@@ -638,6 +663,7 @@ main {
 	height: 40px;
 	line-height: 20px;
 	width: 100px;
+	text-transform: capitalize;
 }
 .menubar-content #fileshared {
 	visibility: hidden;
@@ -686,26 +712,6 @@ main {
 	color: rgba(0,0,0,.87);
 	box-shadow: 0 -1px 0 #e5e5e5,0 0 2px rgba(0,0,0,.12),0 2px 4px rgba(0,0,0,.24);
 }
-.bar[type=file] img {
-	display: inline;
-	max-width: calc(100% - 40px);
-	max-height: calc(100% - 40px);
-	width: auto;
-	margin: auto;
-	position: absolute;
-	left: 0;right:0;
-	top: 20px;
-	box-shadow: 0 -1px 0 #e5e5e5,0 0 2px rgba(0,0,0,.12),0 2px 4px rgba(0,0,0,.24);
-}
-.bar[type=file] .file-view {
-	position: relative;
-	height: calc(100% - 60px);
-	width: calc(100% - 40px);
-	margin: 0;
-	padding: 0 20px;
-	overflow-y: auto;
-	display: flex;
-}
 .bar .folder-empty {
 	/*display: inline-block;*/
 	display: flex;
@@ -727,6 +733,89 @@ main {
 	display: inline-block;
 	margin-top: -10px;
 	color: rgba(0,0,0,.38);
+}
+.bar .trash-empty span,
+.bar .share-empty span,
+.bar .transfers-empty span {
+	margin-top: 10px;
+}
+.bar .file-preview-icon {
+	/*display: inline-block;*/
+	display: flex;
+	align-items: center;
+	justify-content: center;
+    flex-direction: column;
+	width: 100%;
+	height: 100%;
+	line-height: 100%;
+	vertical-align: middle;
+	text-align: center;
+}
+.bar .file-preview-icon i {
+	font-size: 170px;
+	color: rgba(0,0,0,.12);
+	/*display: block;*/
+}
+.bar .file-preview-icon span {
+	display: inline-block;
+	/*margin-top: -10px;*/
+	color: rgba(0,0,0,.38);
+}
+.file-detail-viewport {
+	height: 100%;
+	width: 100%;
+}
+.file-detail-viewport img,
+.file-detail-viewport video {
+	display: inline;
+	max-width: calc(100% - 40px);
+	max-height: calc(100% - 40px);
+	width: auto;
+	margin: auto;
+	position: absolute;
+	left: 0;right:0;
+	top: 20px;
+	/*box-shadow: 0 -1px 0 #e5e5e5,0 0 2px rgba(0,0,0,.12),0 2px 4px rgba(0,0,0,.24);*/
+	box-shadow: 0 0 4px rgba(0,0,0,.14),0 4px 8px rgba(0,0,0,.28);
+}
+.file-detail-viewport .file-preview {
+	display: none;
+	position: relative;
+	height: calc(100% - 60px);
+	/*width: calc(100% - 40px);*/
+	width: 100%;
+	margin: 0;
+	/*padding: 0 20px;*/
+	overflow-y: auto;
+	display: flex;
+	text-align: center;
+}
+.file-preview #editor {
+	display: inline-block;
+	outline: 0 none;
+	/*position: absolute;*/
+	resize: none;
+	height: calc(100% - 12px);
+	width: calc(100% - 8px);
+	padding: 4px;
+	border: none;
+	font-size: 15px;
+}
+.file-preview audio {
+	display: inline-block;
+	/*position: absolute;*/
+	/*transform: translateX(60%);*/
+	/*width: 300px;*/
+	margin-top: 60px;
+}
+.file-detail-viewport .file-preview.active {
+	display: inline-block;
+}
+.file-detail-viewport .file-history {
+	display: none;
+}
+.file-detail-viewport .file-history.active {
+	display: inline-block;
 }
 /* ---------------------------------------------------------------------------------------------------------
 =====================================   SHARED, TRASH, TRANSFERS   =========================================
@@ -941,6 +1030,7 @@ main {
 .dialog {
 	/*position: absolute;*/
 	width: 300px;
+	word-wrap: break-word;
 	height: auto;
 	/*margin-top: -100%;*/
 	/*height: 300px;*/
@@ -957,6 +1047,14 @@ main {
 	font-weight: bold;
 	/*border-bottom: 1px solid rgba(0,0,0,.1);*/
 }
+/*.dialog header em,
+.dialog article em {
+	max-width: 100%;
+	display: inline-block;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
+}*/
 .dialog .dialog-noheader-padding {
 	height: -10px;
 	display: inline-block;
@@ -1047,7 +1145,7 @@ main {
 	/*background: rgba(0,0,0,.1);*/
 }
 .badge.new .badgeval {
-	background: #E64A19;
+	background: #FF5722;
 	color: white;
 }
 /*

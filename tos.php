@@ -44,7 +44,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 	<main class="main">
 		<h2 class="title">Terms of Service</h2>
 		<article class="content float" tos-v1>
-			<p class="lastmod">Last updated February 14, 2016</p>
+			<p class="lastmod">Last updated April 25, 2016</p>
 			<p>The FoxFile Terms of Service (the "Terms" or "Agreement") is a legal agreement between you, either an individual or a single legal entity ("You" or "you" or "Your" or "your"), and FoxFile for the FoxFile service ("FoxFile" or "Product" or "we" or "our"). These Terms govern your use of FoxFile, including any updates and accompanying written documentation.</p>
 			<p>Your use of FoxFile constitutes your binding legal agreement to these Terms, which are subject to change at any time by FoxFile. If you are not legally able to be bound by these Terms, your use of FoxFile is prohibited.</p>
 			<p>You acknowledge and agree that FoxFile may occasionally contact you via email. Please refer to FoxFile's Privacy Policy, (<a href="https://tkluge.net/foxfile/privacy">https://tkluge.net/foxfile/privacy</a>) for information about how we use, transfer and share information we collect and you store within FoxFile.</p>
@@ -121,7 +121,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 			<h2>Export Restrictions</h2>
 			<p>You acknowledge and agree that the Product that is the subject of this Agreement may be controlled for export purposes. You agree to comply with all United States export laws and regulations. You assume sole responsibility for any required export approval and/or licenses and all related costs and for the violation of any United States export law or regulation. If you are located in a country subject to embargo by the United States government, you are not entitled to use FoxFile.</p>
 			<h2>Governing Law, Dispute Resolution, and Venue</h2>
-			<p>THESE TERMS AND THE USE OF THE PRODUCT AND SOFTWARE WILL BE GOVERNED BY NEW JERSEY LAW EXCEPT FOR ITS CONFLICTS OF LAWS PRINCIPLES. ALL CLAIMS ARISING OUT OF OR RELATING TO THESE TERMS OR THE PRODUCT OR SOFTWARE MUST BE LITIGATED EXCLUSIVELY IN THE FEDERAL OR STATE COURTS OF BERGEN COUNTY, NEW JERSEY, AND BOTH PARTIES CONSENT TO VENUE AND PERSONAL JURISDICTION THERE</p>
+			<p>THESE TERMS AND THE USE OF THE PRODUCT AND SOFTWARE WILL BE GOVERNED BY NEW JERSEY LAW EXCEPT FOR ITS CONFLICTS OF LAWS PRINCIPLES. ALL CLAIMS ARISING OUT OF OR RELATING TO THESE TERMS OR THE PRODUCT OR SOFTWARE MUST BE LITIGATED EXCLUSIVELY IN THE FEDERAL OR STATE COURTS OF <!-- BERGEN COUNTY,  -->NEW JERSEY, AND BOTH PARTIES CONSENT TO VENUE AND PERSONAL JURISDICTION THERE</p>
 			<!-- ???? -->
 			<p>Any dispute, controversy or claim arising out of, relating to or in connection with this agreement, including the breach, termination or validity thereof, shall be finally resolved by arbitration. The tribunal shall have the power to rule on any challenge to its own jurisdiction or to the validity or enforceability of any portion of the agreement to arbitrate. The parties agree to arbitrate solely on an individual basis, and that this agreement does not permit CLASS arbitration or any claims brought as a plaintiff or CLASS member in any CLASS or representative arbitration proceeding. The arbitral tribunal may not consolidate more than one person's claims, and may not otherwise preside over any form of a representative or CLASS proceeding.</p>
 			<h2>Entire Agreement and Assignment</h2>

@@ -50,6 +50,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
                 document.title = 'Shared - FoxFile';
                 $('.pages #shared').addClass('active').css('z-index', 401).siblings().css('z-index', 400);
                 $('.pages #shared').siblings().removeClass('active');
+                fm.loadShared();
                 //console.log("Switched to page shared");
             });
             this.router.on('route:openTrash', function(sort) {
@@ -64,6 +65,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
                 $('.pages #transfers').addClass('active').css('z-index', 401).siblings().css('z-index', 400);
                 $('.pages #transfers').siblings().removeClass('active');
                 $('#transfers #badge-transfers').removeClass('new');
+                fm.loadTransfers();
                 //console.log("Switched to page transfers");
             });
             Backbone.history.start();
@@ -75,6 +77,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
         init: function() {
             console.info("Initialize page");
             this.calculateBars();
+            page.updateFMToFitSize();
         },
         calculateSize: function() {
             this.calculateBars();
@@ -175,6 +178,7 @@ header3 font
     fm.barWidth = 280;
     fm.activeBarWidth = 560;
     fm.last = null;
+    fm.wavesurfer = null;
     var hashTree = [];
     var fileTree = [];
     var currentFilePath = '';
@@ -334,11 +338,13 @@ header3 font
                 fm.remove(fileTree[0]);
             }
             foxfile.routerbox.router.navigate('files/'+foxfile_root+'/', {replace: true});
+            document.title = "My Files - FoxFile";
         } else {
             fm.remove(fileTree[fileTree.length - 1]);
             var path = fm.calcFilePath();
             foxfile.routerbox.router.navigate('files/'+path, {/*trigger: true, */replace: true});
         }
+        document.title = fileTree[fileTree.length - 1].name + " - FoxFile";
         if (fileTree.length > fm.numBarsCanBeActive) {
             $('.file-manager .bar[hash='+(fileTree[(fileTree.length - 1) - fm.numBarsCanBeActive].getHash())+']').addClass('leftmost').siblings().removeClass('leftmost');
         } else {
@@ -350,7 +356,7 @@ header3 font
             $('.file-manager').css({
                 'left': -1 * this.barWidth * (fileTree.length - this.numBarsCanBeActive) + 'px'
             });
-            console.log("Moving file manager " + -1 * this.barWidth * (fileTree.length - this.numBarsCanBeActive) + 'px to the left (' + (fileTree.length - this.numBarsCanBeActive) + ' bars)');
+            //console.log("Moving file manager " + -1 * this.barWidth * (fileTree.length - this.numBarsCanBeActive) + 'px to the left (' + (fileTree.length - this.numBarsCanBeActive) + ' bars)');
         } else {
             $('.file-manager').css({
                 'left': 0
@@ -362,7 +368,8 @@ header3 font
             $('.file-manager').css({
                 'width': this.width + (this.barWidth * (fileTree.length - this.numBarsCanBeActive)) + 'px'
             });
-            console.log("Resizing file manager " + (this.width + (this.barWidth * (fileTree.length - this.numBarsCanBeActive))) + 'px');
+            //console.log("window size: " + $(document).width());
+            //console.log("Resizing file manager " + (this.width + (this.barWidth * (fileTree.length - this.numBarsCanBeActive))) + 'px');
         } else {
             $('.file-manager').css({
                 'width': '100%'
@@ -671,6 +678,31 @@ header3 font
             });
         }
     }
+    fm.download = function(id, name, type) {
+        if (fm.multiSelect.selected.length > 1 || type == 'folder') {
+            if (fm.multiSelect.selected.length > 1) {
+                var hashes = _.uniq(fm.multiSelect.selected);
+            } else {
+                var hashes = [id];
+            }
+            if (type != 'folder') type = 'file';
+            var frame = $("<iframe></iframe>").attr('src', './api/files/download?hashlist='+hashes.toString()+"&name="+name+"&type="+type).attr('id', id).css('display', 'none');
+            frame.appendTo('body');
+            var _id = id;
+            setTimeout(function() {
+                $('body > iframe#'+_id).remove();
+                multiSelect.reset();
+            }, 10000);
+        } else {
+            var frame = $("<iframe></iframe>").attr('src', './api/files/download?id='+id+"&name="+name).attr('id', id).css('display', 'none');
+            frame.appendTo('body');
+            var _id = id;
+            setTimeout(function() {
+                $('body > iframe#'+_id).remove();
+            }, 10000);
+        }
+        cm.destroy();
+    }
     fm.move = function(file, target) { //handles moving both single and multiple files
         if (multiSelect.numSelected < 2) {
             if (!_.isArray(file)) { //if its a single thing
@@ -767,20 +799,23 @@ header3 font
                 var res = json['results'];
                 var template = _.template($('#fm-file-trash').html());
                 $('.pages .bar-trash .file-list').empty();
-                $.each(res, function(i) {
-                    // name, parent, icon, hash, type, btype, size, lastmod, shared, public
-                    var f = new File(res[i].name,
-                                        res[i].parent,
-                                        res[i].icon,
-                                        res[i].hash,
-                                        res[i].type,
-                                        res[i].is_folder == '1' ? "folder" : "file",
-                                        res[i].size,
-                                        res[i].lastmod,
-                                        res[i].is_shared,
-                                        res[i].is_public);
-                    $('.pages .bar-trash .file-list').append(template(f));
-                });
+                if (res.length > 0) {
+                    $.each(res, function(i) {
+                        // name, parent, icon, hash, type, btype, size, lastmod, shared, public
+                        var f = new File(res[i].name,
+                                            res[i].parent,
+                                            res[i].hash,
+                                            res[i].is_folder,
+                                            res[i].size,
+                                            res[i].lastmod,
+                                            res[i].is_shared,
+                                            res[i].is_public);
+                        $('.pages .bar-trash .file-list').append(template(f));
+                    });
+                } else {
+                    var template = _.template($('#fm-trash-empty').html());
+                    $('.pages .bar-trash .file-list').append(template({}));
+                }
             },
             error: function(request, error) {
                 //console.error(request, error);
@@ -788,10 +823,76 @@ header3 font
         });
     }
     fm.restore = function(hash) {
-
+        if (fm.multiSelect.numSelected > 1) {
+            hash = fm.multiSelect.selected;
+        } else {
+            hash = [hash];
+        }
+        var hashes = _.uniq(hash);
+        var hashlist = hashes.toString();
+        $.ajax({
+            type: "POST",
+            url: "./api/files/restore",
+            data: {
+                hashlist: hashlist
+            },
+            success: function(result) {
+                var json = JSON.parse(result);
+                fm.refreshAll();
+            },
+            error: function(request, error) {
+                //console.error(request, error);
+            }
+        });
     }
     fm.loadShared = function() {
-
+        $('.pages .bar-shared').addClass('loading');
+        $.ajax({
+            type: "POST",
+            url: "./api/files/list_shared",
+            data: {
+                offset: 0,
+                limit: 30
+            },
+            success: function(result) {
+                $('.pages .bar-shared').removeClass('loading');
+                var json = JSON.parse(result);
+                    // console.log("fm.open("+fHash+") [2] Got response from server: ");
+                    // console.log(json);
+                var hasMore = json['more'];
+                var resultsRemaining = json['remaining'];
+                var res = json['results'];
+                var template = _.template($('#fm-file').html());
+                $('.pages .bar-shared .file-list').empty();
+                if (res.length > 0) {
+                    $.each(res, function(i) {
+                        // name, parent, icon, hash, type, btype, size, lastmod, shared, public
+                        var f = new File(res[i].name,
+                                            res[i].parent,
+                                            res[i].hash,
+                                            res[i].is_folder,
+                                            res[i].size,
+                                            res[i].lastmod,
+                                            res[i].is_shared,
+                                            res[i].is_public);
+                        $('.pages .bar-shared .file-list').append(template(f));
+                    });
+                } else {
+                    var template = _.template($('#fm-share-empty').html());
+                    $('.pages .bar-shared .file-list').append(template({}));
+                }
+            },
+            error: function(request, error) {
+                //console.error(request, error);
+            }
+        });
+    }
+    fm.loadTransfers = function() {
+        /*if (dd.numFilesToUpload == 0) {
+            var template = _.template($('#fm-transfers-empty').html());
+            $('.pages .bar-transfers .file-list').empty();
+            $('.pages .bar-transfers .file-list').append(template({}));
+        }*/
     }
     var FolderBar = function(name, hash, parent) {
         this.dd;
@@ -808,6 +909,7 @@ header3 font
         this.setFiles = function(fileGroup) {this.files = fileGroup;}
         this.refresh = function() {
             var _this = this;
+            $('.file-manager .bar[hash='+_this.hash+']').addClass('loading');
             $.ajax({
                 type: "POST",
                 url: "./api/files/list_files",
@@ -828,10 +930,8 @@ header3 font
                         // name, parent, icon, hash, type, btype, size, lastmod, shared, public
                         files.push(new File(res[i].name,
                                             res[i].parent,
-                                            res[i].icon,
                                             res[i].hash,
-                                            res[i].type,
-                                            res[i].is_folder == '1' ? "folder" : "file",
+                                            res[i].is_folder,
                                             res[i].size,
                                             res[i].lastmod,
                                             res[i].is_shared,
@@ -892,13 +992,12 @@ header3 font
         this.hash = hash;
         this.parent = parent;
         this.type = type;
-        this.hasMore = false;
-        this.remaining = 0;
         this.file = file;
         this.getName = function() {return this.name;}
         this.getHash = function() {return this.hash;}
         this.getParent = function() {return this.parent;}
-        this.getType = function() {return this.type;}
+        this.getType = function() {return this.file.type;}
+        this.getBType = function() {return this.file.btype;}
         this.getJsonData = function() {return this.jsonData;}
         this.setHasMore = function(has) {
             this.hasMore = has;
@@ -915,11 +1014,63 @@ header3 font
             //console.log(this.type);
         }
         this.loadContent = function() {
-            // file preview
+            var template = _.template($('#fm-file-preview').html());
+            var elem = '#file-detail-'+this.hash+' .file-preview';
+            $(elem).empty();
+            $(elem).append(template(this.file));
+
+            var _this = this;
+            if (this.file.btype == 'text') {
+                $.ajax({
+                    type: "GET",
+                    url: "./api/files/view",
+                    data: {
+                        id: _this.file.hash
+                    },
+                    success: function(result) {
+                        $('.file-manager .bar[hash='+_this.hash+']').removeClass('loading');
+                        switch (_this.file.btype) {
+                            case 'text':
+                                $(elem+" #editor").val(result);
+                        }
+                    },
+                    error: function(request, error) {
+                        //console.error(request, error);
+                        $('.file-manager .bar[hash='+_this.hash+']').removeClass('loading');
+                    }
+                });
+            } /*else if (this.file.btype == 'audio') {
+                if (fm.wavesurfer != null) {
+                    fm.wavesurfer.destroy();
+                }
+                fm.wavesurfer = WaveSurfer.create({
+                    container: '#waveform',
+                    waveColor: '#e1e1e1',
+                    cursorColor: '#ff5722',
+                    progressColor: '#ff5722'
+                });
+                fm.wavesurfer.load('./api/files/view?id='+this.file.hash);
+                fm.wavesurfer.on('ready', function() {
+                    $('.file-manager .bar[hash='+_this.hash+']').removeClass('loading');
+                    fm.wavesurfer.play();
+                });
+                fm.wavesurfer.on('pause', function() {
+                    $('.wavesurfer-controls #play').attr('onclick', 'fm.wavesurfer.play()').text('play');
+                });
+                fm.wavesurfer.on('play', function() {
+                    $('.wavesurfer-controls #play').attr('onclick', 'fm.wavesurfer.pause()').text('pause');
+                });
+                fm.wavesurfer.on('stop', function() {
+                    $('.wavesurfer-controls #play').attr('onclick', 'fm.wavesurfer.play()').text('play');
+                });
+            } */else {
+                $('.file-manager .bar[hash='+_this.hash+']').removeClass('loading');
+            }
         }
         this.refresh = function() {
             item = new FileBar(name, hash, parent);
             var _this = this;
+            $('.file-manager .bar[hash='+this.hash+']').addClass('loading');
             $.ajax({
                 type: "POST",
                 url: "./api/files/get_file",
@@ -932,17 +1083,19 @@ header3 font
                     // console.log(json);
                     file = new File(json.name,
                             json.parent,
-                            json.icon,
                             json.hash,
-                            json.type,
+                            json.is_folder,
                             json.size,
                             json.lastmod,
                             json.is_shared,
                             json.is_public);
                     _this.setFile(file);
+                    $('.file-manager .bar[hash='+_this.hash+']').attr({
+                        'parent': file.parent,
+                        'type': file.getType(),
+                        'btype': file.getBType()
+                    });
                     _this.setType();
-
-                    $('.file-manager .bar[hash='+_this.hash+']').removeClass('loading');
                     _this.loadContent();
 
                     // get the current file path so that the router can append this to it
@@ -955,28 +1108,26 @@ header3 font
             });
         }
     }
-    var File = function(name, parent, icon, hash, type, btype, size, lastmod, shared, public) {
+    var File = function(name, parent, hash, isFolder, size, lastmod, shared, public) {
         this.name = name;
         this.parent = parent;
         this.icon = icon;
         this.hash = hash;
-        this.btype = btype;
-        this.type = type;
         this.size = size;
+        this.canPreview = isPreviewable(this);
         this.lastmod = new Date(lastmod);
         this.shared = shared == '0' ? false : true;
         this.public = public == '0' ? false : true;
+        this.type = isFolder == '0' ? 'file' : 'folder';
+        this.btype = this.type;
         this.getName = function() {return this.name;}
         this.getParent = function() {return this.parent;}
         this.getHash = function() {return this.hash;}
         this.getIcon = function() {
             return getIcon(this);
         }
-        this.getType = function() {
-            return getType(this);
-        }
         this.isFolder = function() {
-            return this.btype == 'folder';
+            return this.type == 'folder';
         }
         this.getSize = function() {
             if (!this.isFolder()) {
@@ -985,6 +1136,14 @@ header3 font
                var i = parseInt(Math.log(this.size) / Math.log(1024));
                return (this.size / Math.pow(1024, i)).toFixed(2) + ' ' + sizes[i];
             } else return "&emsp;"; // folders do not display a size
+        }
+        this.getBType = function() {
+            this.btype = getPreviewType(this);
+            return this.btype;
+        }
+        this.getType = function() {
+            this.type = getType(this);
+            return this.type;
         }
         this.isPublic = function() {return this.public;}
         this.isShared = function() {return this.shared;}
@@ -1051,12 +1210,12 @@ header3 font
     dd.init = function() {
         console.info("Initialize dragdrop");
         droppedOn = foxfile_root;
-        $('body').append('<input type="file" class="dd-input-hidden" id="dd-file-upload" multiple="" />');
+        $('body').append('<input type="file" name="files[]" class="dd-input-hidden" id="dd-file-upload" multiple="" />');
         $('#dd-file-upload').on('change', function(e) {
             cm.destroy();
             fileDragDrop(e.originalEvent, this);
         });
-        $('body').append('<input type="file" class="dd-input-hidden" id="dd-folder-upload" webkitdirectory directory multiple />');
+        $('body').append('<input type="file" name="files[]" class="dd-input-hidden" id="dd-folder-upload" webkitdirectory directory multiple />');
         $('#dd-folder-upload').on('change', function(e) {
             cm.destroy();
             fileDragDrop(e.originalEvent, this);
@@ -1137,83 +1296,121 @@ header3 font
         tempFolder.hash = parent.getHash();
         //console.log("next available tree queue position: " + nextAvailablePositionInQueue);
         queue.add(tempFolder);
- 
-        if (elem instanceof HTMLInputElement) {
 
-            var files = e.target.files;
-            console.log(files);
-            if (!files || files.length == 0) {
-                console.log('input was empty');
-                return false;
-            }
-
-            if (ua.ua == 'chrome') {
-                console.log('starting tree traversal');
-                for (var i = 0; i < files.length; i++) {
-                    if (files[i].webkitGetAsEntry) {
-                        var item = files[i].webkitGetAsEntry();
-                        if (item) {
-                            traverseFileTree(nextAvailablePositionInQueue, item, tempFolder);
+        var dataTransfer = e.dataTransfer;
+        var files = e.target.files || (dataTransfer && dataTransfer.files);
+        if (!files || files.length == 0) {
+            return false;
+        }
+        if (ua.ua == 'chrome' 
+                && e.dataTransfer
+                && e.dataTransfer.items
+                && e.dataTransfer.items.length > 0 && e.dataTransfer.items[0].webkitGetAsEntry) {
+            var items = e.dataTransfer.items;
+            for (var i = 0; i < items.length; i++) {
+                if (items[i].webkitGetAsEntry) {
+                    var item = items[i].webkitGetAsEntry();
+                    if (item) {
+                        traverseFileTree(nextAvailablePositionInQueue, item, tempFolder);
                         }
+                }
+            }
+        } else if (ua.ua == 'firefox' && e.dataTransfer) {
+            try {
+                for (var i = 0, m = e.dataTransfer.mozItemCount; i < m; ++i) {
+                    var file = e.dataTransfer.mozGetDataAt("application/x-moz-file", i);
+                    if (file instanceof Ci.nsIFile) {
+                        traverseFileTree(nextAvailablePositionInQueue, new mozDirtyGetAsEntry(file), tempFolder);
+                    }
+                    else {
+                        console.log('dd.fileDragDrop: Not a nsIFile', file);
                     }
                 }
-            } else if (ua.ua == 'firefox') {
-
-            } else if (ua.ua == 'safari') {
-
             }
-
-
+            catch (e) {
+                console.warn(e.getMessage());
+            }
+        } else if (ua.ua == 'safari' && e.dataTransfer ) {
+            // same as for chrome, but replace webkitGetAsEntry with getAsEntry
+            // I think
+            var items = e.dataTransfer.items;
+            for (var i = 0; i < items.length; i++) {
+                if (items[i].getAsEntry) {
+                    var item = items[i].getAsEntry();
+                        if (item) {
+                        traverseFileTree(nextAvailablePositionInQueue, item, tempFolder);
+                    }
+                }
+            }
         } else {
-            // console.log(e.dataTransfer);
-            var dataTransfer = e.dataTransfer;
-            var files = e.target.files || (dataTransfer && dataTransfer.files);
-            if (!files || files.length == 0) {
-                return false;
+            console.log("Got files from file or folder input");
+            var filesList = [];
+            for (var i = 0, file; file = files[i]; i++) {
+                if (file.webkitRelativePath) {
+                    file.path = String(file.webkitRelativePath).replace(RegExp("[\\/]" + String(file.name).replace(/([^\w])/g,'\\$1') + "$"), '') + "/";
+                } else {
+                    file.path = '';
+                }
+                if (!_.contains(dd.ignoredFiles, file.name)) {
+                    filesList.push(file);
+                }
             }
-            if (ua.ua == 'chrome' 
-                    && e.dataTransfer
-                    && e.dataTransfer.items
-                    && e.dataTransfer.items.length > 0 && e.dataTransfer.items[0].webkitGetAsEntry) {
-                var items = e.dataTransfer.items;
-                for (var i = 0; i < items.length; i++) {
-                    if (items[i].webkitGetAsEntry) {
-                        var item = items[i].webkitGetAsEntry();
-                        if (item) {
-                            traverseFileTree(nextAvailablePositionInQueue, item, tempFolder);
-                        }
+            //console.table(filesList);
+            buildFileTree(nextAvailablePositionInQueue, filesList, tempFolder);
+
+            //reset the inputs
+            var c = $('#dd-file-upload');
+            c.replaceWith(c = c.clone(true));
+            var c = $('#dd-folder-upload');
+            c.replaceWith(c = c.clone(true));    
+        }
+    }
+    /* the file inputs need this because they dont fire the same events that drop does */
+    /* and there is apparently a bug where the webkitEntry list is always empty. */
+    /* this is a nonrecursive function to rebuild the file tree from the webkitRelativePath of the file */
+    function buildFileTree(posInQueue, items, parent, path) {
+        //console.table(items);
+        var folderNamesSeen = [];
+        var foldersAdded = [];
+        var folders = [];
+        var parents = [];
+        for (var i = 0; i < items.length; i++) {
+            var file = items[i];
+            var path = file.path;
+            if (path == '' && !_.contains(dd.ignoredFiles, file.name)) {
+                //console.log("%cfound file to add: " + file.name + ", adding to " + parent.name, "color: green;");
+                parent.addChild(new SmallFile(posInQueue, file, file.name, path, parent));
+                queue.triggerStart(posInQueue);
+                //folderNamesSeen.push('');
+            } else {
+                folderNamesSeen.push(path.split(/\//)[0]);
+                //folders.push(file);
+            }
+        }
+        folderNamesSeen = _.uniq(folderNamesSeen);
+        for (var i = 0; i < folderNamesSeen.length; i++) {
+            folders.push([]);
+            for (var j = 0; j < items.length; j++) {
+                if (folderNamesSeen[i] == items[j].path.split(/\//)[0]) {
+                    //console.log(items[j].path);
+                    var oPath = items[j].path;
+                    var path = items[j].path.split(/\//);
+                    var parentName = path.shift();
+                    path = path.toString().replace(/,/g, '/');
+                    items[j].path = path;
+                    if (!_.contains(foldersAdded, parentName)) {
+                        var newFolder = new Folder(posInQueue, parentName, oPath, parent, false);
+                        parent.addChild(newFolder);
+                        parents.push(newFolder);
+                        foldersAdded.push(parentName);
                     }
-                }
-            } else if (ua.ua == 'firefox' && e.dataTransfer) {
-                try {
-                    for (var i = 0, m = e.dataTransfer.mozItemCount; i < m; ++i) {
-                        var file = e.dataTransfer.mozGetDataAt("application/x-moz-file", i);
-                        if (file instanceof Ci.nsIFile) {
-                            traverseFileTree(nextAvailablePositionInQueue, new mozDirtyGetAsEntry(file), tempFolder);
-                        }
-                        else {
-                            console.log('dd.fileDragDrop: Not a nsIFile', file);
-                        }
-                    }
-                }
-                catch (e) {
-                    console.warn(e.getMessage());
-                }
-            } else if (ua.ua == 'safari' && e.dataTransfer ) {
-                // same as for chrome, but replace webkitGetAsEntry with getAsEntry
-                // I think
-                var items = e.dataTransfer.items;
-                for (var i = 0; i < items.length; i++) {
-                    if (items[i].getAsEntry) {
-                        var item = items[i].getAsEntry();
-                        if (item) {
-                            traverseFileTree(nextAvailablePositionInQueue, item, tempFolder);
-                        }
-                    }
+                    folders[i].push(items[j]);
                 }
             }
         }
-
+        for (var i = 0; i < folders.length; i++) {
+            buildFileTree(posInQueue, folders[i], parents[i]);
+        }
     }
     /*
     @param item     the file item
@@ -1580,9 +1777,8 @@ header3 font
             //start uploading
             linearQueue.sort();
             //linearQueue.debug();
+            //linearQueue.start(true);
             linearQueue.start();
-            //linearQueue.clean();
-            //linearQueue.debug();
         }
     }
     function LinearQueue() {
@@ -1682,7 +1878,7 @@ YM      6  M   YP   MM
     $(document).on("contextmenu", ".file-manager .file-list:not(#bar-0 .file-list)", function(e) {
         e.stopPropagation();
         if (!fm.btnStatus.shift) {
-            var parent = $(this).parent();
+            var parent = $(this).parent('.bar');
             e.preventDefault();
             //e.stopPropagation();
             cm.destroy();
@@ -1699,9 +1895,9 @@ YM      6  M   YP   MM
             } else {
                 cm.menu.append(new MenuItem(cm.menu, "Rename", "rename-box", "fm.dialog.rename.show('"+name+"','"+hash+"')", "r or f2").get());
                 cm.menu.append(new MenuItem(cm.menu, "Delete", "delete", "fm.dialog.trash.show('"+name+"','"+hash+"')", "Del").get());
-                cm.menu.append(new MenuItem(cm.menu, "Download", "download", "fm.download('"+hash+"')").get());
-                cm.menu.append(new MenuItem(cm.menu, "Upload File", "upload", "$('#dd-file-upload').click()").get());
-                cm.menu.append(new MenuItem(cm.menu, "Upload Folder", "folder-upload", "$('#dd-folder-upload').click()").get());
+                cm.menu.append(new MenuItem(cm.menu, "Download", "download", "fm.download('"+hash+"','"+name+"')").get());
+                cm.menu.append(new MenuItem(cm.menu, "Upload File", "upload", "$('#dd-file-upload').attr('hash','"+hash+"').click()").get());
+                cm.menu.append(new MenuItem(cm.menu, "Upload Folder", "folder-upload", "$('#dd-folder-upload').attr('hash','"+hash+"').click()").get());
                 cm.menu.append(new MenuItem(cm.menu, "New Folder", "folder-plus", "fm.dialog.newFolder.show('"+name+"','"+hash+"')", "Alt+N").get());
                 cm.menu.append('<hr class="nav-vert-divider">');
                 cm.menu.append(new MenuItem(cm.menu, "Share", "share", "fm.dialog.share.show('"+hash+"')", ".").get());
@@ -1725,7 +1921,7 @@ YM      6  M   YP   MM
                 //e.stopPropagation();
                 cm.menu.append(new MenuItem(cm.menu, "Rename", "rename-box", "fm.dialog.rename.show('"+name+"','"+hash+"')", "r or f2").get());
                 cm.menu.append(new MenuItem(cm.menu, "Delete", "delete", "fm.dialog.trash.show('"+name+"','"+hash+"')", "Del").get());
-                cm.menu.append(new MenuItem(cm.menu, "Download", "download", "fm.download('"+hash+"')").get());
+                cm.menu.append(new MenuItem(cm.menu, "Download", "download", "fm.download('"+hash+"','"+name+"')").get());
                 cm.menu.append(new MenuItem(cm.menu, "Upload File", "upload", "$('#dd-file-upload').attr('hash','"+hash+"').click()").get());
                 cm.menu.append(new MenuItem(cm.menu, "Upload Folder", "folder-upload", "$('#dd-folder-upload').attr('hash','"+hash+"').click()").get());
                 cm.menu.append(new MenuItem(cm.menu, "New Folder", "folder-plus", "fm.dialog.newFolder.show('"+name+"','"+hash+"')", "Alt+N").get());
@@ -1739,7 +1935,7 @@ YM      6  M   YP   MM
                 cm.menu = new ClickMenu(e.pageX, e.pageY);
                 cm.menu.append(new MenuItem(cm.menu, "Rename", "rename-box", "fm.dialog.rename.show('"+name+"','"+hash+"')", "r or f2").get());
                 cm.menu.append(new MenuItem(cm.menu, "Delete", "delete", "fm.dialog.trash.show('"+name+"','"+hash+"')", "Del").get());
-                cm.menu.append(new MenuItem(cm.menu, "Download", "download", "fm.download('"+hash+"')").get());
+                cm.menu.append(new MenuItem(cm.menu, "Download", "download", "fm.download('"+hash+"','"+name+"')").get());
                 cm.menu.append('<hr class="nav-vert-divider">');
                 cm.menu.append(new MenuItem(cm.menu, "Share", "share", "fm.dialog.share.show('"+hash+"')", ".").get());
                 cm.menu.append(new MenuItem(cm.menu, "Move", "folder-move", "fm.dialog.move.show('"+hash+"')", "m").get());
@@ -1759,11 +1955,27 @@ YM      6  M   YP   MM
             cm.menu = new ClickMenu(e.pageX, e.pageY);
             cm.menu.append(new MenuItem(cm.menu, "Rename", "rename-box", "fm.dialog.rename.show('"+name+"','"+hash+"')", "r or f2").get());
             cm.menu.append(new MenuItem(cm.menu, "Delete", "delete", "fm.dialog.trash.show('"+hash+"')", "Del").get());
-            cm.menu.append(new MenuItem(cm.menu, "Download", "download", "fm.download('"+hash+"')").get());
+            cm.menu.append(new MenuItem(cm.menu, "Download", "download", "fm.download('"+hash+"','"+name+"')").get());
             cm.menu.append('<hr class="nav-vert-divider">');
             cm.menu.append(new MenuItem(cm.menu, "Share", "share", "fm.dialog.share.show('"+hash+"')", ".").get());
             cm.menu.append(new MenuItem(cm.menu, "Move", "folder-move", "fm.dialog.move.show('"+hash+"')", "m").get());
             cm.menu.append(new MenuItem(cm.menu, "Refresh", "refresh", "fm.refresh('"+parentHash+"')", "Alt+R").get());
+        }
+    });
+    $(document).on("contextmenu", ".bar-trash .menubar-content", function(e) {
+        e.stopPropagation();
+        if (!fm.btnStatus.shift) {
+            var self = $(this);
+            var hash = self.attr('hash');
+            var name = self.attr('name');
+            e.preventDefault();
+            //e.stopPropagation();
+            cm.destroy();
+            cm.menu = new ClickMenu(e.pageX, e.pageY);
+            cm.menu.append(new MenuItem(cm.menu, "Restore", "backup-restore", "fm.restore('"+hash+"')").get());
+            cm.menu.append(new MenuItem(cm.menu, "Delete forever", "delete-forever", "fm.dialog.delete.show('"+name+"','"+hash+"')", "Del").get());
+            cm.menu.append('<hr class="nav-vert-divider">');
+            cm.menu.append(new MenuItem(cm.menu, "Refresh", "refresh", "fm.loadTrash()", "Alt+R").get());
         }
     });
     $(document).on('mousedown', function(e) {

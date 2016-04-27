@@ -33,7 +33,8 @@ var extensions = {
     'spreadsheet': [['ods', 'ots', 'gsheet', 'nb', 'xlr', 'numbers'], 'Spreadsheet', 'mdi-file-chart'],
     'swf': [['swf'], 'SWF', 'mdi-file-outline'],
     'torrent': [['torrent'], 'Torrent', 'mdi-file-outline'],
-    'text': [['txt', 'rtf', 'ans', 'ascii', 'log', 'odt', 'wpd'], 'Text', 'mdi-file-document'],
+    'text': [['txt', 'rtf', 'ans', 'ascii', 'log', 'odt', 'wpd',
+    'md'], 'Text', 'mdi-file-document'],
     'vcard': [['vcf'], 'Vcard', 'mdi-file-outline'],
     'vector': [['svgz', 'svg', 'cdr', 'eps'], 'Vector', 'mdi-file-outline'],
     'video': [['mkv', 'webm', 'avi', 'mp4', 'm4v', 'mpg', 'mpeg', 'mov', '3g2', '3gp', 'asf', 'wmv'], 'Video', 'mdi-file-video'],
@@ -73,7 +74,7 @@ var extdesc = {
     'bay': 'Casio RAW Image',
     'bmp': 'Bitmap Image',
     'bz2': 'UNIX Compressed',
-    'c': 'C/C++ Source Code',
+    'c': 'C Source Code',
     'cc': 'C++ Source Code',
     'cdr': 'CorelDRAW Image',
     'cgi': 'CGI Script',
@@ -126,6 +127,7 @@ var extdesc = {
     'm3u': 'Media Playlist',
     'm4a': 'MPEG-4 Audio',
     'max': '3ds Max Scene',
+    'md': 'Markdown',
     'mdb': 'MS Access',
     'mef': 'RAW Image',
     'mid': 'MIDI Audio',
@@ -210,6 +212,56 @@ var extdesc = {
     'zip': 'ZIP Archive',
     'mp4': 'MP4 Video'
 };
+var previewable = [];
+var previewType = {
+    'ascii': 'text',
+    'avi': 'image',
+    'bat': 'text',
+    'as': 'text',
+    'bmp': 'image',
+    'c': 'text',
+    'cc': 'text',
+    'cpp': 'text',
+    'com': 'text',
+    'css': 'text',
+    'cxx': 'text',
+    'dhtml': 'text',
+    'fla': 'flash',
+    'flv': 'flash',
+    'gif': 'image',
+    'h': 'text',
+    'hpp': 'text',
+    'htm': 'text',
+    'html': 'text',
+    'java': 'text',
+    'jpeg': 'image',
+    'jpg': 'image',
+    'js': 'text',
+    'kml': 'text',
+    'log': 'text',
+    'm4a': 'audio',
+    'md': 'text',
+    'mp3': 'audio',
+    'mpeg': 'video',
+    'mpg': 'video',
+    'php': 'text',
+    'php3': 'text',
+    'php4': 'text',
+    'php5': 'text',
+    'phtml': 'text',
+    'pl': 'text',
+    'png': 'image',
+    'py': 'text',
+    'sh': 'text',
+    'shtml': 'text',
+    'swf': 'flash',
+    'txt': 'text',
+    'wav': 'audio',
+    'webm': 'video',
+    'xhtml': 'text',
+    'xml': 'text',
+    'mp4': 'video'
+};
 for (var i in extensions) {
     for (var j in extensions[i][0]) {
         var desc = extensions[i][1];
@@ -220,9 +272,12 @@ for (var i in extensions) {
         ext[extensions[i][0][j]] = [i, desc, icon];
     }
 }
+for (var i in previewType) {
+    previewable.push(i);
+}
 function getType(fileItem) {
     name = fileItem.name;
-    if (fileItem.isFolder()) return "Folder";
+    if (fileItem.isFolder()) return "folder";
     var fileExt = getExt(name);
     if (ext[fileExt]) {
         return ext[fileExt][1];
@@ -261,4 +316,15 @@ function getIcon(fileItem) {
         icon = 'mdi-file-outline';
         return icon;
     }
+}
+function isPreviewable(fileItem) {
+    return previewable.indexOf(getExt(fileItem.name)) > -1;
+}
+function getPreviewType(fileItem) {
+    var i = previewable.indexOf(getExt(fileItem.name));
+    if (i > -1) {
+        return previewType[Object.keys(previewType)[i]];  
+    }
+    else
+        return 'nopreview';
 }

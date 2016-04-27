@@ -102,7 +102,6 @@ $dbname = "' . $dbname . '";
 		owner_id INT,
 		is_folder BOOLEAN,
 		hash CHAR(12),
-		md5id CHAR(32),
 		parent CHAR(12),
 		name VARCHAR(128),
 		size DOUBLE(30, 2),

@@ -18,10 +18,10 @@ if (strpos($pageID, '?') !== false) {
 //connect to database  
 $db = mysqli_connect($dbhost,$dbuname,$dbupass,$dbname);
 if(!isset($_SESSION['foxfile_uid'])) {
-	die();
+	resp(401, "You must be logged in to access the files API");
 }
 if(!isset($_SESSION['foxfile_access_level'])) {
-	die();
+	resp(401, "You must be logged in to access the files API");
 }
 $uid = $_SESSION['foxfile_uid'];
 $uem = $_SESSION['foxfile_email'];
@@ -60,6 +60,7 @@ function getUniqId() {
 function getPath($file) { // in theory, this function still works
 	//echo 'finding path of '. $file;
 	global $uhd, $db;
+	$file = sanitize($file);
 	if ($file == $uhd) return '../files/'.$file;
 	$pointer = 0;
 	//unset($path);
@@ -75,7 +76,7 @@ function getPath($file) { // in theory, this function still works
 				$path = array();
 			}
 			$curPos = '';
-			$query = mysqli_query($db, "SELECT * FROM files WHERE hash='$file' LIMIT 1");
+			$query = mysqli_query($db, "SELECT parent FROM files WHERE hash='$file' LIMIT 1");
 			if (mysqli_num_rows($query) == 0) resp(422, "Invalid file hash provided");
 			while($row = mysqli_fetch_array($query)) {
 				$path[] = $row['parent'];
@@ -296,6 +297,20 @@ function Zip($source, $destination, $sharedl = false) {
     return $zip->close();
 
 }
+function getOwner($f) {
+	global $db, $filetable;
+	$c = sanitize($f);
+	$result = mysqli_query($db, "SELECT owner_id from files where hash = '$c' LIMIT 1");
+	$row = mysqli_fetch_array($result);
+	return $row['owner_id'];
+}
+function isShared($file) {
+	global $db, $filetable;
+	$file = sanitize($file);
+	$result = mysqli_query($db, "SELECT is_shared from files where hash = '$file' LIMIT 1");
+	$row = mysqli_fetch_array($result);
+	return $row['is_shared'] === '1';
+}
 if ($pageID == 'list_files') {
 	$fileParent = sanitize($_POST['hash']);
 	$offset = (int) $_POST['offset'];
@@ -376,42 +391,22 @@ if ($pageID == 'new_file') {
 	$parentPath = getPath($fileParent);
 	if (!is_dir($parentPath)) mkdir($parentPath, 0770, true);
 	$dest = $parentPath.'/'.$fileHash;
-	/*$sql = "SELECT * from files WHERE name = '$fName' AND parent = '$fileParent' AND owner_id = '$uid' LIMIT 1";
-	if ($result = mysqli_query($db, $sql)) {
-		$total = mysqli_num_rows($result);
-		if ($total == 0) {*/
-			if (move_uploaded_file($tFile, $dest)) {
-				$sql = "INSERT INTO files (owner_id, is_folder, hash, parent, name, size) VALUES
-					('$uid',
-					'0',
-					'$fileHash',
-					'$fileParent',
-					'$fName',
-					'$fSize')";
-				if (mysqli_query($db, $sql)) {	// put some sort of versioning systen instead of just displaying every version as a separate file
-					echo json_encode(array('status' => 200, 'hash' => $fileHash));
-				} else {
-					resp(500, 'SQL file insert failed');
-				}
-			} else {
-				resp(500, 'File upload failed');
-			}
-		/*} else {
-			$row = mysqli_fetch_object($result);
-			$fileHash = $row->hash;
-			unlink($dest.'/'.$fileHash);
-			if (move_uploaded_file($tFile, $dest)) {
-				$sql = "UPDATE files SET size = '$fSize', last_modified = '$lmdf' WHERE hash = '$fileHash'";
-				if (mysqli_query($db, $sql)) {
-					echo json_encode(array('status' => 200, 'hash' => $fileHash));
-				} else {
-					resp(500, 'SQL file update failed');
-				}
-			} else {
-				resp(500, 'File update failed');
-			}
+	if (move_uploaded_file($tFile, $dest)) {
+		$sql = "INSERT INTO files (owner_id, is_folder, hash, parent, name, size) VALUES
+			('$uid',
+			'0',
+			'$fileHash',
+			'$fileParent',
+			'$fName',
+			'$fSize')";
+		if (mysqli_query($db, $sql)) {	// put some sort of versioning systen instead of just displaying every version as a separate file
+			echo json_encode(array('status' => 200, 'hash' => $fileHash));
+		} else {
+			resp(500, 'SQL file insert failed');
 		}
-	}*/
+	} else {
+		resp(500, 'File upload failed');
+	}
 }
 if ($pageID == 'new_folder') {
 	if (!isset($_POST['name']) || !isset($_POST['parent']))
@@ -455,6 +450,8 @@ if ($pageID == 'new_folder') {
 	}
 }
 if ($pageID == 'list_trash') {
+	if (!isset($_POST['offset']) || !isset($_POST['limit']))
+		resp(422, "missing parameters");
 	$offset = (int) $_POST['offset'];
 	$limit = (int) $_POST['limit'];
 	$sortBy = 'is_folder DESC, name';
@@ -490,22 +487,59 @@ if ($pageID == 'list_trash') {
 		resp(500, 'Failed to count contents of folder '.$fileParent);
 	}
 }
+if ($pageID == 'list_shared') {
+	if (!isset($_POST['offset']) || !isset($_POST['limit']))
+		resp(422, "missing parameters");
+	$offset = (int) $_POST['offset'];
+	$limit = (int) $_POST['limit'];
+	$sortBy = 'is_folder DESC, name';
+	if (isset($_POST['sortby'])) {
+		$sortBy = '';
+		if ($_POST['sortby'] == 'name') $sortBy .= 'name';
+		if ($_POST['sortby_direction'] == 'asc') $sortBy .= ' ASC';
+	}
+	/*$sql = "SELECT COUNT(*) as total from FILES WHERE is_trashed=1 AND owner_id = '$uid'";
+	if ($result = mysqli_query($db, $sql)) {
+		$total = mysqli_fetch_array($result)['total'];
+		$total -= $offset * $limit;
+		$remaining = $total - $limit;
+		$more = false;
+		if ($remaining > 0) $more = true;
+		$sql = "SELECT is_folder, hash, parent, name, size, is_shared, is_public, max(lastmod) as lastmod FROM FILES WHERE owner_id = '$uid' AND is_trashed=1 GROUP BY name ORDER BY $sortBy";
+		if ($result = mysqli_query($db, $sql)) {
+			$rows = array();
+			while ($row = mysqli_fetch_object($result)) {
+				$rows[] = $row;
+			}
+			$final = array(
+				'total_rows' => $total,
+				'more' => $more,
+				'remaining' => $remaining > 0 ? $remaining : 0,
+				'results' => $rows
+			);
+			echo json_encode($final);
+		} else {
+			resp(500, 'Failed to retrieve contents of folder '.$fileParent);
+		}
+	} else {
+		resp(500, 'Failed to count contents of folder '.$fileParent);
+	}*/
+	$final = array(
+				'total_rows' => 0,
+				'more' => 0,
+				'remaining' => 0,
+				'results' => []
+			);
+			echo json_encode($final);
+}
 if ($pageID == 'rename') {
+	if (!isset($_POST['name']) || !isset($_POST['hash']))
+		resp(422, "missing parameters");
 	$hash = sanitize($_POST['hash']);
 	$newName = sanitize($_POST['name']);
 	if ($hash == $uhd) {
 		resp(400, 'Cannot rename the home directory!');
 	} else {
-		/*$isOwner = true;
-
-		$query = mysqli_query($db, "SELECT * FROM files WHERE hash='$hash' LIMIT 1");
-
-		while($row = mysqli_fetch_array($query)) {
-			if ($row['owner'] !== $uid) {
-				$isOwner = false;
-			}
-		}*/
-
 		if(mysqli_query($db, "UPDATE files SET name = '$newName', lastmod = NOW() WHERE owner_id = '$uid' AND hash = '$hash' LIMIT 1")) {
 			resp(200, 'Renamed file or folder');
 		} else {
@@ -514,15 +548,18 @@ if ($pageID == 'rename') {
 	}
 }
 if($pageID == 'trash') {
+	if (!isset($_POST['hashlist']))
+		resp(422, "missing parameters");
 	$hashlist = sanitize($_POST['hashlist']);
 	if (strpos($hashlist, $uhd) !== false) {
 		resp(400, 'Cannot delete the home directory!');
 	} else {
 		foreach (explode(',', $hashlist) as $hash) {
-			if ($name = mysqli_query($db, "SELECT name FROM files WHERE hash='$hash' LIMIT 1")) {
-				$name = mysqli_fetch_object($name)->name;
-				//if (mysqli_query($db, "UPDATE files SET is_trashed=1 WHERE name=(SELECT name FROM files WHERE hash='$hash' LIMIT 1) AND owner_id = '$uid'"))
-				if (mysqli_query($db, "UPDATE files SET is_trashed=1, is_shared=0, is_public=0 WHERE name='$name' AND owner_id = '$uid'"))
+			if ($res = mysqli_query($db, "SELECT name, parent FROM files WHERE hash='$hash' AND owner_id='$uid' LIMIT 1")) {
+				$res = mysqli_fetch_object($res);
+				$name = $res->name;
+				$parent = $res->parent;
+				if (mysqli_query($db, "UPDATE files SET is_trashed=1, is_shared=0, is_public=0 WHERE name='$name' AND parent='$parent' AND owner_id = '$uid'"))
 					resp(200, 'moved files to trash');
 				else
 					resp(500, 'failed to delete files');
@@ -532,15 +569,19 @@ if($pageID == 'trash') {
 		}
 	}
 }
-if($pageID == 'untrash') {
+if($pageID == 'restore') {
+	if (!isset($_POST['hashlist']))
+		resp(422, "missing parameters");
 	$hashlist = sanitize($_POST['hashlist']);
 	if (strpos($hashlist, $uhd) !== false) {
 		resp(400, 'Cannot undelete the home directory! You cant delete it either, so why are you trying this?');
 	} else {
 		foreach (explode(',', $hashlist) as $hash) {
-			if ($name = mysqli_query($db, "SELECT name FROM files WHERE hash='$hash' LIMIT 1")) {
-				$name = mysqli_fetch_object($name)->name;
-				if (mysqli_query($db, "UPDATE files SET is_trashed=0 WHERE name='$name' AND owner_id = '$uid'"))
+			if ($name = mysqli_query($db, "SELECT name, parent FROM files WHERE hash='$hash' LIMIT 1")) {
+				$res = mysqli_fetch_object($name);
+				$name = $res->name;
+				$parent = $res->parent;
+				if (mysqli_query($db, "UPDATE files SET is_trashed=0 WHERE name='$name' AND parent='$parent' AND owner_id = '$uid'"))
 					resp(200, 'removed files from trash');
 				else
 					resp(500, 'failed to remove files from trash');
@@ -551,77 +592,124 @@ if($pageID == 'untrash') {
 	}
 }
 if($pageID == 'delete') {
+	if (!isset($_POST['hashlist']))
+		resp(422, "missing parameters");
 		$hashlist = sanitize($_POST['hashlist']);
 		//echo 'hash '.$hash_self_array . '<br>';
 		if (strpos($hashlist, $uhd) !== false) { 
 			resp(400, 'Cannot delete the home directory!');
 		} else {
-			foreach (explode(',', $hashlist) as $hash) {
+			$success = true;
+			$fails = 0;
+			foreach (explode(',', $hashlist) as $mainhash) {
 				//echo 'foreach '.$hash.'<br>';
-				$delItems = '';
+				/*$delItems = '';
 				$delTree = [$hash];
-				$pointer = 0;
+				$pointer = 0;*/
 				$isOwner = true;
 				$type = '';
-				$query = mysqli_query($db, "SELECT is_folder FROM files WHERE hash='$hash' AND owner_id='$uid' LIMIT 1");
-				$type = mysqli_fetch_object($query)->is_folder == 1 ? 'folder' : 'file';
-
+				$query = mysqli_query($db, "SELECT is_folder, parent, name FROM files WHERE hash='$mainhash' AND owner_id='$uid' LIMIT 1");
+				$res = mysqli_fetch_object($query);
+				$type = $res->is_folder == 1 ? 'folder' : 'file';
 
 				// repeat this for all older versions of the files with the same name and parent as this one
-
-
-				if (!function_exists('recursiveDelete')) { //only declare the function once
-					function recursiveDelete($self) {
-						global $db, $delTree, $pointer, $isOwner, $uid;
-						$curPos = array();
-						$query = mysqli_query($db, "SELECT hash, owner_id FROM files WHERE parent='$self' AND owner_id='$uid'");
-						while($row = mysqli_fetch_array($query)) {
-							$delTree[] = $row['hash']; //get self ids from all files within target
-							$curPos[] = $row['hash'];
-							if ($row['owner_id'] !== $uid) {
-								$isOwner = false;
+				$name = $res->name;
+				$parent = $res->parent;
+				$others = mysqli_query($db, "SELECT hash FROM files WHERE parent='$parent' AND name='$name' AND owner_id='$uid'");
+				$otherHashes = array();
+				while($res = mysqli_fetch_object($others)) {
+					$otherHashes[] = $res->hash;
+				}
+				foreach($otherHashes as $hash) {
+					$delItems = '';
+					$delTree = [$hash];
+					$pointer = 0;
+					if (!function_exists('recursiveDelete')) { //only declare the function once
+						function recursiveDelete($self) {
+							global $db, $delTree, $pointer, $isOwner, $uid;
+							$curPos = array();
+							$query = mysqli_query($db, "SELECT hash, owner_id FROM files WHERE parent='$self' AND owner_id='$uid'");
+							while($row = mysqli_fetch_array($query)) {
+								$delTree[] = $row['hash'];
+								$curPos[] = $row['hash'];
+								if ($row['owner_id'] !== $uid) {
+									$isOwner = false;
+								}
+							}
+							foreach ($curPos as $key => $value) {
+								recursiveDelete($value);
+								$pointer++;
 							}
 						}
-						//$query = mysqli_query($db, "SELECT self FROM files where name="
-						foreach ($curPos as $key => $value) {
-							recursiveDelete($value);
-							$pointer++;
-						}
 					}
-				}
-				if ($type == 'folder') {
-					recursiveDelete($hash);
-				}
-				$pointer = 0;
-				foreach ($delTree as $key => $value) {
-					if ($pointer != sizeof($delTree) - 1) {
-						$delItems .= '\'' . $value . '\', ';
-					} else {
-						$delItems .= '\'' . $value . '\'';
-					}
-					$pointer++;
-				}
-				if ($isOwner) {
 					if ($type == 'folder') {
-						deleteFolder($hash);
-					} else {
-						deleteFile($hash);
+						recursiveDelete($hash);
 					}
-					$success = true;
-					$fails = 0;
-					if(mysqli_query($db, "DELETE FROM files WHERE hash IN ($delItems) AND owner_id='$uid'")) {
-						
-					} else {
-						$success = false;
-						$fails++;
+					$pointer = 0;
+					foreach ($delTree as $key => $value) {
+						if ($pointer != sizeof($delTree) - 1) {
+							$delItems .= '\'' . $value . '\', ';
+						} else {
+							$delItems .= '\'' . $value . '\'';
+						}
+						$pointer++;
 					}
-					if ($success) resp(200, 'deleted files and folders');
-					else resp(500, "Failed to delete " . $fails . ' items.');
-				} else {
-					resp(401, "You do not own this file.");
+					if ($isOwner) {
+						if ($type == 'folder') {
+							deleteFolder($hash);
+						} else {
+							deleteFile($hash);
+						}
+						if(mysqli_query($db, "DELETE FROM files WHERE hash IN ($delItems) AND owner_id='$uid'")) {
+							
+						} else {
+							$success = false;
+							$fails++;
+						}
+
+					} else {
+						resp(401, "You do not own this file.");
+					}
 				}
 			}
+			if ($success) resp(200, 'deleted files and folders');
+			else resp(500, "Failed to delete " . $fails . ' items.');
+
 		}
+}
+if($pageID == 'view') {
+	if (!isset($_GET['id']))
+		resp(422, "missing parameters");
+	$fileName = sanitize($_GET['id']);
+	$filePath = getPath($fileName);
+
+	if (!extension_loaded('fileinfo')) {
+		if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+	        dl('php_fileinfo.dll');
+	    } else {
+	        dl('fileinfo.so');
+	    }
+	}
+
+	if (is_readable($filePath)) {
+		if(getOwner($fileName) == $uid || isShared($fileName)) {
+			$finfo = finfo_open(FILEINFO_MIME_TYPE);
+			$fileType = finfo_file($finfo, $filePath);
+			finfo_close($finfo);
+
+
+			// filter out files that the client wont be able to preview, like .exe and similar
+
+
+			header('Content-Type: ' . $fileType);
+			readfile($filePath);
+			exit();
+		} else {
+			resp(404, "Could not find the requested file");
+		}
+	} else {
+		res(404, "Invalid file path provided");
+	}
 }
 if (isset($_POST['move'])) {
 	$file_multi = sanitize($_POST['file_multi']);
@@ -649,11 +737,10 @@ if (isset($_POST['move'])) {
 					die();
 				}
 			}
-			$date = date("F j, Y, g:i a");
 
 			if ($isOwner) {
 				if (rename(getPath($hash_self), $file_target_path . '/' . $hash_self)) {
-					if(mysqli_query($db, "UPDATE $filetable SET file_parent = '$target', last_modified = '$date' WHERE file_self='$hash_self'")) {
+					if(mysqli_query($db, "UPDATE $filetable SET file_parent = '$target', last_modified = NOW() WHERE file_self='$hash_self'")) {
 						echo '';
 					} else {
 						echo "DB move failed!";
@@ -667,77 +754,52 @@ if (isset($_POST['move'])) {
 		}
 	}
 }
-if(isset($_GET['preview'])) {
-	$fileName = sanitize($_GET['preview']);
-	$filePath = getPath($fileName);
+if($pageID == 'download') {
+	if (isset($_GET['hashlist'])) { //multiple
 
-	if (!extension_loaded('fileinfo')) {
-		if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
-	        dl('php_fileinfo.dll');
-	    } else {
-	        dl('fileinfo.so');
-	    }
-	}
+	} else if (isset($_GET['id'])) {
+		$fileName = sanitize($_GET['id']);
+		$n = sanitize($_GET['name']);
 
-	if (is_readable($filePath)) {
-		if(getOwner($fileName) == $uid || isShared($fileName) == 1) {
-			$finfo = finfo_open(FILEINFO_MIME_TYPE);
-			$fileType = finfo_file($finfo, $filePath);
-			finfo_close($finfo);
+		$isShared = false;
+		//$isShared = isShared($fileName);
 
-			header('Content-Type: ' . $fileType);
-			readfile($filePath);
-			exit();
+		if (getOwner($fileName) == $uid || $isShared) {
+
+		$filePath = getPath($fileName);
+
+		    if(is_readable($filePath)) {
+		        $fileSize = filesize($filePath);
+
+		        header('Content-Description: File Transfer');
+			    header('Content-Type: application/octet-stream');
+			    header('Content-Disposition: attachment; filename='.$n);
+			    header('Expires: 0');
+			    header('Cache-Control: must-revalidate');
+			    header('Pragma: public');
+			    header('Content-Length: ' . filesize($filePath));
+			    ob_end_flush();
+			    readfile($filePath);
+
+		        exit();
+		    }
+		    else {
+		        resp(404,'The provided file path is not valid.');
+		    }
 		} else {
-			header("HTTP/1.0 404 Not Found");
+			resp(403, "you do not have access to this file");
 		}
 	} else {
-		echo 'Invalid file path.';
-	}
-}
-if(isset($_GET['download'])) {
-	$fileName = sanitize($_GET['file_id']);
-	$n = sanitize($_GET['file_name']);
-	$isShared = isShared($fileName);
-
-	if (getOwner($fileName) == $uid || $isShared) {
-
-		if ($isShared) {
-			$filePath = 'shared/'.$fileName;
-		} else {
-			$filePath = getPath($fileName);
-		}
-
-	    if(is_readable($filePath)) {
-	        $fileSize = filesize($filePath);
-
-	        header('Content-Description: File Transfer');
-		    header('Content-Type: application/octet-stream');
-		    header('Content-Disposition: attachment; filename='.$n);
-		    header('Expires: 0');
-		    header('Cache-Control: must-revalidate');
-		    header('Pragma: public');
-		    header('Content-Length: ' . filesize($filePath));
-		    ob_end_flush();
-		    readfile($filePath);
-
-	        exit();
-	    }
-	    else {
-	        echo ('The provided file path is not valid.');
-	    }
-	} else {
-		header("HTTP/1.1 403 Access Denied");
-		header("Location: error?404");
+		resp(422, 'missing parameters');
 	}
 }
 if(isset($_GET['multi_download'])) {
-	$fileName = sanitize($_GET['file_id']);
+	$fileName = sanitize($_GET['id']);
 	$n = sanitize($_GET['file_name']);
 	$type = sanitize($_GET['file_type']); //folder or group of files
-	if (!file_exists('downloads')) mkdir('downloads');
-	if (!file_exists('downloads/' . $uhd)) mkdir('downloads/' . $uhd);
-	$destination = 'downloads/' . $uhd . '/' . $n . '.zip';
+	if (!file_exists('temp')) mkdir('temp');
+	if (!file_exists('temp/' . $uhd)) mkdir('temp/' . $uhd);
+	$destination = 'temp/' . $uhd . '/' . $n . '.zip';
 	//echo 'ID: ' . $fileName.'<br>';
 	//echo 'Name: ' . $n.'<br>';
 	//echo 'Type: ' . $type.'<br>';
@@ -795,7 +857,7 @@ if(isset($_GET['multi_download'])) {
 	    //file should stay until it finishes downloading, then poof by itself
 	    //echo '<br>deleting ' . $destination . '<br>';
 	    if (unlink($destination))
-			echo "Cleared user downloads folder";
+			echo "Cleared user temp folder";
 	    exit();
 	} else {
 		echo 'Could not find file: ' . $destination;

@@ -107,7 +107,7 @@ if($pageID == 'new') {
 			                'unverified')";
 					if (mysqli_query($db,$sql)) {
 						mkdir('../files/'.$root_folder.'/');
-						mkdir('../trashes/'.$root_folder.'/');
+						//mkdir('../trashes/'.$root_folder.'/');
 						echo 0;
 						die();
 			        } else {
@@ -129,12 +129,12 @@ if($pageID == 'newpass') {
 	$passN = sanitize($_POST['newpass']);
 	$passNCrypt = password_hash($passN, PASSWORD_BCRYPT);
 
-	$user = mysqli_query($db, "SELECT pass from $usertable where PID = '$uid'");
+	$user = mysqli_query($db, "SELECT pass from users where PID = '$uid'");
 	$row = mysqli_fetch_array($user);
 	$passToMatch = $row['pass'];
 
 	if (password_verify($passC, $passToMatch)) {
-		if (mysqli_query($db, "UPDATE $usertable SET pass = '$passNCrypt' WHERE PID = '$uid'")) {
+		if (mysqli_query($db, "UPDATE users SET pass = '$passNCrypt' WHERE PID = '$uid'")) {
 			echo "Password changed.";
 		} else {
 			echo "Password change failed.";
