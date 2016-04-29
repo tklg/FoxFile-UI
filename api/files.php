@@ -57,6 +57,12 @@ function getUniqId() {
 		return -1;
 	}
 }
+function getName($file) {
+	global $uid, $db;
+	$result = mysqli_query($db, "SELECT name from files where hash = '$file' AND owner_id='$uid' LIMIT 1");
+	$res = mysqli_fetch_object($result);
+	return $res->name;
+}
 function getPath($file) { // in theory, this function still works
 	//echo 'finding path of '. $file;
 	global $uhd, $db;
@@ -112,13 +118,16 @@ function getPath($file) { // in theory, this function still works
 	}
 }
 function deleteDir($path) {
+	if (!isset($path) || !$path || $path == '' || $path == '/' || $path == '\\') die("THIS MUST NEVER HAPPEN AGAIN");
 	foreach(glob("{$path}/*") as $file) {
         if(is_dir($file)) { 
             deleteDir($file);
         } else {
+            //echo 'removing file: '.$file.'<br>';
             unlink($file);
         }
     }
+    //echo 'removing dir: '.$path.'<br>';
     rmdir($path);
 }
 function deleteFolder($folder) {
@@ -129,28 +138,50 @@ function deleteFile($file) {
 	$path = getPath($file);
 	unlink($path);
 }
-function Zip($source, $destination, $sharedl = false) {
+function recurse_copy($src,$dst) { 
+    $dir = opendir($src); 
+		if (!file_exists($dst))
+			if (mkdir($dst, 0770, true))
+				//echo "<font color='red'>Folder " . $dst . ' did not exist, creating</font><br>';
+    while(false !== ( $file = readdir($dir)) ) { 
+        if (( $file != '.' ) && ( $file != '..' )) { 
+            if ( is_dir($src . '/' . $file) ) { 
+                recurse_copy($src . '/' . $file,$dst . '/' . $file); 
+            } 
+            else { 
+                copy($src . '/' . $file,$dst . '/' . $file); 
+            } 
+        } 
+    } 
+    closedir($dir); 
+}
+function Zip($src, $destination, $zipname, $sharedl = false) {
+	/*echo 'ZIP: ';
+	echo 'src: '.$src.'<br>';
+	echo 'destination: '.$destination.'<br>';
+	echo 'zipname: '.$zipname.'<br>';*/
+	if (!is_dir($destination)) mkdir($destination, 0770, true);
 	global $uhd;
 	if (!$sharedl) {
-	    if (is_string($source)) {
-	    	$source_arr = array(getPath($source)); // convert it to array
-	    	$source = array($source);
+	    if (is_string($src)) {
+	    	$source_arr = array(getPath($src)); // convert it to array
+	    	$src = array($src);
 	    	//echo "Source was string, making array<br>";
 	    } else {
 	    	$fileList = array();
-			foreach($source as $file) {
+			foreach($src as $file) {
 				$fileList[] = getPath($file);
 			}
 	    	$source_arr = $fileList;
 	    }
 	} else { //zipping from the shared folder
-		if (is_string($source)) {
-	    	$source_arr = array('shared/'.$source); // convert it to array
-	    	$source = array($source);
+		if (is_string($src)) {
+	    	$source_arr = array('shared/'.$src); // convert it to array
+	    	$src = array($src);
 	    	//echo "Source was string, making array<br>";
 	    } else {
 	    	$fileList = array();
-			foreach($source as $file) {
+			foreach($src as $file) {
 				$fileList[] = 'shared/'.$file;
 			}
 	    	$source_arr = $fileList;
@@ -160,58 +191,68 @@ function Zip($source, $destination, $sharedl = false) {
         return false;
     }
 
-    $zip = new ZipArchive();
-    if (file_exists($destination)) {
-    	if ($zip->open($destination, ZIPARCHIVE::OVERWRITE)) {
-	        //echo "Created zip file: ".$destination.'<br>';
-	    } else {
-	    	return false;
-	    }
-    } else {
-    	if ($zip->open($destination, ZIPARCHIVE::CREATE)) {
-	        //echo "Created zip file: ".$destination.'<br>';
-	    } else {
-	    	return false;
-	    }
-    }
     $files = array();
-    $dest = str_replace('.', '', $destination) . '/'; //makes a normal folder called *zip :D
+    //$dest = './../'.str_replace('.', '', str_replace('./../', '', $destination)) . '/'; //makes a normal folder
+    //echo $dest.'<br>';
+    $oTarget = $destination;
     //copy over folders
     foreach ($source_arr as $source) {
+    	//echo 'src: '.$source.'<br>';
         if (!file_exists($source)) continue;
 		$source = str_replace('\\', '/', realpath($source));
         //echo "Source: " . $source . '<br>';
-        $oTarget = str_replace('shared', 'downloads', str_replace('files', 'downloads', $source));
         //echo "Target: " . $oTarget . '<br><hr>';
+        //$oTarget = str_replace('files', 'temp', $source);
 		if (is_dir($source)) {
 			$iterator = new RecursiveDirectoryIterator($source);
 			$iterator->setFlags(RecursiveDirectoryIterator::SKIP_DOTS);
 		    $files = new RecursiveIteratorIterator($iterator, RecursiveIteratorIterator::SELF_FIRST);
-
+		    //echo 'folder: <br>';
 		    foreach ($files as $file) {
+		        //$target = str_replace('files', 'temp', $file);
 		        $file = str_replace('\\', '/', realpath($file));
-		        $target = str_replace('shared', 'downloads', str_replace('files', 'downloads', $file));
+		        $tmp = str_replace('./../temp/'.$uhd.'/', '', $destination);
+		        $target = str_replace('files/'.$uhd, 'temp/'.$uhd.'/'.$tmp, $file);
+		        //echo 'exp: '.explode('/', $target)[array_search($tmp, explode('/',$target)) + 1].'<br>';
+		        $target = str_replace(explode('/', $target)[array_search($tmp, explode('/',$target)) + 1].'/', '', $target);
+
+		       /* echo 'file: '.$file.'<br>';
+		        echo 'dest: '.$destination.'<br>';
+		        echo 'tmp: '.$tmp.'<br>';
+		        echo 'target: '.$target.'<br><br>';*/
+		        //$tartmp = $target;
 		        $tartmp = str_replace('/'.basename($target), '', $target);
 		        if (!file_exists($tartmp)) {
 		        	//if (is_dir($tartmp)) {
-		        		mkdir($tartmp, 0777, true);
+		        		mkdir($tartmp, 0770, true);
 		        		//echo "<font color='red'>Folder " . $tartmp . ' did not exist, creating</font><br>';
 		        	//}
 		        }
 		        if (is_dir($file)) {
 		            recurse_copy($file, $target);
 		            //echo '<hr>';
-		        }
-		        else if (is_file($file)) {
+		        } else if (is_file($file)) {
+/*		        	echo 'copying:<br>';
+		        	echo 'file: '.$file.'<br>';
+		        	echo 'tgt: '.$target.'<br>';*/
 		            copy($file, $target);
 		            //echo '<hr>';
 		        }
 		    }
-		}
-		else if (is_file($source)) {
-			$target = str_replace('shared', 'downloads', str_replace('files', 'downloads', $file));
+		} else if (is_file($source)) {
+			$file = str_replace('\\', '/', realpath($source));
+			$tmp = str_replace('./../temp/'.$uhd.'/', '', $destination);
+		    $target = str_replace('files/'.$uhd, 'temp/'.$uhd.'/'.$tmp, $file);
+		    $tartmp = str_replace('/'.basename($target), '', $target);
+		    $target = $destination.'/'.basename($file);
 		    //$zip->addFromString(basename($source), file_get_contents($source));
 		    //copy(str_replace('downloads', 'files', $file), $dest . str_replace($source . '/', '', $file));
+		    /*echo 'file: '.$file.'<br>';
+		    echo 'dest: '.$destination.'<br>';
+		    echo 'tmp: '.$tmp.'<br>';
+		    echo 'target: '.$target.'<br>';
+		    echo 'tartmp: '.$tartmp.'<br><br>';*/
+		    //if(!is_dir($tartmp)) mkdir($tartmp, 0770, true);
 		    copy($file, $target);
 		}
 
@@ -219,6 +260,7 @@ function Zip($source, $destination, $sharedl = false) {
     //loop through folder renaming files because folders cant be renamed in a zip
     //echo "<b>looping through files and folders</b><hr>";
     $source = $oTarget;
+    //echo 'renaming folders in: '.$source.'<br>';
     //echo $source . '<br>';
     if (is_dir($source)) {
 		$iterator = new RecursiveDirectoryIterator($source);
@@ -232,25 +274,36 @@ function Zip($source, $destination, $sharedl = false) {
 
 	        if (is_dir($file)) {
 	            //echo "Folder: " . $file . '<br>';
-	            //echo 'Renaming to: ' . getName(basename($file));
-	            chmod($file, 0777);
+	            //echo 'Renaming to: ' . getName(basename($file)).'<br>';
+	            chmod($file, 0770);
 	            rename($file, str_replace(basename($file), getName(basename($file)), $file));
 		        //echo '<hr>';
         	} else if (is_file($file)) {
+        		//renamed inside the zip
 	        }
 	        $i++;
 	    }
 	}
-	else if (is_file($source)) {
-
-	}
-
+	$zip = new ZipArchive();
+    if (file_exists($zipname)) {
+    	if ($zip->open($zipname, ZIPARCHIVE::OVERWRITE)) {
+	    } else {
+	    	return false;
+	    }
+    } else {
+    	if ($zip->open($zipname, ZIPARCHIVE::CREATE)) {
+	    } else {
+	    	return false;
+	    	//psh cleanup
+	    }
+    }
     //zip created folder
-        if (!file_exists($source)) continue;
-		$source = $oTarget;
-		//echo '<hr><b>creating zip</b><hr>';
+        //if (!file_exists($source)) continue;
+		$source = str_replace('\\', '/', realpath($oTarget));;
+		//echo 'zipping: '.$source.'<br>';
+		//echo '<hr><b>creating zip</b><br>';
         //echo "Source: " . $source . '<br>';
-        $oTarget = str_replace('shared', 'downloads', str_replace('files', 'downloads', $source));
+        //$oTarget = str_replace('files', 'temp', $source);
         //echo "Target: " . $oTarget . '<br><hr>';
 		if (is_dir($source)) {
 			$iterator = new RecursiveDirectoryIterator($source);
@@ -259,15 +312,19 @@ function Zip($source, $destination, $sharedl = false) {
 
 		    foreach ($files as $file) {
 		        $file = str_replace('\\', '/', realpath($file));
+		        //echo 'file: '.$file.'<br>';
 		        if (is_dir($file)) {
-		            $zip->addEmptyDir(str_replace($source . '/', '', $file . '/'));
+		        	//echo 'adding dir: '.str_replace($source, '', $file).'<br>';
+		            $zip->addEmptyDir(str_replace($source, '', $file));
 		        }
 		        else if (is_file($file)) {
+		        	//echo 'adding file: '.str_replace($source . '/', '', $file).'<br>';
 		            $zip->addFromString(str_replace($source . '/', '', $file), file_get_contents($file));
 		        }
+		        //echo '<br>';
 		    }
-		}
-		else if (is_file($source)) {
+		} else if (is_file($source)) {
+			echo '<strong>this should never happen</strong><br>';
 		    $zip->addFromString(basename($source), file_get_contents($source));
 		    //echo 'file: ' . str_replace('downloads', 'files', $file) . '<hr>';
 		    //copy(str_replace('downloads', 'files', $file), $dest . str_replace($source . '/', '', $file));
@@ -422,10 +479,10 @@ if ($pageID == 'new_folder') {
 	$realfilepath = $realtgtpath.'/'.$fileHash;
 	//echo $realfilepath;
 	if (mkdir($realfilepath)) {
-		$sql = "SELECT * from files WHERE name = '$fileName' AND parent = '$fileParent' AND owner_id = '$uid' AND is_folder = 1 LIMIT 1";
+		/*$sql = "SELECT * from files WHERE name = '$fileName' AND parent = '$fileParent' AND owner_id = '$uid' AND is_folder = 1 LIMIT 1";
 		if ($result = mysqli_query($db, $sql)) {
 			$total = mysqli_num_rows($result);
-			if ($total == 0) {
+			if ($total == 0) {*/
 				$sql = "INSERT INTO files (owner_id, is_folder, hash, parent, name) VALUES
 							('$uid',
 							'1',
@@ -437,14 +494,14 @@ if ($pageID == 'new_folder') {
 				} else {
 					resp(500, 'SQL folder insert failed');
 				}
-			} else {
+			/*} else {
 				$row = mysqli_fetch_object($result);
 				$fileHash = $row->hash;
 				echo json_encode(array('status' => 200, 'hash' => $fileHash));
 			}
 		} else {
 			resp(500, "Folder preexistence check failed");
-		}
+		}*/
 	} else {
 		resp(500, 'Folder creation failed');
 	}
@@ -554,19 +611,24 @@ if($pageID == 'trash') {
 	if (strpos($hashlist, $uhd) !== false) {
 		resp(400, 'Cannot delete the home directory!');
 	} else {
+		$fails = 0;
 		foreach (explode(',', $hashlist) as $hash) {
 			if ($res = mysqli_query($db, "SELECT name, parent FROM files WHERE hash='$hash' AND owner_id='$uid' LIMIT 1")) {
 				$res = mysqli_fetch_object($res);
 				$name = $res->name;
 				$parent = $res->parent;
-				if (mysqli_query($db, "UPDATE files SET is_trashed=1, is_shared=0, is_public=0 WHERE name='$name' AND parent='$parent' AND owner_id = '$uid'"))
-					resp(200, 'moved files to trash');
-				else
-					resp(500, 'failed to delete files');
+				if (mysqli_query($db, "UPDATE files SET is_trashed=1, is_shared=0, is_public=0 WHERE name='$name' AND parent='$parent' AND owner_id = '$uid'")) {
+					//ok
+				} else
+					$fails++;
 			} else {
-				resp(500, 'failed to delete files');
+				$fails++;
 			}
 		}
+		if ($fails == 0)
+			resp(200, 'moved files to trash');
+		else
+			resp(500, 'failed to delete '.$fails.' files');
 	}
 }
 if($pageID == 'restore') {
@@ -576,19 +638,24 @@ if($pageID == 'restore') {
 	if (strpos($hashlist, $uhd) !== false) {
 		resp(400, 'Cannot undelete the home directory! You cant delete it either, so why are you trying this?');
 	} else {
+		$fails = 0;
 		foreach (explode(',', $hashlist) as $hash) {
 			if ($name = mysqli_query($db, "SELECT name, parent FROM files WHERE hash='$hash' LIMIT 1")) {
 				$res = mysqli_fetch_object($name);
 				$name = $res->name;
 				$parent = $res->parent;
-				if (mysqli_query($db, "UPDATE files SET is_trashed=0 WHERE name='$name' AND parent='$parent' AND owner_id = '$uid'"))
-					resp(200, 'removed files from trash');
-				else
-					resp(500, 'failed to remove files from trash');
+				if (mysqli_query($db, "UPDATE files SET is_trashed=0 WHERE name='$name' AND parent='$parent' AND owner_id = '$uid'")) {
+					//ok
+				} else
+					$fails++;
 			} else {
-				resp(500, 'failed to remove files from trash');
+				$fails++;
 			}
 		}
+		if ($fails == 0)
+			resp(200, 'removed files from trash');
+		else
+			resp(500, 'failed to remove '.$fails.' files from trash');
 	}
 }
 if($pageID == 'delete') {
@@ -608,14 +675,14 @@ if($pageID == 'delete') {
 				$pointer = 0;*/
 				$isOwner = true;
 				$type = '';
-				$query = mysqli_query($db, "SELECT is_folder, parent, name FROM files WHERE hash='$mainhash' AND owner_id='$uid' LIMIT 1");
+				$query = mysqli_query($db, "SELECT is_folder, parent, name FROM files WHERE hash='$mainhash' AND owner_id='$uid' AND is_trashed='1' LIMIT 1");
 				$res = mysqli_fetch_object($query);
 				$type = $res->is_folder == 1 ? 'folder' : 'file';
 
 				// repeat this for all older versions of the files with the same name and parent as this one
 				$name = $res->name;
 				$parent = $res->parent;
-				$others = mysqli_query($db, "SELECT hash FROM files WHERE parent='$parent' AND name='$name' AND owner_id='$uid'");
+				$others = mysqli_query($db, "SELECT hash FROM files WHERE parent='$parent' AND name='$name' AND owner_id='$uid' AND is_trashed='1'");
 				$otherHashes = array();
 				while($res = mysqli_fetch_object($others)) {
 					$otherHashes[] = $res->hash;
@@ -628,7 +695,7 @@ if($pageID == 'delete') {
 						function recursiveDelete($self) {
 							global $db, $delTree, $pointer, $isOwner, $uid;
 							$curPos = array();
-							$query = mysqli_query($db, "SELECT hash, owner_id FROM files WHERE parent='$self' AND owner_id='$uid'");
+							$query = mysqli_query($db, "SELECT hash, owner_id FROM files WHERE parent='$self' AND owner_id='$uid' AND is_trashed='1'");
 							while($row = mysqli_fetch_array($query)) {
 								$delTree[] = $row['hash'];
 								$curPos[] = $row['hash'];
@@ -660,7 +727,7 @@ if($pageID == 'delete') {
 						} else {
 							deleteFile($hash);
 						}
-						if(mysqli_query($db, "DELETE FROM files WHERE hash IN ($delItems) AND owner_id='$uid'")) {
+						if(mysqli_query($db, "DELETE FROM files WHERE hash IN ($delItems) AND owner_id='$uid' AND is_trashed='1'")) {
 							
 						} else {
 							$success = false;
@@ -756,7 +823,60 @@ if (isset($_POST['move'])) {
 }
 if($pageID == 'download') {
 	if (isset($_GET['hashlist'])) { //multiple
-
+		$fileName = sanitize($_GET['hashlist']);
+		$n = sanitize($_GET['name']);
+		$type = sanitize($_GET['type']); //folder or group of files
+		if (!file_exists('./../temp')) mkdir('./../temp');
+		if (!file_exists('./../temp/' . $uhd)) mkdir('./../temp/' . $uhd);
+		$n2 = str_replace('.','',$n);
+		$destination = './../temp/' . $uhd . '/' . $n2 . 'zip';
+		$zipname = './../temp/' . $uhd . '/' . $n . '.zip';
+		if ($type == 'file') { //if file name contains , is multiple files
+			$files = explode(',', $fileName);
+		} else {
+			$files = $fileName;
+		}
+		if ($type === 'folder') {
+			$isShared = isShared($files);
+			if (getOwner($files) == $uid || $isShared) {
+				if (!Zip($files, $destination, $zipname)) resp(500, "Failed to zip files.");
+			} else {
+				//echo "You do not have access to these files.";
+			}
+		} else if ($type === 'file') {
+			//$files will be a CSV split into an array
+			$fil = $files[0];
+			$isShared = isShared($files[0]);
+			if (getOwner($files[0]) == $uid || $isShared) {
+				if (!Zip($files, $destination, $zipname)) resp(500, "Failed to zip files.");
+			} else {
+				//echo "You do not have access to these files.";
+			}
+		} else {
+			resp(500, 'unknown type: '.$type);
+		}
+		if(file_exists($zipname)) {
+			//echo $destination;
+		    header('Pragma: public');
+		    header('Expires: 0');
+		    header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+		    header('Content-Type: application/octet-stream');
+		    header("Content-Description: File Transfer");
+		    header('Content-Disposition: attachment; filename="'.$n.'.zip"');
+		    header('Content-Length: ' . filesize($zipname));
+		    header("Content-Transfer-Encoding: binary");
+		    ob_clean();
+			flush();
+		    readfile($zipname);
+		    //sleep(1);
+		    //file should stay until it finishes downloading, then poof by itself
+		    //echo '<br>deleting ' . $destination . '<br>';
+		    @unlink($zipname);
+				//echo "Cleared user temp folder";
+		    exit();
+		} else {
+			resp(404,'Could not find file: ' . $zipname);
+		}
 	} else if (isset($_GET['id'])) {
 		$fileName = sanitize($_GET['id']);
 		$n = sanitize($_GET['name']);
@@ -791,76 +911,6 @@ if($pageID == 'download') {
 		}
 	} else {
 		resp(422, 'missing parameters');
-	}
-}
-if(isset($_GET['multi_download'])) {
-	$fileName = sanitize($_GET['id']);
-	$n = sanitize($_GET['file_name']);
-	$type = sanitize($_GET['file_type']); //folder or group of files
-	if (!file_exists('temp')) mkdir('temp');
-	if (!file_exists('temp/' . $uhd)) mkdir('temp/' . $uhd);
-	$destination = 'temp/' . $uhd . '/' . $n . '.zip';
-	//echo 'ID: ' . $fileName.'<br>';
-	//echo 'Name: ' . $n.'<br>';
-	//echo 'Type: ' . $type.'<br>';
-	//echo 'Dest: ' . $destination.'<br>';
-	//if files to dl is > 1, use file zip
-	//else use folder zip
-	if ($type == 'file') { //if file name contains , is multiple files
-		$files = explode(',', $fileName);
-		//echo 'Type = File<br>';
-	} else {
-		$files = $fileName;
-		//echo 'Type = Folder<br>';
-	}
-	if ($type === 'folder') {
-		$isShared = isShared($files);
-		if (getOwner($files) == $uid || $isShared) {
-			if ($isShared) {
-				if (!Zip($files, $destination, true)) echo "Failed to zip files.";
-			} else {
-				//echo 'Zipping folder<br>';
-				if (!Zip($files, $destination)) echo "Failed to zip files.";
-			}
-		} else {
-			//echo "You do not have access to these files.";
-		}
-	} else if ($type === 'file') {
-		//$files will be a CSV split into an array
-		$fil = $files[0];
-		$isShared = isShared($files[0]);
-		if (getOwner($files[0]) == $uid || $isShared) {
-			if ($isShared) {
-				if (!Zip($files, $destination, true)) echo "Failed to zip files.";
-			} else {
-				//echo 'Zipping files<br>';
-				if (!Zip($files, $destination)) echo "Failed to zip files.";
-			}
-		} else {
-			//echo "You do not have access to these files.";
-		}
-	}
-	if(file_exists($destination)) {
-		//echo $destination;
-	    header('Pragma: public');
-	    header('Expires: 0');
-	    header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
-	    header('Content-Type: application/octet-stream');
-	    header("Content-Description: File Transfer");
-	    header('Content-Disposition: attachment; filename="'.$n.'.zip"');
-	    header('Content-Length: ' . filesize($destination));
-	    header("Content-Transfer-Encoding: binary");
-	    ob_clean();
-		flush();
-	    readfile($destination);
-	    //sleep(1);
-	    //file should stay until it finishes downloading, then poof by itself
-	    //echo '<br>deleting ' . $destination . '<br>';
-	    if (unlink($destination))
-			echo "Cleared user temp folder";
-	    exit();
-	} else {
-		echo 'Could not find file: ' . $destination;
 	}
 }
 

@@ -179,6 +179,7 @@ header3 font
     fm.activeBarWidth = 560;
     fm.last = null;
     fm.wavesurfer = null;
+    fm.hashToRestore = '';
     var hashTree = [];
     var fileTree = [];
     var currentFilePath = '';
@@ -424,6 +425,9 @@ header3 font
                 return this.opts2html();
             }
         },
+        MiniBar: function(id) {
+
+        },
         hideCurrentlyActive: function() {
             this.dialog.hide();
         },
@@ -459,7 +463,7 @@ header3 font
                 fm.dialog.dialog = new fm.dialog.Dialog(
                     this.id,
                     null,
-                    '<p>Permanently delete <em>' + file + '</em> ?</p>',
+                    '<p>Permanently delete <em>' + file + '</em> '+((fm.multiSelect.selected.length > 1) ? 'and '+(fm.multiSelect.selected.length - 1)+' other'+((fm.multiSelect.selected.length > 2)?'s':''):'')+'?</p>',
                     footer.html()
                 );
                 fm.dialog.dialog.show();
@@ -481,7 +485,7 @@ header3 font
                 fm.dialog.dialog = new fm.dialog.Dialog(
                     this.id,
                     null,
-                    '<p>Move <em>' + file + '</em> to the trash?</p>',
+                    '<p>Move <em>' + file + '</em> '+((fm.multiSelect.selected.length > 1) ? 'and '+(fm.multiSelect.selected.length - 1)+' other'+((fm.multiSelect.selected.length > 2)?'s':''):'')+' to the trash?</p>',
                     footer.html()
                 );
                 fm.dialog.dialog.show();
@@ -519,10 +523,10 @@ header3 font
             show: function(file, id) {
                 //d.info(file+'<br>'+id);
                 $('.modal-move').addClass('modal-active');
-                if (multiSelect.numSelected < 2) {
+                if (multiSelect.selected.length < 2) {
                     $('.modal-move .modal-header #modal-header-name').text(file);
                 } else {
-                    $('.modal-move .modal-header #modal-header-name').text(file + " and " + (multiSelect.numSelected - 1) + " others");
+                    $('.modal-move .modal-header #modal-header-name').text(file + " and " + (multiSelect.selected.length - 1) + " others");
                 }
                 $('.modal-move #modal-file-id-move').val(id);
                 //$('.modal-move #modal-bar-id-move').val(bar);
@@ -547,15 +551,100 @@ header3 font
         },
         share: {
             show: function(file, id) {
-
-            }, 
+                this.id = id;
+                var footer = new fm.dialog.DialogFooter();
+                footer.addOpt(new fm.dialog.DialogFooterOption('Cancel', 'default', 'fm.dialog.newFolder.hide()'));
+                footer.addOpt(new fm.dialog.DialogFooterOption('Share', 'default', 'fm.share($(\'#'+this.id+' .dialog input\').val(),\''+this.id+'\')'));
+                fm.dialog.dialog = new fm.dialog.Dialog(
+                    this.id,
+                    'Share <em>'+file+'</em>',
+                    /*'<p>Enter the emails of people you want to share this with:</p>'
+                    +'<input type="text" id="'+id+'" placeholder="Emails" value="" />'
+                    +'<p>or make it accessible by everyone:</p>'
+                    +'<input type="checkbox" id="'+id+'" '+(fm.isShared(id) ? 'checked':'')+' />'*/
+                    '<input type="text" id="sharelink-'+id+'" placeholder="Fetching link..." value="" autofocus />',
+                    footer.html()
+                );
+                fm.dialog.dialog.show();
+                cm.destroy();
+                fm.dialog.dialogActive = true;
+            },
             hide: function() {
-
+                fm.dialog.dialog.hide();
+                fm.dialog.dialogActive = false;
             }
         }
     }
     fm.snackbar = {
-
+        nextID: 0,
+        timer: null,
+        queue: [],
+        queueIsGoing: false,
+        current: null,
+        template: _.template($('#template-snackbar').html()),
+        create: function(msg, action, fn) {
+            this.queue.push(new this.Snackbar(msg, action, fn));
+            var _this = this;
+            setTimeout(function() {
+                _this.startQueue();
+            }, 300);
+        },
+        startQueue: function() {
+            if (!this.queueIsGoing) {
+                this.queueIsGoing = true;
+                this.nextInQueue().show();
+            }
+        },
+        nextInQueue: function() {
+            if (this.queue.length == 0) {
+                this.queueIsGoing = false;
+                return null;
+            }
+            this.current = this.queue.shift();
+            return this.current;
+        },
+        dismiss: function() {
+            clearTimeout(this.current.timer);
+            this.current.hide();
+            setTimeout(function() {
+                var n = fm.snackbar.nextInQueue();
+                if (n)
+                n.show();
+            }, 500);
+        },
+        Snackbar: function(msg, action, fn) {
+            this.id = fm.snackbar.nextID++;
+            this.message = msg;
+            this.action = action;
+            this.fn = fn;
+            this.timer = null;
+            this.create = function() {
+                $('body').append(fm.snackbar.template(this));
+            }
+            this.show = function() {
+                $('#snackbar-'+this.id).addClass('active');
+                var _this = this;
+                _this.timer = setTimeout(function() {
+                    _this.hide();
+                    setTimeout(function() {
+                        var n = fm.snackbar.nextInQueue();
+                        if (n)
+                        n.show();
+                    }, 500);
+                }, 4000);
+            }
+            this.hide = function() {
+                $('#snackbar-'+this.id).removeClass('active');
+                var _this = this;
+                setTimeout(function() {
+                    _this.destroy();
+                }, 500);
+            }
+            this.destroy = function() {
+                $('#snackbar-'+this.id).remove();
+            }
+            this.create();
+        }
     }
     fm.multiSelect = {
         selected: [],
@@ -564,23 +653,60 @@ header3 font
         },
         add: function(hash) {
             this.selected.push(hash);
+            this.dedup();
         },
         remove: function(hash) {
             this.selected = _.without(this.selected, hash);
         },
+        contains: function(hash) {
+            return _.contains(this.selected, hash);
+        },
         clear: function() {
-            this.selected = [];
+            var l = this.selected.length;
+            for (i = 0; i < l; i++) {
+                $('#cb-'+this.selected.shift()).prop('checked', false);
+            }
+        },
+        get: function() {
+            this.dedup();
+            return this.selected;
+        }
+    }
+    fm.multiTrash = {
+        selected: [],
+        dedup: function() {
+            this.selected = _.uniq(this.selected);
+        },
+        add: function(hash) {
+            this.selected.push(hash);
+            this.dedup();
+        },
+        remove: function(hash) {
+            this.selected = _.without(this.selected, hash);
+        },
+        contains: function(hash) {
+            return _.contains(this.selected, hash);
+        },
+        clear: function() {
+            var l = this.selected.length;
+            for (i = 0; i < l; i++) {
+                $('#cb-'+this.selected.shift()).prop('checked', false);
+            }
+        },
+        get: function() {
+            this.dedup();
+            return this.selected;
         }
     }
     fm.refresh = function(hash) {
         console.log("refreshing bar " + hash);
-        fm.getFromHash(hash).refresh();
+        fm.getFromHash(hash).refresh(true);
         cm.destroy();
     }
     fm.refreshAll = function() {
         console.log("refreshing all open bars");
         for (i = 0; i < fileTree.length; i++) {
-            fileTree[i].refresh();
+            fileTree[i].refresh(true);
         }
     }
     fm.rename = function(hash, name) {
@@ -596,15 +722,17 @@ header3 font
                 var json = JSON.parse(result);
                 fm.dialog.hideCurrentlyActive();
                 fm.refresh(parent);
+                fm.snackbar.create('Renamed ' + name);
             },
             error: function(request, error) {
-                
+                fm.dialog.hideCurrentlyActive();
+                fm.snackbar.create("Failed to rename " + name);
             }
         });
     }
     fm.delete = function(hash) {
-        if (fm.multiSelect.numSelected > 1) {
-            hash = fm.multiSelect.selected;
+        if (fm.multiTrash.selected.length > 1) {
+            hash = fm.multiTrash.selected;
         } else {
             hash = [hash];
         }
@@ -621,15 +749,17 @@ header3 font
             success: function(result) {
                 fm.dialog.hideCurrentlyActive();
                 fm.loadTrash();
-                fm.multiSelect.clear();
+                fm.snackbar.create("Deleted file" + (fm.multiTrash.selected.length > 0 ? 's' : ''));
+                fm.multiTrash.clear();
             },
             error: function(request, error) {
-                    
+                fm.dialog.hideCurrentlyActive();
+                fm.snackbar.create("Failed to delete file" + (fm.multiTrash.selected.length > 0 ? 's' : ''));
             }
         });
     }
     fm.trash = function(hash) {
-        if (fm.multiSelect.numSelected > 1) {
+        if (fm.multiSelect.selected.length > 1) {
             hash = fm.multiSelect.selected;
         } else {
             hash = [hash];
@@ -637,6 +767,7 @@ header3 font
         var hashes = _.uniq(hash);
         var hashlist = hashes.toString();
         //files.unshare(file, id);
+        console.log(hashlist);
         var parent = $('#file-'+hashes[0]+'.menubar-content').attr('parent');
         $.ajax({
             type: "POST",
@@ -648,10 +779,13 @@ header3 font
                 var json = JSON.parse(result);
                 fm.dialog.hideCurrentlyActive();
                 fm.refresh(parent);
+                fm.snackbar.create("Moved file" + (fm.multiSelect.selected.length > 0 ? 's' : '') + " to the trash", "undo", "fm.snackbar.dismiss();fm.restore(fm.hashToRestore)");
+                fm.hashToRestore = hashlist;
                 fm.multiSelect.clear();
             },
             error: function(request, error) {
-                    
+                fm.dialog.hideCurrentlyActive();
+                fm.snackbar.create("Failed to move file" + (fm.multiSelect.selected.length > 0 ? 's' : '') + " to the trash");
             }
         });
     }
@@ -670,29 +804,33 @@ header3 font
                     var json = JSON.parse(result);
                     fm.dialog.hideCurrentlyActive();
                     fm.refresh(parent);
-                    fm.multiSelect.clear();
+                    fm.snackbar.create("Made new folder");
                 },
                 error: function(xhr, status, e) {
-
+                    fm.dialog.hideCurrentlyActive();
+                    fm.snackbar.create("Failed to make new folder");
                 }
             });
         }
     }
-    fm.download = function(id, name, type) {
+    fm.download = function(id, name) {
+        //this will definitely exist SOMEWHERE
+        var type = $('.menubar-content[hash='+id+']').attr('type');
+        if (type != 'folder') type = 'file';
         if (fm.multiSelect.selected.length > 1 || type == 'folder') {
             if (fm.multiSelect.selected.length > 1) {
                 var hashes = _.uniq(fm.multiSelect.selected);
             } else {
                 var hashes = [id];
             }
-            if (type != 'folder') type = 'file';
             var frame = $("<iframe></iframe>").attr('src', './api/files/download?hashlist='+hashes.toString()+"&name="+name+"&type="+type).attr('id', id).css('display', 'none');
             frame.appendTo('body');
             var _id = id;
             setTimeout(function() {
                 $('body > iframe#'+_id).remove();
-                multiSelect.reset();
             }, 10000);
+            fm.multiSelect.clear();
+            fm.snackbar.create("Downloading files");
         } else {
             var frame = $("<iframe></iframe>").attr('src', './api/files/download?id='+id+"&name="+name).attr('id', id).css('display', 'none');
             frame.appendTo('body');
@@ -700,11 +838,12 @@ header3 font
             setTimeout(function() {
                 $('body > iframe#'+_id).remove();
             }, 10000);
+            fm.snackbar.create("Download file");
         }
         cm.destroy();
     }
     fm.move = function(file, target) { //handles moving both single and multiple files
-        if (multiSelect.numSelected < 2) {
+        if (multiSelect.selected.length < 2) {
             if (!_.isArray(file)) { //if its a single thing
                 var tmp = [file];
                 file = tmp;
@@ -823,7 +962,8 @@ header3 font
         });
     }
     fm.restore = function(hash) {
-        if (fm.multiSelect.numSelected > 1) {
+        cm.destroy();
+        if (fm.multiSelect.selected.length > 1) {
             hash = fm.multiSelect.selected;
         } else {
             hash = [hash];
@@ -839,9 +979,11 @@ header3 font
             success: function(result) {
                 var json = JSON.parse(result);
                 fm.refreshAll();
+                fm.loadTrash();
+                fm.snackbar.create("Restored file" +(fm.multiSelect.selected.length > 1 ? "s":''));
             },
             error: function(request, error) {
-                //console.error(request, error);
+                fm.snackbar.create("Failed to restore file" +(fm.multiSelect.selected.length > 1 ? "s":''));
             }
         });
     }
@@ -887,12 +1029,15 @@ header3 font
             }
         });
     }
+    fm.isShared = function() {
+        return false;
+    }
     fm.loadTransfers = function() {
-        /*if (dd.numFilesToUpload == 0) {
+        if (dd.numFilesToUpload == 0) {
             var template = _.template($('#fm-transfers-empty').html());
-            $('.pages .bar-transfers .file-list').empty();
+            $('.pages .bar-transfers .file-list').empty().addClass('empty');
             $('.pages .bar-transfers .file-list').append(template({}));
-        }*/
+        }
     }
     var FolderBar = function(name, hash, parent) {
         this.dd;
@@ -901,13 +1046,18 @@ header3 font
         this.parent = parent;
         this.hasMore = false;
         this.remaining = 0;
+        this.offset = 0;
+        this.limit = 30;
         this.files = []; // all files contained within this folder
         this.getName = function() {return this.name;}
         this.getHash = function() {return this.hash;}
         this.getParent = function() {return this.parent;}
         this.getFiles = function() {return this.files;}
         this.setFiles = function(fileGroup) {this.files = fileGroup;}
-        this.refresh = function() {
+        this.refresh = function(fromstart) {
+            if (fromstart) {
+                this.offset = 0;
+            }
             var _this = this;
             $('.file-manager .bar[hash='+_this.hash+']').addClass('loading');
             $.ajax({
@@ -915,8 +1065,8 @@ header3 font
                 url: "./api/files/list_files",
                 data: {
                     hash: _this.hash,
-                    offset: 0,
-                    limit: 30
+                    offset: _this.offset,
+                    limit: _this.limit
                 },
                 success: function(result) {
                     var json = JSON.parse(result);
@@ -958,7 +1108,8 @@ header3 font
             // console.log("Loading bar " + this.hash + " content: " + this.files.length + " files");
             if (this.files.length > 0) {
                 var template = _.template($('#fm-file').html());
-                $('#bar-'+this.hash+' .file-list').empty();
+                if (this.offset == 0)
+                    $('#bar-'+this.hash+' .file-list').empty();
                 for (i = 0; i < this.files.length; i++) {
                     $('#bar-'+this.hash+' .file-list').append(template(this.files[i]));
                 }
@@ -966,6 +1117,18 @@ header3 font
                 var template = _.template($('#fm-folder-empty').html());
                 $('#bar-'+this.hash+' .file-list').empty();
                 $('#bar-'+this.hash+' .file-list').append(template({}));
+            }
+            this.offset += this.limit;
+            if (this.hasMore) {
+                var _this = this;
+                var onsc = _.debounce(function() {
+                    if($('#bar-'+_this.hash+' .file-list').scrollTop() + $('#bar-'+_this.hash+' .file-list').height() > (40 * _this.offset) - 100) {
+                       _this.refresh(false);
+                    }
+                }, 300);
+                $('#bar-'+this.hash+' .file-list').on('scroll', function() {
+                    onsc();
+                });
             }
         }
         this.setWidth = function(size) {
@@ -1156,13 +1319,34 @@ header3 font
         }
     }
     $(document).on('click', '.file-manager .menubar-content:not(.btn-ctrlbar)', function(e) {
+        e.stopPropagation();
         if($(e.target).parents('.file-multiselect-checkbox-container').length > 0) {
             //checkbox
         } else {
             var dest = $(this).attr('hash');
-            $(this).addClass('active').siblings().removeClass('active');
-            fm.open(dest);
+            if (fm.btnStatus.shift) {
+                if (fm.multiSelect.contains(dest)) {
+                    fm.multiSelect.remove(dest);
+                    $('#cb-'+dest).prop('checked', false);
+                } else {
+                    fm.multiSelect.add(dest);
+                    $('#cb-'+dest).prop('checked', true);
+                }
+            } else {
+                $(this).addClass('active').siblings().removeClass('active');
+                fm.open(dest);
+            }
         }
+    });
+    $(document).on('click', '.menubar-content .file-multiselect-checkbox-container .label', function(e) {
+        e.stopPropagation();
+        var hash = $(this).parents('.menubar-content').attr('hash');
+        fm.multiSelect.add(hash);
+    });
+    $(document).on('click', '.menubar-content .file-multiselect-checkbox-container .label-checked', function(e) {
+        e.stopPropagation();
+        var hash = $(this).parents('.menubar-content').attr('hash');
+        fm.multiSelect.remove(hash);
     });
     $(document).on('click', '.file-manager .btn-back', function(e) {
         fm.back();
@@ -1222,6 +1406,15 @@ header3 font
         });
         queue = new TreeQueue();
         linearQueue = new LinearQueue();
+        $('body').on('dragover dragenter', function(e) {
+            if (!fm.isActive) {
+                $('#files.btn-ctrlbar').addClass('active').siblings().removeClass('active');
+                $('.pages').children().removeClass('active').css('z-index', 400);
+                fm.isActive = true;
+                var path = fm.calcFilePath();
+                foxfile.routerbox.router.navigate('files/'+path, {replace: true});
+            }
+        });
     }
     dd.addListener = function(folder) {
         var hash = folder.getHash();
@@ -1344,6 +1537,7 @@ header3 font
             }
         } else {
             console.log("Got files from file or folder input");
+            cm.destroy();
             var filesList = [];
             for (var i = 0, file; file = files[i]; i++) {
                 if (file.webkitRelativePath) {
@@ -1567,6 +1761,10 @@ header3 font
         }
         this.addToTransfersPage = function() {
             var template = _.template($('#fm-file-transferring').html());
+            if ($('#transfers .file-list').hasClass('empty')) {
+                $('#transfers .file-list').empty().removeClass('empty');
+                $('#transfers .file-list').append('<ul></ul>');
+            }
             $('#transfers .file-list ul').append(template(this));
             $('#transfers #badge-transfers').addClass('new');
             $('#transfers #badge-transfers .badgeval').text(++dd.numFilesToUpload);
@@ -1718,6 +1916,10 @@ header3 font
         }
         this.addToTransfersPage = function() {
             var template = _.template($('#fm-file-transferring').html());
+            if ($('#transfers .file-list').hasClass('empty')) {
+                $('#transfers .file-list').empty().removeClass('empty');
+                $('#transfers .file-list').append('<ul></ul>');
+            }
             $('#transfers .file-list ul').append(template(this));
             $('#transfers #badge-transfers').addClass('new');
             $('#transfers #badge-transfers .badgeval').text(++dd.numFilesToUpload);
@@ -1725,6 +1927,9 @@ header3 font
         this.addToLinearQueue = function() {
             linearQueue.add(this);
         }
+    }
+    function ChunkedFile(posInQueue, item, name, path, parent) {
+
     }
     function TreeItem(root) {
         this.root = root;
@@ -1800,6 +2005,7 @@ header3 font
         this.start = function(fake) {
             if (this.trees.length == 0) {
                 console.log("%cFinishing %cupload of LinearQueue","color:red","color:gray");
+                fm.snackbar.create("Finished uploading files");
                 fm.refreshAll();
             } else {
                 if (fake) {
@@ -1878,7 +2084,7 @@ YM      6  M   YP   MM
     $(document).on("contextmenu", ".file-manager .file-list:not(#bar-0 .file-list)", function(e) {
         e.stopPropagation();
         if (!fm.btnStatus.shift) {
-            var parent = $(this).parent('.bar');
+            var parent = $(this).parents('.bar');
             e.preventDefault();
             //e.stopPropagation();
             cm.destroy();
@@ -1900,8 +2106,8 @@ YM      6  M   YP   MM
                 cm.menu.append(new MenuItem(cm.menu, "Upload Folder", "folder-upload", "$('#dd-folder-upload').attr('hash','"+hash+"').click()").get());
                 cm.menu.append(new MenuItem(cm.menu, "New Folder", "folder-plus", "fm.dialog.newFolder.show('"+name+"','"+hash+"')", "Alt+N").get());
                 cm.menu.append('<hr class="nav-vert-divider">');
-                cm.menu.append(new MenuItem(cm.menu, "Share", "share", "fm.dialog.share.show('"+hash+"')", ".").get());
-                cm.menu.append(new MenuItem(cm.menu, "Move", "folder-move", "fm.dialog.move.show('"+hash+"')", "m").get());
+                cm.menu.append(new MenuItem(cm.menu, "Share", "share", "fm.dialog.share.show('"+name+"','"+hash+"')", "s").get());
+                cm.menu.append(new MenuItem(cm.menu, "Move", "folder-move", "fm.dialog.move.show('"+name+"','"+hash+"')", "m").get());
                 cm.menu.append(new MenuItem(cm.menu, "Refresh", "refresh", "fm.refresh('"+hash+"')", "Alt+R").get());
             }
         }
@@ -1926,8 +2132,8 @@ YM      6  M   YP   MM
                 cm.menu.append(new MenuItem(cm.menu, "Upload Folder", "folder-upload", "$('#dd-folder-upload').attr('hash','"+hash+"').click()").get());
                 cm.menu.append(new MenuItem(cm.menu, "New Folder", "folder-plus", "fm.dialog.newFolder.show('"+name+"','"+hash+"')", "Alt+N").get());
                 cm.menu.append('<hr class="nav-vert-divider">');
-                cm.menu.append(new MenuItem(cm.menu, "Share", "share", "fm.dialog.share.show('"+hash+"')", ".").get());
-                cm.menu.append(new MenuItem(cm.menu, "Move", "folder-move", "fm.dialog.move.show('"+hash+"')", "m").get());
+                cm.menu.append(new MenuItem(cm.menu, "Share", "share", "fm.dialog.share.show('"+name+"','"+hash+"')", "s").get());
+                cm.menu.append(new MenuItem(cm.menu, "Move", "folder-move", "fm.dialog.move.show('"+name+"','"+hash+"')", "m").get());
                 cm.menu.append(new MenuItem(cm.menu, "Refresh", "refresh", "fm.refresh('"+parentHash+"')", "Alt+R").get());
             } else if (self.attr('btype') == 'file') {
                 e.preventDefault();
@@ -1937,10 +2143,32 @@ YM      6  M   YP   MM
                 cm.menu.append(new MenuItem(cm.menu, "Delete", "delete", "fm.dialog.trash.show('"+name+"','"+hash+"')", "Del").get());
                 cm.menu.append(new MenuItem(cm.menu, "Download", "download", "fm.download('"+hash+"','"+name+"')").get());
                 cm.menu.append('<hr class="nav-vert-divider">');
-                cm.menu.append(new MenuItem(cm.menu, "Share", "share", "fm.dialog.share.show('"+hash+"')", ".").get());
-                cm.menu.append(new MenuItem(cm.menu, "Move", "folder-move", "fm.dialog.move.show('"+hash+"')", "m").get());
+                cm.menu.append(new MenuItem(cm.menu, "Share", "share", "fm.dialog.share.show('"+name+"','"+hash+"')", "s").get());
+                cm.menu.append(new MenuItem(cm.menu, "Move", "folder-move", "fm.dialog.move.show('"+name+"','"+hash+"')", "m").get());
                 cm.menu.append(new MenuItem(cm.menu, "Refresh", "refresh", "fm.refresh('"+parentHash+"')", "Alt+R").get());
             }
+        }
+    });
+    $(document).on("click", ".file-manager .bar:not([id^='file-detail-']) .file-actions-header span", function(e) {
+        e.stopPropagation();
+        e.preventDefault();
+        if (!fm.btnStatus.shift) {
+            var self = $(this).parents('.bar');
+            var hash = self.attr('hash');
+            var name = self.attr('name');
+            cm.destroy();
+            var menu = cm.menu;
+            cm.menu = new ClickMenu(e.pageX - 180, e.pageY + 30);
+            cm.menu.append(new MenuItem(cm.menu, "Rename", "rename-box", "fm.dialog.rename.show('"+name+"','"+hash+"')", "r or f2").get());
+            cm.menu.append(new MenuItem(cm.menu, "Delete", "delete", "fm.dialog.trash.show('"+name+"','"+hash+"')", "Del").get());
+            cm.menu.append(new MenuItem(cm.menu, "Download", "download", "fm.download('"+hash+"','"+name+"')").get());
+            cm.menu.append(new MenuItem(cm.menu, "Upload File", "upload", "$('#dd-file-upload').attr('hash','"+hash+"').click()").get());
+            cm.menu.append(new MenuItem(cm.menu, "Upload Folder", "folder-upload", "$('#dd-folder-upload').attr('hash','"+hash+"').click()").get());
+            cm.menu.append(new MenuItem(cm.menu, "New Folder", "folder-plus", "fm.dialog.newFolder.show('"+name+"','"+hash+"')", "Alt+N").get());
+            cm.menu.append('<hr class="nav-vert-divider">');
+            cm.menu.append(new MenuItem(cm.menu, "Share", "share", "fm.dialog.share.show('"+name+"','"+hash+"')", "s").get());
+            cm.menu.append(new MenuItem(cm.menu, "Move", "folder-move", "fm.dialog.move.show('"+name+"','"+hash+"')", "m").get());
+            cm.menu.append(new MenuItem(cm.menu, "Refresh", "refresh", "fm.refresh('"+hash+"')", "Alt+R").get());
         }
     });
     $(document).on("contextmenu", ".bar[id^='file-detail-']", function(e) {
@@ -1957,8 +2185,8 @@ YM      6  M   YP   MM
             cm.menu.append(new MenuItem(cm.menu, "Delete", "delete", "fm.dialog.trash.show('"+hash+"')", "Del").get());
             cm.menu.append(new MenuItem(cm.menu, "Download", "download", "fm.download('"+hash+"','"+name+"')").get());
             cm.menu.append('<hr class="nav-vert-divider">');
-            cm.menu.append(new MenuItem(cm.menu, "Share", "share", "fm.dialog.share.show('"+hash+"')", ".").get());
-            cm.menu.append(new MenuItem(cm.menu, "Move", "folder-move", "fm.dialog.move.show('"+hash+"')", "m").get());
+            cm.menu.append(new MenuItem(cm.menu, "Share", "share", "fm.dialog.share.show('"+name+"','"+hash+"')", "s").get());
+            cm.menu.append(new MenuItem(cm.menu, "Move", "folder-move", "fm.dialog.move.show('"+name+"','"+hash+"')", "m").get());
             cm.menu.append(new MenuItem(cm.menu, "Refresh", "refresh", "fm.refresh('"+parentHash+"')", "Alt+R").get());
         }
     });

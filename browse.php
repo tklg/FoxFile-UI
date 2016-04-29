@@ -190,15 +190,12 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 				<ul class="">
 					<li class="menubar-content floatb btn-ctrlbar active" id="files" hash="<?php echo $user_uhd; ?>">
 						<i class="nocheckbox-icon mdi mdi-folder-multiple-outline"></i><span class="file-name">My files</span>
-						<!-- <span class="badge" id="badge-files"><span class="badgeval">a</span></span> -->
 					</li>
-					<li class="menubar-content floatb btn-ctrlbar" id="shared">
+					<!-- <li class="menubar-content floatb btn-ctrlbar" id="shared">
 						<i class="nocheckbox-icon mdi mdi-account-multiple"></i><span class="file-name">Shared with me</span>
-						<!-- <span class="badge" id="badge-shared"><span class="badgeval">10</span></span> -->
-					</li>
+					</li> -->
 					<li class="menubar-content floatb btn-ctrlbar" id="trash">
 						<i class="nocheckbox-icon mdi mdi-delete"></i><span class="file-name">Trash</span>
-						<!-- <span class="badge new" id="badge-trash"><span class="badgeval">3000</span></span> -->
 					</li>
 					<li class="menubar-content floatb btn-ctrlbar" id="transfers">
 						<i class="nocheckbox-icon mdi mdi-transfer"></i><span class="file-name">File uploads</span>
@@ -208,7 +205,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 			</nav>
 		</section>
 	</section>
-</main>	
+</main>
 </body>
 <script type="text/template" id="fm-folder">
 <section class="bar loading" id="bar-<%= hash %>" type="folder" hash="<%= hash %>" parent="<%= parent %>" name="<%= name %>">
@@ -253,13 +250,13 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 	<header>
 		<span class="filename"><%= name %></span>
 		<section class="file-actions-header">
-			<span title="Rename"><i class="mdi mdi-rename-box"></i><link class="rippleJS lightgray" /></span>
-			<span title="Move to trash"><i class="mdi mdi-delete"></i><link class="rippleJS lightgray" /></span>
-			<span title="Download"><i class="mdi mdi-download"></i><link class="rippleJS lightgray" /></span>
-			<span title="Share"><i class="mdi mdi-share"></i><link class="rippleJS lightgray" /></span>
-			<span title="Move"><i class="mdi mdi-folder-move"></i><link class="rippleJS lightgray" /></span>
-			<span title="Reload"><i class="mdi mdi-reload"></i><link class="rippleJS lightgray" /></span>
-			<span title="Information"><i class="mdi mdi-information-outline"></i><link class="rippleJS lightgray" /></span>
+			<span title="Rename" onclick="fm.dialog.rename.show('<%= name %>', '<%= hash %>')"><i class="mdi mdi-rename-box"></i><link class="rippleJS lightgray" /></span>
+			<span title="Move to trash" onclick="fm.dialog.trash.show('<%= name %>', '<%= hash %>')"><i class="mdi mdi-delete"></i><link class="rippleJS lightgray" /></span>
+			<span title="Download" onclick="fm.download('<%= hash %>', '<%= name %>')"><i class="mdi mdi-download"></i><link class="rippleJS lightgray" /></span>
+			<span title="Share" onclick="fm.dialog.share.show('<%= name %>', '<%= hash %>')"><i class="mdi mdi-share"></i><link class="rippleJS lightgray" /></span>
+			<span title="Move" onclick="fm.dialog.move.show('<%= name %>', '<%= hash %>')"><i class="mdi mdi-folder-move"></i><link class="rippleJS lightgray" /></span>
+			<span title="Reload" onclick="fm.refresh('<%= hash %>')"><i class="mdi mdi-reload"></i><link class="rippleJS lightgray" /></span>
+			<span title="Information" onclick="fm.switchToInfoView('<%= hash %>')"><i class="mdi mdi-information-outline"></i><link class="rippleJS lightgray" /></span>
 		</section>
 	</header>
 	<div class="progress">
@@ -312,8 +309,10 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 	<source src="./api/files/view?id=<%= hash %>" />
 	</video>
 	<% } else if (btype == 'flash') { %>
-	<embed src="./api/files/view?id=<%= hash %>"></embed>
-	<% } 
+	<embed src="./api/files/view?id=<%= hash %>" />
+	<% } else if (btype == 'pdf') { %>
+	<iframe src="./plugins/pdf.js/web/viewer.html?file=./../../../api/files/view%3Fid%3D<%= hash %>"></iframe>
+	<% }
 } %>
 </script>
 <script type="text/template" id="fm-file-transferring">
@@ -383,6 +382,11 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 </script>
 <script type="text/template" id="template-dialog-footer-opt">
 <button class="btn dialog-btn dialog-btn-<%= type %>" onclick="<%= fn %>"><%= name %><link class="rippleJS" /></button>
+</script>
+<script type="text/template" id="template-snackbar">
+<div class="snackbar" id="snackbar-<%= id %>">
+	<span class="snackbar-msg"><%= message %></span><% if (action != null) { %><button class="btn snackbar-btn" onclick="<%= fn %>"><%= action %></button><% } %>
+</div>
 </script>
 	<script type="text/javascript" src="//code.jquery.com/jquery-2.1.4.min.js"></script>
 	<script src="//code.jquery.com/ui/1.11.4/jquery-ui.min.js"></script>

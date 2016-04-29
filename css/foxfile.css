@@ -57,12 +57,12 @@ body {
     /*overflow-x: hidden;*/
     overflow: hidden;
 }
-.float, .float-1 {box-shadow: 0 -1px 0 #e5e5e5,0 0 2px rgba(0,0,0,.12),0 2px 4px rgba(0,0,0,.24); }
+.float, .float-1 {box-shadow: 0 1.5px 4px rgba(0, 0, 0, 0.24), 0 1.5px 6px rgba(0, 0, 0, 0.12);}
 .float-2 {box-shadow: 0 0 4px rgba(0,0,0,.14),0 4px 8px rgba(0,0,0,.28); }
 .float-3 {box-shadow: 0 8px 17px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19); }
 .float-4 {box-shadow: 0 10px 20px rgba(0, 0, 0, 0.22), 0 14px 56px rgba(0, 0, 0, 0.25);}
 .float-5 {box-shadow: 0 15px 24px rgba(0, 0, 0, 0.22), 0 19px 76px rgba(0, 0, 0, 0.3);}
-.floatb::before, .floatb-1::before {position: absolute; content: ''; display: block; top: 0; bottom: 0; left: 0; right: 0; pointer-events: none; box-shadow: 0 -1px 0 #e5e5e5,0 0 2px rgba(0,0,0,.12),0 2px 4px rgba(0,0,0,.24); } .floatb-2::before {position: absolute; content: ''; display: block; top: 0; bottom: 0; left: 0; right: 0; pointer-events: none; box-shadow: 0 0 4px rgba(0,0,0,.14),0 4px 8px rgba(0,0,0,.28); } .floatb-3::before {position: absolute; content: ''; display: block; top: 0; bottom: 0; left: 0; right: 0; pointer-events: none; box-shadow: 0 8px 17px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19); }
+.floatb::before, .floatb-1::before {position: absolute; content: ''; display: block; top: 0; bottom: 0; left: 0; right: 0; pointer-events: none; box-shadow: 0 1.5px 4px rgba(0, 0, 0, 0.24), 0 1.5px 6px rgba(0, 0, 0, 0.12); } .floatb-2::before {position: absolute; content: ''; display: block; top: 0; bottom: 0; left: 0; right: 0; pointer-events: none; box-shadow: 0 0 4px rgba(0,0,0,.14),0 4px 8px rgba(0,0,0,.28); } .floatb-3::before {position: absolute; content: ''; display: block; top: 0; bottom: 0; left: 0; right: 0; pointer-events: none; box-shadow: 0 8px 17px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19); }
 ::selection {
 	background: #2DA4FE;
 	color: white;
@@ -298,7 +298,7 @@ nav ul {
 }
 .nav-vert li:hover {
 	background: rgba(0,0,0,.06);
-	box-shadow: 0 -1px 0 #e5e5e5,0 0 2px rgba(0,0,0,.12),0 2px 4px rgba(0,0,0,.24);
+	box-shadow: 0 1.5px 4px rgba(0, 0, 0, 0.24), 0 1.5px 6px rgba(0, 0, 0, 0.12);
 }
 .nav-vert li:active {
 	box-shadow: 0 0 4px rgba(0,0,0,.14),0 4px 8px rgba(0,0,0,.28);
@@ -481,7 +481,7 @@ main {
 .bar header .btn-back:hover i {
 	color: #E64A19;
 	/*background: rgba(0,0,0,.12);*/
-	/*box-shadow: 0 -1px 0 #e5e5e5,0 0 2px rgba(0,0,0,.12),0 2px 4px rgba(0,0,0,.24);*/
+	/*box-shadow: 0 1.5px 4px rgba(0, 0, 0, 0.24), 0 1.5px 6px rgba(0, 0, 0, 0.12);*/
 }
 .bar[type=folder] .file-det-header {
 	display: none;
@@ -632,7 +632,7 @@ main {
 .menubar-content .file-multiselect-checkbox-container:hover {
 	/*background: rgba(0,0,0,.12);*/
 	color: rgba(0,0,0,.87);
-	/*box-shadow: 0 -1px 0 #e5e5e5,0 0 2px rgba(0,0,0,.12),0 2px 4px rgba(0,0,0,.24);*/
+	/*box-shadow: 0 1.5px 4px rgba(0, 0, 0, 0.24), 0 1.5px 6px rgba(0, 0, 0, 0.12);*/
 }
 .menubar-content .file-multiselect-checkbox-container .label,
 .menubar-content .file-multiselect-checkbox-container .label-checked {
@@ -710,7 +710,7 @@ main {
 .bar .file-actions-header span:hover {
 	background: rgba(0,0,0,.12);
 	color: rgba(0,0,0,.87);
-	box-shadow: 0 -1px 0 #e5e5e5,0 0 2px rgba(0,0,0,.12),0 2px 4px rgba(0,0,0,.24);
+	box-shadow: 0 1.5px 4px rgba(0, 0, 0, 0.24), 0 1.5px 6px rgba(0, 0, 0, 0.12);
 }
 .bar .folder-empty {
 	/*display: inline-block;*/
@@ -726,7 +726,9 @@ main {
 }
 .bar .folder-empty i {
 	font-size: 170px;
-	color: rgba(0,0,0,.12);
+	/*color: rgba(0,0,0,.12);*/
+	color: #e1e1e1;
+	text-shadow: 0 1.5px 4px rgba(0, 0, 0, 0.24), 0 1.5px 6px rgba(0, 0, 0, 0.12);
 	/*display: block;*/
 }
 .bar .folder-empty span {
@@ -753,7 +755,9 @@ main {
 }
 .bar .file-preview-icon i {
 	font-size: 170px;
-	color: rgba(0,0,0,.12);
+	/*color: rgba(0,0,0,.12);*/
+	color: #e1e1e1;
+	text-shadow: 0 1.5px 4px rgba(0, 0, 0, 0.24), 0 1.5px 6px rgba(0, 0, 0, 0.12);
 	/*display: block;*/
 }
 .bar .file-preview-icon span {
@@ -775,7 +779,7 @@ main {
 	position: absolute;
 	left: 0;right:0;
 	top: 20px;
-	/*box-shadow: 0 -1px 0 #e5e5e5,0 0 2px rgba(0,0,0,.12),0 2px 4px rgba(0,0,0,.24);*/
+	/*box-shadow: 0 1.5px 4px rgba(0, 0, 0, 0.24), 0 1.5px 6px rgba(0, 0, 0, 0.12);*/
 	box-shadow: 0 0 4px rgba(0,0,0,.14),0 4px 8px rgba(0,0,0,.28);
 }
 .file-detail-viewport .file-preview {
@@ -789,6 +793,7 @@ main {
 	overflow-y: auto;
 	display: flex;
 	text-align: center;
+	padding: 0;
 }
 .file-preview #editor {
 	display: inline-block;
@@ -807,6 +812,15 @@ main {
 	/*transform: translateX(60%);*/
 	/*width: 300px;*/
 	margin-top: 60px;
+}
+.file-preview iframe,
+.file-preview embed {
+	border: none;
+	height: calc(100% - 4px);
+	/*height: 100%;*/
+	width: 100%;
+	margin: 0;
+	display: inline-block;
 }
 .file-detail-viewport .file-preview.active {
 	display: inline-block;
@@ -945,7 +959,7 @@ main {
 	transition: all 0.1s ease-in-out
 }
 .bar-trash .file-controls i:hover {
-	box-shadow: 0 -1px 0 #e5e5e5,0 0 2px rgba(0,0,0,.12),0 2px 4px rgba(0,0,0,.24);
+	box-shadow: 0 1.5px 4px rgba(0, 0, 0, 0.24), 0 1.5px 6px rgba(0, 0, 0, 0.12);
 }
 .progress {
 	display: none;
@@ -1063,6 +1077,9 @@ main {
 	padding: 0 20px;
 	color: rgba(0,0,0,.54);
 }
+.dialog article p:not(:first-of-type) {
+	margin: 0;
+}
 .dialog article input {
 	width: 100%;
 	height: 40px;
@@ -1102,10 +1119,59 @@ main {
 	transition: all 0.1s ease-in-out;
 }
 .dialog footer button:hover {
-	box-shadow: 0 -1px 0 #e5e5e5,0 0 2px rgba(0,0,0,.12),0 2px 4px rgba(0,0,0,.24);	
+	box-shadow: 0 1.5px 4px rgba(0, 0, 0, 0.24), 0 1.5px 6px rgba(0, 0, 0, 0.12);
 }
 .dialog footer button + button {
 	margin-left: 10px;
+}
+.snackbar {
+	box-sizing: border-box;
+	position: absolute;
+	background: #323232;
+	z-index: 1998;
+	box-shadow: 0 8px 17px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
+	left: 50%;
+	transform: translateX(-50%);
+	min-width: 432px;
+	max-width: 865px;
+	height: 60px;
+	line-height: 60px;
+	border-radius: 3px 3px 0 0;
+	padding: 0 20px 0 24px;
+	display: flex;
+	transition: all 0.15s ease-in-out;
+	bottom: -66px;
+}
+.snackbar.active {
+	bottom: 0;
+}
+.snackbar .snackbar-msg {
+	display: inline-block;
+	flex: 1;
+	color: white;
+	font-weight: 300;
+}
+.snackbar .snackbar-btn {
+	/*display: inline-block;*/
+	color: #FF5722;
+	text-transform: uppercase;
+	background: transparent;
+	height: 40px;
+	margin: 10px 0;
+	padding: 0 10px;
+	border: none;
+	outline: none;
+	transition: all 0.1s ease-in-out;
+	cursor: pointer;
+	border-radius: 3px;
+}
+.snackbar .snackbar-btn.hidden {
+	display: none;
+}
+.snackbar .snackbar-btn:focus,
+.snackbar .snackbar-btn:hover {
+	box-shadow: 0 1.5px 4px rgba(0, 0, 0, 0.24), 0 1.5px 6px rgba(0, 0, 0, 0.12);
+	background: rgba(255,255,255,.05);
 }
 /*
 8888888b.  8888888b.  
@@ -1170,7 +1236,7 @@ YM      6  M   YP   MM
 	left: 10px;
 	z-index: 99999999;
 	overflow: hidden;
-	box-shadow: 0 -1px 0 #e5e5e5,0 0 2px rgba(0,0,0,.12),0 2px 4px rgba(0,0,0,.24);
+	box-shadow: 0 1.5px 4px rgba(0, 0, 0, 0.24), 0 1.5px 6px rgba(0, 0, 0, 0.12);
 }
 .clickmenu ul {
 	padding: 0;

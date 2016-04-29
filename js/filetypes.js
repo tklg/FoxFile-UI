@@ -244,6 +244,7 @@ var previewType = {
     'mp3': 'audio',
     'mpeg': 'video',
     'mpg': 'video',
+    'pdf': 'pdf',
     'php': 'text',
     'php3': 'text',
     'php4': 'text',
