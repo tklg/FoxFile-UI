@@ -544,7 +544,8 @@ main {
     pointer-events: none;
     transition: all 0.1s ease-in-out;
 }
-.bar[type=folder] li:not(.active):hover::before {
+.bar[type=folder] li:not(.active):hover::before,
+.menubar-content.selected:before {
     background: rgba(0,0,0,.06);
 }
 .bar[type=folder] .file-info {
@@ -581,7 +582,7 @@ main {
 .bar[type=folder]:last-of-type .file-name {
 	/*max-width: calc(100% - 370px);*/
 }
-.menubar-content.active::before {
+.menubar-content.active:not([id^="#tfile-"])::before {
 	/*background: #e6e6e6;*/
 	background: rgba(0,0,0,.12);
 }
@@ -729,6 +730,10 @@ main {
 	/*color: rgba(0,0,0,.12);*/
 	color: #e1e1e1;
 	text-shadow: 0 1.5px 4px rgba(0, 0, 0, 0.24), 0 1.5px 6px rgba(0, 0, 0, 0.12);
+	/*background: white;
+	box-shadow: 0 1.5px 4px rgba(0, 0, 0, 0.24), 0 1.5px 6px rgba(0, 0, 0, 0.12);
+	border-radius: 50%;
+	padding: 20px;*/
 	/*display: block;*/
 }
 .bar .folder-empty span {
@@ -806,6 +811,16 @@ main {
 	border: none;
 	font-size: 15px;
 }
+.CodeMirror {
+	text-align: left;
+	position: absolute;
+	height: 100%;
+	width: 100%;
+	font-family: 'Hack', monospace, sans-serif;
+	font-size: 10pt;
+	border: none;
+	z-index: 8;
+}
 .file-preview audio {
 	display: inline-block;
 	/*position: absolute;*/
@@ -879,7 +894,7 @@ main {
 	flex: 1 0 auto;
 	transition: all 0.15s ease-in-out;
 }
-.bar-transfers .nameandprogress.active .file-name {
+.bar-transfers .active .nameandprogress .file-name {
 	height: 30px;
 	line-height: 30px;
 }
@@ -893,7 +908,7 @@ main {
 	flex: 1 0 auto;
 	transition: all 0.25s ease-in-out;
 }
-.bar-transfers .nameandprogress.active .file-upload-progress {
+.bar-transfers .active .nameandprogress .file-upload-progress {
 	height: 4px;
 }
 .bar-transfers .file-upload-progress-bar {
@@ -905,7 +920,7 @@ main {
 	width: 0;
 	background: #FF9E80;
 }
-.bar-transfers .nameandprogress.active .file-upload-progress-bar {
+.bar-transfers .active .nameandprogress .file-upload-progress-bar {
 	height: 4px;
 }
 .bar-transfers .file-upload-status {
@@ -916,6 +931,12 @@ main {
 	width: 65px;
 	/*text-align: center;*/
 	padding: 0 20px;
+}
+.bar-transfers .upload-success .file-upload-status {
+	color: #4caf50;
+}
+.bar-transfers .upload-fail .file-upload-status {
+	color: #f44336;
 }
 .bar-trash .file-controls i {
 	height: 40px;
@@ -1016,6 +1037,37 @@ main {
   animation-delay: 1.15s;
 }
 @-webkit-keyframes indeterminate {0% {left: -35%; right: 100%; } 60% {left: 100%; right: -90%; } 100% {left: 100%; right: -90%; } } @keyframes indeterminate {0% {left: -35%; right: 100%; } 60% {left: 100%; right: -90%; } 100% {left: 100%; right: -90%; } } @-webkit-keyframes indeterminate-short {0% {left: -200%; right: 100%; } 60% {left: 107%; right: -8%; } 100% {left: 107%; right: -8%; } } @keyframes indeterminate-short {0% {left: -200%; right: 100%; } 60% {left: 107%; right: -8%; } 100% {left: 107%; right: -8%; } }
+.menubar-content.ui-draggable-dragging {
+	z-index: 3000;
+	background: white;
+	width: 240px;
+	padding: 0 20px 0 0;
+	list-style: none;
+	cursor: default;
+	display: flex;
+	line-height: 40px;
+}
+.menubar-content.ui-draggable-dragging .file-name {
+	/*flex: 1 0 auto;*/
+	min-width: 0;
+	/*max-width: calc(100% - 306px);*/
+	padding: 0 20px 0 0;
+	display: inline-block;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	cursor: default;
+	flex: auto;
+}
+.menubar-content.ui-draggable-dragging:after {
+	content: '';
+}
+.menubar-content.ui-draggable-dragging.active:before {
+	background: transparent;
+}
+.menubar-content.ui-draggable-dragging .file-info {
+	display: none;
+}
 /* ---------------------------------------------------------------------------------------------------------
 =====================================   DIALOGS AND STUFF   ================================================
 ----------------------------------------------------------------------------------------------------------*/

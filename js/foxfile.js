@@ -521,50 +521,31 @@ header3 font
         },
         move: {
             show: function(file, id) {
-                //d.info(file+'<br>'+id);
-                $('.modal-move').addClass('modal-active');
-                if (multiSelect.selected.length < 2) {
-                    $('.modal-move .modal-header #modal-header-name').text(file);
-                } else {
-                    $('.modal-move .modal-header #modal-header-name').text(file + " and " + (multiSelect.selected.length - 1) + " others");
-                }
-                $('.modal-move #modal-file-id-move').val(id);
-                //$('.modal-move #modal-bar-id-move').val(bar);
-                $('.modal-move .minibar-file-id').attr({
-                    'filehash': id,
-                    'filename': file
-                });
-                $('.modal-move').fadeIn();
-                $('.modal-move .modal-content').css({
-                    'height':  parseInt($('.modal-move .modal').css('height')) - (parseInt($('.modal-move .modal-header').css('height')) + parseInt($('.modal-move .modal-footer').css('height'))) - 22 + 'px'
-                });
-                if (minibar.open(userRoot, file, id)) {
-                    //
-                }
-                modalActive = true;
+                
             },
             hide: function() {
-                $('.modal-move').fadeOut();
-                minibar.reset();
-                modalActive = false;
+                
             }
         },
         share: {
             show: function(file, id) {
                 this.id = id;
                 var footer = new fm.dialog.DialogFooter();
-                footer.addOpt(new fm.dialog.DialogFooterOption('Cancel', 'default', 'fm.dialog.newFolder.hide()'));
-                footer.addOpt(new fm.dialog.DialogFooterOption('Share', 'default', 'fm.share($(\'#'+this.id+' .dialog input\').val(),\''+this.id+'\')'));
+                footer.addOpt(new fm.dialog.DialogFooterOption('Dismiss', 'default', 'fm.dialog.share.hide()'));
+                footer.addOpt(new fm.dialog.DialogFooterOption('Remove link', 'default', "fm.unshare(\'"+file+"\',\'"+id+"\')"));
                 fm.dialog.dialog = new fm.dialog.Dialog(
                     this.id,
-                    'Share <em>'+file+'</em>',
+                    //'Share <em>'+file+'</em>',
+                    null,
                     /*'<p>Enter the emails of people you want to share this with:</p>'
                     +'<input type="text" id="'+id+'" placeholder="Emails" value="" />'
                     +'<p>or make it accessible by everyone:</p>'
                     +'<input type="checkbox" id="'+id+'" '+(fm.isShared(id) ? 'checked':'')+' />'*/
-                    '<input type="text" id="sharelink-'+id+'" placeholder="Fetching link..." value="" autofocus />',
+                    '<p>Anyone with the link can download the file.</p>'
+                    +'<input type="text" id="sharelink-'+id+'" placeholder="Fetching link..." value="" autofocus />',
                     footer.html()
                 );
+                fm.share(file, id);
                 fm.dialog.dialog.show();
                 cm.destroy();
                 fm.dialog.dialogActive = true;
@@ -843,81 +824,39 @@ header3 font
         cm.destroy();
     }
     fm.move = function(file, target) { //handles moving both single and multiple files
-        if (multiSelect.selected.length < 2) {
+        if (fm.multiSelect.selected.length < 2) {
             if (!_.isArray(file)) { //if its a single thing
                 var tmp = [file];
                 file = tmp;
             }
         } else {
-            file = multiSelect.selected;
+            file = fm.multiSelect.selected;
         }
         var hashes = _.uniq(file);
         var filesList = hashes.toString();
-        //d.info("moving " + filesList + " to " + target);
-        $.post('dbquery.php',
-        {
-            move: 'move',
-            file_multi: filesList,
-            file_target: target
-        },
-        function(result) {
-            if (result == '') {
-                //worked
-                bar.refreshAll();
-                multiSelect.reset();
-                files.moveGUI.hide();
-            } else {
-                d.error(result);
+        $.ajax({
+            url: './api/files/move',
+            type: 'POST',
+            data: {
+                file_multi: filesList,
+                file_target: target
+            },
+            success: function(result, status, xhr) {
+                fm.refreshAll();
+                fm.multiSelect.clear();
+                fm.snackbar.create("Moved files");;
+            },
+            error: function(xhr, status, e) {
+                fm.snackbar.create("Failed to move files");
             }
-            //files.refresh(bar);
         });
+        cm.destroy();
     }
     fm.share = function(file, id) {
-        $.post('dbquery.php',
-        {
-            modifyshared: 'yes',
-            action: 'add',
-            file: id
-        },
-        function(result) {
-            if (result.includes('success')) {
-                //d.info(result);
-                var urla = window.location.href.toString().split('/');
-                var url = '';
-                for (i = 0; i < urla.length - 1; i++) {
-                    url += urla[i] + '/';
-                }
-                //var key = location.hostname + '/foxfile/share?id=' + result.split("|-=-|")[1];
-                var key = url + 'share?id=' + result.split("|-=-|")[1];
-                $('.modal-share #modal-file-name-share').val(key).select();
-
-                if (!result.includes("no new"))
-                    bar.refreshAll();
-                //$('.modal-share #modal-file-name-share').select();
-            } else {
-                d.error(result);
-            }
-        });
+        
     },
     fm.unshare = function(file, id) {
-        //d.warning(file + " " + id);
-        $.post('dbquery.php',
-        {
-            modifyshared: 'yes',
-            action: 'remove',
-            file: id
-        },
-        function(result) {
-            if (result.includes('success')) {
-                $('.modal-share #modal-file-name-share').val("Link removed");
-                //d.info(result);
-                d.info("Unshared");
-                bar.refreshAll();
-                files.shareGUI.hide();
-            } else {
-                d.error(result);
-            }
-        });
+        
     }
     fm.loadTrash = function() {
         $('.pages .bar-trash').addClass('loading');
@@ -942,13 +881,13 @@ header3 font
                     $.each(res, function(i) {
                         // name, parent, icon, hash, type, btype, size, lastmod, shared, public
                         var f = new File(res[i].name,
-                                            res[i].parent,
-                                            res[i].hash,
-                                            res[i].is_folder,
-                                            res[i].size,
-                                            res[i].lastmod,
-                                            res[i].is_shared,
-                                            res[i].is_public);
+                                         res[i].parent,
+                                         res[i].hash,
+                                         res[i].is_folder,
+                                         res[i].size,
+                                         res[i].lastmod,
+                                         res[i].is_shared,
+                                         res[i].is_public);
                         $('.pages .bar-trash .file-list').append(template(f));
                     });
                 } else {
@@ -1010,13 +949,13 @@ header3 font
                     $.each(res, function(i) {
                         // name, parent, icon, hash, type, btype, size, lastmod, shared, public
                         var f = new File(res[i].name,
-                                            res[i].parent,
-                                            res[i].hash,
-                                            res[i].is_folder,
-                                            res[i].size,
-                                            res[i].lastmod,
-                                            res[i].is_shared,
-                                            res[i].is_public);
+                                         res[i].parent,
+                                         res[i].hash,
+                                         res[i].is_folder,
+                                         res[i].size,
+                                         res[i].lastmod,
+                                        res[i].is_shared,
+                                         res[i].is_public);
                         $('.pages .bar-shared .file-list').append(template(f));
                     });
                 } else {
@@ -1033,11 +972,17 @@ header3 font
         return false;
     }
     fm.loadTransfers = function() {
-        if (dd.numFilesToUpload == 0) {
+        if (dd.numFilesToDisplay == 0) {
             var template = _.template($('#fm-transfers-empty').html());
             $('.pages .bar-transfers .file-list').empty().addClass('empty');
             $('.pages .bar-transfers .file-list').append(template({}));
         }
+    }
+    fm.clearUploads = function() {
+        dd.numFilesToDisplay = dd.numFilesToUpload;
+        $('.bar-transfers .upload-success').remove();
+        fm.snackbar.create("Emptied uploads list");
+        fm.loadTransfers();
     }
     var FolderBar = function(name, hash, parent) {
         this.dd;
@@ -1112,6 +1057,60 @@ header3 font
                     $('#bar-'+this.hash+' .file-list').empty();
                 for (i = 0; i < this.files.length; i++) {
                     $('#bar-'+this.hash+' .file-list').append(template(this.files[i]));
+                    var _this = this;
+                    var _i = i;
+                    $("#bar-" + this.hash + " .file-list li[hash="+this.files[i].hash+"]").draggable({
+                        opacity: 1,
+                        helper: "clone",
+                        revert: 'invalid',
+                        cursorAt: {
+                            top: 15,
+                            left: 100
+                        },
+                        appendTo: 'body',
+                        distance: 6,
+                        scroll: false,
+                        start: function(e, ui) {
+                            $("li[hash="+_this.files[_i].hash+"]").css({
+                                '-webkit-transition': 'none',
+                                'transition': 'none'
+                            });
+                            if (fm.multiSelect.selected.length > 1) {
+                                $(ui.helper).children('.file-name').text(fm.multiSelect.selected.length+" files");
+                            }
+                            //draggingFile = true;
+                            //currentDraggingFolder = '';
+                        },
+                        stop: function(e, ui) {
+                            $("li[hash="+_this.files[_i].hash+"]").css({
+                                '-webkit-transition': 'all .15s ease-in-out',
+                                'transition': 'all .15s ease-in-out'
+                            });
+                            //draggingFile = false;
+                        }
+                    });
+                    if (this.files[i].type == 'folder') {
+                        var _this = this.files[i];
+                        $('#bar-' + this.hash + ' .file-list #folder-'+this.files[i].hash).droppable({
+                            hoverClass: 'dragdrop-hover',
+                            tolerance: 'pointer',
+                            greedy: true,
+                            drop: function(e, ui) {
+                                if (fm.multiSelect.selected.length > 1) {
+                                    hash = fm.multiSelect.selected;
+                                } else {
+                                    hash = [$(ui.helper).attr('hash')];
+                                }
+                                var hashes = _.uniq(hash);
+                                var hashlist = hashes.toString();
+                                var target = _this.hash;
+                                if (_.contains(hashes, target))
+                                    fm.snackbar.create("Cannot move a folder into itself");
+                                else if ($('#bar-' + _this.parent + ' .file-list').children('[hash='+hashes[0]+']').length == 0)
+                                    fm.move(hashlist, target);
+                            }
+                        });
+                    }
                 }
             } else {
                 var template = _.template($('#fm-folder-empty').html());
@@ -1119,8 +1118,8 @@ header3 font
                 $('#bar-'+this.hash+' .file-list').append(template({}));
             }
             this.offset += this.limit;
+            var _this = this;
             if (this.hasMore) {
-                var _this = this;
                 var onsc = _.debounce(function() {
                     if($('#bar-'+_this.hash+' .file-list').scrollTop() + $('#bar-'+_this.hash+' .file-list').height() > (40 * _this.offset) - 100) {
                        _this.refresh(false);
@@ -1130,6 +1129,24 @@ header3 font
                     onsc();
                 });
             }
+            $('#bar-' + this.hash + ' .file-list').droppable({
+                hoverClass: 'dz-drag-hover',
+                tolerance: 'pointer',
+                drop: function(event, ui) {
+                    if (fm.multiSelect.selected.length > 1) {
+                        hash = fm.multiSelect.selected;
+                    } else {
+                        hash = [$(ui.helper).attr('hash')];
+                    }
+                    var hashes = _.uniq(hash);
+                    var hashlist = hashes.toString();
+                    var target = _this.hash;
+                    if (_.contains(hashes, target))
+                        fm.snackbar.create("Cannot move a folder into itself");
+                    else if ($('#bar-' + _this.hash + ' .file-list').children('[hash='+hashes[0]+']').length == 0)
+                        fm.move(hashlist, target);
+                }
+            });
         }
         this.setWidth = function(size) {
             console.log("Sizing bar " + this.hash + " to " + size + 'px');
@@ -1194,7 +1211,10 @@ header3 font
                         $('.file-manager .bar[hash='+_this.hash+']').removeClass('loading');
                         switch (_this.file.btype) {
                             case 'text':
-                                $(elem+" #editor").val(result);
+                                //$(elem+" #editor").val(result);
+                                te.init();
+                                te.setValue(result, _this.name);
+                                break;
                         }
                     },
                     error: function(request, error) {
@@ -1326,9 +1346,11 @@ header3 font
             var dest = $(this).attr('hash');
             if (fm.btnStatus.shift) {
                 if (fm.multiSelect.contains(dest)) {
+                    $(this).removeClass('selected');
                     fm.multiSelect.remove(dest);
                     $('#cb-'+dest).prop('checked', false);
                 } else {
+                    $(this).addClass('selected');
                     fm.multiSelect.add(dest);
                     $('#cb-'+dest).prop('checked', true);
                 }
@@ -1341,11 +1363,13 @@ header3 font
     $(document).on('click', '.menubar-content .file-multiselect-checkbox-container .label', function(e) {
         e.stopPropagation();
         var hash = $(this).parents('.menubar-content').attr('hash');
+        $(this).parents('.menubar-content').addClass('selected');
         fm.multiSelect.add(hash);
     });
     $(document).on('click', '.menubar-content .file-multiselect-checkbox-container .label-checked', function(e) {
         e.stopPropagation();
         var hash = $(this).parents('.menubar-content').attr('hash');
+        $(this).parents('.menubar-content').removeClass('selected');
         fm.multiSelect.remove(hash);
     });
     $(document).on('click', '.file-manager .btn-back', function(e) {
@@ -1387,6 +1411,7 @@ header3 font
     var queue;
     var linearQueue;
     dd.numFilesToUpload = 0;
+    dd.numFilesToDisplay = 0;
     dd.ignoredFiles = [
         'desktop.ini',
         'Thumbs.db'
@@ -1735,13 +1760,13 @@ header3 font
                 },
                 beforeSend: function() {
                     console.log(_this.name);
-                    $('#transfers .file-list #tfile-'+_this.id+' .nameandprogress').addClass('active');
+                    $('#transfers .file-list #tfile-'+_this.id).addClass('active');
                     $('#transfers .file-list #tfile-'+_this.id+' .file-upload-status').text("Creating");
                 },
                 success: function(result, status, xhr) {
                     console.log("Upload success response: " + result);
                     //var json = JSON.parse(result);
-                    $('#transfers .file-list #tfile-'+_this.id+' .nameandprogress').removeClass('active');
+                    $('#transfers .file-list #tfile-'+_this.id).removeClass('active').addClass('upload-success');
                     $('#transfers .file-list #tfile-'+_this.id+' .file-upload-status').text("Done");
                     $('#transfers #badge-transfers .badgeval').text(--dd.numFilesToUpload);
                     /*var template = _.template($('#fm-file-basic').html());
@@ -1752,7 +1777,7 @@ header3 font
                 },
                 error: function(xhr, status, e) {
                     console.log("onError: " + status + " " + e);
-                    $('#transfers .file-list #tfile-'+_this.id+' .nameandprogress').removeClass('active').addClass('failed');
+                    $('#transfers .file-list #tfile-'+_this.id).removeClass('active').addClass('upload-fail');
                     $('#transfers .file-list #tfile-'+_this.id+' .file-upload-status').text("Failed");
                     _this.state = 3;
                     linearQueue.start();
@@ -1768,6 +1793,7 @@ header3 font
             $('#transfers .file-list ul').append(template(this));
             $('#transfers #badge-transfers').addClass('new');
             $('#transfers #badge-transfers .badgeval').text(++dd.numFilesToUpload);
+            dd.numFilesToDisplay++;
         }
         this.debug = function() {
             if (!this.sysf) {
@@ -1887,13 +1913,13 @@ header3 font
                 processData: false,
                 contentType: false,
                 beforeSend: function() {
-                    $('#transfers .file-list #tfile-'+_this.id+' .nameandprogress').addClass('active');
+                    $('#transfers .file-list #tfile-'+_this.id).addClass('active');
                     $('#transfers .file-list #tfile-'+_this.id+' .file-upload-status').text("Uploading");
                 },
                 success: function(result, status, xhr) {
                     console.log("Upload success response: " + result);
                     //var json = JSON.parse(result);
-                    $('#transfers .file-list #tfile-'+_this.id+' .nameandprogress').removeClass('active');
+                    $('#transfers .file-list #tfile-'+_this.id).removeClass('active').addClass('upload-success');
                     $('#transfers .file-list #tfile-'+_this.id+' .file-upload-status').text("Done");
                     $('#transfers #badge-transfers .badgeval').text(--dd.numFilesToUpload);
                     /*var template = _.template($('#fm-file-basic').html());
@@ -1904,7 +1930,7 @@ header3 font
                 },
                 error: function(xhr, status, e) {
                     console.log("onError: " + status + " " + e);
-                    $('#transfers .file-list #tfile-'+_this.id+' .nameandprogress').removeClass('active').addClass('failed');
+                    $('#transfers .file-list #tfile-'+_this.id).removeClass('active').addClass('upload-fail');
                     $('#transfers .file-list #tfile-'+_this.id+' .file-upload-status').text("Failed");
                     _this.state = 3;
                     linearQueue.start();
@@ -1923,6 +1949,7 @@ header3 font
             $('#transfers .file-list ul').append(template(this));
             $('#transfers #badge-transfers').addClass('new');
             $('#transfers #badge-transfers .badgeval').text(++dd.numFilesToUpload);
+            dd.numFilesToDisplay++;
         }
         this.addToLinearQueue = function() {
             linearQueue.add(this);
@@ -2005,7 +2032,7 @@ header3 font
         this.start = function(fake) {
             if (this.trees.length == 0) {
                 console.log("%cFinishing %cupload of LinearQueue","color:red","color:gray");
-                fm.snackbar.create("Finished uploading files");
+                fm.snackbar.create("Finished uploading files", 'view', '$(\'#transfers.btn-ctrlbar\').click()');
                 fm.refreshAll();
             } else {
                 if (fake) {
@@ -2106,7 +2133,7 @@ YM      6  M   YP   MM
                 cm.menu.append(new MenuItem(cm.menu, "Upload Folder", "folder-upload", "$('#dd-folder-upload').attr('hash','"+hash+"').click()").get());
                 cm.menu.append(new MenuItem(cm.menu, "New Folder", "folder-plus", "fm.dialog.newFolder.show('"+name+"','"+hash+"')", "Alt+N").get());
                 cm.menu.append('<hr class="nav-vert-divider">');
-                cm.menu.append(new MenuItem(cm.menu, "Share", "share", "fm.dialog.share.show('"+name+"','"+hash+"')", "s").get());
+                cm.menu.append(new MenuItem(cm.menu, "Get public link", "link", "fm.dialog.share.show('"+name+"','"+hash+"')", "L").get());
                 cm.menu.append(new MenuItem(cm.menu, "Move", "folder-move", "fm.dialog.move.show('"+name+"','"+hash+"')", "m").get());
                 cm.menu.append(new MenuItem(cm.menu, "Refresh", "refresh", "fm.refresh('"+hash+"')", "Alt+R").get());
             }
@@ -2132,7 +2159,7 @@ YM      6  M   YP   MM
                 cm.menu.append(new MenuItem(cm.menu, "Upload Folder", "folder-upload", "$('#dd-folder-upload').attr('hash','"+hash+"').click()").get());
                 cm.menu.append(new MenuItem(cm.menu, "New Folder", "folder-plus", "fm.dialog.newFolder.show('"+name+"','"+hash+"')", "Alt+N").get());
                 cm.menu.append('<hr class="nav-vert-divider">');
-                cm.menu.append(new MenuItem(cm.menu, "Share", "share", "fm.dialog.share.show('"+name+"','"+hash+"')", "s").get());
+                cm.menu.append(new MenuItem(cm.menu, "Get public link", "link", "fm.dialog.share.show('"+name+"','"+hash+"')", "L").get());
                 cm.menu.append(new MenuItem(cm.menu, "Move", "folder-move", "fm.dialog.move.show('"+name+"','"+hash+"')", "m").get());
                 cm.menu.append(new MenuItem(cm.menu, "Refresh", "refresh", "fm.refresh('"+parentHash+"')", "Alt+R").get());
             } else if (self.attr('btype') == 'file') {
@@ -2143,7 +2170,7 @@ YM      6  M   YP   MM
                 cm.menu.append(new MenuItem(cm.menu, "Delete", "delete", "fm.dialog.trash.show('"+name+"','"+hash+"')", "Del").get());
                 cm.menu.append(new MenuItem(cm.menu, "Download", "download", "fm.download('"+hash+"','"+name+"')").get());
                 cm.menu.append('<hr class="nav-vert-divider">');
-                cm.menu.append(new MenuItem(cm.menu, "Share", "share", "fm.dialog.share.show('"+name+"','"+hash+"')", "s").get());
+                cm.menu.append(new MenuItem(cm.menu, "Get public link", "link", "fm.dialog.share.show('"+name+"','"+hash+"')", "L").get());
                 cm.menu.append(new MenuItem(cm.menu, "Move", "folder-move", "fm.dialog.move.show('"+name+"','"+hash+"')", "m").get());
                 cm.menu.append(new MenuItem(cm.menu, "Refresh", "refresh", "fm.refresh('"+parentHash+"')", "Alt+R").get());
             }
@@ -2158,22 +2185,30 @@ YM      6  M   YP   MM
             var name = self.attr('name');
             cm.destroy();
             var menu = cm.menu;
-            cm.menu = new ClickMenu(e.pageX - 180, e.pageY + 30);
-            cm.menu.append(new MenuItem(cm.menu, "Rename", "rename-box", "fm.dialog.rename.show('"+name+"','"+hash+"')", "r or f2").get());
-            cm.menu.append(new MenuItem(cm.menu, "Delete", "delete", "fm.dialog.trash.show('"+name+"','"+hash+"')", "Del").get());
-            cm.menu.append(new MenuItem(cm.menu, "Download", "download", "fm.download('"+hash+"','"+name+"')").get());
-            cm.menu.append(new MenuItem(cm.menu, "Upload File", "upload", "$('#dd-file-upload').attr('hash','"+hash+"').click()").get());
-            cm.menu.append(new MenuItem(cm.menu, "Upload Folder", "folder-upload", "$('#dd-folder-upload').attr('hash','"+hash+"').click()").get());
-            cm.menu.append(new MenuItem(cm.menu, "New Folder", "folder-plus", "fm.dialog.newFolder.show('"+name+"','"+hash+"')", "Alt+N").get());
-            cm.menu.append('<hr class="nav-vert-divider">');
-            cm.menu.append(new MenuItem(cm.menu, "Share", "share", "fm.dialog.share.show('"+name+"','"+hash+"')", "s").get());
-            cm.menu.append(new MenuItem(cm.menu, "Move", "folder-move", "fm.dialog.move.show('"+name+"','"+hash+"')", "m").get());
-            cm.menu.append(new MenuItem(cm.menu, "Refresh", "refresh", "fm.refresh('"+hash+"')", "Alt+R").get());
+            cm.menu = new ClickMenu(e.pageX - 180, 112);
+            if (hash == foxfile_root) {
+                cm.menu.append(new MenuItem(cm.menu, "Upload File", "upload", "$('#dd-file-upload').attr('hash','"+hash+"').click()").get());
+                cm.menu.append(new MenuItem(cm.menu, "Upload Folder", "folder-upload", "$('#dd-folder-upload').attr('hash','"+hash+"').click()").get());
+                cm.menu.append(new MenuItem(cm.menu, "New Folder", "folder-plus", "fm.dialog.newFolder.show('"+name+"','"+hash+"')", "Alt+N").get());
+                cm.menu.append('<hr class="nav-vert-divider">');
+                cm.menu.append(new MenuItem(cm.menu, "Refresh", "refresh", "fm.refresh('"+hash+"')", "Alt+R").get());
+            } else {
+                cm.menu.append(new MenuItem(cm.menu, "Rename", "rename-box", "fm.dialog.rename.show('"+name+"','"+hash+"')", "r or f2").get());
+                cm.menu.append(new MenuItem(cm.menu, "Delete", "delete", "fm.dialog.trash.show('"+name+"','"+hash+"')", "Del").get());
+                cm.menu.append(new MenuItem(cm.menu, "Download", "download", "fm.download('"+hash+"','"+name+"')").get());
+                cm.menu.append(new MenuItem(cm.menu, "Upload File", "upload", "$('#dd-file-upload').attr('hash','"+hash+"').click()").get());
+                cm.menu.append(new MenuItem(cm.menu, "Upload Folder", "folder-upload", "$('#dd-folder-upload').attr('hash','"+hash+"').click()").get());
+                cm.menu.append(new MenuItem(cm.menu, "New Folder", "folder-plus", "fm.dialog.newFolder.show('"+name+"','"+hash+"')", "Alt+N").get());
+                cm.menu.append('<hr class="nav-vert-divider">');
+                cm.menu.append(new MenuItem(cm.menu, "Get public link", "link", "fm.dialog.share.show('"+name+"','"+hash+"')", "L").get());
+                cm.menu.append(new MenuItem(cm.menu, "Move", "folder-move", "fm.dialog.move.show('"+name+"','"+hash+"')", "m").get());
+                cm.menu.append(new MenuItem(cm.menu, "Refresh", "refresh", "fm.refresh('"+hash+"')", "Alt+R").get());
+            }
         }
     });
     $(document).on("contextmenu", ".bar[id^='file-detail-']", function(e) {
         e.stopPropagation();
-        if (!fm.btnStatus.shift) {
+        if (!fm.btnStatus.shift && $(e.target).parents('.CodeMirror').length == 0) {
             var self = $(this);
             var hash = self.attr('hash');
             var parentHash = self.attr('parent');
@@ -2185,7 +2220,7 @@ YM      6  M   YP   MM
             cm.menu.append(new MenuItem(cm.menu, "Delete", "delete", "fm.dialog.trash.show('"+hash+"')", "Del").get());
             cm.menu.append(new MenuItem(cm.menu, "Download", "download", "fm.download('"+hash+"','"+name+"')").get());
             cm.menu.append('<hr class="nav-vert-divider">');
-            cm.menu.append(new MenuItem(cm.menu, "Share", "share", "fm.dialog.share.show('"+name+"','"+hash+"')", "s").get());
+            cm.menu.append(new MenuItem(cm.menu, "Get public link", "link", "fm.dialog.share.show('"+name+"','"+hash+"')", "L").get());
             cm.menu.append(new MenuItem(cm.menu, "Move", "folder-move", "fm.dialog.move.show('"+name+"','"+hash+"')", "m").get());
             cm.menu.append(new MenuItem(cm.menu, "Refresh", "refresh", "fm.refresh('"+parentHash+"')", "Alt+R").get());
         }
@@ -2218,6 +2253,116 @@ YM      6  M   YP   MM
         }
     });
 })(window.cm = window.cm || {}, jQuery);
+/*
+88888888888 8888888888 
+    888     888        
+    888     888        
+    888     8888888    
+    888     888        
+    888     888        
+    888     888        
+    888     8888888888 
+*/
+(function(te, $, undefined) {
+    var editor = null;
+    te.langsLoaded = [];
+    te.init = function() {
+        ied();
+    }
+    var ied = function(hash) {
+        editor = CodeMirror.fromTextArea($('#editor')[0], {
+            lineNumbers: true,
+            lineWrapping: false,
+            theme: 'foxfile-cm',
+            indentUnit: 4,
+            indentWithTabs: true,
+            tabSize: 4,
+            readOnly: true,
+            keyMap: 'sublime',
+            foldGutter: true,
+            styleLineActive: true,
+            gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
+            extraKeys: {
+                "Ctrl-S": function(instance) {
+                    te.save();
+                }
+            }
+        });
+        CodeMirror.keyMap.sublime.Backspace = null;
+        editor.on('focus', function() {
+            //codemirrorActive = true;
+        });
+        editor.on('blur', function() {
+            //codemirrorActive = false;
+            //codemir.savecontent();
+            te.save();
+        });
+        editor.on('keydown', function(instance, e) {
+            //editor.showHint(instance);
+            switch (e.which) {
+                case 16: //shift
+                case 17: //ctrl
+                case 18: //alt
+                case 27: //esc
+                case 20: //caps
+                case 112:case 113:case 114:case 115:case 116:case 117:case 118:case 119:case 120:case 121:case 122:case 123: //f1 - f12
+                case 37:case 38:case 39: case 40: //arrow keys
+                    //only do the thing below if the key is not one that does nothing
+                    break;
+                default:
+                    /*tabs_list[active_tab].saved = false;
+                    $('#'+active_tab+'.tab .editor-tab-status').text('save');*/
+                    break;
+            }
+        });
+        editor.on('cursorActivity', function(instance) {
+            /*var object = instance.getCursor();
+            $('.info .line-number #value').text(object.line + 1);
+            $('.info .column-number #value').text(object.ch + 1);*/
+        });
+    }
+    te.setLanguage = function(language) {
+        if (language == 'null') return;
+        if (!_.contains(te.langsLoaded, language)) {
+            if (language == 'htmlmixed') { //because html has so many dependencies
+                var _te = te;
+                $.getScript('./js/cm-mode/xml/xml.js', function() {
+                    _te.langsLoaded.push('xml');
+                    $.getScript('./js/cm-mode/css/css.js', function() {
+                        _te.langsLoaded.push('css');
+                        $.getScript('./js/cm-mode/javascript/javascript.js', function() {
+                            _te.langsLoaded.push('javascript');
+                            $.getScript('./js/cm-mode/' + language + '/' + language + '.js', function() {
+                                _te.langsLoaded.push(language);
+                                editor.setOption("mode", language);
+                                console.log('set language to ' + language);
+                            });
+                        });
+                    });
+                });
+            } else {
+                //console.log('js/cm-mode/' + language + '/' + language + '.js');
+                $.getScript('./js/cm-mode/' + language + '/' + language + '.js', function() {
+                    te.langsLoaded.push(language);
+                    editor.setOption("mode", language);
+                    console.log('set language to ' + language);
+                });
+            }
+        } else {
+            editor.setOption("mode", language);
+            //console.log('set language to ' + language);
+        }
+    }
+    te.setValue = function(data, name) {
+        editor.setValue(data);
+        te.setLanguage(CodeMirror.findModeByFileName(name).mode);
+    }
+    te.save = function() {
+
+    }
+
+})(window.te = window.te || {}, jQuery);
+
 
 
 /*

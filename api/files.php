@@ -778,47 +778,63 @@ if($pageID == 'view') {
 		res(404, "Invalid file path provided");
 	}
 }
-if (isset($_POST['move'])) {
+if ($pageID == 'move') {
 	$file_multi = sanitize($_POST['file_multi']);
 	$target = sanitize($_POST['file_target']);
 	$file_multi_array = explode(',', $file_multi);
 	$file_target_path = getPath($target);
 
 	$isOwner = true;
-	$query = mysqli_query($db, "SELECT * FROM $filetable WHERE file_self IN ('$file_multi')");
+	$query = mysqli_query($db, "SELECT * FROM files WHERE hash IN ('$file_multi')");
 	while($row = mysqli_fetch_array($query)) {
-		if ($row['owner'] !== $uid) {
+		if ($row['owner_id'] !== $uid) {
 			$isOwner = false;
 		}
 	}
-
+	$fails = 0;
 	foreach ($file_multi_array as $hash_self) {
 		if ($hash_self == $uhd) {
-			echo 'Cannot move the home directory!';
+			resp(500, 'Cannot move the home directory!');
 		//} else if (strpos(getPath($hash_self), $target) !== false) {
 			//echo 'Cannot move a folder into itself!';
 		} else {
 			if (sizeof(explode('/', $file_target_path)) > sizeof(explode('/', getPath($hash_self)))) { //doesnt actually work, but the rename() will prevent this anyway
 				if (strpos(getPath($hash_self), $target) !== false) {
-					echo 'Cannot move a folder into itself!';
+					resp(500, 'Cannot move a folder into itself!');
 					die();
 				}
 			}
+			$query = mysqli_query($db, "SELECT is_folder, parent, name FROM files WHERE hash='$hash_self' AND owner_id='$uid' AND is_trashed='0' LIMIT 1");
+			$res = mysqli_fetch_object($query);
+			$type = $res->is_folder == 1 ? 'folder' : 'file';
 
-			if ($isOwner) {
-				if (rename(getPath($hash_self), $file_target_path . '/' . $hash_self)) {
-					if(mysqli_query($db, "UPDATE $filetable SET file_parent = '$target', last_modified = NOW() WHERE file_self='$hash_self'")) {
-						echo '';
+			// repeat this for all older versions of the files with the same name and parent as this one
+			$name = $res->name;
+			$parent = $res->parent;
+			$others = mysqli_query($db, "SELECT hash FROM files WHERE parent='$parent' AND name='$name' AND owner_id='$uid'");
+			$otherHashes = array();
+			while($res = mysqli_fetch_object($others)) {
+				$otherHashes[] = $res->hash;
+			}
+			foreach($otherHashes as $hash) {
+				if ($isOwner) {
+					if (rename(getPath($hash), $file_target_path . '/' . $hash)) {
+						if(mysqli_query($db, "UPDATE files SET parent = '$target', lastmod = NOW() WHERE hash='$hash' LIMIT 1")) {
+							
+						} else {
+							resp(500, "DB move failed!");
+						}
 					} else {
-						echo "DB move failed!";
+						resp(500, 'Move failed!');
 					}
 				} else {
-					echo 'Move failed!';
+					resp(403, "You do not own this file.");
 				}
-			} else {
-				echo "You do not own this file.";
 			}
 		}
+	}
+	if ($fails == 0) {
+		resp(200, 'moved files');
 	}
 }
 if($pageID == 'download') {

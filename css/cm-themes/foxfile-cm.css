@@ -1,0 +1,117 @@
+.cm-s-foxfile-cm.CodeMirror {
+    background: #fff;
+    color: rgba(0,0,0,.87);
+}
+.cm-s-foxfile-cm .CodeMirror-selected {
+    /*background: rgba(0, 0, 10,.08);*/
+    background: #2DA4FE;
+}
+.cm-s-foxfile-cm.CodeMirror::selection {
+    /*background: rgba(0, 0, 10,.08);*/
+    background: #2DA4FE;
+}
+.cm-s-foxfile-cm.CodeMirror::-moz-selection {
+    /*background: rgba(0, 0, 10,.08);*/
+    background: #2DA4FE;
+}
+.cm-s-foxfile-cm .CodeMirror-gutters {
+    background: #f2f2f2;
+    border-right: 1px solid #ff5722;
+}
+.cm-s-foxfile-cm .CodeMirror-guttermarker {
+    color: rgba(0,0,0,.54);
+}
+.cm-s-foxfile-cm .CodeMirror-guttermarker-subtle {
+    color: rgba(0,0,0,.38);
+}
+.cm-s-foxfile-cm .CodeMirror-linenumber {
+    color: rgba(0,0,0,.54);
+}
+.cm-s-foxfile-cm .CodeMirror-cursor {
+    border-left: 1px solid rgba(0,0,0,.87) !important;
+}
+.cm-s-foxfile-cm .cm-keyword {
+    color: #ff5722;
+}
+.cm-s-foxfile-cm .cm-atom {
+    color: #00BCD4;
+}
+.cm-s-foxfile-cm .cm-number {
+    color: #4DD0E1;
+}
+.cm-s-foxfile-cm .cm-def {
+    color: #8DA6CE;
+}
+.cm-s-foxfile-cm span.cm-variable-2,
+.cm-s-foxfile-cm span.cm-tag {
+    color: #F20C11;
+}
+.cm-s-foxfile-cm span.cm-variable-3,
+.cm-s-foxfile-cm span.cm-def {
+    color: #B3421D;
+}
+.cm-s-foxfile-cm .cm-operator {
+    color: #009688;
+}
+.cm-s-foxfile-cm .cm-comment {
+    color: #B7C6CC;
+    font-style: italic;
+    font-weight: normal;
+}
+.cm-s-foxfile-cm .cm-string {
+    color: #689F38;
+    font-style: italic;
+}
+.cm-s-foxfile-cm .cm-string-2 {
+    color: #66BB6A;
+}
+.cm-s-foxfile-cm .cm-meta {
+    background-color: #141414;
+    color: #f7f7f7;
+}
+.cm-s-foxfile-cm .cm-builtin {
+    color: #00ACC1;
+}
+.cm-s-foxfile-cm .cm-tag {
+    color: #997643;
+}
+.cm-s-foxfile-cm .cm-attribute {
+    color: #4DB6AC;
+}
+.cm-s-foxfile-cm .cm-header {
+    color: #02DBAA;
+}
+.cm-s-foxfile-cm .cm-hr {
+    color: #AEAEAE;
+}
+.cm-s-foxfile-cm .cm-link {
+    color: #4DB6AC;
+    font-style: italic;
+    text-decoration: none;
+}
+.cm-s-foxfile-cm .cm-searching {
+	background: #4DB6AC;
+}
+.cm-s-foxfile-cm .cm-error {
+    border-bottom: 1px solid red;
+}
+.cm-s-foxfile-cm .CodeMirror-activeline-background {
+    background: #2D3940 !important;
+}
+.cm-s-foxfile-cm .CodeMirror-matchingbracket {
+    outline: 1px solid grey;
+    color: white !important;
+}
+.CodeMirror-scrollbar-filler {
+    background: #f1f1f1;
+}
+.CodeMirror-dialog {
+    background: #ddd;
+    color: rgba(0,0,0,.54);
+}
+.CodeMirror-dialog-top {
+    border-bottom: 1px solid #FF5722;
+}
+.CodeMirror-dialog-bottom {
+    border-top: 1px solid #FF5722;
+}

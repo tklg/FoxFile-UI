@@ -38,8 +38,11 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     <title>FoxFile</title>
 <!-- 	<link async href="http://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"> -->
 	<link href='https://fonts.googleapis.com/css?family=Roboto:300,400,700' rel='stylesheet' type='text/css'>
+	<link async rel="stylesheet" href="css/codemirror.css">
+    <link async href="js/cm-addon/dialog/dialog.css" rel="stylesheet" />
+    <link rel="stylesheet" href="css/cm-themes/foxfile-cm.css">
 	<link async rel="stylesheet" href="css/foxfile.css">
-	<link href="css/materialdesignicons.min.css" media="all" rel="stylesheet" type="text/css" />
+
 	<link rel="icon" type="image/ico" href="img/favicon.png">
 		
 	<!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
@@ -53,7 +56,8 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     Reloadr.go({
         client: [
             'js/foxfile.js',
-            'css/foxfile.css'
+            'css/foxfile.css',
+            'css/cm-themes/foxfile-cm.css'
         ],
         frequency: 1000
     });
@@ -106,8 +110,8 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 				<header>
 					<span class="filename">File uploads</span>
 					<section class="file-actions-header">
-						<span><i class="mdi mdi-delete"></i></span>
-						<span><i class="mdi mdi-dots-vertical"></i></span>
+						<span title="Clear uploads list" onclick="fm.clearUploads()"><i class="mdi mdi-delete"></i></span>
+						<!-- <span><i class="mdi mdi-dots-vertical"></i></span> -->
 					</section>
 				</header>
 				<div class="progress">
@@ -388,6 +392,9 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 	<span class="snackbar-msg"><%= message %></span><% if (action != null) { %><button class="btn snackbar-btn" onclick="<%= fn %>"><%= action %></button><% } %>
 </div>
 </script>
+
+<link href="css/materialdesignicons.min.css" media="all" rel="stylesheet" type="text/css" />
+
 	<script type="text/javascript" src="//code.jquery.com/jquery-2.1.4.min.js"></script>
 	<script src="//code.jquery.com/ui/1.11.4/jquery-ui.min.js"></script>
 	<!-- <link async rel="stylesheet" type="text/css" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.7.1/themes/base/jquery-ui.css"/> -->
@@ -396,6 +403,23 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     <script src="js/filetypes.js"></script>
     <script src="js/foxfile.js"></script>
     <script type="text/javascript" src="js/ripple.js"></script>
+
+	<script src="js/codemirror.js"></script>
+    <script src="js/cm-keymap/sublime.js"></script>
+    <!-- load these in with js when needed -->
+    <script src="js/cm-addon/dialog/dialog.js"></script>
+    <script src="js/cm-addon/search/searchcursor.js"></script>
+    <script src="js/cm-addon/search/search.js"></script>
+    <script src="js/cm-addon/edit/closebrackets.js"></script>
+    <script src="js/cm-addon/comment/comment.js"></script>
+    <script src="js/cm-addon/fold/foldcode.js"></script>
+    <script src="js/cm-addon/fold/foldgutter.js"></script>
+    <link href="js/cm-addon/fold/foldgutter.css" rel="stylesheet" />
+    <script src="js/cm-addon/fold/brace-fold.js"></script>
+    <script src="js/cm-addon/fold/xml-fold.js"></script>
+    <script src="js/cm-addon/fold/markdown-fold.js"></script>
+    <script src="js/cm-addon/fold/comment-fold.js"></script>
+    <script src="js/cm-mode/meta.js"></script>
 
     <!-- <script src="//cdnjs.cloudflare.com/ajax/libs/wavesurfer.js/1.0.52/wavesurfer.min.js"></script> -->
     <script>
