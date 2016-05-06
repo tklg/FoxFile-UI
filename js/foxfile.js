@@ -11,7 +11,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
                                                                   
     Foxfile : foxfile.js 
     Copyright (C) 2016 Theodore Kluge
-    http://tkluge.net
+    https://tkluge.net
 */
 (function(foxfile, $, undefined) {
     foxfile.init = function(){
@@ -30,7 +30,8 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
                     "files/*filePath": "loadPath",
                     "shared": "openShared",
                     "trash": "openTrash",
-                    "transfers": "openTransfers"
+                    "transfers": "openTransfers",
+                    "search": "openSearch"
                 }
             });
             this.router = new Router();
@@ -68,6 +69,10 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
                 fm.loadTransfers();
                 //console.log("Switched to page transfers");
             });
+            this.router.on('route:openSearch', function(sort) {
+                document.title = 'Search - FoxFile';
+                //fm.loadSearch();
+            });
             Backbone.history.start();
         }
     }
@@ -76,11 +81,10 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
         numBarsCanBeActive: 1,
         init: function() {
             console.info("Initialize page");
-            this.calculateBars();
-            page.updateFMToFitSize();
-        },
-        calculateSize: function() {
-            this.calculateBars();
+            page.calculateBars();
+            fm.updateSize();
+            fm.resizeToFitCurrentlyActive();
+            fm.moveToFitCurrentlyActive();
         },
         calculateBars: function() {
             this.width = $(window).width();
@@ -98,12 +102,9 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
             fm.numBarsCanBeActive = this.numBarsCanBeActive;
             fm.barWidth = minWidth;
             fm.activeBarWidth = this.width - ((this.numBarsCanBeActive - 1) * minWidth);
+            $('.pages > section').css('width', this.width - fm.barWidth);
             //console.log('Calculated '+barsActive+' bars active on this screen size ('+this.width+'px), each ' + fm.barWidth + "px wide");
             return barsActive;
-        },
-        updateFMToFitSize: function() {
-            fm.resizeToFitCurrentlyActive();
-            fm.moveToFitCurrentlyActive();
         },
         changeContent: function(el) {
             this.content.empty().append(el);
@@ -115,19 +116,11 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     }
 
     var rightnav = {
-    	isOpen: false,
+        isOpen: false,
     	toggle: function() {
-    		if (this.isOpen) this.close();
-    		else this.open();
-    	},
-    	open: function() {
-    		$('#nav-right').addClass('active');
-    		this.isOpen = true;
-    	},
-    	close: function() {
-    		$('#nav-right').removeClass('active');
-    		this.isOpen = false;
-    	}
+            $('#nav-right').toggleClass('active');
+            this.isOpen = !this.isOpen;
+        }
     }
 
     $(document).on('click', '.btn-ctrlbar', function(e) {
@@ -135,7 +128,17 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
         if ($(this).attr('id') == 'files') {
             document.title = 'My Files - FoxFile';
             $('.pages').children().removeClass('active').css('z-index', 400);
-            if (fm.isActive) { // switch to root
+            $('.pages .bar').removeClass('float-3');
+            if (fm.searching) {
+                fm.searching = false;
+                fm.isActive = true;
+                fm.clearTrees();
+                $('.file-manager .bar:not(#bar-0)').remove();
+                fm.open(foxfile_root);
+                var path = fm.calcFilePath();
+                foxfile.routerbox.router.navigate('files/'+path, {replace: true});
+                return;
+            } else if (fm.isActive) { // switch to root
                 fm.back('all');
                 return;
             } else {
@@ -147,19 +150,17 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
         } else {
             fm.isActive = false;
             foxfile.routerbox.router.navigate($(this).attr('id'), {trigger: true, replace: true});
+            if (fm.getHashTree().length > 1)
+                $('.pages .bar').addClass('float-3');
         }
     });
     $(document).on('click', '.user-menu, .nav-right-active-cover, #nav-right .closeOnClick', function(e) {
     	console.log("Toggling right nav");
     	rightnav.toggle();
     });
-    var res;
+    var pageInit = _.debounce(page.init, 200);
     $(window).resize(function() {
-        clearTimeout(res);
-        res = setTimeout(function() {
-            page.calculateSize();
-            page.updateFMToFitSize();
-        }, 100);
+        pageInit();
     });
 })(window.foxfile = window.foxfile || {}, jQuery);
 /*  
@@ -180,6 +181,8 @@ header3 font
     fm.last = null;
     fm.wavesurfer = null;
     fm.hashToRestore = '';
+    fm.searching = false;
+    fm.simultaneousUploads = 1;
     var hashTree = [];
     var fileTree = [];
     var currentFilePath = '';
@@ -189,15 +192,11 @@ header3 font
         m2: false,
         m3: false,
         shift: false,
-        ctrl: false,
-        scrollingTabs: false
+        ctrl: false
     };
     fm.init = function() {
         console.info("Initialize FileManager");
-        this.width = $(window).width();
-        $('#bar-0').css({
-            'width': fm.barWidth + 'px'
-        });
+        fm.updateSize();
 
         fm.open(foxfile_root);
 
@@ -211,6 +210,17 @@ header3 font
                 transition: 'all 0.45s ease-in-out'
             });
         }, 500);
+    }
+    fm.updateSize = function() {
+        //console.info("Resize FileManager");
+        this.width = $(window).width();
+        $('#bar-0').css({
+            'width': fm.barWidth + 'px'
+        });
+    }
+    fm.clearTrees = function() {
+        hashTree = [];
+        fileTree = [];
     }
     fm.getLast = function() {
         fm.last = fileTree[fileTree.length - 1];
@@ -282,14 +292,19 @@ header3 font
         return filePath;
     }
     fm.add = function(barItem) {
-        // console.log("adding barItem: " + barItem.getHash());
+        //console.log("adding barItem: " + barItem.getHash() + ' ' + barItem.getParent());
 
         document.title = barItem.name + " - FoxFile";
 
-        if (barItem.getParent() == hashTree[hashTree.length - 2]) { // opening a file from the same folder
+        if (barItem.getParent() == hashTree[hashTree.length - 2]) { // opening a file from the same folder;
+            console.log("remove last");
             fm.remove(fm.getLast());
         } else if (_.indexOf(hashTree, barItem.getParent()) < (hashTree.length - 2)) {
+            console.log('remove rest');
             var ind = _.indexOf(hashTree, barItem.getParent());
+            if (fm.searching && hashTree.length <= 2) {
+                ind = _.indexOf(hashTree, 'search');
+            }
             fm.remove(fm.get(ind));
         }
 
@@ -317,12 +332,13 @@ header3 font
         fm.moveToFitCurrentlyActive();
     }
     fm.remove = function(barItem) {
+        //console.log(barItem);
         if (barItem.getHash() == fm.getLast().getHash()) { // removing the last one
-            console.log("removing last ("+fm.getLast().getHash()+")");
+            //console.log("removing last ("+fm.getLast().getHash()+")");
             $('.file-manager .bar[hash='+fileTree.pop().getHash()+']').remove();
             hashTree.pop();
         } else {
-            console.log("removing all after ("+fm.getLast().getHash()+"), inclusive");
+            //console.log("removing all after ("+fm.getLast().getHash()+"), inclusive");
             var ftl = fileTree.length - 1;
             for (i = _.indexOf(fileTree, barItem); i < ftl; i++) {
                 $('.file-manager .bar[hash='+fileTree.pop().getHash()+']').remove();
@@ -330,6 +346,14 @@ header3 font
             }
         }
         //document.title = fm.getLast().name + " - FoxFile";
+        fm.resizeToFitCurrentlyActive();
+        fm.moveToFitCurrentlyActive();
+    }
+    fm.removeRoot = function() {
+        hashTree = [];
+        fileTree = [];
+        $('.file-manager .bar:not(#bar-0)').remove();
+        document.title = 'FoxFile';
         fm.resizeToFitCurrentlyActive();
         fm.moveToFitCurrentlyActive();
     }
@@ -379,6 +403,7 @@ header3 font
     }
     fm.dialog = {
         dialog: null,
+        minibar: null,
         dialogActive: false,
         Dialog: function(id, header, content, footer) {
             this.id = id;
@@ -425,8 +450,79 @@ header3 font
                 return this.opts2html();
             }
         },
-        MiniBar: function(id) {
-
+        MiniBar: function() {
+            var template = _.template($('#template-dialog-minibar').html());
+            var hashTree = [];
+            var nameTree = [];
+            //var folderTree = [];
+            this.limit = 30;
+            this.offset = 0;
+            this.load = function(hash, name, noadd) {
+                $('.minibar .file-list').addClass('loading');
+                /*for (var i = 0; i < folderTree.length; i++) {
+                    var name = name;
+                    if (folderTree[i].hash == hash) 
+                        name = folderTree[i].name;
+                }*/
+                if (!noadd) {
+                    hashTree.push(hash);
+                    hashTree = _.uniq(hashTree);
+                    nameTree.push(name);
+                }
+                $('.minibar #minibar-name').text(name);
+                var _this = this;
+                $.ajax({
+                    type: "POST",
+                    url: "./api/files/list_folders",
+                    data: {
+                        hash: hash,
+                        offset: _this.offset,
+                        limit: _this.limit
+                    },
+                    success: function(result) {
+                        $('.minibar').removeClass('loading');
+                        $('#minibar-target').attr('cdir', hash);
+                        var json = JSON.parse(result);
+                            // console.log("fm.open("+fHash+") [2] Got response from server: ");
+                            // console.log(json);
+                        var hasMore = json['more'];
+                        var resultsRemaining = json['remaining'];
+                        var res = json['results'];
+                        $('.minibar .file-list').empty();
+                        if (res.length > 0) {
+                            $.each(res, function(i) {
+                                var f = new fm.dialog.MiniBarItem(res[i].name,
+                                            res[i].hash);
+                                $('.minibar .file-list').append(f.template(f));
+                                //folderTree.push(f);
+                            });
+                        } else {
+                            var template = _.template($('#template-dialog-minibar-item').html());
+                            $('.minibar .file-list').append(template({name:'Folder is empty',hash:hash,fn:''}));
+                        }
+                    },
+                    error: function(request, error) {
+                        fm.snackbar.create("Failed to load folders");
+                    }
+                });
+            }
+            this.back = function() {
+                if (hashTree.length > 1) {
+                    hashTree.pop();
+                    nameTree.pop();
+                    this.load(hashTree[hashTree.length - 1], nameTree[nameTree.length - 1], true);
+                }
+            }
+            this.html = function() {
+                var res = template(this);
+                return res;
+            }
+        },
+        MiniBarItem: function(name, hash) {
+            this.template = _.template($('#template-dialog-minibar-item').html());
+            this.name = name;
+            this.hash = hash;
+            this.fn = 'fm.dialog.minibar.load(\''+hash+'\',\''+name+'\')';
         },
         hideCurrentlyActive: function() {
             this.dialog.hide();
@@ -437,7 +533,7 @@ header3 font
                 this.id = id;
                 var footer = new fm.dialog.DialogFooter();
                 footer.addOpt(new fm.dialog.DialogFooterOption('Cancel', 'default', 'fm.dialog.rename.hide()'));
-                footer.addOpt(new fm.dialog.DialogFooterOption('Rename', 'default', 'fm.rename(\''+this.id+'\', $(\'#'+this.id+' .dialog input\').val())'));
+                footer.addOpt(new fm.dialog.DialogFooterOption('Rename', 'submit', 'fm.rename(\''+this.id+'\', $(\'#'+this.id+' .dialog input\').val())'));
                 fm.dialog.dialog = new fm.dialog.Dialog(
                     id,
                     null,
@@ -459,11 +555,33 @@ header3 font
                 this.id = id;
                 var footer = new fm.dialog.DialogFooter();
                 footer.addOpt(new fm.dialog.DialogFooterOption('Cancel', 'default', 'fm.dialog.delete.hide()'));
-                footer.addOpt(new fm.dialog.DialogFooterOption('Delete', 'default', 'fm.delete(\''+this.id+'\')'));
+                footer.addOpt(new fm.dialog.DialogFooterOption('Delete', 'submit', 'fm.delete(\''+this.id+'\')'));
                 fm.dialog.dialog = new fm.dialog.Dialog(
                     this.id,
                     null,
-                    '<p>Permanently delete <em>' + file + '</em> '+((fm.multiSelect.selected.length > 1) ? 'and '+(fm.multiSelect.selected.length - 1)+' other'+((fm.multiSelect.selected.length > 2)?'s':''):'')+'?</p>',
+                    '<p>Permanently delete <em>' + file + '</em> '+((fm.multiSelect.selected.length > 0) ? 'and '+(fm.multiSelect.selected.length - 1)+' other'+((fm.multiSelect.selected.length > 2)?'s':''):'')+'?</p>',
+                    footer.html()
+                );
+                fm.dialog.dialog.show();
+                cm.destroy();
+                fm.dialog.dialogActive = true;
+            },
+            hide: function() {
+                fm.dialog.dialog.hide();
+                fm.dialog.dialogActive = false;
+            }
+        },
+        emptyTrash: {
+            id: '',
+            show: function() {
+                this.id = 'emptytrash';
+                var footer = new fm.dialog.DialogFooter();
+                footer.addOpt(new fm.dialog.DialogFooterOption('Cancel', 'default', 'fm.dialog.emptyTrash.hide()'));
+                footer.addOpt(new fm.dialog.DialogFooterOption('Delete', 'submit', 'fm.delete(\''+this.id+'\')'));
+                fm.dialog.dialog = new fm.dialog.Dialog(
+                    this.id,
+                    null,
+                    '<p>Empty the trash bin?</p>',
                     footer.html()
                 );
                 fm.dialog.dialog.show();
@@ -481,11 +599,11 @@ header3 font
                 this.id = id;
                 var footer = new fm.dialog.DialogFooter();
                 footer.addOpt(new fm.dialog.DialogFooterOption('Cancel', 'default', 'fm.dialog.trash.hide()'));
-                footer.addOpt(new fm.dialog.DialogFooterOption('Delete', 'default', 'fm.trash(\''+this.id+'\')'));
+                footer.addOpt(new fm.dialog.DialogFooterOption('Delete', 'submit', 'fm.trash(\''+this.id+'\')'));
                 fm.dialog.dialog = new fm.dialog.Dialog(
                     this.id,
                     null,
-                    '<p>Move <em>' + file + '</em> '+((fm.multiSelect.selected.length > 1) ? 'and '+(fm.multiSelect.selected.length - 1)+' other'+((fm.multiSelect.selected.length > 2)?'s':''):'')+' to the trash?</p>',
+                    '<p>Move <em>' + file + '</em> '+((fm.multiSelect.selected.length > 0) ? 'and '+(fm.multiSelect.selected.length - 1)+' other'+((fm.multiSelect.selected.length > 2)?'s':''):'')+' to the trash?</p>',
                     footer.html()
                 );
                 fm.dialog.dialog.show();
@@ -503,7 +621,7 @@ header3 font
                 this.id = id;
                 var footer = new fm.dialog.DialogFooter();
                 footer.addOpt(new fm.dialog.DialogFooterOption('Cancel', 'default', 'fm.dialog.newFolder.hide()'));
-                footer.addOpt(new fm.dialog.DialogFooterOption('Create', 'default', 'fm.newFolder($(\'#'+this.id+' .dialog input\').val(),\''+this.id+'\')'));
+                footer.addOpt(new fm.dialog.DialogFooterOption('Create', 'submit', 'fm.newFolder($(\'#'+this.id+' .dialog input\').val(),\''+this.id+'\')'));
                 fm.dialog.dialog = new fm.dialog.Dialog(
                     this.id,
                     'Enter a name for the folder',
@@ -521,10 +639,24 @@ header3 font
         },
         move: {
             show: function(file, id) {
-                
+                var footer = new fm.dialog.DialogFooter();
+                footer.addOpt(new fm.dialog.DialogFooterOption('Cancel', 'default', 'fm.dialog.move.hide()'));
+                footer.addOpt(new fm.dialog.DialogFooterOption('Move', 'submit', 'fm.move(\''+id+'\',$(\'#minibar-target\').attr(\'cdir\'))'));
+                fm.dialog.minibar = new fm.dialog.MiniBar();
+                fm.dialog.dialog = new fm.dialog.Dialog(
+                    id,
+                    null,
+                    fm.dialog.minibar.html(),
+                    footer.html()
+                );
+                fm.dialog.minibar.load(foxfile_root, 'My Files');
+                fm.dialog.dialog.show();
+                cm.destroy();
+                fm.dialog.dialogActive = true;
             },
             hide: function() {
-                
+                fm.dialog.dialog.hide();
+                fm.dialog.dialogActive = false;
             }
         },
         share: {
@@ -532,7 +664,7 @@ header3 font
                 this.id = id;
                 var footer = new fm.dialog.DialogFooter();
                 footer.addOpt(new fm.dialog.DialogFooterOption('Dismiss', 'default', 'fm.dialog.share.hide()'));
-                footer.addOpt(new fm.dialog.DialogFooterOption('Remove link', 'default', "fm.unshare(\'"+file+"\',\'"+id+"\')"));
+                footer.addOpt(new fm.dialog.DialogFooterOption('Remove link', 'submit', "fm.unshare(\'"+file+"\',\'"+id+"\')"));
                 fm.dialog.dialog = new fm.dialog.Dialog(
                     this.id,
                     //'Share <em>'+file+'</em>',
@@ -541,8 +673,8 @@ header3 font
                     +'<input type="text" id="'+id+'" placeholder="Emails" value="" />'
                     +'<p>or make it accessible by everyone:</p>'
                     +'<input type="checkbox" id="'+id+'" '+(fm.isShared(id) ? 'checked':'')+' />'*/
-                    '<p>Anyone with the link can download the file.</p>'
-                    +'<input type="text" id="sharelink-'+id+'" placeholder="Fetching link..." value="" autofocus />',
+                    '<p>Anyone with the link can download this file.</p>'
+                    +'<input type="text" id="sharelink-'+id+'" placeholder="Fetching link..." value="" readonly autofocus />',
                     footer.html()
                 );
                 fm.share(file, id);
@@ -680,12 +812,10 @@ header3 font
         }
     }
     fm.refresh = function(hash) {
-        console.log("refreshing bar " + hash);
         fm.getFromHash(hash).refresh(true);
         cm.destroy();
     }
     fm.refreshAll = function() {
-        console.log("refreshing all open bars");
         for (i = 0; i < fileTree.length; i++) {
             fileTree[i].refresh(true);
         }
@@ -700,7 +830,7 @@ header3 font
                 name: name
             },
             success: function(result) {
-                var json = JSON.parse(result);
+                //var json = JSON.parse(result);
                 fm.dialog.hideCurrentlyActive();
                 fm.refresh(parent);
                 fm.snackbar.create('Renamed ' + name);
@@ -712,7 +842,7 @@ header3 font
         });
     }
     fm.delete = function(hash) {
-        if (fm.multiTrash.selected.length > 1) {
+        if (fm.multiTrash.selected.length > 0) {
             hash = fm.multiTrash.selected;
         } else {
             hash = [hash];
@@ -730,17 +860,33 @@ header3 font
             success: function(result) {
                 fm.dialog.hideCurrentlyActive();
                 fm.loadTrash();
-                fm.snackbar.create("Deleted file" + (fm.multiTrash.selected.length > 0 ? 's' : ''));
+                fm.snackbar.create("Deleted file" + (fm.multiTrash.selected.length > 1 ? 's' : ''));
                 fm.multiTrash.clear();
             },
             error: function(request, error) {
                 fm.dialog.hideCurrentlyActive();
-                fm.snackbar.create("Failed to delete file" + (fm.multiTrash.selected.length > 0 ? 's' : ''));
+                fm.snackbar.create("Failed to delete file" + (fm.multiTrash.selected.length > 1 ? 's' : ''));
             }
         });
     }
+    fm.emptyTrash = function() {
+        var elem = $('.bar-trash .file-list li .file-multiselect-checkbox-container input');
+        elem.click();
+        elem.each(function(i) {
+            fm.multiTrash.add($(this).attr('id').split('-')[1]);
+        });
+        fm.dialog.emptyTrash.show();
+    }
+    fm.restoreTrash = function() {
+        var elem = $('.bar-trash .file-list li .file-multiselect-checkbox-container input');
+        elem.click();
+        elem.each(function(i) {
+            fm.multiTrash.add($(this).attr('id').split('-')[1]);
+        });
+        fm.restore('restoretrash');
+    }
     fm.trash = function(hash) {
-        if (fm.multiSelect.selected.length > 1) {
+        if (fm.multiSelect.selected.length > 0) {
             hash = fm.multiSelect.selected;
         } else {
             hash = [hash];
@@ -757,16 +903,16 @@ header3 font
                 hashlist: hashlist
             },
             success: function(result) {
-                var json = JSON.parse(result);
+                //var json = JSON.parse(result);
                 fm.dialog.hideCurrentlyActive();
                 fm.refresh(parent);
-                fm.snackbar.create("Moved file" + (fm.multiSelect.selected.length > 0 ? 's' : '') + " to the trash", "undo", "fm.snackbar.dismiss();fm.restore(fm.hashToRestore)");
+                fm.snackbar.create("Moved file" + (fm.multiSelect.selected.length > 1 ? 's' : '') + " to the trash", "undo", "fm.snackbar.dismiss();fm.restore(fm.hashToRestore)");
                 fm.hashToRestore = hashlist;
                 fm.multiSelect.clear();
             },
             error: function(request, error) {
                 fm.dialog.hideCurrentlyActive();
-                fm.snackbar.create("Failed to move file" + (fm.multiSelect.selected.length > 0 ? 's' : '') + " to the trash");
+                fm.snackbar.create("Failed to move file" + (fm.multiSelect.selected.length > 1 ? 's' : '') + " to the trash");
             }
         });
     }
@@ -782,7 +928,7 @@ header3 font
                     parent: parent
                 },
                 success: function(result, status, xhr) {
-                    var json = JSON.parse(result);
+                    //var json = JSON.parse(result);
                     fm.dialog.hideCurrentlyActive();
                     fm.refresh(parent);
                     fm.snackbar.create("Made new folder");
@@ -798,8 +944,8 @@ header3 font
         //this will definitely exist SOMEWHERE
         var type = $('.menubar-content[hash='+id+']').attr('type');
         if (type != 'folder') type = 'file';
-        if (fm.multiSelect.selected.length > 1 || type == 'folder') {
-            if (fm.multiSelect.selected.length > 1) {
+        if (fm.multiSelect.selected.length > 0 || type == 'folder') {
+            if (fm.multiSelect.selected.length > 0) {
                 var hashes = _.uniq(fm.multiSelect.selected);
             } else {
                 var hashes = [id];
@@ -819,7 +965,7 @@ header3 font
             setTimeout(function() {
                 $('body > iframe#'+_id).remove();
             }, 10000);
-            fm.snackbar.create("Download file");
+            fm.snackbar.create("Downloading file");
         }
         cm.destroy();
     }
@@ -842,21 +988,56 @@ header3 font
                 file_target: target
             },
             success: function(result, status, xhr) {
+                fm.dialog.hideCurrentlyActive();
                 fm.refreshAll();
                 fm.multiSelect.clear();
-                fm.snackbar.create("Moved files");;
+                fm.snackbar.create("Moved file" +(fm.multiSelect.selected.length > 1 ? "s":''));
             },
             error: function(xhr, status, e) {
-                fm.snackbar.create("Failed to move files");
+                fm.dialog.hideCurrentlyActive();
+                fm.snackbar.create("Failed to move file" +(fm.multiSelect.selected.length > 1 ? "s":''));
             }
         });
         cm.destroy();
     }
     fm.share = function(file, id) {
-        
-    },
+        $.ajax({
+            url: './api/files/share',
+            type: 'POST',
+            data: {
+                hash: id
+            },
+            success: function(result, status, xhr) {
+                var json = JSON.parse(result);
+                var link = json['message'];
+                var urla = window.location.href.toString().split('browse');
+                var url = urla[0];
+                url += 'share/'+link;
+                $('.dialog article input').val(url);
+                fm.refreshAll();
+            },
+            error: function(xhr, status, e) {
+                fm.dialog.hideCurrentlyActive();
+                fm.snackbar.create("Failed to share file");
+            }
+        });
+    }
     fm.unshare = function(file, id) {
-        
+        $.ajax({
+            url: './api/files/share',
+            type: 'POST',
+            data: {
+                remove: id
+            },
+            success: function(result, status, xhr) {
+                $('.dialog article input').val("Link removed");
+                fm.refreshAll();
+            },
+            error: function(xhr, status, e) {
+                fm.dialog.hideCurrentlyActive();
+                fm.snackbar.create("Failed to unshare file");
+            }
+        });
     }
     fm.loadTrash = function() {
         $('.pages .bar-trash').addClass('loading');
@@ -902,8 +1083,8 @@ header3 font
     }
     fm.restore = function(hash) {
         cm.destroy();
-        if (fm.multiSelect.selected.length > 1) {
-            hash = fm.multiSelect.selected;
+        if (fm.multiTrash.selected.length > 0) {
+            hash = fm.multiTrash.selected;
         } else {
             hash = [hash];
         }
@@ -919,10 +1100,10 @@ header3 font
                 var json = JSON.parse(result);
                 fm.refreshAll();
                 fm.loadTrash();
-                fm.snackbar.create("Restored file" +(fm.multiSelect.selected.length > 1 ? "s":''));
+                fm.snackbar.create("Restored file" +(fm.multiTrash.selected.length > 1 ? "s":''));
             },
             error: function(request, error) {
-                fm.snackbar.create("Failed to restore file" +(fm.multiSelect.selected.length > 1 ? "s":''));
+                fm.snackbar.create("Failed to restore file" +(fm.multiTrash.selected.length > 1 ? "s":''));
             }
         });
     }
@@ -984,6 +1165,111 @@ header3 font
         fm.snackbar.create("Emptied uploads list");
         fm.loadTransfers();
     }
+    fm.toggleInfoView = function(hash) {
+        $('#file-detail-'+hash+' .file-preview, #file-detail-'+hash+' .file-history').toggleClass('active');
+        $('#fpvtoggle i').toggleClass('mdi-information-outline mdi-eye');
+        if ($('#file-detail-'+hash+' .file-preview').hasClass('active')) {
+            $('#fpvtoggle').attr('title', 'Information');
+        } else {
+            $('#fpvtoggle').attr('title', 'Preview');
+        }
+    }
+    fm.touchFile = function(hash) {
+        $.ajax({
+            type: "POST",
+            url: "./api/files/touch", //add touch() to the stuff this does to fix the downloading problem
+            data: {
+                hash: hash
+            },
+            success: function(result) {
+                fm.snackbar.create("Set new current version");
+                fm.refreshAll();
+            },
+            error: function(r, e) {
+
+            }
+        });
+    }
+    fm.deleteVersion = function(hash) {
+        $.ajax({
+            type: "POST",
+            url: "./api/files/delete_single",
+            data: {
+                hash: hash
+            },
+            success: function(result) {
+                fm.snackbar.create("Version removed");
+                fm.refreshAll();
+            },
+            error: function(r, e) {
+                fm.snackbar.create("Failed to delete file");
+            }
+        });
+    }
+    var srch = function(name) {
+        if (name == '') {
+            fm.searching = false;
+            fm.isActive = true;
+            fm.clearTrees();
+            $('.file-manager .bar:not(#bar-0)').remove();
+            fm.open(foxfile_root);
+            var path = fm.calcFilePath();
+            foxfile.routerbox.router.navigate('files/'+path, {replace: true});
+            $('.btn-ctrlbar#files').addClass('active');
+            return;
+        }
+        $('#bar-search').addClass('loading');
+        if (!fm.searching) {
+            $('.btn-ctrlbar').removeClass('active');
+            $('.pages').children().removeClass('active').css('z-index', 400);
+            foxfile.routerbox.router.navigate('search', {replace: true});
+            fm.clearTrees();
+            $('.file-manager .bar:not(#bar-0)').remove();
+            openSearchFolder();
+            fm.isActive = false;
+            fm.searching = true;
+        }
+        $.ajax({
+            type: "POST",
+            url: "./api/files/search",
+            data: {
+                name: name
+            },
+            success: function(result) {
+                updateSearchBar(JSON.parse(result));
+            },
+            error: function(request, error) {
+                fm.snackbar.create("Failed to load seach results for \"" + name+"\"");
+            }
+        });
+    }
+    fm.search = _.debounce(srch, 500);
+    var openSearchFolder = function() {
+        //possibly do something like this for the other 2 or 3 bars
+        var item = new FolderBar('Search', 'search', 'root');
+        fm.add(item);
+    }
+    var updateSearchBar = function(res) {
+        var sb = fm.getFileTree()[0];
+        var files = [];
+        $.each(res, function(i) {
+            // name, parent, icon, hash, type, btype, size, lastmod, shared, public
+            files.push(new File(res[i].name,
+                res[i].parent,
+                res[i].hash,
+                res[i].is_folder,
+                res[i].size,
+                res[i].lastmod,
+                res[i].is_shared,
+                res[i].is_public,
+                res[i].is_trashed));
+        });
+        sb.setFiles(files);
+        sb.loadContent();
+        sb.offset = 0;
+        dd.addListener(sb);
+        $('#bar-search').removeClass('loading');
+    }
     var FolderBar = function(name, hash, parent) {
         this.dd;
         this.name = name;
@@ -1016,7 +1302,6 @@ header3 font
                 success: function(result) {
                     var json = JSON.parse(result);
                         // console.log("fm.open("+fHash+") [2] Got response from server: ");
-                        // console.log(json);
                     var hasMore = json['more'];
                     var resultsRemaining = json['remaining'];
                     var res = json['results'];
@@ -1030,7 +1315,8 @@ header3 font
                                             res[i].size,
                                             res[i].lastmod,
                                             res[i].is_shared,
-                                            res[i].is_public));
+                                            res[i].is_public,
+                                            res[i].is_trashed));
                     });
                     _this.setFiles(files);
                     _this.setRemaining(resultsRemaining);
@@ -1045,7 +1331,7 @@ header3 font
                     foxfile.routerbox.router.navigate('files/'+path, {/*trigger: true, */replace: true});
                 },
                 error: function(request, error) {
-                    //console.error(request, error);
+                    console.error(request, error);
                 }
             });
         }
@@ -1075,7 +1361,7 @@ header3 font
                                 '-webkit-transition': 'none',
                                 'transition': 'none'
                             });
-                            if (fm.multiSelect.selected.length > 1) {
+                            if (fm.multiSelect.selected.length > 0) {
                                 $(ui.helper).children('.file-name').text(fm.multiSelect.selected.length+" files");
                             }
                             //draggingFile = true;
@@ -1096,7 +1382,7 @@ header3 font
                             tolerance: 'pointer',
                             greedy: true,
                             drop: function(e, ui) {
-                                if (fm.multiSelect.selected.length > 1) {
+                                if (fm.multiSelect.selected.length > 0) {
                                     hash = fm.multiSelect.selected;
                                 } else {
                                     hash = [$(ui.helper).attr('hash')];
@@ -1113,40 +1399,47 @@ header3 font
                     }
                 }
             } else {
-                var template = _.template($('#fm-folder-empty').html());
+                var template;
+                if (this.hash == 'search') {
+                    template = _.template($('#fm-search-empty').html());
+                } else {
+                    template = _.template($('#fm-folder-empty').html());
+                }
                 $('#bar-'+this.hash+' .file-list').empty();
                 $('#bar-'+this.hash+' .file-list').append(template({}));
             }
-            this.offset += this.limit;
             var _this = this;
+            this.offset += this.limit;
             if (this.hasMore) {
                 var onsc = _.debounce(function() {
                     if($('#bar-'+_this.hash+' .file-list').scrollTop() + $('#bar-'+_this.hash+' .file-list').height() > (40 * _this.offset) - 100) {
                        _this.refresh(false);
                     }
-                }, 300);
+                }, 700);
                 $('#bar-'+this.hash+' .file-list').on('scroll', function() {
                     onsc();
                 });
             }
-            $('#bar-' + this.hash + ' .file-list').droppable({
-                hoverClass: 'dz-drag-hover',
-                tolerance: 'pointer',
-                drop: function(event, ui) {
-                    if (fm.multiSelect.selected.length > 1) {
-                        hash = fm.multiSelect.selected;
-                    } else {
-                        hash = [$(ui.helper).attr('hash')];
+            if (this.hash != 'search') {
+                $('#bar-' + this.hash + ' .file-list').droppable({
+                    hoverClass: 'dz-drag-hover',
+                    tolerance: 'pointer',
+                    drop: function(event, ui) {
+                        if (fm.multiSelect.selected.length > 0) {
+                            hash = fm.multiSelect.selected;
+                        } else {
+                            hash = [$(ui.helper).attr('hash')];
+                        }
+                        var hashes = _.uniq(hash);
+                        var hashlist = hashes.toString();
+                        var target = _this.hash;
+                        if (_.contains(hashes, target))
+                            fm.snackbar.create("Cannot move a folder into itself");
+                        else if ($('#bar-' + _this.hash + ' .file-list').children('[hash='+hashes[0]+']').length == 0)
+                            fm.move(hashlist, target);
                     }
-                    var hashes = _.uniq(hash);
-                    var hashlist = hashes.toString();
-                    var target = _this.hash;
-                    if (_.contains(hashes, target))
-                        fm.snackbar.create("Cannot move a folder into itself");
-                    else if ($('#bar-' + _this.hash + ' .file-list').children('[hash='+hashes[0]+']').length == 0)
-                        fm.move(hashlist, target);
-                }
-            });
+                });
+            }
         }
         this.setWidth = function(size) {
             console.log("Sizing bar " + this.hash + " to " + size + 'px');
@@ -1199,6 +1492,11 @@ header3 font
             $(elem).empty();
             $(elem).append(template(this.file));
 
+            template = _.template($('#fm-file-history').html());
+            elem = '#file-detail-'+this.hash+' .file-history';
+            $(elem).empty();
+            $(elem).append(template(this.file));
+
             var _this = this;
             if (this.file.btype == 'text') {
                 $.ajax({
@@ -1218,7 +1516,7 @@ header3 font
                         }
                     },
                     error: function(request, error) {
-                        //console.error(request, error);
+                        console.error(request, error);
                         $('.file-manager .bar[hash='+_this.hash+']').removeClass('loading');
                     }
                 });
@@ -1249,6 +1547,42 @@ header3 font
             } */else {
                 $('.file-manager .bar[hash='+_this.hash+']').removeClass('loading');
             }
+            template = _.template($('#fm-file-history-file').html());
+            elem = '#file-detail-'+this.hash+' .file-history .file-list';
+            $(elem).empty();
+            $.ajax({
+                type: "POST",
+                url: "./api/files/list_versions",
+                data: {
+                    hash: _this.file.hash
+                },
+                success: function(result) {
+                    var res = JSON.parse(result);
+                    if (res.length == 0) {
+                        $(elem).append(template({
+                            name: 'No other versions of this file were found.',
+                            size: '',
+                            lastmod: ''
+                        }));
+                    } else {
+                        $.each(res, function(i) {
+                            $(elem).append(template({
+                                name: res[i].name,
+                                parent: res[i].parent,
+                                hash: res[i].hash,
+                                isFolder: res[i].is_folder,
+                                size: res[i].size+' bytes',
+                                lastmod: res[i].lastmod,
+                                shared: res[i].is_shared,
+                                public: res[i].is_public
+                            }));
+                        });
+                    }
+                },
+                error: function(request, error) {
+                    console.error(request, error);
+                }
+            });
         }
         this.refresh = function() {
             item = new FileBar(name, hash, parent);
@@ -1271,7 +1605,8 @@ header3 font
                             json.size,
                             json.lastmod,
                             json.is_shared,
-                            json.is_public);
+                            json.is_public,
+                            json.is_trashed);
                     _this.setFile(file);
                     $('.file-manager .bar[hash='+_this.hash+']').attr({
                         'parent': file.parent,
@@ -1291,12 +1626,13 @@ header3 font
             });
         }
     }
-    var File = function(name, parent, hash, isFolder, size, lastmod, shared, public) {
+    var File = function(name, parent, hash, isFolder, size, lastmod, shared, public, trashed) {
         this.name = name;
         this.parent = parent;
         this.icon = icon;
         this.hash = hash;
         this.size = size;
+        this.trashed = trashed == '0' ? '' : 'trashed';
         this.canPreview = isPreviewable(this);
         this.lastmod = new Date(lastmod);
         this.shared = shared == '0' ? false : true;
@@ -1332,13 +1668,13 @@ header3 font
         this.isShared = function() {return this.shared;}
         this.getDate = function() {
             var date = this.lastmod.toDateString().split(' ');
-            return date[1]+", "+date[2]+" "+date[3];
+            return date[1]+" "+date[2]+", "+date[3];
         }
         this.getTime = function() {
             return this.lastmod.toLocaleTimeString();
         }
     }
-    $(document).on('click', '.file-manager .menubar-content:not(.btn-ctrlbar)', function(e) {
+    $(document).on('click', '.file-manager .menubar-content:not(.btn-ctrlbar):not([trashed])', function(e) {
         e.stopPropagation();
         if($(e.target).parents('.file-multiselect-checkbox-container').length > 0) {
             //checkbox
@@ -1357,6 +1693,8 @@ header3 font
             } else {
                 $(this).addClass('active').siblings().removeClass('active');
                 fm.open(dest);
+                $('.pages').children().removeClass('active').css('z-index', 400);
+                fm.isActive = true;
             }
         }
     });
@@ -1364,13 +1702,21 @@ header3 font
         e.stopPropagation();
         var hash = $(this).parents('.menubar-content').attr('hash');
         $(this).parents('.menubar-content').addClass('selected');
-        fm.multiSelect.add(hash);
+        if ($(this).parents('.menubar-content[trashed]').length > 0) {
+            fm.multiTrash.add(hash);
+        } else {
+            fm.multiSelect.add(hash);
+        }
     });
     $(document).on('click', '.menubar-content .file-multiselect-checkbox-container .label-checked', function(e) {
         e.stopPropagation();
         var hash = $(this).parents('.menubar-content').attr('hash');
         $(this).parents('.menubar-content').removeClass('selected');
-        fm.multiSelect.remove(hash);
+        if ($(this).parents('.menubar-content[trashed]').length > 0) {
+            fm.multiTrash.remove(hash);
+        } else {
+            fm.multiSelect.remove(hash);
+        }
     });
     $(document).on('click', '.file-manager .btn-back', function(e) {
         fm.back();
@@ -1381,14 +1727,45 @@ header3 font
     $(document).on('click', '.dialog-cover', function(e) {
         fm.dialog.hideCurrentlyActive();
     });
-    $(document).on("keydown", function(e) {
-        if (e.which == 16) {
-            fm.btnStatus.shift = true;
+    $(document).on('focus', 'input#search', function(e) {
+        $('header.main #nav-header').addClass('searching');
+    });
+    $(document).on('blur', 'input#search', function(e) {
+        $('header.main #nav-header').removeClass('searching');
+        if ($(this).val() == '') {
+            $('header.main .input-text-placeholder').removeClass('active');
+        } else {
+            $('header.main .input-text-placeholder').addClass('active');
         }
     });
+    $(document).on('keyup', 'input#search', function(e) {
+        fm.search($('input#search').val());
+    });
+    $(document).on("keydown", function(e) {
+        switch (e.which) {
+            case 16: //shift
+                fm.btnStatus.shift = true;
+                break;
+            case 27: //esc
+                if (fm.dialog.dialogActive) {
+                    fm.dialog.dialog.hide();
+                    fm.dialog.dialogActive = false;
+                }
+                break;
+            case 13: //enter
+                if (fm.dialog.dialogActive) {
+                    $('.dialog .dialog-btn-submit').click();
+                }
+                break;
+        }
+
+    });
     $(document).on("keyup", function(e) {
-        if (e.which == 16) {
-            fm.btnStatus.shift = false;
+        switch (e.which) {
+            case 16: 
+                fm.btnStatus.shift = false;
+                break;
+            
         }
     });
 })(window.fm = window.fm || {}, jQuery);
@@ -1720,6 +2097,10 @@ header3 font
                 $.ajax({
                     type: "POST",
                     url: "./api/files/uniqid",
+                    data: {
+                        name: _this.name,
+                        parent: _this.parent.hash
+                    },
                     success: function(result) {
                         var json = JSON.parse(result);
                         _this.hash = json.message;
@@ -1769,11 +2150,9 @@ header3 font
                     $('#transfers .file-list #tfile-'+_this.id).removeClass('active').addClass('upload-success');
                     $('#transfers .file-list #tfile-'+_this.id+' .file-upload-status').text("Done");
                     $('#transfers #badge-transfers .badgeval').text(--dd.numFilesToUpload);
-                    /*var template = _.template($('#fm-file-basic').html());
-                    $('#bar-'+_this.parent.hash+' .file-list').append(template(_this));*/
-                    //refresh bar _this.parent.hash
                     _this.state = 2;
                     linearQueue.start();
+                    //_this.remove();
                 },
                 error: function(xhr, status, e) {
                     console.log("onError: " + status + " " + e);
@@ -1781,8 +2160,12 @@ header3 font
                     $('#transfers .file-list #tfile-'+_this.id+' .file-upload-status').text("Failed");
                     _this.state = 3;
                     linearQueue.start();
+                    //_this.remove();
                 }
             });
+        }
+        this.remove = function() {
+            //this = null;
         }
         this.addToTransfersPage = function() {
             var template = _.template($('#fm-file-transferring').html());
@@ -1922,11 +2305,9 @@ header3 font
                     $('#transfers .file-list #tfile-'+_this.id).removeClass('active').addClass('upload-success');
                     $('#transfers .file-list #tfile-'+_this.id+' .file-upload-status').text("Done");
                     $('#transfers #badge-transfers .badgeval').text(--dd.numFilesToUpload);
-                    /*var template = _.template($('#fm-file-basic').html());
-                    $('#bar-'+_this.parent.hash+' .file-list').append(template(_this));*/
-                    //refresh bar _this.parent.hash
                     _this.state = 2;
                     linearQueue.start();
+                    //_this.remove();
                 },
                 error: function(xhr, status, e) {
                     console.log("onError: " + status + " " + e);
@@ -1934,11 +2315,12 @@ header3 font
                     $('#transfers .file-list #tfile-'+_this.id+' .file-upload-status').text("Failed");
                     _this.state = 3;
                     linearQueue.start();
+                    //_this.remove();
                 }
             });
         }
         this.remove = function() {
-
+            //this = null;
         }
         this.addToTransfersPage = function() {
             var template = _.template($('#fm-file-transferring').html());
@@ -1956,7 +2338,156 @@ header3 font
         }
     }
     function ChunkedFile(posInQueue, item, name, path, parent) {
+        this.posInQueue = posInQueue;
+        this.item = item;
+        this.name = name;
+        this.hash = null;
+        this.parent = parent;
+        this.path = path;
+        this.id = queue.getNextId();
+        this.state = 0;
+        this.progress = 0;
+        this.getSize = function() {
+           var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+           if (this.item.size == 0) return '0 Bytes';
+           var i = parseInt(Math.log(this.item.size) / Math.log(1024));
+           return (this.item.size / Math.pow(1024, i)).toFixed(2) + ' ' + sizes[i];
+        }
+        this.getName = function(includePath) {
+            if (includePath) 
+                return this.path + this.item.name;
+            else
+                return this.name;
+        }
+        this.getType = function() {
+            //return getType(this.item.name);
+            return "File";
+        }
+        this.generateHash = function() {
+            //console.log("Generating hash for FILE: " + this.name + " with parent " + this.parent.name);
+            if (this.hash == null) {
+                this.addToTransfersPage();
+                var _this = this;
+                $.ajax({
+                    type: "POST",
+                    url: "./api/files/uniqid",
+                    success: function(result) {
+                        var json = JSON.parse(result);
+                        _this.hash = json.message;
+                        queue.triggerDone(_this.posInQueue);
+                        $('#transfers .file-list #tfile-'+_this.id).attr('hash', _this.hash);
+                        //console.log("hash for " + _this.name+": "+json.response);
+                    },
+                    error: function(request, error) {
+                        //console.error(request, error);
+                    }
+                });
+            }
+        }
+        this.fakeUpload = function() {
+            this.state = 1;
+            var _this = this;
+            $('#transfers .file-list #tfile-'+_this.id+' .nameandprogress').addClass('active');
+            $('#transfers .file-list #tfile-'+_this.id+' .file-upload-status').text("Uploading");
+            setTimeout(function() {
+                $('#transfers .file-list #tfile-'+_this.id+' .nameandprogress').removeClass('active');
+                $('#transfers .file-list #tfile-'+_this.id+' .file-upload-status').text("Done");
+                $('#transfers #badge-transfers .badgeval').text(--dd.numFilesToUpload);    
+                _this.state = 2;
+                linearQueue.start(true);
+            }, 600);
+        }
+        this.upload = function() {
 
+        }
+        this.remove = function() {
+            //this = null;
+        }
+        this.addToTransfersPage = function() {
+            var template = _.template($('#fm-file-transferring').html());
+            if ($('#transfers .file-list').hasClass('empty')) {
+                $('#transfers .file-list').empty().removeClass('empty');
+                $('#transfers .file-list').append('<ul></ul>');
+            }
+            $('#transfers .file-list ul').append(template(this));
+            $('#transfers #badge-transfers').addClass('new');
+            $('#transfers #badge-transfers .badgeval').text(++dd.numFilesToUpload);
+            dd.numFilesToDisplay++;
+        }
+        this.addToLinearQueue = function() {
+            linearQueue.add(this);
+        }
+    }
+    function Chunk(hash, offset, length, content) {
+        this.hash = hash;
+        this.offset = offset;
+        this.length = length;
+        this.content = content;
+        this.send = function() {
+           /* var file = $('#uploadFile')[0].files[0];
+          var chunkSize = 1024 * 1024;
+          var fileSize = file.size;
+          var chunks = Math.ceil(file.size/chunkSize,chunkSize);
+          var chunk = 0;
+
+          console.log('file size..',fileSize);
+          console.log('chunks...',chunks);
+
+          while (chunk <= chunks) {
+              var offset = chunk*chunkSize;
+              console.log('current chunk..', chunk);
+              console.log('offset...', chunk*chunkSize);
+              console.log('file blob from offset...', offset)
+              console.log(file.slice(offset,chunkSize));
+              chunk++;
+          }*/
+            this.state = 1;
+            var _this = this;
+            $.ajax({
+                xhr: function() {
+                    var xhr = $.ajaxSettings.xhr();
+                    //var xhr = new window.XMLHttpRequest();
+                    var elem = $('#transfers .file-list #tfile-'+_this.id+' .file-upload-progress-bar');
+                    if(xhr.upload){
+                        xhr.upload.addEventListener('progress', function(e) {
+                            if(e.lengthComputable) {
+                                elem.css({
+                                    width: ((e.loaded / e.total) * 100) + '%'
+                                }).attr({value: e.loaded, max: e.total});
+                            }
+                        }, false);
+                    }
+                    return xhr;
+                },
+                type: 'POST',
+                url: './api/files/new_large_file',
+                data: {
+                    'hash': _this.hash
+                },
+                beforeSend: function() {
+                    $('#transfers .file-list #tfile-'+_this.id).addClass('active');
+                    $('#transfers .file-list #tfile-'+_this.id+' .file-upload-status').text("Uploading");
+                },
+                success: function(result, status, xhr) {
+                    console.log("Upload success response: " + result);
+                    //var json = JSON.parse(result);
+                    $('#transfers .file-list #tfile-'+_this.id).removeClass('active').addClass('upload-success');
+                    $('#transfers .file-list #tfile-'+_this.id+' .file-upload-status').text("Done");
+                    $('#transfers #badge-transfers .badgeval').text(--dd.numFilesToUpload);
+                    _this.state = 2;
+                    linearQueue.start();
+                    //_this.remove();
+                },
+                error: function(xhr, status, e) {
+                    console.log("onError: " + status + " " + e);
+                    $('#transfers .file-list #tfile-'+_this.id).removeClass('active').addClass('upload-fail');
+                    $('#transfers .file-list #tfile-'+_this.id+' .file-upload-status').text("Failed");
+                    _this.state = 3;
+                    linearQueue.start();
+                    //_this.remove();
+                }
+            });
+        }
     }
     function TreeItem(root) {
         this.root = root;
@@ -1983,7 +2514,9 @@ header3 font
             if (this.startTimer) clearTimeout(this.startTimer);
             this.startTimer = null;
             this.startTimer = setTimeout(function() {
-                _this.start(posInQueue);
+                for (var i = 0; i < fm.simultaneousUploads; i++) {
+                    _this.start(posInQueue);
+                }
             }, 500);
         }
         this.start = function(posInQueue) {
@@ -2108,7 +2641,7 @@ YM      6  M   YP   MM
             this.menu.destroy();
         }
     }
-    $(document).on("contextmenu", ".file-manager .file-list:not(#bar-0 .file-list)", function(e) {
+    $(document).on("contextmenu", ".file-manager .file-list:not(#bar-0 .file-list):not(#bar-search .file-list)", function(e) {
         e.stopPropagation();
         if (!fm.btnStatus.shift) {
             var parent = $(this).parents('.bar');
@@ -2139,7 +2672,7 @@ YM      6  M   YP   MM
             }
         }
     });
-    $(document).on("contextmenu", ".file-manager .menubar-content:not(.btn-ctrlbar)", function(e) {
+    $(document).on("contextmenu", ".file-manager .menubar-content:not(.btn-ctrlbar):not([trashed])", function(e) {
         e.stopPropagation();
         if (!fm.btnStatus.shift) {
             var self = $(this);
@@ -2176,7 +2709,7 @@ YM      6  M   YP   MM
             }
         }
     });
-    $(document).on("click", ".file-manager .bar:not([id^='file-detail-']) .file-actions-header span", function(e) {
+    $(document).on("click", ".file-manager .bar:not([id^='file-detail-']):not(#bar-search) .file-actions-header span", function(e) {
         e.stopPropagation();
         e.preventDefault();
         if (!fm.btnStatus.shift) {
@@ -2225,7 +2758,7 @@ YM      6  M   YP   MM
             cm.menu.append(new MenuItem(cm.menu, "Refresh", "refresh", "fm.refresh('"+parentHash+"')", "Alt+R").get());
         }
     });
-    $(document).on("contextmenu", ".bar-trash .menubar-content", function(e) {
+    $(document).on("contextmenu", ".bar-trash .menubar-content, .menubar-content[trashed]", function(e) {
         e.stopPropagation();
         if (!fm.btnStatus.shift) {
             var self = $(this);
@@ -2270,6 +2803,9 @@ YM      6  M   YP   MM
         ied();
     }
     var ied = function(hash) {
+        /*if (editor != null) {
+            $('#editor')[0].CodeMirror.toTextArea();
+        }*/
         editor = CodeMirror.fromTextArea($('#editor')[0], {
             lineNumbers: true,
             lineWrapping: false,

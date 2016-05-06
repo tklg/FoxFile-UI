@@ -1,4 +1,19 @@
 <?php
+/* 
+                                                              
+   ad88                             ad88  88  88              
+  d8"                              d8"    ""  88              
+  88                               88         88              
+MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,  
+  88    a8"     "8a  `Y8, ,8P'     88     88  88  a8P_____88  
+  88    8b       d8    )888(       88     88  88  8PP"""""""  
+  88    "8a,   ,a8"  ,d8" "8b,     88     88  88  "8b,   ,aa  
+  88     `"YbbdP"'  8P'     `Y8    88     88  88   `"Ybbd8"'  
+                                                                  
+    Foxfile : auth.php 
+    Copyright (C) 2016 Theodore Kluge
+    https://tkluge.net
+*/
 session_start();
 require('../includes/user.php');
 require('../includes/cfgvars.php');
@@ -103,7 +118,7 @@ if($pageID == 'new') {
 			                '$upass',
 			                '1',
 			                '$root_folder',
-			                '2000000000',
+			                '2147483648',
 			                'unverified')";
 					if (mysqli_query($db,$sql)) {
 						mkdir('../files/'.$root_folder.'/');

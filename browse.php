@@ -36,7 +36,6 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="initial-scale=1, width=device-width, maximum-scale=1, minimum-scale=1">
     <title>FoxFile</title>
-<!-- 	<link async href="http://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"> -->
 	<link href='https://fonts.googleapis.com/css?family=Roboto:300,400,700' rel='stylesheet' type='text/css'>
 	<link async rel="stylesheet" href="css/codemirror.css">
     <link async href="js/cm-addon/dialog/dialog.css" rel="stylesheet" />
@@ -56,8 +55,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     Reloadr.go({
         client: [
             'js/foxfile.js',
-            'css/foxfile.css',
-            'css/cm-themes/foxfile-cm.css'
+            'css/foxfile.css'
         ],
         frequency: 1000
     });
@@ -95,7 +93,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
             </li>
             <hr class="nav-vert-divider">
             <li class="closeOnClick"><a class="fill" href="account">Manage account</a></li>
-            <li class="closeOnClick"><a class="fill" href="installapp">Install desktop app</a></li>
+            <li class="closeOnClick disabled"><a class="fill" href="installapp">Install desktop app</a></li>
             <li class="closeOnClick"><a class="fill" href="help">Help</a></li>
             <hr class="nav-vert-divider">
             <li class="nav-vert-footer closeOnClick"><a class="fill" href="logout">Log out</a></li>
@@ -123,7 +121,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 			</section>
 		</section>
 		<section class="shared" id="shared">
-			<section class="bar bar-shared loading" id="bar-2" type="folder" folder="file-transfers">
+			<section class="bar bar-shared loading" id="bar-2" type="folder" folder="file-shared">
 				<header>
 					<span class="filename">Shared with me</span>
 					<section class="file-actions-header">
@@ -136,41 +134,17 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 			  	</div>
 				<nav class="file-list">
 					<ul class="">
-						<li class="menubar-content floatb" container="<%= model.get('container') %>" type="<%= model.get('basicFileType') %>" filehash="<%= model.get('hash_self') %>" id="<%= model.get('fileID') %>" name="<%= model.get('fileName') %>" pos="" fileparent="<%= model.get('hash_parent') %>">
-							<span class="file-multiselect-checkbox-container">
-								<input type="checkbox" id="cb-04" value="abcdef" />
-								<label class="label" for="cb-04"><i class="mdi mdi-checkbox-blank-outline"></i></label>
-								<label class="label-checked" for="cb-04"><i class="mdi mdi-checkbox-marked"></i></label>
-								<label class="label-icon" for="cb-04"><i class="mdi mdi-file-outline"></i></label>
-							</span>
-							<span class="file-name">File name 1</span>
-							<div class="file-info">
-								<span class="file-info-item" id="filedet"><span class="filetype">type</span><br><span id="filesize" unit="<%= model.get('units') %>">size</span></span>
-							</div>
-						</li>
-						<li class="menubar-content floatb" container="<%= model.get('container') %>" type="<%= model.get('basicFileType') %>" filehash="<%= model.get('hash_self') %>" id="<%= model.get('fileID') %>" name="<%= model.get('fileName') %>" pos="" fileparent="<%= model.get('hash_parent') %>">
-							<span class="file-multiselect-checkbox-container">
-								<input type="checkbox" id="cb-03" value="abcdef" />
-								<label class="label" for="cb-03"><i class="mdi mdi-checkbox-blank-outline"></i></label>
-								<label class="label-checked" for="cb-03"><i class="mdi mdi-checkbox-marked"></i></label>
-								<label class="label-icon" for="cb-03"><i class="mdi mdi-file-outline"></i></label>
-							</span>
-							<span class="file-name">File name 2</span>
-							<div class="file-info">
-								<span class="file-info-item" id="filedet"><span class="filetype">type</span><br><span id="filesize" unit="<%= model.get('units') %>">size</span></span>
-							</div>
-						</li>
 					</ul>
 				</nav>
 			</section>
 		</section>
 		<section class="trash" id="trash">
-			<section class="bar bar-trash loading" id="bar-2" type="folder" folder="file-transfers">
+			<section class="bar bar-trash loading" id="bar-2" type="folder" folder="file-trash">
 				<header>
-					<span class="filename">Deleted files</span>
+					<span class="filename">Trash bin</span>
 					<section class="file-actions-header">
-						<span title="Restore all"><i class="mdi mdi-backup-restore"></i></span>
-						<span title="Delete all"><i class="mdi mdi-delete-sweep"></i></span>
+						<span title="Restore all" onclick="fm.restoreTrash()"><i class="mdi mdi-backup-restore"></i></span>
+						<span title="Delete all" onclick="fm.emptyTrash()"><i class="mdi mdi-delete-sweep"></i></span>
 					</section>
 				</header>
 				<div class="progress">
@@ -233,7 +207,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 </section>
 </script>
 <script type="text/template" id="fm-file">
-<li class="menubar-content floatb" parent="<%= getParent() %>" type="<%= getType() %>" btype="<%= btype %>" hash="<%= hash %>" id="file-<%= hash %>" name="<%= name %>" shared="<%= shared %>" >
+<li class="menubar-content floatb" parent="<%= getParent() %>" type="<%= getType() %>" btype="<%= btype %>" hash="<%= hash %>" id="file-<%= hash %>" name="<%= name %>" shared="<%= shared %>" <%= trashed %>>
 	<div class="dragdrop-border"></div>
 	<span class="file-multiselect-checkbox-container">
 		<input type="checkbox" id="cb-<%= hash %>" value="abcdef" />
@@ -257,10 +231,10 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 			<span title="Rename" onclick="fm.dialog.rename.show('<%= name %>', '<%= hash %>')"><i class="mdi mdi-rename-box"></i><link class="rippleJS lightgray" /></span>
 			<span title="Move to trash" onclick="fm.dialog.trash.show('<%= name %>', '<%= hash %>')"><i class="mdi mdi-delete"></i><link class="rippleJS lightgray" /></span>
 			<span title="Download" onclick="fm.download('<%= hash %>', '<%= name %>')"><i class="mdi mdi-download"></i><link class="rippleJS lightgray" /></span>
-			<span title="Share" onclick="fm.dialog.share.show('<%= name %>', '<%= hash %>')"><i class="mdi mdi-share"></i><link class="rippleJS lightgray" /></span>
+			<span title="Share" onclick="fm.dialog.share.show('<%= name %>', '<%= hash %>')"><i class="mdi mdi-link"></i><link class="rippleJS lightgray" /></span>
 			<span title="Move" onclick="fm.dialog.move.show('<%= name %>', '<%= hash %>')"><i class="mdi mdi-folder-move"></i><link class="rippleJS lightgray" /></span>
 			<span title="Reload" onclick="fm.refresh('<%= hash %>')"><i class="mdi mdi-reload"></i><link class="rippleJS lightgray" /></span>
-			<span title="Information" onclick="fm.switchToInfoView('<%= hash %>')"><i class="mdi mdi-information-outline"></i><link class="rippleJS lightgray" /></span>
+			<span id="fpvtoggle" title="Information" onclick="fm.toggleInfoView('<%= hash %>')"><i class="mdi mdi-information-outline"></i><link class="rippleJS lightgray" /></span>
 		</section>
 	</header>
 	<div class="progress">
@@ -271,12 +245,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 
 		</section>
 		<section class="file-history">
-			<article class="file-history-info">
-
-			</article>
-			<ul class="file-list">
-
-			</ul>
+			
 		</section>
 	</section>
 </section>
@@ -285,6 +254,12 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 <section class="folder-empty">
 	<i class="mdi mdi-cloud-upload"></i>
 	<span>This folder is empty</span>
+</section>
+</script>
+<script type="text/template" id="fm-search-empty">
+<section class="folder-empty">
+	<i class="mdi mdi-magnify"></i>
+	<span>No files matched your search</span>
 </section>
 </script>
 <script type="text/template" id="fm-file-preview">
@@ -319,6 +294,27 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 	<% }
 } %>
 </script>
+<script type="text/template" id="fm-file-history">
+<h2>File information</h2>
+	<article class="file-history-info">
+		<ul>
+			<li><span class="property">Name</span><%= name %></li>
+			<li><span class="property">Size</span><%= getSize() %></li>
+			<li><span class="property">Public?</span><%= isPublic() ? "Yes" : "No" %></li>				
+			<li><span class="property">Last modified</span><%= getDate() + " : " + getTime() %></li>
+		</ul>
+	</article>
+	<h2>File versions</h2>
+	<ul class="file-list">
+
+	</ul>
+</script>
+<script type="text/template" id="fm-file-history-file">
+<li class="hist-file"><span class="file-name"><%= name %></span><span class="file-size"><%= size %></span><span class="lastmod"><%= lastmod %></span>
+<button title="Set as current" onclick="fm.touchFile('<%= hash %>')">Set as current version</button>
+<button title="Delete version" onclick="fm.deleteVersion('<%= hash %>')"><i class="mdi mdi-history"></i>Delete this version</button>
+</li>
+</script>
 <script type="text/template" id="fm-file-transferring">
 <li class="menubar-content floatb" hash="<%= id %>" id="tfile-<%= id %>" name="<%= name %>">
 	<span class="file-upload-status">Waiting</span>
@@ -334,7 +330,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 </li>
 </script>
 <script type="text/template" id="fm-file-trash">
-<li class="menubar-content floatb" btype="<%= btype %>" hash="<%= hash %>" id="bfile-<%= hash %>" name="<%= name %>" parent="<%= parent %>">
+<li class="menubar-content floatb" btype="<%= btype %>" hash="<%= hash %>" id="bfile-<%= hash %>" name="<%= name %>" parent="<%= parent %>" <%= trashed %>>
 	<span class="file-multiselect-checkbox-container">
 	<input type="checkbox" id="cb-<%= hash %>" value="<%= hash %>" />
 	<label class="label" for="cb-<%= hash %>"><i class="mdi mdi-checkbox-blank-outline"></i></label>
@@ -386,6 +382,26 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 </script>
 <script type="text/template" id="template-dialog-footer-opt">
 <button class="btn dialog-btn dialog-btn-<%= type %>" onclick="<%= fn %>"><%= name %><link class="rippleJS" /></button>
+</script>
+<script type="text/template" id="template-dialog-minibar">
+<section class="minibar" id="minibar-target" cdir>
+	<header>
+		<span class="sep">Move to:</span>
+		<span id="minibar-name">My Files</span>
+		<div class="minibar-controls">
+			<span class="btn" onclick="fm.dialog.minibar.back()">Up a level <i class="mdi mdi-arrow-up"></i><link class="rippleJS lightgray" /></span>
+		</div>
+	</header>
+	<section class="minibar-bar">
+		<ul class="file-list"></ul>
+	</section>
+</section>
+</script>
+<script type="text/template" id="template-dialog-minibar-item">
+<li class="minibar-item" hash="<%= hash %>" onclick="<%= fn %>">
+<span class="file-icon"><i class="mdi mdi-folder"></i></span>
+<span class="file-name"><%= name %></span>
+</li>
 </script>
 <script type="text/template" id="template-snackbar">
 <div class="snackbar" id="snackbar-<%= id %>">

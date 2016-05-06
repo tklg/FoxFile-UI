@@ -11,7 +11,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
                                                                   
     Foxfile : foxfile.css
     Copyright (C) 2016 Theodore Kluge
-    http://tkluge.net
+    https://tkluge.net
 *//*
 orange 300 #FF8A65
 orange 500 #FF5722
@@ -59,7 +59,7 @@ body {
 }
 .float, .float-1 {box-shadow: 0 1.5px 4px rgba(0, 0, 0, 0.24), 0 1.5px 6px rgba(0, 0, 0, 0.12);}
 .float-2 {box-shadow: 0 0 4px rgba(0,0,0,.14),0 4px 8px rgba(0,0,0,.28); }
-.float-3 {box-shadow: 0 8px 17px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19); }
+.float-3 {box-shadow: 0 8px 17px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19) !important; }
 .float-4 {box-shadow: 0 10px 20px rgba(0, 0, 0, 0.22), 0 14px 56px rgba(0, 0, 0, 0.25);}
 .float-5 {box-shadow: 0 15px 24px rgba(0, 0, 0, 0.22), 0 19px 76px rgba(0, 0, 0, 0.3);}
 .floatb::before, .floatb-1::before {position: absolute; content: ''; display: block; top: 0; bottom: 0; left: 0; right: 0; pointer-events: none; box-shadow: 0 1.5px 4px rgba(0, 0, 0, 0.24), 0 1.5px 6px rgba(0, 0, 0, 0.12); } .floatb-2::before {position: absolute; content: ''; display: block; top: 0; bottom: 0; left: 0; right: 0; pointer-events: none; box-shadow: 0 0 4px rgba(0,0,0,.14),0 4px 8px rgba(0,0,0,.28); } .floatb-3::before {position: absolute; content: ''; display: block; top: 0; bottom: 0; left: 0; right: 0; pointer-events: none; box-shadow: 0 8px 17px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19); }
@@ -93,6 +93,12 @@ img {
 	color: white;
 	display: flex;
 	z-index: 1000;
+	transition: all 0.15s ease-in-out;
+}
+#nav-header.searching {
+	background: #f2f2f2;
+	/*background: #FF9E80;*/
+	color: rgba(0,0,0,.87);
 }
 .logo-text {
 	display: inline-block;
@@ -109,6 +115,10 @@ img {
 .logo-text a {
 	color: white;
 	text-decoration: none;
+	transition: color 0.15s ease-in-out;
+}
+#nav-header.searching .logo-text a {
+	color: rgba(0,0,0,.87);
 }
 .redfox {
 	/*color: #BF360C;*/
@@ -143,12 +153,15 @@ nav ul {
     background: rgba(255,255,255,.15);
     text-indent: 60px;
     font-size: 100%;
-    transition: all .1s ease-in-out;
+    color: white;
+    transition: all .15s ease-in-out;
 }
-#nav-header .input-search:focus,
-#nav-header .input-search.active {
+/*#nav-header .input-search:focus,
+#nav-header .input-search.active*/
+#nav-header.searching .input-search {
     background: white;
-    color: rgba(0,0,0,.87);
+    /*background: rgba(255,255,255,.8);*/
+	color: rgba(0,0,0,.87);
 }
 #nav-header .input-text-icon {
     position: absolute;
@@ -168,9 +181,13 @@ nav ul {
     cursor: text;
     transition: all .15s ease-in-out;
 }
+#nav-header.searching .input-text-placeholder,
+#nav-header .input-text-placeholder.active {
+	display: none;
+}
 #nav-header .input-search:focus + .input-text-icon i,
 #nav-header .input-search:focus ~ .input-text-placeholder {
-    color: rgba(0,0,0,.87);
+    color: rgba(0,0,0,.54);
 }
 #nav-header .input-text-icon i {
     height: 36px;
@@ -214,9 +231,16 @@ nav ul {
 	cursor: pointer;
 	padding: 0 10px;
 	margin: 0 10px;
+	color: white;
+}
+#nav-header.searching .user-menu {
+	color: rgba(0,0,0,.87);
 }
 #nav-header .user-menu:hover {
 	background: #D84315;
+}
+#nav-header.searching .user-menu:hover {
+	background: rgba(0,0,0,.12);
 }
 #nav-header .user-menu-msg {
 	display: inline-block;
@@ -296,12 +320,23 @@ nav ul {
 	color: rgba(0,0,0,.87);
 	text-decoration: none;
 }
+.nav-vert li.disabled a {
+	color: rgba(0,0,0,.38);
+	cursor: default;
+}
 .nav-vert li:hover {
 	background: rgba(0,0,0,.06);
 	box-shadow: 0 1.5px 4px rgba(0, 0, 0, 0.24), 0 1.5px 6px rgba(0, 0, 0, 0.12);
 }
+.nav-vert li.disabled:hover {
+	box-shadow: none;
+	background: transparent;
+}
 .nav-vert li:active {
 	box-shadow: 0 0 4px rgba(0,0,0,.14),0 4px 8px rgba(0,0,0,.28);
+}
+.nav-vert li.disabled:active {
+	box-shadow: none;
 }
 .nav-vert-header,
 .nav-vert-footer {
@@ -396,7 +431,7 @@ main {
 	background: white;
 	z-index: 30;
 	border: none;
-	box-shadow: 0 -10px 0 #e5e5e5,0 -7px 7px rgba(0,0,0,.12),0 0 20px rgba(0,0,0,.24);
+	box-shadow: 0 8px 17px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
 }
 .bar:last-of-type[parent=root] {
 	transition: none !important;
@@ -672,6 +707,15 @@ main {
 .menubar-content[shared=true] #fileshared {
 	visibility: visible;
 }
+.bar:not(.bar-trash) .menubar-content[trashed] {
+	color: rgba(0,0,0,.38);
+}
+.bar:not(.bar-trash) .menubar-content[trashed] .file-name:after {
+	position: absolute;
+	content: '(in trash)';
+	font-size: 12px;
+	margin-left: 10px;
+}
 /*.bar header .file-actions-header {
 	display: none;
 }*/
@@ -684,6 +728,9 @@ main {
 	line-height: 60px;
 	bottom: 0;
 	flex: none;
+}
+.bar#bar-search .file-actions-header {
+	display: none;
 }
 .bar .file-actions-header span {
 	position: relative;
@@ -788,7 +835,6 @@ main {
 	box-shadow: 0 0 4px rgba(0,0,0,.14),0 4px 8px rgba(0,0,0,.28);
 }
 .file-detail-viewport .file-preview {
-	display: none;
 	position: relative;
 	height: calc(100% - 60px);
 	/*width: calc(100% - 40px);*/
@@ -796,9 +842,9 @@ main {
 	margin: 0;
 	/*padding: 0 20px;*/
 	overflow-y: auto;
-	display: flex;
 	text-align: center;
 	padding: 0;
+	display: none;
 }
 .file-preview #editor {
 	display: inline-block;
@@ -823,9 +869,7 @@ main {
 }
 .file-preview audio {
 	display: inline-block;
-	/*position: absolute;*/
-	/*transform: translateX(60%);*/
-	/*width: 300px;*/
+	margin: 0 auto;
 	margin-top: 60px;
 }
 .file-preview iframe,
@@ -834,17 +878,102 @@ main {
 	height: calc(100% - 4px);
 	/*height: 100%;*/
 	width: 100%;
-	margin: 0;
+	margin: 0 auto;
 	display: inline-block;
 }
 .file-detail-viewport .file-preview.active {
-	display: inline-block;
+	display: flex;
 }
 .file-detail-viewport .file-history {
 	display: none;
 }
 .file-detail-viewport .file-history.active {
 	display: inline-block;
+}
+.file-detail-viewport .file-history {
+	padding: 0 20px;
+	width: calc(100% - 40px);
+	font-size: 15px;
+}
+.file-detail-viewport .file-history h2 {
+	font-size: 20px;
+	font-weight: normal;
+}
+.file-detail-viewport .file-history ul {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+.file-detail-viewport .file-history-info li {
+	height: 30px;
+	line-height: 30px;
+	border-bottom: 1px solid rgba(0,0,0,.06);
+	text-align: right;
+}
+.file-detail-viewport .file-history-info li span {
+	color: rgba(0,0,0,.38);
+	float: left;
+}
+.file-detail-viewport .file-history .file-list li {
+	height: 30px;
+	line-height: 30px;
+	border-bottom: 1px solid rgba(0,0,0,.06);
+	display: flex;
+}
+.file-detail-viewport .file-list .file-name {
+	flex: auto;
+}
+.file-detail-viewport .file-list li:first-of-type .file-name:after {
+	position: absolute;
+	content: '(current)';
+	color: rgba(0,0,0,.54);
+	font-size: 12px;
+	margin-left: 6px;
+}
+.file-detail-viewport .file-list li:hover {
+	/*background: rgba(0,0,0,.06);*/
+}
+.file-detail-viewport .file-list li:not(:first-of-type):hover .file-size,
+.file-detail-viewport .file-list li:not(:first-of-type):hover .lastmod {
+	display: none;
+}
+.file-detail-viewport .file-list li button {
+	display: none;
+	height: 30px;
+	line-height: 30px;
+	border: none;
+	outline: 0 none;
+	background: transparent;
+	/*font-size: 15px;*/
+	padding: 0;
+	cursor: pointer;
+}
+.file-detail-viewport .file-list li button + button {
+	margin-left: 20px;
+}
+.file-detail-viewport .file-list li button i {
+	color: rgba(0,0,0,.54);
+	font-size: 26px;
+	vertical-align: middle;
+	display: none;
+}
+.file-detail-viewport .file-list li:not(:first-of-type):hover button {
+	display: inline-block;
+}
+.file-detail-viewport .file-list li button:hover {
+	/*background: rgba(0,0,0,.06);*/
+	/*color: #FF5722;*/
+	color: #E64A19;
+}
+.file-detail-viewport .file-list .file-size {
+	padding: 0 10px 0 0;
+	font-size: 13px;
+	color: rgba(0,0,0,.54);
+}
+.file-detail-viewport .file-list .lastmod {
+	padding: 0 0 0 10px;
+	font-size: 13px;
+	color: rgba(0,0,0,.54);
 }
 /* ---------------------------------------------------------------------------------------------------------
 =====================================   SHARED, TRASH, TRANSFERS   =========================================
@@ -864,6 +993,9 @@ main {
 	right: 0;
 	display: none;
 	/*transition: all 0.55s ease-in-out;*/
+}
+.pages .bar#bar-2 {
+	box-shadow: none;
 }
 .transfers.active,
 .shared.active,
@@ -1144,6 +1276,7 @@ main {
 	font-size: 100%;
 	outline: 0 none;
 	margin-top: 10px;
+	cursor: text;
 }
 .dialog header + article input {
 	margin: 0;
@@ -1200,12 +1333,16 @@ main {
 .snackbar .snackbar-msg {
 	display: inline-block;
 	flex: 1;
-	color: white;
+	color: transparent;
 	font-weight: 300;
+	transition: color 0.4s ease-in-out;
+}
+.snackbar.active .snackbar-msg {
+	color: white;
 }
 .snackbar .snackbar-btn {
 	/*display: inline-block;*/
-	color: #FF5722;
+	color: transparent;
 	text-transform: uppercase;
 	background: transparent;
 	height: 40px;
@@ -1213,9 +1350,12 @@ main {
 	padding: 0 10px;
 	border: none;
 	outline: none;
-	transition: all 0.1s ease-in-out;
+	transition: all 0.1s ease-in-out, color 0.4s ease-in-out;
 	cursor: pointer;
 	border-radius: 3px;
+}
+.snackbar.active .snackbar-btn {
+	color: #FF5722;
 }
 .snackbar .snackbar-btn.hidden {
 	display: none;
@@ -1224,6 +1364,101 @@ main {
 .snackbar .snackbar-btn:hover {
 	box-shadow: 0 1.5px 4px rgba(0, 0, 0, 0.24), 0 1.5px 6px rgba(0, 0, 0, 0.12);
 	background: rgba(255,255,255,.05);
+}
+.minibar {
+	margin: 0;
+}
+.minibar header {
+	position: relative;
+	border-bottom: 2px solid #FF5722;
+	/*height: 40px;
+	line-height: 40px;*/
+	padding: 0;
+	display: flex;
+}
+.minibar header .sep {
+	height: 20px;
+	line-height: 20px;
+	position: absolute;
+	color: rgba(0,0,0,.54);
+	font-weight: normal;
+	font-size: 14px;
+	top: 14px;
+}
+.minibar header #minibar-name {
+	margin-top: 20px;
+	line-height: 40px;
+	height: 40px;
+	font-style: italic;
+	flex: 1;
+	overflow: hidden;
+	display: inline-block;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.minibar header div {
+	display: inline-block;
+	float: right;
+	line-height: 60px;
+}
+.minibar header div .btn {
+	display: inline-block;
+	text-align: center;
+	font-weight: normal;
+	border-radius: 18px;
+	cursor: pointer;
+	transition: all 0.15s ease-in-out;
+	padding: 0 10px;
+	height: 36px;
+	line-height: 36px;
+	margin: 12px 0;
+	position: relative;
+}
+.minibar header div .btn:hover {
+	background: rgba(0,0,0,.06);
+	box-shadow: 0 1.5px 4px rgba(0, 0, 0, 0.24), 0 1.5px 6px rgba(0, 0, 0, 0.12);
+}
+.minibar .minibar-bar ul {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	max-height: 600px;
+	overflow: auto;
+}
+.minibar .minibar-bar li {
+	height: 40px;
+	line-height: 40px;
+	display: flex;
+	cursor: default;
+	transition: all 0.15s ease-in-out;
+	border-bottom: 1px solid rgba(0,0,0,.06);
+}
+.minibar .minibar-bar li:hover {
+	background: rgba(0,0,0,.06);
+}
+.minibar .minibar-bar li .file-icon {
+	display: inline-block;
+	text-align: center;
+	height: 40px;
+	line-height: 40px;
+	width: 36px;
+	color: rgba(0,0,0,.54);
+	vertical-align: middle;
+	font-size: 22px;
+}
+.minibar .minibar-bar li .file-icon i {
+	height: 36px;
+	width: 36px;
+	text-align: center;
+	line-height: 36px;
+	margin: 2px 0;
+}
+.minibar .minibar-bar li .file-name {
+	display: inline-block;
+	flex: 1;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 /*
 8888888b.  8888888b.  
@@ -1329,6 +1564,7 @@ YM      6  M   YP   MM
 	color: rgba(0,0,0,.54);
 }
 .clickmenu li .kbs-hint {
+	display: none;
 	color: rgba(0,0,0,.38);
 	font-size: 12px;
 	height: 30px;

@@ -40,28 +40,38 @@ $dbname = "' . $dbname . '";
 	    lastname VARCHAR(128),
 	    email VARCHAR(128),
 	    password VARCHAR(512),
-	    root_folder VARCHAR(32),
+	    root_folder VARCHAR(12) character set utf8 collate utf8_bin not null,
 		total_storage DOUBLE(100, 2),
 		account_status VARCHAR(32),
 	    access_level TINYINT,
 	    join_date DATETIME DEFAULT CURRENT_TIMESTAMP
-    )';
+    ) charset=utf8';
 	if (mysqli_query($db, $sql)) {
 		//$db = mysqli_connect($dbhost,$dbuname,$dbupass,$dbname);
 		$sql = "CREATE TABLE IDGEN (
 			  PID bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			  PRIMARY KEY(PID),
-			  stub char(1) NOT NULL DEFAULT '',
-			  UNIQUE(stub)
+			  hashes char(1) NOT NULL DEFAULT '',
+			  UNIQUE(hashes)
+			)";
+		$sql2 = "CREATE TABLE LINKGEN (
+			  PID bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			  PRIMARY KEY(PID),
+			  hashes char(1) NOT NULL DEFAULT '',
+			  UNIQUE(hashes)
 			)";
 		if (mysqli_query($db, $sql)) {
-			echo 0;
-			die();
+			if (mysqli_query($db, $sql2)) {
+				echo 0;
+				die();
+			} else {
+				echo mysqli_error();
+			}
 		} else {
-			echo mysql_error();
+			echo mysqli_error();
 		}
 	} else {
-		echo mysql_error();
+		echo mysqli_error();
 	}
 } else if (isset($_POST['create_user'])) {
 	require '../plugins/hashids/Hashids.php';
@@ -73,7 +83,7 @@ $dbname = "' . $dbname . '";
 		$newIdObj = mysqli_insert_id($db);
 		$hashids = new Hashids\Hashids('foxfilesaltisstillbestsalt', 12);
 		$root_folder = $hashids->encode($newIdObj);
-		$total_storage = 5000000000;
+		$total_storage = 5368709120;
 		$sql = "INSERT INTO USERS (firstname, email, password, root_folder, total_storage, account_status, access_level)
 	        VALUES (
 	        'Administrator',
@@ -81,18 +91,18 @@ $dbname = "' . $dbname . '";
 	        '$password',
 	        '$root_folder',
 	        '$total_storage',
-	        'verified',
+	        'unverified',
 	        '5')";
 		if (mysqli_query($db, $sql)) {
 			mkdir('../files/'.$root_folder.'/');
-			mkdir('../trashes/'.$root_folder.'/');
+			//mkdir('../trashes/'.$root_folder.'/');
 			echo 0;
 			die();
 		} else {
 			echo mysql_error();
 		}
 	} else {
-		echo mysql_error();
+		echo mysqli_error();
 	}
 } else if (isset($_POST['create_table_files'])) {
 	$db = mysqli_connect($dbhost,$dbuname,$dbupass,$dbname);
@@ -101,8 +111,8 @@ $dbname = "' . $dbname . '";
         PRIMARY KEY(PID),
 		owner_id INT,
 		is_folder BOOLEAN,
-		hash CHAR(12),
-		parent CHAR(12),
+		hash CHAR(12) character set utf8 collate utf8_bin not null,
+		parent CHAR(12) character set utf8 collate utf8_bin not null,
 		name VARCHAR(128),
 		size DOUBLE(30, 2),
         is_trashed BOOLEAN DEFAULT 0,
@@ -110,8 +120,19 @@ $dbname = "' . $dbname . '";
         is_public BOOLEAN DEFAULT 0,
         lastmod DATETIME DEFAULT CURRENT_TIMESTAMP,
         UNIQUE(PID,hash)
-        )';
+        ) charset=utf8';
+    $q2 = "CREATE TABLE shared (
+    	PID INT NOT NULL AUTO_INCREMENT,
+    	PRIMARY KEY(PID),
+    	owner_id INT,
+    	hash CHAR(12),
+    	points_to CHAR(12),
+    	is_public BOOLEAN DEFAULT 0,
+    	shared_with VARCHAR(128),
+    	UNIQUE(PID,hash)
+    	) charset=utf8";
 	if (mysqli_query($db, $sql)) {
+		if (mysqli_query($db, $q2)) {
 		$string = '<?php 
 $dbuname = "' . $dbuname . '";
 $dbupass = "' . $dbupass . '";
@@ -123,9 +144,12 @@ $installed = true;
         fwrite($fp, $string);
         fclose($fp);
 		echo 0;
-		die();
+		die();	
+		} else {
+			echo mysqli_errno()
+		}
 	} else {
-		echo mysql_error();
+		echo mysqli_error();
 	}
 //} else if (isset($_POST['create_table_files'])) { 
 } else {

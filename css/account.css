@@ -1,0 +1,262 @@
+/* 
+                                                              
+   ad88                             ad88  88  88              
+  d8"                              d8"    ""  88              
+  88                               88         88              
+MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,  
+  88    a8"     "8a  `Y8, ,8P'     88     88  88  a8P_____88  
+  88    8b       d8    )888(       88     88  88  8PP"""""""  
+  88    "8a,   ,a8"  ,d8" "8b,     88     88  88  "8b,   ,aa  
+  88     `"YbbdP"'  8P'     `Y8    88     88  88   `"Ybbd8"'  
+                                                                  
+    Foxfile : account.css
+    Copyright (C) 2016 Theodore Kluge
+    https://tkluge.net
+*//*
+orange 300 #FF8A65
+orange 500 #FF5722
+orange 700 #E64A19
+orange 800 #D84315
+orange 900 #BF360C
+orange A100 #FF9E80
+*/
+.float-1 {box-shadow: 0 1.5px 4px rgba(0, 0, 0, 0.24), 0 1.5px 6px rgba(0, 0, 0, 0.12);}
+.float-2 {box-shadow: 0 0 4px rgba(0,0,0,.14),0 4px 8px rgba(0,0,0,.28); }
+.float-3 {box-shadow: 0 8px 17px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19); }
+.float-4 {box-shadow: 0 10px 20px rgba(0, 0, 0, 0.22), 0 14px 56px rgba(0, 0, 0, 0.25);}
+.float-5 {box-shadow: 0 15px 24px rgba(0, 0, 0, 0.22), 0 19px 76px rgba(0, 0, 0, 0.3);}
+#bar-0 {
+	width: 25%;
+	max-width: 340px;
+}
+.bar:not(:first-of-type) {
+	display: none;
+}
+.bar.active {
+	display: inline-block;
+	flex: auto;
+	box-shadow: 0 8px 17px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
+	z-index: 30;
+	background: white;
+	border: none;
+	overflow: auto;
+}
+.bar.active header {
+	background: white;
+}
+.bar:not(:first-of-type):not(.loading) header {
+	border-bottom: 2px solid rgba(0,0,0,.12);
+}
+.bar .content {
+	padding: 0 20px;
+	width: calc(100% - 40px);
+}
+.bar h2 {
+	font-size: 40px;
+	font-weight: 300;
+	margin: 16px auto;
+}
+.bar ul {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.bar:not(:first-of-type) li {
+	height: 60px;
+	line-height: 60px;
+	display: flex;
+	border-bottom: 1px solid rgba(0,0,0,.06);
+}
+.bar li .property {
+	display: inline-block;
+	width: 30%;
+	/*max-width: 240px;*/
+	min-width: 120px;
+}
+.bar li input {
+	width: 50%;
+	flex: 1;
+	height: 40px;
+	line-height: 40px;
+	margin: 10px 0;
+	font-size: 16px;
+	border: none;
+	outline: 0 none;
+	border-bottom: 2px solid rgba(0,0,0,.12);
+	padding: 0;
+	text-indent: 10px;
+	transition: all 0.1s ease-in-out;
+	color: rgba(0,0,0,.54);
+}
+.bar li input:focus {
+	border-bottom: 2px solid #FF5722;
+}
+.bar li .value {
+	width: 50%;
+	flex: 1;
+	height: 40px;
+	line-height: 40px;
+	margin: 10px 0;
+	font-size: 16px;
+	color: rgba(0,0,0,.54);
+}
+.bar li .btn {
+	width: 80px;
+	height: 40px;
+	margin: 10px 0;
+	border: none;
+	outline: 0 none;
+	background: white;
+	color: #FF5722;
+	text-transform: uppercase;
+	float: right;
+	border-radius: 3px;
+	margin-left: 20px;
+	transition: all 0.15s ease-in-out;
+	cursor: pointer;
+	box-shadow: 0 1.5px 4px rgba(0, 0, 0, 0.24), 0 1.5px 6px rgba(0, 0, 0, 0.12);
+}
+.bar li .btn:hover,
+.bar li .btn:focus {
+	background: #FF5722;
+	color: white;
+	box-shadow: 0 0 4px rgba(0,0,0,.14),0 4px 8px rgba(0,0,0,.28);
+}
+.bar li.large {
+	min-height: 60px;
+	height: 120px;
+	flex-direction: column;
+	position: relative;
+}
+.bar li.large .property {
+	height: 100%;
+}
+.bar li ul {
+	display: inline;
+	/*width: 84%;*/
+	width: 70%;
+	flex: 1;
+	height: 100%;
+	float: right;
+	position: absolute;
+	right: 0;
+	top: 0;
+}
+.bar:not(:first-of-type) li ul li {
+	display: inline-block;
+	height: 60px;
+	line-height: 60px;
+	width: 100%;
+	border: none;
+	display: flex;
+}
+#filepercent {
+	color: #FF5722;
+}
+#trashpercent {
+	color: #BF360C;
+}
+.bar li ul li .value span {
+	display: inline-block;
+	width: auto;
+	font-size: 24px;
+	color: rgba(0,0,0,.87);
+	vertical-align: middle;
+	height: 30px;
+	line-height: 30px;
+	margin: 0 10px;
+	margin-top: -4px;
+	color: inherit;
+}
+.bar li .graph {
+	display: inline-block;
+	height: 40px;
+	line-height: 40px;
+	margin: 10px 0;
+	width: 80%;
+	background: #ececec;
+	/*border-bottom: 1px solid #FF5722;*/
+	overflow: hidden;
+}
+.bar .graph div {
+	display: inline-block;
+	height: 100%;
+	max-width: 100%;
+	text-indent: 6px;
+	color: white;
+	font-weight: 300;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+.bar .graph .prog-f {
+	width: 0;
+	background: #FF5722;
+}
+.bar .graph .prog-t {
+	width: 0;
+	background: #BF360C;
+}
+.value[type=checkbox] {
+	display: none;
+}
+.value[type=checkbox] + label {
+	right: 20px;
+	margin: 14px 0;
+	position: absolute;
+	height: 30px;
+	width: 60px;
+	border: 2px solid rgba(0,0,0,.12);
+	border-radius: 15px;
+	transition: all 0.15s cubic-bezier(0.74, 0.02, 0.2, 0.99);
+	cursor: pointer;
+}
+.value[type=checkbox]:checked + label {
+	border-color: #BF360C;
+}
+.value[type=checkbox] + label .switch {
+	position: absolute;
+	left: 0;
+	height: 26px;
+	width: 26px;
+	margin: 2px;
+	border-radius: 50%;
+	background: rgba(0,0,0,.18);
+	transition: all 0.15s cubic-bezier(0.74, 0.02, 0.2, 0.99);
+}
+.value[type=checkbox]:checked + label .switch {
+	background: #FF5722;
+	left: 50%;
+}
+.bar:not(:first-of-type) li .passstack li {
+	display: flex;
+}
+.bar:not(:first-of-type) .acc-h li {
+	line-height: 30px;
+	height: 30px;
+}
+.bar:not(:first-of-type) .acc-h li .property {
+	width: 130px;
+}
+.bar:not(:first-of-type) .acc-h li span {
+	height: 30px;
+	line-height: 30px;
+	margin: 0;
+}
+.bar:not(:first-of-type) .acc-h li .date {
+	flex: none;
+	width: 130px;
+	text-align: right;
+}
+.bar li .desc {
+	font-size: 14px;
+	color: rgba(0,0,0,.54);
+	line-height: initial;
+	width: 100%;
+}
+#email-ver {
+	color: #f44336;
+}
+#email-ver.verified {
+	color: #4caf50;
+}
