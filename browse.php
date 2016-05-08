@@ -300,6 +300,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 		<ul>
 			<li><span class="property">Name</span><%= name %></li>
 			<li><span class="property">Size</span><%= getSize() %></li>
+			<li><span class="property">Shared?</span><%= isShared() ? "Yes" : "No" %></li>				
 			<li><span class="property">Public?</span><%= isPublic() ? "Yes" : "No" %></li>				
 			<li><span class="property">Last modified</span><%= getDate() + " : " + getTime() %></li>
 		</ul>

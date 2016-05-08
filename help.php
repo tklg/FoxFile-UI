@@ -19,7 +19,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 	Foxfile : <?php echo basename(__FILE__); ?> 
 	Version <?php echo $foxfile_version; ?> 
 	Copyright (C) 2016 Theodore Kluge
-	http://tkluge.net
+	https://tkluge.net
 
 -->
 <head>
@@ -28,7 +28,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 	<meta author="tkluge" />
 	<link rel="stylesheet" href="css/page.css" />
 	<!-- <link href="css/materialdesignicons.min.css" media="all" rel="stylesheet" type="text/css" /> -->
-	<link rel="icon" type="image/ico" href="favicon.ico">
+	<link rel="icon" type="image/ico" href="favicon.png">
 	<link href='https://fonts.googleapis.com/css?family=Roboto:300,400' rel='stylesheet' type='text/css'>
 	<meta name="viewport" content="initial-scale=1, width=device-width, maximum-scale=1, minimum-scale=1, user-scalable=no">
 </head>

@@ -125,8 +125,8 @@ $dbname = "' . $dbname . '";
     	PID INT NOT NULL AUTO_INCREMENT,
     	PRIMARY KEY(PID),
     	owner_id INT,
-    	hash CHAR(12),
-    	points_to CHAR(12),
+    	hash CHAR(12) character set utf8 collate utf8_bin not null,
+    	points_to CHAR(12) character set utf8 collate utf8_bin not null,
     	is_public BOOLEAN DEFAULT 0,
     	shared_with VARCHAR(128),
     	UNIQUE(PID,hash)

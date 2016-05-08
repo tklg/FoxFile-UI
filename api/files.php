@@ -421,10 +421,11 @@ if ($pageID == 'list_files') {
 	if ($result = mysqli_query($db, $sql)) {
 		$total = mysqli_fetch_object($result)->total;
 		$total = (int) $total;
-		$total -= ($offset * $limit);
-		$remaining = $total - $limit;
+		$total = ($total > 0 ? $total : 0);
+		$remaining = $total - ($offset + $limit);
 		$more = false;
 		if ($remaining > 0) $more = true;
+		else $remaining = 0;
 		//$sql = "SELECT hash, max(lastmod) as last_modified FROM (SELECT * FROM FILES WHERE parent = '$fileParent' AND owner_id = '$uid' group by name LIMIT $limit OFFSET $offset) as sub INNER JOIN FILES as f on f.hash = sub.hash and f.lastmod = sub.last_modified ORDER BY $sortBy";
 		//$sql = "SELECT is_folder, hash, parent, name, size, is_shared, is_public, lastmod FROM files WHERE hash IN (SELECT max(lastmod), hash FROM files WHERE parent = '$fileParent' AND owner_id = '$uid' AND is_trashed=0 GROUP BY name ORDER BY $sortBy LIMIT $limit OFFSET $offset)";
 		//$sql = "SELECT is_folder, hash, parent, name, size, is_shared, is_public, max(lastmod) as lastmod FROM FILES WHERE parent = '$fileParent' AND owner_id = '$uid' AND is_trashed=0 GROUP BY name ORDER BY $sortBy LIMIT $limit OFFSET $offset";
@@ -466,10 +467,11 @@ if ($pageID == 'list_folders') {
 	if ($result = mysqli_query($db, $sql)) {
 		$total = mysqli_fetch_object($result)->total;
 		$total = (int) $total;
-		$total -= ($offset * $limit);
-		$remaining = $total - $limit;
+		$total = ($total > 0 ? $total : 0);
+		$remaining = $total - ($offset + $limit);
 		$more = false;
 		if ($remaining > 0) $more = true;
+		else $remaining = 0;
 		$sql = "SELECT f.* FROM FILES f JOIN (SELECT name, max(lastmod) as latest FROM files WHERE parent = '$fileParent' AND owner_id = '$uid' AND is_trashed=0 AND is_folder=1 GROUP BY name) f2 ON f.lastmod = f2.latest and f.name = f2.name ORDER BY $sortBy LIMIT $limit OFFSET $offset";
 		if ($result = mysqli_query($db, $sql)) {
 			$rows = array();
@@ -563,6 +565,39 @@ if ($pageID == 'new_file') {
 		}
 	} else {
 		resp(500, 'File upload failed');
+	}
+}
+if ($pageID == 'new_file_chunk') {
+	if (isset($_POST['start'])) {
+		if (!isset($_POST['start']) || !isset($_POST['parent'])) 
+			resp(422, "missing parameters");
+		$hash = sanitize($_POST['start']);
+		$parent = sanitize($_POST['parent']);
+		resp(200, 'start');
+		//make blank file
+		
+	} else if (isset($_POST['append'])) {
+		if (!isset($_POST['append']) || !isset($_POST['length']) || !isset($_POST['offset']) || !isset($_FILES['data'])) 
+			resp(422, "missing parameters");
+		//append
+		$hash = sanitize($_POST['append']);
+		$parent = sanitize($_POST['offset']);
+		$blob = $_FILES['data']['tmp_name'];
+		resp(200, 'append');
+	} else if (isset($_POST['finish'])) {
+		if (!isset($_POST['finish']) || !isset($_POST['parent'])) 
+			resp(422, "missing parameters");
+		$hash = sanitize($_POST['finish']);
+		$parent = sanitize($_POST['parent']);
+		resp(200, 'finish');
+	} else if (isset($_POST['remove'])) {
+		if (!isset($_POST['remove']) || !isset($_POST['parent'])) 
+			resp(422, "missing parameters");
+		$hash = sanitize($_POST['remove']);
+		$parent = sanitize($_POST['parent']);
+		resp(200, 'remove');
+	} else {
+		resp(422, 'Invalid request');
 	}
 }
 if ($pageID == 'new_folder') {

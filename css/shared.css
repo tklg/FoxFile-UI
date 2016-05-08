@@ -150,3 +150,129 @@ orange A100 #FF9E80
 	border: none;
 	display: flex;
 }
+.snackbar {
+	box-sizing: border-box;
+	position: absolute;
+	background: #323232;
+	z-index: 1998;
+	box-shadow: 0 8px 17px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
+	left: 50%;
+	transform: translateX(-50%);
+	min-width: 432px;
+	max-width: 865px;
+	height: 60px;
+	line-height: 60px;
+	border-radius: 3px 3px 0 0;
+	padding: 0 20px 0 24px;
+	display: flex;
+	transition: all 0.15s ease-in-out;
+	bottom: -66px;
+}
+.snackbar.active {
+	bottom: 0;
+}
+.snackbar .snackbar-msg {
+	display: inline-block;
+	flex: 1;
+	color: transparent;
+	font-weight: 300;
+	transition: color 0.4s ease-in-out;
+}
+.snackbar.active .snackbar-msg {
+	color: white;
+}
+.snackbar .snackbar-btn {
+	/*display: inline-block;*/
+	color: transparent;
+	text-transform: uppercase;
+	background: transparent;
+	height: 40px;
+	margin: 10px 0;
+	padding: 0 10px;
+	border: none;
+	outline: none;
+	transition: all 0.1s ease-in-out, color 0.4s ease-in-out;
+	cursor: pointer;
+	border-radius: 3px;
+}
+.snackbar.active .snackbar-btn {
+	color: #FF5722;
+}
+.snackbar .snackbar-btn.hidden {
+	display: none;
+}
+.snackbar .snackbar-btn:focus,
+.snackbar .snackbar-btn:hover {
+	box-shadow: 0 1.5px 4px rgba(0, 0, 0, 0.24), 0 1.5px 6px rgba(0, 0, 0, 0.12);
+	background: rgba(255,255,255,.05);
+}
+.promo {
+	height: 100%;
+	box-sizing: border-box;
+	padding: 20px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+    flex-direction: column;
+}
+.promo h2 {
+	width: 100%;
+	margin: 10px 0 0 0;
+	font-size: 30px;
+}
+.promo p {
+	color: rgba(0,0,0,.54);
+}
+.btn {
+	text-decoration: none;
+	display: inline-block;
+	padding: 0 10px;
+	height: 40px;
+	line-height: 40px;
+	border: none;
+	outline: 0 none;
+	cursor: pointer;
+	color: #FF5722;
+	text-transform: uppercase;
+	border-radius: 4px;
+	transition: all 0.1s ease-in-out;
+	background: transparent;
+	/*box-shadow: 0 1.5px 4px rgba(0, 0, 0, 0.24), 0 1.5px 6px rgba(0, 0, 0, 0.12);*/
+}
+.btn:hover {
+	box-shadow: 0 1.5px 4px rgba(0, 0, 0, 0.24), 0 1.5px 6px rgba(0, 0, 0, 0.12);
+}
+#bar-shared.bar-shared {
+	flex: 1;
+}
+.bar-shared .content {
+	height: calc(100% - 60px);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+    flex-direction: column;
+}
+.content .file {
+	width: 280px;
+	height: 40px;
+	line-height: 40px;
+	display: flex;
+	margin-bottom: 20px;
+}
+.file span {
+	display: inline-block;
+	line-height: 40px;
+}
+.file .file-name {
+	font-size: 20px;
+	text-align: center;
+	flex: 1;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.file .file-size {
+	float: right;
+	color: rgba(0,0,0,.54);
+	font-size: 14px;
+}
