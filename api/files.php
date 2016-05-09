@@ -32,16 +32,21 @@ if (strpos($pageID, '?') !== false) {
 
 //connect to database  
 $db = mysqli_connect($dbhost,$dbuname,$dbupass,$dbname);
+$uid = -1;
+$uhd = 'demo';
 if(!isset($_SESSION['foxfile_uid'])) {
-	resp(401, "You must be logged in to access the files API");
+	if ($pageID !== 'download')
+		resp(401, "You must be logged in to access the files API");
+} else if(!isset($_SESSION['foxfile_access_level'])) {
+	if ($pageID !== 'download')
+		resp(401, "You must be logged in to access the files API");
+} else {
+	$uid = $_SESSION['foxfile_uid'];
+	$uem = $_SESSION['foxfile_email'];
+	$alvl = $_SESSION['foxfile_access_level'];
+	$uhd = $_SESSION['foxfile_uhd'];
+	$maxstore = $_SESSION['foxfile_max_storage'];
 }
-if(!isset($_SESSION['foxfile_access_level'])) {
-	resp(401, "You must be logged in to access the files API");
-}
-$uid = $_SESSION['foxfile_uid'];
-$uem = $_SESSION['foxfile_email'];
-$alvl = $_SESSION['foxfile_access_level'];
-$uhd = $_SESSION['foxfile_uhd'];
 date_default_timezone_set('America/New_York');
 
 function sanitize($s) {
@@ -62,7 +67,7 @@ function resp($code, $message) {
 }
 function getUniqId() {
 	global $db;
-	$sql = "REPLACE INTO IDGEN (hashes) VALUES ('a')";
+	$sql = "REPLACE INTO idgen (hashes) VALUES ('a')";
 	if ($result = mysqli_query($db, $sql)) {
 		$newIdObj = mysqli_insert_id($db);
 		require '../plugins/hashids/Hashids.php';
@@ -74,7 +79,7 @@ function getUniqId() {
 }
 function getUniqLink() {
 	global $db;
-	$sql = "REPLACE INTO LINKGEN (hashes) VALUES ('a')";
+	$sql = "REPLACE INTO linkgen (hashes) VALUES ('a')";
 	if ($result = mysqli_query($db, $sql)) {
 		$newIdObj = mysqli_insert_id($db);
 		require '../plugins/hashids/Hashids.php';
@@ -100,6 +105,10 @@ function dirSize($path){
     }
     return $bytestotal;
 }
+function hasSpaceLeft() {
+	global $uhd, $maxstore;
+	return dirSize('./../files/'.$uhd) < $maxstore;
+}
 function getPath($file) { // in theory, this function still works
 	//echo 'finding path of '. $file;
 	global $uhd, $db;
@@ -120,7 +129,10 @@ function getPath($file) { // in theory, this function still works
 			}
 			$curPos = '';
 			$query = mysqli_query($db, "SELECT parent FROM files WHERE hash='$file' LIMIT 1");
-			if (mysqli_num_rows($query) == 0) resp(422, "Invalid file hash provided");
+			if (mysqli_num_rows($query) == 0) {
+				//resp(422, "Invalid file hash provided");
+				return $path;
+			}
 			while($row = mysqli_fetch_array($query)) {
 				$path[] = $row['parent'];
 				$curPos = $row['parent'];
@@ -130,7 +142,6 @@ function getPath($file) { // in theory, this function still works
 				if ($curPos !== $uhd) {
 					return recursivePath($curPos, false);
 				} else {
-					$ret = array();
 					$finalPathArray = $path;
 					return $finalPathArray;
 				}
@@ -426,10 +437,10 @@ if ($pageID == 'list_files') {
 		$more = false;
 		if ($remaining > 0) $more = true;
 		else $remaining = 0;
-		//$sql = "SELECT hash, max(lastmod) as last_modified FROM (SELECT * FROM FILES WHERE parent = '$fileParent' AND owner_id = '$uid' group by name LIMIT $limit OFFSET $offset) as sub INNER JOIN FILES as f on f.hash = sub.hash and f.lastmod = sub.last_modified ORDER BY $sortBy";
+		//$sql = "SELECT hash, max(lastmod) as last_modified FROM (SELECT * FROM files WHERE parent = '$fileParent' AND owner_id = '$uid' group by name LIMIT $limit OFFSET $offset) as sub INNER JOIN files as f on f.hash = sub.hash and f.lastmod = sub.last_modified ORDER BY $sortBy";
 		//$sql = "SELECT is_folder, hash, parent, name, size, is_shared, is_public, lastmod FROM files WHERE hash IN (SELECT max(lastmod), hash FROM files WHERE parent = '$fileParent' AND owner_id = '$uid' AND is_trashed=0 GROUP BY name ORDER BY $sortBy LIMIT $limit OFFSET $offset)";
-		//$sql = "SELECT is_folder, hash, parent, name, size, is_shared, is_public, max(lastmod) as lastmod FROM FILES WHERE parent = '$fileParent' AND owner_id = '$uid' AND is_trashed=0 GROUP BY name ORDER BY $sortBy LIMIT $limit OFFSET $offset";
-		$sql = "SELECT f.* FROM FILES f JOIN (SELECT name, max(lastmod) as latest FROM files WHERE parent = '$fileParent' AND owner_id = '$uid' AND is_trashed=0 GROUP BY name) f2 ON f.lastmod = f2.latest and f.name = f2.name ORDER BY $sortBy LIMIT $limit OFFSET $offset";
+		//$sql = "SELECT is_folder, hash, parent, name, size, is_shared, is_public, max(lastmod) as lastmod FROM files WHERE parent = '$fileParent' AND owner_id = '$uid' AND is_trashed=0 GROUP BY name ORDER BY $sortBy LIMIT $limit OFFSET $offset";
+		$sql = "SELECT f.* FROM files f JOIN (SELECT name, max(lastmod) as latest FROM files WHERE parent = '$fileParent' AND owner_id = '$uid' AND is_trashed=0 GROUP BY name) f2 ON f.lastmod = f2.latest and f.name = f2.name ORDER BY $sortBy LIMIT $limit OFFSET $offset";
 		if ($result = mysqli_query($db, $sql)) {
 			$rows = array();
 			while ($row = mysqli_fetch_object($result)) {
@@ -472,7 +483,7 @@ if ($pageID == 'list_folders') {
 		$more = false;
 		if ($remaining > 0) $more = true;
 		else $remaining = 0;
-		$sql = "SELECT f.* FROM FILES f JOIN (SELECT name, max(lastmod) as latest FROM files WHERE parent = '$fileParent' AND owner_id = '$uid' AND is_trashed=0 AND is_folder=1 GROUP BY name) f2 ON f.lastmod = f2.latest and f.name = f2.name ORDER BY $sortBy LIMIT $limit OFFSET $offset";
+		$sql = "SELECT f.* FROM files f JOIN (SELECT name, max(lastmod) as latest FROM files WHERE parent = '$fileParent' AND owner_id = '$uid' AND is_trashed=0 AND is_folder=1 GROUP BY name) f2 ON f.lastmod = f2.latest and f.name = f2.name ORDER BY $sortBy LIMIT $limit OFFSET $offset";
 		if ($result = mysqli_query($db, $sql)) {
 			$rows = array();
 			while ($row = mysqli_fetch_object($result)) {
@@ -496,7 +507,7 @@ if ($pageID == 'list_folders') {
 }
 if ($pageID == 'get_file') {
 	$self = sanitize($_POST['hash']);
-	$sql = "SELECT * FROM FILES WHERE hash = '$self' AND owner_id = '$uid' LIMIT 1";
+	$sql = "SELECT * FROM files WHERE hash = '$self' AND owner_id = '$uid' LIMIT 1";
 	if ($result = mysqli_query($db, $sql)) {
 		$rows = mysqli_fetch_object($result);
 		echo json_encode($rows);
@@ -506,7 +517,7 @@ if ($pageID == 'get_file') {
 }
 if ($pageID == 'get_file_info') {
 	$self = sanitize($_POST['hash']);
-	$sql = "SELECT name, hash, parent, is_folder FROM FILES WHERE hash = '$self' AND owner_id = '$uid' LIMIT 1";
+	$sql = "SELECT name, hash, parent, is_folder FROM files WHERE hash = '$self' AND owner_id = '$uid' LIMIT 1";
 	if ($result = mysqli_query($db, $sql)) {
 		$rows = mysqli_fetch_object($result);
 		echo json_encode($rows);
@@ -535,6 +546,10 @@ if ($pageID == 'uniqid') {
 if ($pageID == 'new_file') {
 	if (!isset($_FILES['file']) || !isset($_POST['parent']) || !isset($_POST['hash'])) 
 		resp(422, "missing parameters");
+
+	if (!hasSpaceLeft()) {
+		resp(507, "No storage space remaining for your account");
+	}
 
 	$fileParent = sanitize($_POST['parent']);
 	$fileHash = sanitize($_POST['hash']);
@@ -568,33 +583,74 @@ if ($pageID == 'new_file') {
 	}
 }
 if ($pageID == 'new_file_chunk') {
+	$wd = './../temp/';
+	if (!hasSpaceLeft()) {
+		resp(507, "No storage space remaining for your account");
+	}
 	if (isset($_POST['start'])) {
-		if (!isset($_POST['start']) || !isset($_POST['parent'])) 
+		if (!isset($_POST['start'])) 
 			resp(422, "missing parameters");
 		$hash = sanitize($_POST['start']);
-		$parent = sanitize($_POST['parent']);
+		if (!is_dir($wd.$hash)) mkdir($wd.$hash, 0770, true);
 		resp(200, 'start');
 		//make blank file
 		
 	} else if (isset($_POST['append'])) {
-		if (!isset($_POST['append']) || !isset($_POST['length']) || !isset($_POST['offset']) || !isset($_FILES['data'])) 
+		if (!isset($_POST['append']) || !isset($_POST['length']) || !isset($_POST['num']) || !isset($_FILES['data'])) 
 			resp(422, "missing parameters");
 		//append
 		$hash = sanitize($_POST['append']);
-		$parent = sanitize($_POST['offset']);
-		$blob = $_FILES['data']['tmp_name'];
-		resp(200, 'append');
+		$num = sanitize($_POST['num']);
+		$blobName = $_FILES['data']['name'];
+		$blobTemp =  $_FILES['data']['tmp_name'];
+
+		if (move_uploaded_file($blobTemp, $wd.$hash.'/'.$hash.'-'.$num.'.part')) {
+			resp(200, 'appended part: '.$num);
+		} else {
+			resp(500, 'failed to upload part');
+		}
+
 	} else if (isset($_POST['finish'])) {
-		if (!isset($_POST['finish']) || !isset($_POST['parent'])) 
+		if (!isset($_POST['finish']) || !isset($_POST['parent']) || !isset($_POST['num']) || !isset($_POST['name']) || !isset($_POST['size'])) 
 			resp(422, "missing parameters");
 		$hash = sanitize($_POST['finish']);
 		$parent = sanitize($_POST['parent']);
-		resp(200, 'finish');
+		$num = sanitize($_POST['num']);
+		$name = sanitize($_POST['name']);
+		$size = sanitize($_POST['size']);
+		$parentPath = getPath($parent);
+
+		for ($i = 0; $i < $num; $i++) {
+			$file = fopen($wd.$hash.'/'.$hash.'-'.$i.'.part', 'rb');
+	        $buffer = fread($file, 5242880); // 5mb
+	        fclose($file);
+	        echo 'merge from: '.$wd.$hash.'/'.$hash.'-'.$i.'.part<br>';
+			$f = fopen($parentPath.'/'.$hash, 'ab');
+			//$f = fopen($wd.$hash.'/'.$hash, 'ab');
+		    $write = fwrite($f, $buffer);
+		    fclose($f);
+		}
+
+		deleteDir($wd.$hash);
+
+		$sql = "INSERT INTO files (owner_id, is_folder, hash, parent, name, size) VALUES
+			('$uid',
+			'0',
+			'$hash',
+			'$parent',
+			'$name',
+			'$size')";
+		if (mysqli_query($db, $sql)) {	// put some sort of versioning systen instead of just displaying every version as a separate file
+			echo json_encode(array('status' => 200, 'hash' => $hash));
+		} else {
+			resp(500, 'SQL file insert failed');
+		}
+
 	} else if (isset($_POST['remove'])) {
-		if (!isset($_POST['remove']) || !isset($_POST['parent'])) 
+		if (!isset($_POST['remove'])) 
 			resp(422, "missing parameters");
 		$hash = sanitize($_POST['remove']);
-		$parent = sanitize($_POST['parent']);
+		deleteDir($wd.$hash);
 		resp(200, 'remove');
 	} else {
 		resp(422, 'Invalid request');
@@ -668,15 +724,16 @@ if ($pageID == 'list_trash') {
 		if ($_POST['sortby'] == 'name') $sortBy .= 'name';
 		if ($_POST['sortby_direction'] == 'asc') $sortBy .= ' ASC';
 	}
-	$sql = "SELECT COUNT(*) as total from FILES WHERE is_trashed=1 AND owner_id = '$uid'";
+	$sql = "SELECT COUNT(*) as total from files WHERE is_trashed=1 AND owner_id = '$uid'";
 	if ($result = mysqli_query($db, $sql)) {
 		$total = mysqli_fetch_array($result)['total'];
 		$total -= $offset * $limit;
 		$remaining = $total - $limit;
 		$more = false;
 		if ($remaining > 0) $more = true;
-		//$sql = "SELECT is_folder, hash, parent, name, size, is_shared, is_public, max(lastmod) as lastmod FROM FILES WHERE owner_id = '$uid' AND is_trashed=1 GROUP BY name ORDER BY $sortBy";
-		$sql = "SELECT f.* FROM FILES f JOIN (SELECT name, max(lastmod) as latest FROM files WHERE owner_id = '$uid' AND is_trashed=1 GROUP BY name) f2 ON f.lastmod = f2.latest and f.name = f2.name ORDER BY $sortBy LIMIT $limit OFFSET $offset";
+		//$sql = "SELECT is_folder, hash, parent, name, size, is_shared, is_public, max(lastmod) as lastmod FROM files WHERE owner_id = '$uid' AND is_trashed=1 GROUP BY name ORDER BY $sortBy";
+		//$sql = "SELECT f.* FROM files f JOIN (SELECT name, max(lastmod) as latest FROM files WHERE owner_id = '$uid' AND is_trashed=1 GROUP BY name) f2 ON f.lastmod = f2.latest and f.name = f2.name ORDER BY $sortBy LIMIT $limit OFFSET $offset";
+		$sql = "SELECT f.* FROM files f WHERE f.is_trashed=1 AND f.owner_id='$uid' ORDER BY $sortBy LIMIT $limit OFFSET $offset";
 		if ($result = mysqli_query($db, $sql)) {
 			$rows = array();
 			while ($row = mysqli_fetch_object($result)) {
@@ -723,7 +780,7 @@ if ($pageID == 'list_versions') {
 	$res = mysqli_fetch_object($res);
 	$name = $res->name;
 	$parent = $res->parent;
-	$sql = "SELECT is_folder, hash, parent, name, size, is_shared, is_public, lastmod FROM FILES WHERE owner_id = '$uid' AND name='$name' AND parent='$parent' AND is_trashed=0 ORDER BY lastmod DESC";
+	$sql = "SELECT is_folder, hash, parent, name, size, is_shared, is_public, lastmod FROM files WHERE owner_id = '$uid' AND name='$name' AND parent='$parent' AND is_trashed=0 ORDER BY lastmod DESC";
 	if ($result = mysqli_query($db, $sql)) {
 		$rows = array();
 		while ($row = mysqli_fetch_object($result)) {
@@ -867,7 +924,7 @@ if($pageID == 'delete') {
 					if ($type == 'folder') {
 						recursiveDelete($hash);
 					}
-					$pointer = 0;
+					/*$pointer = 0;
 					foreach ($delTree as $key => $value) {
 						if ($pointer != sizeof($delTree) - 1) {
 							$delItems .= '\'' . $value . '\', ';
@@ -875,7 +932,9 @@ if($pageID == 'delete') {
 							$delItems .= '\'' . $value . '\'';
 						}
 						$pointer++;
-					}
+					}*/
+					// probably use implode for this
+					$delItems = '\''.implode('\',\'',$delTree).'\'';
 					if ($isOwner) {
 						if ($type == 'folder') {
 							deleteFolder($hash);
@@ -932,13 +991,30 @@ if($pageID == 'view') {
 			$finfo = finfo_open(FILEINFO_MIME_TYPE);
 			$fileType = finfo_file($finfo, $filePath);
 			finfo_close($finfo);
+			$maxSize = 2097152;
+			$fileSize = filesize($filePath);
+			header('Content-Type: ' . $fileType);
+
+			if ($fileSize > $maxSize) {
+			    $handle = fopen($filePath, 'rb');
+			    while (!feof($handle)) {
+			    	$buffer = fread($handle, $maxSize);
+        			echo $buffer;
+				   	ob_flush();
+	        		flush();
+			    }
+			    fclose($handle);
+			} else {
+			   	ob_clean();
+				flush();
+			   	readfile($filePath);
+			}
 
 
 			// filter out files that the client wont be able to preview, like .exe and similar
 
 
-			header('Content-Type: ' . $fileType);
-			readfile($filePath);
+			//readfile($filePath);
 			exit();
 		} else {
 			resp(404, "Could not find the requested file");
@@ -1012,9 +1088,9 @@ if ($pageID == 'search') {
 	$name = sanitize($_POST['name']);
 	$sortBy = 'f.is_folder DESC, f.name';
 	if ($name == 'in:trash') { // is clicking on the 'trash' tab really that hard?
-		$q = "SELECT f.* FROM FILES f JOIN (SELECT name, max(lastmod) as latest FROM files WHERE owner_id = '$uid' AND is_trashed=1 GROUP BY name) f2 ON f.lastmod = f2.latest and f.name = f2.name ORDER BY $sortBy";
+		$q = "SELECT f.* FROM files f JOIN (SELECT name, max(lastmod) as latest FROM files WHERE owner_id = '$uid' AND is_trashed=1 GROUP BY name) f2 ON f.lastmod = f2.latest and f.name = f2.name ORDER BY $sortBy";
 	} else {
-		$q = "SELECT f.* FROM FILES f JOIN (SELECT name, max(lastmod) as latest FROM files WHERE owner_id = '$uid' AND name COLLATE UTF8_GENERAL_CI LIKE '%$name%' GROUP BY name) f2 ON f.lastmod = f2.latest and f.name = f2.name ORDER BY $sortBy";
+		$q = "SELECT f.* FROM files f JOIN (SELECT name, max(lastmod) as latest FROM files WHERE owner_id = '$uid' AND name COLLATE UTF8_GENERAL_CI LIKE '%$name%' GROUP BY name) f2 ON f.lastmod = f2.latest and f.name = f2.name ORDER BY $sortBy";
 	}
 	if ($result = mysqli_query($db, $q)) {
 		$res = array();
@@ -1026,7 +1102,7 @@ if ($pageID == 'search') {
 		resp(500, "failed to load search results");
 	}
 }
-if ($pageID == 'share') {
+if ($pageID == 'make_public') {
 	$action = null;
 	if (isset($_POST['remove'])) {
 		$action = 'remove';
@@ -1048,7 +1124,7 @@ if ($pageID == 'share') {
 			} else {
 				$newid = getUniqLink();
 				$q = "INSERT INTO shared (owner_id,hash,points_to,is_public,shared_with) VALUES ('$uid','$newid','$hash','0','')";
-				$q2 = "UPDATE files SET is_shared=1 WHERE hash='$hash' AND owner_id='$uid'";
+				$q2 = "UPDATE files SET is_public=1, is_shared=1 WHERE hash='$hash' AND owner_id='$uid'";
 				if (mysqli_query($db, $q)) {
 					if (mysqli_query($db, $q2)) {
 						resp(200, $newid);
@@ -1063,7 +1139,7 @@ if ($pageID == 'share') {
 		}
 	} else if ($action === 'remove') {
 		$q = "DELETE FROM shared WHERE points_to='$hash' AND owner_id='$uid'";
-		$q2 = "UPDATE files SET is_shared=0 WHERE hash='$hash' AND owner_id='$uid'";
+		$q2 = "UPDATE files SET is_public=0, is_shared=0 WHERE hash='$hash' AND owner_id='$uid'";
 		if (mysqli_query($db, $q)) {
 			if (mysqli_query($db, $q2)) {
 				resp(200, "Unshared file or folder");
@@ -1100,8 +1176,11 @@ if($pageID == 'download') {
 		} else if ($type === 'file') {
 			//$files will be a CSV split into an array
 			$fil = $files[0];
-			$isShared = isShared($files[0]);
-			if (getOwner($files[0]) == $uid || $isShared) {
+			$isShared = true;
+			foreach ($files as $file) {
+				if (!isShared($file)) $isShared = false;
+			}
+			if ($isShared || getOwner($files[0]) == $uid) {
 				if (!Zip($files, $destination, $zipname)) resp(500, "Failed to zip files.");
 			} else {
 				//echo "You do not have access to these files.";
@@ -1110,6 +1189,8 @@ if($pageID == 'download') {
 			resp(500, 'unknown type: '.$type);
 		}
 		if(file_exists($zipname)) {
+			$fileSize = filesize($zipname);
+		    $maxSize = 2097152;//2MB
 			//echo $destination;
 		    header('Pragma: public');
 		    header('Expires: 0');
@@ -1117,12 +1198,23 @@ if($pageID == 'download') {
 		    header('Content-Type: application/octet-stream');
 		    header("Content-Description: File Transfer");
 		    header('Content-Disposition: attachment; filename="'.$n.'.zip"');
-		    header('Content-Length: ' . filesize($zipname));
+		    header('Content-Length: ' . $fileSize);
 		    header("Content-Transfer-Encoding: binary");
-		    ob_clean();
-			flush();
-		    readfile($zipname);
-		    //sleep(1);
+		    
+		    if ($fileSize > $maxSize) {
+			    $handle = fopen($zipname, 'rb');
+			    while (!feof($handle)) {
+			    	$buffer = fread($handle, $maxSize);
+        			echo $buffer;
+				   	ob_flush();
+	        		flush();
+			    }
+			    fclose($handle);
+			} else {
+			   	ob_clean();
+				flush();
+			   	readfile($zipname);
+			}
 		    //file should stay until it finishes downloading, then poof by itself
 		    //echo '<br>deleting ' . $destination . '<br>';
 		    @unlink($zipname);
@@ -1135,15 +1227,16 @@ if($pageID == 'download') {
 		$fileName = sanitize($_GET['id']);
 		$n = sanitize($_GET['name']);
 
-		$isShared = false;
-		//$isShared = isShared($fileName);
+		//$isShared = false;
+		$isShared = isShared($fileName);
 
-		if (getOwner($fileName) == $uid || $isShared) {
+		if ($isShared || getOwner($fileName) == $uid) {
 
 		$filePath = getPath($fileName);
 
 		    if(is_readable($filePath)) {
 		        $fileSize = filesize($filePath);
+		        $maxSize = 2097152;//2MB
 
 		        header('Content-Description: File Transfer');
 			    header('Content-Type: application/octet-stream');
@@ -1151,9 +1244,25 @@ if($pageID == 'download') {
 			    header('Expires: 0');
 			    header('Cache-Control: must-revalidate');
 			    header('Pragma: public');
-			    header('Content-Length: ' . filesize($filePath));
-			    ob_end_flush();
-			    readfile($filePath);
+			    header('Content-Length: ' . $fileSize);
+			    //ob_end_flush();
+
+			    if ($fileSize > $maxSize) {
+			    	$handle = fopen($filePath, 'rb');
+			    	while (!feof($handle)) {
+			    		$buffer = fread($handle, $maxSize);
+        				echo $buffer;
+				    	ob_flush();
+	        			flush();
+			    	}
+			    	fclose($handle);
+			    } else {
+			    	ob_clean();
+					flush();
+			    	readfile($filePath);
+			    }
+
+			    //download($filePath, $n);
 
 		        exit();
 		    }

@@ -68,13 +68,13 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     <![endif]-->
     <script src="../js/reloadr.js"></script>
     <script>
-    Reloadr.go({
+    /*Reloadr.go({
         client: [
             '../js/shared.js',
             '../css/shared.css'
         ],
         frequency: 1000
-    });
+    });*/
 </script>
   </head>
 <body>
@@ -151,14 +151,14 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
         </div>
         <section class="content">
             <div class="file">
-                <span class="file-name">File name</span>
+                <span class="file-name">Fetching...</span>
                 <!-- <span class="file-size">1000mb</span> -->
             </div>
-            <div>
-                <a class="btn" onclick="shared.download(shared_id)">Download</a>
-                <?php if ($logged_in) { ?>
+            <div class="inactive">
+                <a class="btn" onclick="shared.download()">Download</a>
+                <?php if ($logged_in && false) { ?>
                 or
-                <a class="btn" onclick="shared.copy(shared_id)">Copy to my files</a>
+                <a class="btn" onclick="shared.copy()">Copy to my files</a>
                 <?php } ?>
             </div>
         </section>

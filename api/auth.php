@@ -63,6 +63,7 @@ if($pageID == 'login') {
 			$_SESSION['foxfile_lastname'] = $row->lastname;
 			$_SESSION['foxfile_username'] = $row->firstname.' '.$row->lastname;
 			$_SESSION['foxfile_user_md5'] = md5($row->email);
+			$_SESSION['foxfile_max_storage'] = $row->total_storage;
 			echo 0;
 		} else {
 			echo 1;
@@ -96,7 +97,7 @@ if($pageID == 'new') {
 		if (!$gp || $v) {
 
 	        $email = sanitize($_POST['useremail']);  
-			$result = mysqli_query($db, "SELECT 1 from users where email = '$email' LIMIT 1");  
+			$result = mysqli_query($db, "SELECT PID from users where email = '$email' LIMIT 1");  
 			
 			if(mysqli_num_rows($result) > 0){  
 			    echo 2;
@@ -106,20 +107,21 @@ if($pageID == 'new') {
 				$userfirst = sanitize($_POST['userfirst']);
 				$userlast = sanitize($_POST['userlast']);
 				require '../plugins/hashids/Hashids.php';
-				$sql = "REPLACE INTO IDGEN (stub) VALUES ('a')";
+				$sql = "REPLACE INTO idgen (hashes) VALUES ('a')";
 				if ($result = mysqli_query($db, $sql)) {
 					$newIdObj = mysqli_insert_id($db);
 					$hashids = new Hashids\Hashids('foxfilesaltisstillbestsalt', 12);
 					$root_folder = $hashids->encode($newIdObj);
-					$sql = "INSERT INTO users (firstname, lastname, email, password, access_level, root_folder, total_storage, account_status)
+					$sql = "INSERT INTO users (firstname, lastname, email, password, access_level, root_folder, total_storage, account_status, theme)
 			                VALUES ('$userfirst',
 			                '$userlast',
 			                '$email',
 			                '$upass',
 			                '1',
 			                '$root_folder',
-			                '2147483648',
-			                'unverified')";
+			                2147483648,
+			                'unverified',
+			                'default')";
 					if (mysqli_query($db,$sql)) {
 						mkdir('../files/'.$root_folder.'/');
 						//mkdir('../trashes/'.$root_folder.'/');

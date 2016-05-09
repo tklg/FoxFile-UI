@@ -27,13 +27,18 @@ $dbname = "' . $dbname . '";
 	    $fp = fopen($db_config_path, "w");
         fwrite($fp, $string);
         fclose($fp);
+        mysqli_close($db);
 		echo 0;
 	} else {
 		echo mysqli_connect_error();
 	}
 } else if (isset($_POST['create_table_user'])) {
 	$db = mysqli_connect($dbhost,$dbuname,$dbupass,$dbname);
-    $sql = 'CREATE TABLE USERS (
+	if (mysqli_connect_errno()) {
+		echo mysqli_connect_error($db);
+		exit();
+	}
+    $sql = "CREATE TABLE users (
 	    PID INT NOT NULL AUTO_INCREMENT, 
 	    PRIMARY KEY(PID),
 	    firstname VARCHAR(128),
@@ -44,47 +49,59 @@ $dbname = "' . $dbname . '";
 		total_storage DOUBLE(100, 2),
 		account_status VARCHAR(32),
 	    access_level TINYINT,
-	    join_date DATETIME DEFAULT CURRENT_TIMESTAMP
-    ) charset=utf8';
-	if (mysqli_query($db, $sql)) {
-		//$db = mysqli_connect($dbhost,$dbuname,$dbupass,$dbname);
-		$sql = "CREATE TABLE IDGEN (
+	    join_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) charset=utf8 ENGINE=INNODB";
+		$sql1 = "CREATE TABLE idgen (
 			  PID bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			  PRIMARY KEY(PID),
 			  hashes char(1) NOT NULL DEFAULT '',
 			  UNIQUE(hashes)
-			)";
-		$sql2 = "CREATE TABLE LINKGEN (
+			) ENGINE=INNODB";
+		$sql2 = "CREATE TABLE linkgen (
 			  PID bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			  PRIMARY KEY(PID),
 			  hashes char(1) NOT NULL DEFAULT '',
 			  UNIQUE(hashes)
-			)";
-		if (mysqli_query($db, $sql)) {
+			) ENGINE=INNODB";
+	if (mysqli_query($db, $sql) && mysqli_query($db, $sql1) && mysqli_query($db, $sql2)) {
+		mysqli_close($db);
+		echo 0;
+		die();
+		/*$db = mysqli_connect($dbhost,$dbuname,$dbupass,$dbname);
+		if (mysqli_query($db, $sql1)) {
+			mysqli_close($db);
+			$db = mysqli_connect($dbhost,$dbuname,$dbupass,$dbname);
 			if (mysqli_query($db, $sql2)) {
+				mysqli_close($db);
 				echo 0;
 				die();
 			} else {
-				echo mysqli_error();
+				mysqli_close($db);
+				echo 502;
+				echo mysqli_error($db);
 			}
 		} else {
-			echo mysqli_error();
-		}
+			mysqli_close($db);
+			echo 501;
+			echo mysqli_error($db);
+		}*/
 	} else {
-		echo mysqli_error();
+		echo mysqli_error($db);
+		echo 500;
+		mysqli_close($db);
 	}
 } else if (isset($_POST['create_user'])) {
 	require '../plugins/hashids/Hashids.php';
 	$db = mysqli_connect($dbhost,$dbuname,$dbupass,$dbname);
 	$email = $_POST['useremail'];
 	$password = password_hash($_POST['userpass'], PASSWORD_BCRYPT);
-	$sql = "REPLACE INTO IDGEN (stub) VALUES ('a')";
+	$sql = "REPLACE INTO idgen (hashes) VALUES ('a')";
 	if ($result = mysqli_query($db, $sql)) {
 		$newIdObj = mysqli_insert_id($db);
 		$hashids = new Hashids\Hashids('foxfilesaltisstillbestsalt', 12);
 		$root_folder = $hashids->encode($newIdObj);
-		$total_storage = 5368709120;
-		$sql = "INSERT INTO USERS (firstname, email, password, root_folder, total_storage, account_status, access_level)
+		$total_storage = 2147483648;
+		$sql = "INSERT INTO users (firstname, email, password, root_folder, total_storage, account_status, access_level)
 	        VALUES (
 	        'Administrator',
 	        '$email',
@@ -95,18 +112,23 @@ $dbname = "' . $dbname . '";
 	        '5')";
 		if (mysqli_query($db, $sql)) {
 			mkdir('../files/'.$root_folder.'/');
+			mysqli_close($db);
 			//mkdir('../trashes/'.$root_folder.'/');
 			echo 0;
 			die();
 		} else {
-			echo mysql_error();
+			echo mysqli_error();
+			echo 504;
+			mysqli_close($db);
 		}
 	} else {
+		echo 503;
 		echo mysqli_error();
+		mysqli_close($db);
 	}
 } else if (isset($_POST['create_table_files'])) {
 	$db = mysqli_connect($dbhost,$dbuname,$dbupass,$dbname);
-	$sql = 'CREATE TABLE FILES (
+	$sql = 'CREATE TABLE files (
         PID INT NOT NULL AUTO_INCREMENT, 
         PRIMARY KEY(PID),
 		owner_id INT,
@@ -118,9 +140,9 @@ $dbname = "' . $dbname . '";
         is_trashed BOOLEAN DEFAULT 0,
         is_shared BOOLEAN DEFAULT 0,
         is_public BOOLEAN DEFAULT 0,
-        lastmod DATETIME DEFAULT CURRENT_TIMESTAMP,
+        lastmod TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         UNIQUE(PID,hash)
-        ) charset=utf8';
+        ) charset=utf8 ENGINE=INNODB';
     $q2 = "CREATE TABLE shared (
     	PID INT NOT NULL AUTO_INCREMENT,
     	PRIMARY KEY(PID),
@@ -130,9 +152,10 @@ $dbname = "' . $dbname . '";
     	is_public BOOLEAN DEFAULT 0,
     	shared_with VARCHAR(128),
     	UNIQUE(PID,hash)
-    	) charset=utf8";
-	if (mysqli_query($db, $sql)) {
-		if (mysqli_query($db, $q2)) {
+    	) charset=utf8 ENGINE=INNODB";
+	if (mysqli_query($db, $sql) && mysqli_query($db, $q2)) {
+		/*$db = mysqli_connect($dbhost,$dbuname,$dbupass,$dbname);
+		if (mysqli_query($db, $q2)) {*/
 		$string = '<?php 
 $dbuname = "' . $dbuname . '";
 $dbupass = "' . $dbupass . '";
@@ -143,13 +166,18 @@ $installed = true;
 	    $fp = fopen($db_config_path, "w");
         fwrite($fp, $string);
         fclose($fp);
+        mysqli_close($db);
 		echo 0;
 		die();	
-		} else {
-			echo mysqli_errno()
-		}
+		/*} else {
+			mysqli_close($db);
+			echo 506;
+			echo mysqli_error();
+		}*/
 	} else {
+		echo 505;
 		echo mysqli_error();
+		mysqli_close($db);
 	}
 //} else if (isset($_POST['create_table_files'])) { 
 } else {
@@ -288,7 +316,11 @@ $installed = true;
     });
     function install() {
     	openStat();
-    	$.post('index.php',
+    	if (done[0]) {
+    		install2();
+    		return;
+    	}
+    	$.post('index.php?connect_database',
 		{
 			connect_database: '',
 			dbuser: $('#dbuser').val(),
@@ -298,50 +330,70 @@ $installed = true;
 		},
 		function(errorcode) {
 			console.log(errorcode);
-			if (errorcode == 0 || done[0]) {
+			if (errorcode == 0) {
 				done[0] = true;
 				success(1);
-				$.post('index.php',
-				{
-					create_table_user: ''
-				},
-				function(errorcode) {
-					if (errorcode == 0 || done[1]) {
-						done[1] = true;
-						success(2)
-						$.post('index.php',
-						{
-							create_user: '',
-							useremail: $('#email').val(),
-							userpass: $('#userpass').val()
-						},
-						function(errorcode) {
-							if (errorcode == 0 || done[2]) {
-								done[2] = true;
-								success(3);
-								$.post('index.php',
-								{
-									create_table_files: ''
-								},
-								function(errorcode) {
-									if (errorcode == 0 || done[3]) {
-										done[3] = true;
-										success(4);
-										finish();
-									} else {
-										error(4, errorcode);
-									}
-								});
-							} else {
-								error(3, errorcode);
-							}
-						});
-					} else {
-						error(2, errorcode);
-					}
-				});
+				install2();
 			} else {
 				error(1, errorcode);
+			}
+		});
+    }
+    function install2() {
+    	if (done[1]) {
+    		install3();
+    		return;
+    	}
+    	$.post('index.php?create_table_user',
+			{
+			create_table_user: ''
+			},
+			function(errorcode) {
+			if (errorcode == 0) {
+			done[1] = true;
+			success(2);
+			install3();
+			} else {
+			error(2, errorcode);
+			}
+		});
+    }
+    function install3() {
+    	if (done[2]) {
+    		install4();
+    		return;
+    	}
+    	$.post('index.php?create_user',
+			{
+			create_user: '',
+			useremail: $('#email').val(),
+			userpass: $('#userpass').val()
+			},
+			function(errorcode) {
+			if (errorcode == 0) {
+			done[2] = true;
+			success(3);
+			install4();
+			} else {
+			error(3, errorcode);
+			}
+		});
+    }
+    function install4() {
+    	if (done[3]) {
+    		return;
+    	}
+    	$.post('index.php?create_table_files',
+			{
+			create_table_files: ''
+			},
+			function(errorcode) {
+			if (errorcode == 0) {
+			done[3] = true;
+			success(4);
+			finish();
+			} else {
+			error(4, errorcode);
 			}
 		});
     }

@@ -253,7 +253,8 @@ orange A100 #FF9E80
     flex-direction: column;
 }
 .content .file {
-	width: 280px;
+	/*width: 280px;*/
+	max-width: 80%;
 	height: 40px;
 	line-height: 40px;
 	display: flex;
@@ -275,4 +276,7 @@ orange A100 #FF9E80
 	float: right;
 	color: rgba(0,0,0,.54);
 	font-size: 14px;
+}
+.inactive {
+	display: none;
 }

@@ -51,14 +51,14 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     <![endif]-->
     <script src="js/reloadr.js"></script>
     <script>
-    Reloadr.go({
+    /*Reloadr.go({
         client: [
             'js/account.js',
             'css/foxfile.css',
             'css/account.css'
         ],
         frequency: 1000
-    });
+    });*/
 </script>
   </head>
 <body>
@@ -103,9 +103,9 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 				<li class="menubar-content floatb btn-ctrlbar active" id="account">
 					<i class="nocheckbox-icon mdi mdi-account"></i><span class="file-name">My account</span>
 				</li>
-				<li class="menubar-content floatb btn-ctrlbar" id="settings">
+				<!-- <li class="menubar-content floatb btn-ctrlbar" id="settings">
 					<i class="nocheckbox-icon mdi mdi-settings"></i><span class="file-name">Settings</span>
-				</li>
+				</li> -->
 				<li class="menubar-content floatb btn-ctrlbar" id="security">
 					<i class="nocheckbox-icon mdi mdi-security"></i><span class="file-name">Security</span>
 				</li>
@@ -211,14 +211,14 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
                         </li>
                         <li>
                             <input placeholder="And again" class="value" type="password" id="password2" />
-                            <button class="btn btn-save">change</button>
+                            <button class="btn btn-save" onclick="account.changePass();">change</button>
                         </li>
                     </ul>
                 </li>
                 <li>
                     <span class="property">Remove my account</span>
-                    <span class="value">This can not be undone.</span>
-                    <button class="btn btn-save">remove</button></label>
+                    <span class="value">This cannot be undone.</span>
+                    <button class="btn btn-save" onclick="account.confirmRemove()">remove</button></label>
                 </li>
             </ul>
         </section>

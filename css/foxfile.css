@@ -445,6 +445,7 @@ main {
 	/*margin-bottom: 1px;*/
 	/*box-shadow: 0 0 4px rgba(0,0,0,.14),0 4px 8px rgba(0,0,0,.28);*/
 	z-index: 15;
+	transition: background 0.15s ease-in-out;
 }
 .bar:last-of-type header {
 	background: white;
@@ -465,6 +466,7 @@ main {
 	overflow: hidden;
 	white-space: nowrap;
 	text-overflow: ellipsis;
+	transition: color 0.15s ease-in-out;
 }
 .bar.leftmost header .filename {
 	padding-left: 30px;
@@ -474,6 +476,7 @@ main {
 	height: 40px;
 	padding: 10px 20px;
 	font-size: 16px;
+	transition: color 0.15s ease-in-out;
 }
 .bar header .header-name,
 .bar header .header-email {
@@ -526,6 +529,7 @@ main {
 	right: 0;
 	bottom: 0;
 	font-size: 12px;
+	transition: color 0.15s ease-in-out;
 }
 .bar[type=folder]:last-of-type .file-det-header {
 	display: inline-block;
@@ -566,6 +570,7 @@ main {
 	line-height: 40px;
 	font-size: 15px;
 	display: flex;
+	/*transition: color 0.15s ease-in-out;*/
 	-webkit-touch-callout: none;-webkit-user-select: none;-khtml-user-select: none;-moz-user-select: none;-ms-user-select: none;user-select: none;
 }
 .bar[type=folder] li::before {
@@ -630,6 +635,24 @@ main {
 	color: rgba(0,0,0,.38);
 	right: 6px;
 }
+.bar.hovering header {
+	background: #FF5722;
+	color: white;
+}
+.bar.hovering header * {
+	color: white !important;
+}
+.menubar-content.hovering {
+	/*border: 1px solid #FF5722;
+	height: 38px !important;
+	width: calc(100% - 2px) !important;*/
+	background: #FF5722 !important;
+	color: white;
+}
+.menubar-content.hovering *,
+.menubar-content.hovering:after {
+	color: white !important;
+}
 .menubar-content .nocheckbox-icon {
 	display: inline-block;
 	line-height: 40px;
@@ -650,7 +673,7 @@ main {
 	flex: none;
 	margin: 3px 3px;
 	border-radius: 50%;
-	transition: all 0.15s ease-in-out;
+	/*transition: all 0.15s ease-in-out;*/
 }
 .menubar-content .file-multiselect-checkbox-container input[type=checkbox] {
 	display: none;

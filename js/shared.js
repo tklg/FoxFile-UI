@@ -23,6 +23,9 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
         var i = parseInt(Math.log(bytes) / Math.log(1024));
         return (bytes / Math.pow(1024, i)).toFixed(2) + ' ' + sizes[i];
     }
+    shared.hashes = [];
+    shared.type = 'file';
+    shared.name = '';
     shared.snackbar = {
         nextID: 0,
         timer: null,
@@ -95,12 +98,72 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
         }
     }
     shared.fetch = function(hash) {
-
+        $.ajax({
+            url: './../api/shared/fetch',
+            type: 'POST',
+            data: {
+                hash: hash
+            },
+            success: function(result, status, xhr) {
+                var json = JSON.parse(result);
+                var resp = json['response'];
+                var num = json['num_results'];
+                if (num > 0) {
+                    $('.content .file .file-name').text(
+                        resp[0]['name'] + 
+                        (resp.length > 1 ? ' and '+(resp.length - 1)+' others':'')
+                    );
+                    shared.name = resp[0]['name'];
+                    for (var i = 0; i < num; i++) {
+                        shared.hashes.push(resp[i]['hash']);
+                        if (resp[i]['type'] == '1') shared.type = 'folder';
+                    }
+                    $('.content .inactive').removeClass('inactive');
+                } else {
+                     $('.content .file .file-name').text('404');
+                }
+                $('.bar-shared').removeClass('loading');
+            },
+            error: function(xhr, status, e) {
+                fm.snackbar.create("Failed to fetch shared file");
+            }
+        });
     }
-    shared.download = function(hash) {
-
+    shared.download = function() {
+        var type = shared.type;
+        var name = shared.name;
+        var _id = shared.hashes[0];
+        if (shared.hashes.length > 1 || type == 'folder') {
+            var hashes = _.uniq(shared.hashes);
+            var frame = $("<iframe></iframe>").attr('src', './../api/files/download?hashlist='+hashes.toString()+"&name="+name+"&type="+type).attr('id', _id).css('display', 'none');
+            frame.appendTo('body');
+            setTimeout(function() {
+                $('body > iframe#'+_id).remove();
+            }, 10000);
+            shared.snackbar.create("Downloading files");
+        } else {
+            var frame = $("<iframe></iframe>").attr('src', './../api/files/download?id='+_id+"&name="+name).attr('id', _id).css('display', 'none');
+            frame.appendTo('body');
+            setTimeout(function() {
+                $('body > iframe#'+_id).remove();
+            }, 10000);
+            shared.snackbar.create("Downloading file");
+        }
     }
-    shared.copy = function(hash) {
-
+    shared.copy = function() {
+        var hashes = _.uniq(shared.hashes);
+        $.ajax({
+            url: './../api/shared/copy',
+            type: 'POST',
+            data: {
+                hashlist: hashes.toString()
+            },
+            success: function(result, status, xhr) {
+                fm.snackbar.create("Copied file", 'view', 'document.location.href=\'./../browse\'')
+            },
+            error: function(xhr, status, e) {
+                fm.snackbar.create("Failed to copy file");
+            }
+        });
     }
 })(window.shared = window.shared || {}, jQuery);

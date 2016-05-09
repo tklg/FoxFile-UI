@@ -117,7 +117,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     		$('.error-email').removeClass('active');
 
             if (passMatch) {
-                $.post('./api/user/new',
+                $.post('./api/auth/new',
                     {
                         useremail: $('#email').val(),
                         userpass: $('#password').val(),

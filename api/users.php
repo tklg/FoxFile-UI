@@ -134,12 +134,27 @@ if ($pageID == 'update') {
 		$_SESSION['foxfile_email'] = $val;
 		$_SESSION['foxfile_user_md5'] = md5($val);
 		$q = "UPDATE users SET email='$val' WHERE root_folder='$id' LIMIT 1";
+	} else if (isset($_POST['pass'])) {
+		$p = sanitize($_POST['pass']);
+		$p2 = sanitize($_POST['pass2']);
+		if ($p !== $p2) {
+			resp(422, "passwords do not match");
+		}
+		if ($p == '') {
+			resp(422, 'password cannot be blank');
+		}
+		$pass = password_hash($p, PASSWORD_BCRYPT);
+
+		$q = "UPDATE users SET password='$pass' WHERE PID='$uid' LIMIT 1";
 	}
 	if (mysqli_query($db, $q)) {
 		resp(200, 'updated '.$val);
 	} else {
 		resp(500, "failed to update user");
 	}
+}
+if ($pageID == 'recover') {
+	
 }
 
 mysqli_close($db);

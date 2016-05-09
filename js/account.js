@@ -245,6 +245,42 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
             account.snackbar.create("Please enter a valid email");
         }
     }
+    account.changePass = function() {
+        var pass = $('#password').val();
+        var pass2 = $('#password2').val();
+        if (pass != pass2) {
+            account.snackbar.create("Passwords do not match");
+            return;
+        }
+        if (pass == '') {
+            account.snackbar.create("Password cannot be blank");
+            return;
+        }
+        $('.bar-security').addClass('loading');
+        $('.btn-save').blur();
+        $.ajax({
+            type: "POST",
+            url: "./api/users/update",
+            data: {
+                id: 'me',
+                pass: pass,
+                pass2: pass2
+            },
+            success: function(result) {
+                $('.bar-security').removeClass('loading');
+                account.snackbar.create("Changed password");
+                $('#password').val('');
+                $('#password2').val('');
+            },
+            error: function(request, error) {
+                account.snackbar.create("Failed to save changes");
+            }
+        });
+    }
+    account.confirmRemove = function() {
+        $('.btn-save').blur();
+        account.snackbar.create("There is still no escape yet");
+    }
     $(document).on('click', '.btn-ctrlbar', function(e) {
         account.routerbox.router.navigate($(this).attr('id'), {trigger: true, replace: true});
     });

@@ -13,6 +13,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     Copyright (C) 2016 Theodore Kluge
     https://tkluge.net
 */
+
 (function(foxfile, $, undefined) {
     foxfile.init = function(){
         page.init();
@@ -183,6 +184,8 @@ header3 font
     fm.hashToRestore = '';
     fm.searching = false;
     fm.simultaneousUploads = 1;
+    fm.uploadSizeLimit = 2097152; //2MB, php default
+    fm.uploadChunkSize = 2097152;
     var hashTree = [];
     var fileTree = [];
     var currentFilePath = '';
@@ -379,7 +382,7 @@ header3 font
     fm.moveToFitCurrentlyActive = function() {
         if (fileTree.length > this.numBarsCanBeActive) {
             $('.file-manager').css({
-                'left': -1 * this.barWidth * (fileTree.length - this.numBarsCanBeActive) + 'px'
+                'left': -1 * this.barWidth * (fileTree.length - this.numBarsCanBeActive) - 2 + 'px'
             });
             //console.log("Moving file manager " + -1 * this.barWidth * (fileTree.length - this.numBarsCanBeActive) + 'px to the left (' + (fileTree.length - this.numBarsCanBeActive) + ' bars)');
         } else {
@@ -525,7 +528,8 @@ header3 font
             this.fn = 'fm.dialog.minibar.load(\''+hash+'\',\''+name+'\')';
         },
         hideCurrentlyActive: function() {
-            this.dialog.hide();
+            if (this.dialog)
+                this.dialog.hide();
         },
         rename: {
             id: '',
@@ -944,7 +948,7 @@ header3 font
         //this will definitely exist SOMEWHERE
         var type = $('.menubar-content[hash='+id+']').attr('type');
         if (type != 'folder') type = 'file';
-        if (fm.multiSelect.selected.length > 0 || type == 'folder') {
+        if (fm.multiSelect.selected.length > 1 || type == 'folder') {
             if (fm.multiSelect.selected.length > 0) {
                 var hashes = _.uniq(fm.multiSelect.selected);
             } else {
@@ -1002,7 +1006,7 @@ header3 font
     }
     fm.share = function(file, id) {
         $.ajax({
-            url: './api/files/share',
+            url: './api/files/make_public',
             type: 'POST',
             data: {
                 hash: id
@@ -1025,7 +1029,7 @@ header3 font
     }
     fm.unshare = function(file, id) {
         $.ajax({
-            url: './api/files/share',
+            url: './api/files/make_public',
             type: 'POST',
             data: {
                 remove: id
@@ -1344,11 +1348,12 @@ header3 font
                 if (this.offset == 0) {
                     $('#bar-'+this.hash+' .file-list').empty();
                 }
-                for (i = 0; i < this.files.length; i++) {
+                for (var i = 0; i < this.files.length; i++) {
                     $('#bar-'+this.hash+' .file-list').append(template(this.files[i]));
                     var _this = this;
                     var _i = i;
-                    $("#bar-" + this.hash + " .file-list li[hash="+this.files[i].hash+"]").draggable({
+                    var targetHash = this.files[i].hash;
+                    $("#bar-" + this.hash + " .file-list li[hash="+targetHash+"]").draggable({
                         opacity: 1,
                         helper: "clone",
                         revert: 'invalid',
@@ -1359,8 +1364,8 @@ header3 font
                         appendTo: 'body',
                         distance: 6,
                         scroll: false,
-                        start: function(e, ui) {
-                            $("li[hash="+_this.files[_i].hash+"]").css({
+                        start: function(e, ui) {   
+                            $("li[hash="+targetHash+"]").css({
                                 '-webkit-transition': 'none',
                                 'transition': 'none'
                             });
@@ -1371,7 +1376,7 @@ header3 font
                             //currentDraggingFolder = '';
                         },
                         stop: function(e, ui) {
-                            $("li[hash="+_this.files[_i].hash+"]").css({
+                            $("li[hash="+targetHash+"]").css({
                                 '-webkit-transition': 'all .15s ease-in-out',
                                 'transition': 'all .15s ease-in-out'
                             });
@@ -1379,20 +1384,24 @@ header3 font
                         }
                     });
                     if (this.files[i].type == 'folder') {
-                        var _this = this.files[i];
-                        $('#bar-' + this.hash + ' .file-list #folder-'+this.files[i].hash).droppable({
-                            hoverClass: 'dragdrop-hover',
+                        dd.addSmallListener(this.files[i]);
+                        $(".file-list li[hash="+targetHash+"]").droppable({
+                            hoverClass: 'hovering',
                             tolerance: 'pointer',
                             greedy: true,
                             drop: function(e, ui) {
+                                e.stopPropagation();
+                                e.preventDefault();
+                                var target = $(this).attr('hash');
+                                console.log("#bar-" + _this.hash + " .file-list li[hash="+target+"]");
                                 if (fm.multiSelect.selected.length > 0) {
                                     hash = fm.multiSelect.selected;
                                 } else {
-                                    hash = [$(ui.helper).attr('hash')];
+                                    hash = [$(ui.draggable).attr('hash')];
                                 }
                                 var hashes = _.uniq(hash);
                                 var hashlist = hashes.toString();
-                                var target = _this.hash;
+                                console.log(hashlist, target);
                                 if (_.contains(hashes, target))
                                     fm.snackbar.create("Cannot move a folder into itself");
                                 else if ($('#bar-' + _this.parent + ' .file-list').children('[hash='+hashes[0]+']').length == 0)
@@ -1425,9 +1434,17 @@ header3 font
             }
             if (this.hash != 'search') {
                 $('#bar-' + this.hash + ' .file-list').droppable({
-                    hoverClass: 'dz-drag-hover',
                     tolerance: 'pointer',
+                    over: function(e, ui) {
+                        if ($('#bar-'+_this.hash+' .file-list').children('li.hovering').length == 0) {
+                            $('#bar-'+_this.hash).addClass('hovering');
+                        }
+                    },
+                    out: function(e, ui) {
+                        $('#bar-'+_this.hash).removeClass('hovering');
+                    },
                     drop: function(event, ui) {
+                        $('#bar-'+_this.hash).removeClass('hovering');
                         if (fm.multiSelect.selected.length > 0) {
                             hash = fm.multiSelect.selected;
                         } else {
@@ -1445,7 +1462,7 @@ header3 font
             }
         }
         this.setWidth = function(size) {
-            console.log("Sizing bar " + this.hash + " to " + size + 'px');
+            //console.log("Sizing bar " + this.hash + " to " + size + 'px');
             $('#bar-'+this.hash).css({
                 'width': size + 'px'
             });
@@ -1639,8 +1656,7 @@ header3 font
         this.canPreview = isPreviewable(this);
         this.lastmod = new Date(lastmod);
         this.shared = shared == '0' ? false : true;
-        //this.public = public == '0' ? false : true;
-        this.public = shared == '0' ? false : true;
+        this.public = public == '0' ? false : true;
         this.type = isFolder == '0' ? 'file' : 'folder';
         this.btype = this.type;
         this.getName = function() {return this.name;}
@@ -1803,11 +1819,13 @@ header3 font
         $('body').append('<input type="file" name="files[]" class="dd-input-hidden" id="dd-file-upload" multiple="" />');
         $('#dd-file-upload').on('change', function(e) {
             cm.destroy();
+            internal = false;
             fileDragDrop(e.originalEvent, this);
         });
         $('body').append('<input type="file" name="files[]" class="dd-input-hidden" id="dd-folder-upload" webkitdirectory directory multiple />');
         $('#dd-folder-upload').on('change', function(e) {
             cm.destroy();
+            internal = false;
             fileDragDrop(e.originalEvent, this);
         });
         queue = new TreeQueue();
@@ -1824,27 +1842,76 @@ header3 font
     }
     dd.addListener = function(folder) {
         var hash = folder.getHash();
-        console.log("Adding DragDrop listeners to " + hash);
+        //console.log("Adding DragDrop listeners to " + hash);
         $('.bar#bar-'+hash).on('dragover dragenter', function(e) {
             e.preventDefault();
+            //e.stopPropagation();
             if (!hovering) {
                 e = e.originalEvent;
-                if (e.dataTransfer) internal = false;
+                if (e.dataTransfer) {
+                    internal = false;
+                }
                 hovering = true;
                 fileDragHover(e, this);
+                console.log("Hover entered bar " + $(this).attr('hash'));
+                $('#bar-'+$(this).attr('hash')).addClass('hovering');
             }
         });
-        $('.bar#bar-'+hash).on('dragleave dragend drop', function(e) {
+        $('.bar#bar-'+hash).on('dragleave dragend', function(e) {
             e.preventDefault();
+            //e.stopPropagation();
             e = e.originalEvent;
             hovering = false;
             internal = true;
             fileDragLeave(e, this);
+            console.log("Hover left bar " + $(this).attr('hash'));
+            $('#bar-'+$(this).attr('hash')).removeClass('hovering');
         });
         $('.bar#bar-'+hash).on('drop', function(e) {
             e.preventDefault();
+            //e.stopPropagation();
             e = e.originalEvent;
+            hovering = false;
             fileDragDrop(e, this);
+            console.log("Dropped a file on " + $(this).attr('hash'));
+            $('#bar-'+$(this).attr('hash')).removeClass('hovering');
+        });
+    }
+    dd.addSmallListener = function(file) {
+        var hash = file.getHash();
+        //console.log("Adding DragDrop listeners to " + hash);
+        $('.menubar-content#file-'+hash).on('dragover dragenter', function(e) {
+            e.preventDefault();
+            //e.stopPropagation();
+            if (!hovering) {
+                e = e.originalEvent;
+                if (e.dataTransfer) {
+                    internal = false;
+                }
+                hovering = true;
+                fileDragHover(e, this);
+                //console.log("Hover entered folder " + $(this).attr('hash'));
+                $('.menubar-content#file-'+$(this).attr('hash')).addClass('hovering');
+            }
+        });
+        $('.menubar-content#file-'+hash).on('dragleave dragend', function(e) {
+            e.preventDefault();
+            //e.stopPropagation();
+            e = e.originalEvent;
+            hovering = false;
+            internal = true;
+            fileDragLeave(e, this);
+            //console.log("Hover left folder " + $(this).attr('hash'));
+            $('.menubar-content#file-'+$(this).attr('hash')).removeClass('hovering');
+        });
+        $('.menubar-content#file-'+hash).on('drop', function(e) {
+            e.preventDefault();
+            //e.stopPropagation();
+            e = e.originalEvent;
+            hovering = false;
+            fileDragDrop(e, this);
+            console.log("Dropped a file on " + $(this).attr('hash'));
+            $('.menubar-content#file-'+$(this).attr('hash')).removeClass('hovering');
         });
     }
     function fileDragHover(e, elem) {
@@ -1857,42 +1924,44 @@ header3 font
             if (fm.getHashTree()[i] == hash) 
                 barItem = fm.getFileTree()[i];
         }
-        console.log("Hover entered bar " + barItem.getHash());
-        $('#bar-'+hash).addClass('hovering');
-        if (!internal) { // uploading a new file or folder  
-            console.log('new');
-        } else { // moving a file or folder
-            console.log('move');
-        }
     }
     function fileDragLeave(e, elem) {
         e.stopPropagation();
         e.preventDefault();
         //timer = window.setTimeout(function() {
-            var hash = $(elem).attr('hash');
+            /*var hash = $(elem).attr('hash');
             var barItem;
             for (i = 0; i < fm.getHashTree().length; i++) {
                 if (fm.getHashTree()[i] == hash) 
                     barItem = fm.getFileTree()[i];
-            }
-            console.log("Hover left bar " + barItem.getHash());
-            $('#bar-'+barItem.getHash()).removeClass('hovering');
+            }*/
         //}, 25);
     }
     function fileDragDrop(e, elem) {
-        console.log("Dropped a file on " + $(elem).attr('hash'));
         e.stopPropagation();
         e.preventDefault();
         var hash = $(elem).attr('hash');
-        var parent;
-        for (i = 0; i < fm.getHashTree().length; i++) {
-            if (fm.getHashTree()[i] == hash) 
-                parent = fm.getFileTree()[i];
-        }
-        $('#bar-'+parent.getHash()).removeClass('hovering');
+        var parent = $(elem).attr('parent');
+        //var parent;
+        console.log(internal);
+        if (internal) return;
+        /*if ($(elem).is('li')) {
+            par = $(elem).attr('parent');
+            for (i = 0; i < fm.getHashTree().length; i++) {
+                if (fm.getHashTree()[i] == par) 
+                    parent = fm.getFileTree()[i];
+            }
+        } else {*/
+            /*for (i = 0; i < fm.getHashTree().length; i++) {
+                if (fm.getHashTree()[i] == hash) 
+                    parent = fm.getFileTree()[i];
+            }*/
+        //}
         var nextAvailablePositionInQueue = queue.getNextPos();
-        var tempFolder = new Folder(nextAvailablePositionInQueue, parent.getName(), parent.getHash(), parent.getParent(), true);
-        tempFolder.hash = parent.getHash();
+        var parentParent = $('#bar-'+parent).attr('parent');
+        var parentName = $('#bar-'+parent).attr('name');
+        var tempFolder = new Folder(nextAvailablePositionInQueue, parentName, parent, parentParent, true);
+        tempFolder.hash = hash;
         //console.log("next available tree queue position: " + nextAvailablePositionInQueue);
         queue.add(tempFolder);
 
@@ -1964,6 +2033,7 @@ header3 font
             var c = $('#dd-folder-upload');
             c.replaceWith(c = c.clone(true));    
         }
+        internal = true;
     }
     /* the file inputs need this because they dont fire the same events that drop does */
     /* and there is apparently a bug where the webkitEntry list is always empty. */
@@ -1979,7 +2049,7 @@ header3 font
             var path = file.path;
             if (path == '' && !_.contains(dd.ignoredFiles, file.name)) {
                 //console.log("%cfound file to add: " + file.name + ", adding to " + parent.name, "color: green;");
-                if (file.size > 20971520) { // 20MB
+                if (file.size > fm.uploadSizeLimit) {
                     parent.addChild(new ChunkedFile(posInQueue, file, file.name, path, parent));
                 } else {
                     parent.addChild(new SmallFile(posInQueue, file, file.name, path, parent));
@@ -2028,7 +2098,7 @@ header3 font
                 if (!_.contains(dd.ignoredFiles, file.name)) {
                     //console.log("%cfound file to add: " + file.name + ", adding to " + parent.name, "color: green;");
                     console.log('size: ' + file.size);
-                    if (file.size > 20971520) { // 20MB
+                    if (file.size > fm.uploadSizeLimit) {
                         parent.addChild(new ChunkedFile(posInQueue, file, file.name, path, parent));
                     } else {
                         parent.addChild(new SmallFile(posInQueue, file, file.name, path, parent));
@@ -2352,8 +2422,9 @@ header3 font
     }
     function ChunkedFile(posInQueue, item, name, path, parent) {
         this.chunkQueue = [];
-        this.chunkSize = 5242880; // 5MB
+        this.chunkSize = fm.uploadChunkSize;
         this.chunkOffset = 0;
+        this.numChunks = 0;
         this.posInQueue = posInQueue;
         this.item = item;
         this.name = name;
@@ -2391,9 +2462,10 @@ header3 font
                         var json = JSON.parse(result);
                         _this.hash = json.message;
                         var chunks = Math.ceil(_this.item.size / _this.chunkSize);
-                        console.log('fileSize: '+_this.item.size);
+                        _this.numChunks = chunks;
+                        /*console.log('fileSize: '+_this.item.size);
                         console.log("Chunks: "+chunks);
-                        console.log("Chunksize: "+_this.chunkSize);
+                        console.log("Chunksize: "+_this.chunkSize);*/
                         /* var file = $('#uploadFile')[0].files[0];
           var chunkSize = 1024 * 1024;
           var fileSize = file.size;
@@ -2412,15 +2484,17 @@ header3 font
               chunk++;
           }*/
 
-                        for (var chunk = 0; chunk <= chunks; chunk++) {
-                            //console.log("chunk: "+chunk);
+                        for (var chunk = 0; chunk < chunks; chunk++) {
+/*                            console.log("chunkoffset: "+_this.chunkOffset);
+                            console.log('chunkSize:'+_this.chunkSize);*/
                             _this.chunkQueue.push(new Chunk(
                                 _this,
+                                chunk,
                                 _this.id,
                                 _this.hash,
                                 _this.chunkOffset, 
                                 _this.chunkSize,
-                                _this.item.slice(_this.chunkOffset, _this.chunkSize),
+                                _this.item.slice(_this.chunkOffset, _this.chunkOffset+_this.chunkSize),
                                 _this.updateProgress
                                 ));
                             _this.chunkOffset += _this.chunkSize;
@@ -2453,8 +2527,9 @@ header3 font
             sf.progress += prog;
             var progress = sf.progress;
             var total = sf.item.size;
+            //console.log('updateProgress: '+progress+"/"+total+" ("+progress / total + '%)');
             elem.css({
-                width: progress / total + '%'
+                width: (progress / total) * 100 + '%'
             }).attr({value: progress, max: total});
         }
         this.upload = function(failed, self) {
@@ -2468,8 +2543,7 @@ header3 font
                     type: 'POST',
                     url: './api/files/new_file_chunk',
                     data: {
-                        start: _self.hash,
-                        parent: _self.parent.hash
+                        start: _self.hash
                     },
                     beforeSend: function() {
                         $('#transfers .file-list #tfile-'+_self.id).addClass('active');
@@ -2496,7 +2570,10 @@ header3 font
                         url: './api/files/new_file_chunk',
                         data: {
                             finish: _self.hash,
-                            parent: _self.parent.hash
+                            parent: _self.parent.hash,
+                            name: _self.name,
+                            size: _self.item.size,
+                            num: _self.numChunks
                         },
                         success: function(result, status, xhr) {
                             $('#transfers .file-list #tfile-'+_self.id).removeClass('active').addClass('upload-success');
@@ -2521,8 +2598,7 @@ header3 font
                         type: 'POST',
                         url: './api/files/new_file_chunk',
                         data: {
-                            remove: _self.hash,
-                            parent: _self.parent.hash
+                            remove: _self.hash
                         },
                         success: function(result, status, xhr) {
                         },
@@ -2557,8 +2633,9 @@ header3 font
             linearQueue.add(this);
         }
     }
-    function Chunk(sf, id, hash, offset, length, content, onProgress) {
+    function Chunk(sf, num, id, hash, offset, length, content, onProgress) {
         this.sf = sf;
+        this.num = num;
         this.id = id;
         this.hash = hash;
         this.offset = offset;
@@ -2566,13 +2643,14 @@ header3 font
         this.content = content;
         this.state = 0;
         this.onProgress = onProgress;
+        this.prev = 0;
         this.send = function(onfinish, self) {
             self.state = 1;
             var formData = new FormData();
             formData.append('append', self.hash);
-            formData.append('offset', self.offset);
+            formData.append('num', self.num);
             formData.append('length', self.length);
-            console.log(self.content);
+            //console.log(self.content);
             formData.append('data', self.content);
             $.ajax({
                 xhr: function() {
@@ -2582,7 +2660,9 @@ header3 font
                     if(xhr.upload){
                         xhr.upload.addEventListener('progress', function(e) {
                             if(e.lengthComputable) {
-                                self.onProgress(e.loaded, self.sf);
+                                var diff = e.loaded - self.prev;
+                                self.prev = e.loaded;
+                                self.onProgress(diff, self.sf);
                             }
                         }, false);
                     }
@@ -2594,7 +2674,7 @@ header3 font
                 processData: false,
                 contentType: false,
                 success: function(result, status, xhr) {
-                    console.log("Upload success response: " + result);
+                    //console.log("Upload success response: " + result);
                     onfinish(false, self.sf);
                     self.state = 2;
                 },

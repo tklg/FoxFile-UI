@@ -52,13 +52,13 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     <![endif]-->
     <script src="js/reloadr.js"></script>
     <script>
-    Reloadr.go({
+    /*Reloadr.go({
         client: [
             'js/foxfile.js',
             'css/foxfile.css'
         ],
         frequency: 1000
-    });
+    });*/
 </script>
   </head>
 <body>
