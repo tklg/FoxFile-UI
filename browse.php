@@ -204,6 +204,9 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 	</div>
 	<nav class="file-list">
 	</nav>
+	<section class="file-history">
+
+	</section>
 </section>
 </script>
 <script type="text/template" id="fm-file">

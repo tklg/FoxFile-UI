@@ -25,18 +25,71 @@ if (strpos($uri, '/') !== false) {
 } else {
     $pageID = substr($uri, 1);
 }
+if (strpos($pageID, '?') !== false) {
+	$uri = explode('?', $pageID);
+	$pageID = $uri[0];
+}
 
 //connect to database  
 $db = mysqli_connect($dbhost,$dbuname,$dbupass,$dbname);
 
 date_default_timezone_set('America/New_York');
 
+function resp($code, $message) {
+	http_response_code($code);
+	$res = array(
+		'status' => $code,
+		'message' => $message
+	);
+	echo json_encode($res);
+	die();
+}
 function sanitize($s) {
 	global $db;
 	return htmlentities(br2nl(mysqli_real_escape_string($db, $s)), ENT_QUOTES);
 }
 function br2nl($s) {
     return preg_replace('/\<br(\s*)?\/?\>/i', "\n", $s);
+}
+function sendVerification($email) {
+	global $db;
+	require_once './../includes/mailconf.php';
+	$q = "SELECT account_status FROM users WHERE email='$email' LIMIT 1";
+	if ($res = mysqli_query($db, $q)) {
+
+		$link = mysqli_fetch_object($res)->account_status;
+		if ($link == 'verified') {
+			resp(500, 'Your email is already verified');
+		}
+
+		//$cdir = 
+		$link = $_SERVER['HTTP_HOST']."/foxfile/verify?key=".$link.'&from='.$email;
+		require_once './../plugins/phpmailer/PHPMailerAutoload.php';
+
+		$mail = new PHPMailer;
+		$mail->isSMTP();
+		$mail->Host = $mailhost;
+		$mail->SMTPAuth = true;
+		$mail->Username = $mailuser;
+		$mail->Password = $mailkey;
+		$mail->SMTPSecure = 'tls';
+
+		$mail->setFrom('foxfile@'.$_SERVER['HTTP_HOST'], 'FoxFile');
+		$mail->addAddress($email);
+		//$mail->isHTML(true);
+
+		$mail->Subject = 'FoxFile email verification';
+		$mail->msgHTML('Click link to verify your email:<br><a href="'.$link.'">'.$link.'</a>');
+		$mail->AltBody = 'Copy/paste link into the address bar to verify your email: '.$link;
+
+		if (!$mail->send()) {
+			resp(500, "Failed to send mail: ".$mail->ErrorInfo);
+		} else {
+			resp(200, "Sent mail");
+		}
+	} else {
+		resp(500, 'failed to fetch link');
+	}
 }
 if($pageID == 'userexists') {
 	$useremail = sanitize($_POST['useremail']);
@@ -55,6 +108,10 @@ if($pageID == 'login') {
 		$passToMatch = $row->password;
 		$password = $_POST['userpass'];
 		if (password_verify($password, $passToMatch)) {
+			session_destroy();
+			foreach ($_SESSION as $value)
+				$value = null;
+			session_start();
 			$_SESSION['foxfile_access_level'] = $row->access_level;
 			$_SESSION['foxfile_uid'] = $row->PID;
 			$_SESSION['foxfile_email'] = $useremail;
@@ -112,7 +169,13 @@ if($pageID == 'new') {
 					$newIdObj = mysqli_insert_id($db);
 					$hashids = new Hashids\Hashids('foxfilesaltisstillbestsalt', 12);
 					$root_folder = $hashids->encode($newIdObj);
-					$sql = "INSERT INTO users (firstname, lastname, email, password, access_level, root_folder, total_storage, account_status, theme)
+					$bytes;
+					if (function_exists('random_bytes'))
+						$bytes = bin2hex(random_bytes(20));
+					else 
+						$bytes = bin2hex(openssl_random_pseudo_bytes(20));
+
+					$sql = "INSERT INTO users (firstname, lastname, email, password, access_level, root_folder, total_storage, account_status)
 			                VALUES ('$userfirst',
 			                '$userlast',
 			                '$email',
@@ -120,16 +183,16 @@ if($pageID == 'new') {
 			                '1',
 			                '$root_folder',
 			                2147483648,
-			                'unverified',
-			                'default')";
+			                '$bytes')";
 					if (mysqli_query($db,$sql)) {
 						mkdir('../files/'.$root_folder.'/');
+						sendVerification($email);
 						//mkdir('../trashes/'.$root_folder.'/');
 						echo 0;
 						die();
 			        } else {
 			        	//echo mysqli_error($db);
-			            echo 5;
+			            echo 6;
 			            die();
 			        }
 			    } else {
@@ -141,23 +204,104 @@ if($pageID == 'new') {
 			echo 4;
 		}
 }
-if($pageID == 'newpass') {
-	$passC = sanitize($_POST['checkpass']);
-	$passN = sanitize($_POST['newpass']);
-	$passNCrypt = password_hash($passN, PASSWORD_BCRYPT);
+if ($pageID == 'send_verification') {
+	if (!isset($_POST['email']) || !isset($_POST['extra'])) {
+		resp(422, 'email address required');
+	}
+	$email = sanitize($_POST['email']);
+	sendVerification($email);
+}
+if ($pageID == 'send_recovery') {
+	require_once './../includes/mailconf.php';
+	if (!isset($_POST['email']) || !isset($_POST['extra'])) {
+		resp(422, 'email address required');
+	}
+	$email = sanitize($_POST['email']);
 
-	$user = mysqli_query($db, "SELECT pass from users where PID = '$uid'");
-	$row = mysqli_fetch_array($user);
-	$passToMatch = $row['pass'];
+	$bytes;
+	if (function_exists('random_bytes'))
+		$bytes = bin2hex(random_bytes(40));
+	else 
+		$bytes = bin2hex(openssl_random_pseudo_bytes(40));
+	$_SESSION['foxfile_recovery_nonce'] = $bytes;
 
-	if (password_verify($passC, $passToMatch)) {
-		if (mysqli_query($db, "UPDATE users SET pass = '$passNCrypt' WHERE PID = '$uid'")) {
-			echo "Password changed.";
+	$link = $_SERVER['HTTP_HOST']."/foxfile/passchange?key=".$bytes.'&from='.$email;
+	require_once './../plugins/phpmailer/PHPMailerAutoload.php';
+
+	$mail = new PHPMailer;
+	$mail->isSMTP();
+	$mail->Host = $mailhost;
+	$mail->SMTPAuth = true;
+	$mail->Username = $mailuser;
+	$mail->Password = $mailkey;
+	$mail->SMTPSecure = 'tls';
+	$mail->SMTPDebug = 2;
+
+	$mail->setFrom('foxfile@'.$_SERVER['HTTP_HOST'], 'FoxFile');
+	$mail->addAddress($email);
+	//$mail->isHTML(true);
+
+	$mail->Subject = 'FoxFile password reset';
+	$mail->msgHTML('Click link to reset your password:<br><a href="'.$link.'">'.$link.'</a>');
+	$mail->AltBody = 'Copy/paste link into the address bar to reset your password: '.$link;
+
+	if (!$mail->send()) {
+		resp(500, "Failed to send mail: ".$mail->ErrorInfo);
+	} else {
+		resp(200, "Sent mail");
+	}
+
+}
+if ($pageID == 'verify') {
+	if (!isset($_GET['key']) || !isset($_GET['from'])) {
+		resp(422, 'missing parameters');
+	}
+	$key = sanitize($_GET['key']);
+	$email = sanitize($_GET['from']);
+
+	$q = "SELECT account_status FROM users WHERE email='$email' LIMIT 1";
+	if ($res = mysqli_query($db, $q)) {
+		if (mysqli_num_rows($res) == 0) {
+			resp(400, "Verification failed - invalid email");
+		}
+		if (mysqli_fetch_object($res)->account_status == $key) {
+			$q = "UPDATE users SET account_status='verified' WHERE email='$email' LIMIT 1";
+			if (mysqli_query($db, $q)) {
+				if (isset($_SESSION['foxfile_uid'])) $loc = 'account';
+				else $loc = 'login';
+
+				header('Location: '.$loc);
+			}
 		} else {
-			echo "Password change failed.";
+			resp(400, "Verification failed - invalid key");
 		}
 	} else {
-		echo "Current password is incorrect.";
+		resp(500, "Verification failed - database error");
 	}
+}
+if ($pageID == 'recover') {
+	if (!isset($_POST['key']) || !isset($_POST['from']) || !isset($_POST['pass']) || !isset($_POST['pass2'])) {
+		resp(422, 'missing parameters');
+	}
+	$key = sanitize($_POST['key']);
+	$email = sanitize($_POST['from']);
+
+	if (!isset($_SESSION['foxfile_recovery_nonce']) || $key !== $_SESSION['foxfile_recovery_nonce']) resp(400, "Invalid key");
+	unset($_SESSION['foxfile_recovery_nonce']);
+
+	$pass = sanitize($_POST['pass']);
+	$pass2 = sanitize($_POST['pass2']);
+	if ($pass == '') resp(400, 'password cannot be blank');
+	if ($pass !== $pass2) resp(400, "passwords do not match");
+
+	$pass = password_hash($pass, PASSWORD_BCRYPT);
+
+	$q = "UPDATE users SET password='$pass' WHERE email='$email' LIMIT 1";
+	if (mysqli_query($db, $q)) {
+		header("Location: ./../../logout");
+	} else {
+		resp(500, 'Failed to change password');
+	}
+
 }
 mysqli_close($db);

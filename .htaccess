@@ -14,6 +14,10 @@ ErrorDocument 403 /foxfile/403.html
 
   RewriteCond %{SCRIPT_FILENAME} !-d
   RewriteCond %{SCRIPT_FILENAME} !-f
+  RewriteRule ^(.*verify.+)$ api/auth/verify [NC]
+
+  RewriteCond %{SCRIPT_FILENAME} !-d
+  RewriteCond %{SCRIPT_FILENAME} !-f
   RewriteRule ^(.*login.+)$ index.php [NC]
 
   RewriteCond %{SCRIPT_FILENAME} !-d

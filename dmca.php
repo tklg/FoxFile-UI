@@ -44,9 +44,10 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 	<main class="main">
 		<h2 class="title">DMCA Policy</h2>
 		<article class="content float">
-			<p class="lastmod">Last updated February 28, 2016</p>
-			<p>dmca currently not set, use 'report' on a file to have it reviewed<br>
-			or something</p>
+			<p class="lastmod">Last updated May 12, 2016</p>
+			<!-- 2/28/16 <p>dmca currently not set, use 'report' on a file to have it reviewed<br>
+			or something</p> -->
+			<p>Im not really sure how to do this</p>
 		</article>
 	</main>
 	<?php include './includes/footer.html'; ?>

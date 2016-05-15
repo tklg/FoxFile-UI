@@ -546,15 +546,23 @@ main {
 	overflow-y: auto;
 	/*display: inline-block;*/
 }
-.bar[type=folder] ul {
+/*.bar[type=folder] ul {
 	position: relative;
 	margin: 0;
 	padding: 0;
 	list-style: none;
-	/*max-height: 100%;*/
 	width: 100%;
 	z-index: 10;
 	box-shadow: 0 -1px 0 #e5e5e5,0 0 2px -2px rgba(0,0,0,.12),0 2px 4px -4px rgba(0,0,0,.24);
+}*/
+.bar[type=folder] .file-history {
+	display: none;
+}
+.bar.viewdetails[type=folder] .file-list {
+	display: none;
+}
+.bar.viewdetails[type=folder] .file-history {
+	display: inline-block;
 }
 .bar[type=folder] li {
 	display: inline-block;

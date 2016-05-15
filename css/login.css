@@ -106,6 +106,7 @@ main.active #header-main img {
 	display: inline-block;
 }
 .content {
+	bottom: 0;
 	position: absolute;
 	flex: 1 0 auto;
 	display: inline-block;

@@ -29,6 +29,9 @@ orange A100 #FF9E80
 	width: 25%;
 	max-width: 340px;
 }
+.hidden {
+	display: none;
+}
 .bar:not(:first-of-type) {
 	display: none;
 }

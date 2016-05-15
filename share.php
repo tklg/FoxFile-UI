@@ -81,32 +81,6 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 <header class="main">
     <nav class="floatb-2" id="nav-header">
         <h1 class="logo-text"><a href="./../"><span class="redfox">Fox</span>File</a></h1>
-    	<div class="file-search"></div>
-        <?php if ($logged_in) { ?>
-        <!-- <div class="user-menu">
-        	<span class="user-menu-msg">Hello, <?php echo $user_first; ?></span>
-        	<img class="img user-menu-img" src="//gravatar.com/avatar/<?php echo $user_md5; ?>?r=r" alt="user gravatar" />
-        </div>
-    </nav>
-    <nav class="floatb-2 nav-right " id="nav-right">
-        <ul class="nav nav-vert" id="user-controls">
-            <li class="nav-vert-header nointeract">
-                <img class="img user-menu-img float" src="//gravatar.com/avatar/<?php echo $user_md5; ?>?r=r" alt="user gravatar" />
-                <div class="infobox">
-                    <span class="nav-header-name"><?php echo $user_name; ?></span>
-                    <span class="nav-header-email"><?php echo $user_email; ?></span>
-                </div>
-            </li>
-            <hr class="nav-vert-divider">
-            <li class="closeOnClick"><a class="fill" href="browse">Manage my files</a></li>
-            <li class="closeOnClick disabled"><a class="fill" href="installapp">Install desktop app</a></li>
-            <li class="closeOnClick"><a class="fill" href="help">Help</a></li>
-            <hr class="nav-vert-divider">
-            <li class="nav-vert-footer closeOnClick"><a class="fill" href="logout">Log out</a></li>
-        </ul>
-    </nav>
-    <div class="nav-right-active-cover"></div> -->
-        <?php } ?>
 </header>
 <main>
 	<section class="bar" id="bar-0" type="folder" folder="menu">
@@ -171,14 +145,10 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 </div>
 </script>
 	<script type="text/javascript" src="//code.jquery.com/jquery-2.1.4.min.js"></script>
-	<!-- <script src="//code.jquery.com/ui/1.11.4/jquery-ui.min.js"></script> -->
-	<!-- <link async rel="stylesheet" type="text/css" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.7.1/themes/base/jquery-ui.css"/> -->
-    <!-- <script src="js/underscore.min.js"></script> -->
     <script src="../js/underscore.min.js"></script>
-    <!-- <script src="js/backbone.min.js"></script> -->
+    <script src="../js/filetypes.js"></script>
     <script src="../js/backbone.min.js"></script>
     <script src="../js/shared.js"></script>
-    <!-- <script type="text/javascript" src="js/ripple.js"></script> -->
     <script type="text/javascript" src="../js/ripple.js"></script>
     <script>
     <?php if ($logged_in) { ?> var foxfile_root = '<?php echo $user_uhd; ?>'; <?php } ?>

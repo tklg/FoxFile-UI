@@ -92,6 +92,7 @@ if ($pageID == 'account') {
 		/*while($st = mysqli_fetch_object($r3)) {
 			$s_t += (int) $st->s_trash;
 		}*/
+		if ($r['status'] !== 'verified') $r['status'] = 'unverified';
 		$total = (int) $r['s_total'];
 		unset($r['s_total']);
 		$r['quota'] = array(

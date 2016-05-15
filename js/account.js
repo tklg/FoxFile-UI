@@ -82,7 +82,11 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
                 var d = date.toDateString().split(' ');
                 $('#join').text(d[1]+" "+d[2]+", "+d[3] + " " + date.toLocaleTimeString());
                 $('#foxid').text(c['foxid']+":"+c['root']);
-                $('#email-ver').text(c['status']).addClass(c['status']);
+                var ev = c['status'];
+                $('#email-ver').text(ev).addClass(ev);
+                if (ev != 'verified') {
+                    $('#email-resend').removeClass('hidden');
+                }
                 var s_f = q['files'],
                     s_t = q['trash'],
                     s = q['total'];
@@ -280,6 +284,23 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     account.confirmRemove = function() {
         $('.btn-save').blur();
         account.snackbar.create("There is still no escape yet");
+    }
+    account.sendVerificationEmail = function() {
+        var email = $('#email').val();
+        $.ajax({
+            type: "POST",
+            url: "./api/auth/send_verification",
+            data: {
+                email: email,
+                extra: false
+            },
+            success: function(result) {
+                account.snackbar.create("Verification email sent");
+            },
+            error: function(request, error) {
+                account.snackbar.create("Failed to send verification email");
+            }
+        });
     }
     $(document).on('click', '.btn-ctrlbar', function(e) {
         account.routerbox.router.navigate($(this).attr('id'), {trigger: true, replace: true});

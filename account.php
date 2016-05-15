@@ -151,6 +151,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
                 <li>
                     <span class="property">Verified email?</span>
                     <span class="value" id="email-ver">Fetching...</span>
+                    <button class="btn btn-save hidden" id="email-resend" onclick="account.sendVerificationEmail()">Resend email</button>
                 </li>
             </ul>
             <h2>Your files</h2>

@@ -1140,7 +1140,7 @@ header3 font
                                          res[i].is_folder,
                                          res[i].size,
                                          res[i].lastmod,
-                                        res[i].is_shared,
+                                         res[i].is_shared,
                                          res[i].is_public);
                         $('.pages .bar-shared .file-list').append(template(f));
                     });
@@ -1167,13 +1167,18 @@ header3 font
         fm.snackbar.create("Emptied uploads list");
         fm.loadTransfers();
     }
-    fm.toggleInfoView = function(hash) {
-        $('#file-detail-'+hash+' .file-preview, #file-detail-'+hash+' .file-history').toggleClass('active');
-        $('#fpvtoggle i').toggleClass('mdi-information-outline mdi-eye');
-        if ($('#file-detail-'+hash+' .file-preview').hasClass('active')) {
-            $('#fpvtoggle').attr('title', 'Information');
+    fm.toggleInfoView = function(hash, isFile) {
+        if (isFile != false) { //yes this is necessary
+            $('#file-detail-'+hash+' .file-preview, #file-detail-'+hash+' .file-history').toggleClass('active');
+            $('#fpvtoggle i').toggleClass('mdi-information-outline mdi-eye');
+            if ($('#file-detail-'+hash+' .file-preview').hasClass('active')) {
+                $('#fpvtoggle').attr('title', 'Information');
+            } else {
+                $('#fpvtoggle').attr('title', 'Preview');
+            }
         } else {
-            $('#fpvtoggle').attr('title', 'Preview');
+            cm.destroy();
+            $('#bar-'+hash).toggleClass('viewdetails');
         }
     }
     fm.touchFile = function(hash) {
@@ -2396,6 +2401,9 @@ header3 font
                     console.log("onError: " + status + " " + e);
                     $('#transfers .file-list #tfile-'+_this.id).removeClass('active').addClass('upload-fail');
                     $('#transfers .file-list #tfile-'+_this.id+' .file-upload-status').text("Failed");
+                    if (xhr.status == 507) {
+                        $('#transfers .file-list #tfile-'+self.id+' .file-name').text($('#transfers .file-list #tfile-'+self.id+' .file-name').text() + ' (Insufficient storage)');
+                    }
                     _this.state = 3;
                     linearQueue.start();
                     //_this.remove();
@@ -2543,7 +2551,8 @@ header3 font
                     type: 'POST',
                     url: './api/files/new_file_chunk',
                     data: {
-                        start: _self.hash
+                        start: _self.hash,
+                        size: _self.item.size
                     },
                     beforeSend: function() {
                         $('#transfers .file-list #tfile-'+_self.id).addClass('active');
@@ -2557,6 +2566,9 @@ header3 font
                         console.log("onError: " + status + " " + e);
                         $('#transfers .file-list #tfile-'+_self.id).removeClass('active').addClass('upload-fail');
                         $('#transfers .file-list #tfile-'+_self.id+' .file-upload-status').text("Failed");
+                        if (xhr.status == 507) {
+                            $('#transfers .file-list #tfile-'+self.id+' .file-name').text($('#transfers .file-list #tfile-'+self.id+' .file-name').text() + ' (Insufficient storage)');
+                        }
                         _self.upload(true);
                         _self.state = 3;
                     }
@@ -2764,7 +2776,10 @@ header3 font
         this.start = function(fake) {
             if (this.trees.length == 0) {
                 console.log("%cFinishing %cupload of LinearQueue","color:red","color:gray");
-                fm.snackbar.create("Finished uploading files", 'view', '$(\'#transfers.btn-ctrlbar\').click()');
+                if (dd.numFilesToUpload == 0)
+                    fm.snackbar.create("Finished uploading files", 'view', '$(\'#transfers.btn-ctrlbar\').click()');
+                else
+                    fm.snackbar.create("Failed to upload "+dd.numFilesToUpload+" files", 'view', '$(\'#transfers.btn-ctrlbar\').click()');
                 fm.refreshAll();
             } else {
                 if (fake) {
@@ -2908,7 +2923,7 @@ YM      6  M   YP   MM
             }
         }
     });
-    $(document).on("click", ".file-manager .bar:not([id^='file-detail-']):not(#bar-search) .file-actions-header span", function(e) {
+    $(document).on("click", ".file-manager .bar:not([id^='file-detail-']):not(#bar-search):not(.active) .file-actions-header span", function(e) {
         e.stopPropagation();
         e.preventDefault();
         if (!fm.btnStatus.shift) {
@@ -2916,15 +2931,18 @@ YM      6  M   YP   MM
             var hash = self.attr('hash');
             var name = self.attr('name');
             cm.destroy();
-            var menu = cm.menu;
             cm.menu = new ClickMenu(e.pageX - 180, 112);
             if (hash == foxfile_root) {
+                //cm.menu.append(new MenuItem(cm.menu, "Information", 'information-outline', "fm.toggleInfoView('"+hash+"', false)", 'i').get());
+                //cm.menu.append('<hr class="nav-vert-divider">');
                 cm.menu.append(new MenuItem(cm.menu, "Upload File", "upload", "$('#dd-file-upload').attr('hash','"+hash+"').click()").get());
                 cm.menu.append(new MenuItem(cm.menu, "Upload Folder", "folder-upload", "$('#dd-folder-upload').attr('hash','"+hash+"').click()").get());
                 cm.menu.append(new MenuItem(cm.menu, "New Folder", "folder-plus", "fm.dialog.newFolder.show('"+name+"','"+hash+"')", "Alt+N").get());
                 cm.menu.append('<hr class="nav-vert-divider">');
                 cm.menu.append(new MenuItem(cm.menu, "Refresh", "refresh", "fm.refresh('"+hash+"')", "Alt+R").get());
             } else {
+                //cm.menu.append(new MenuItem(cm.menu, "Information", 'information-outline', "fm.toggleInfoView('"+hash+"', false)", 'i').get());
+                //cm.menu.append('<hr class="nav-vert-divider">');
                 cm.menu.append(new MenuItem(cm.menu, "Rename", "rename-box", "fm.dialog.rename.show('"+name+"','"+hash+"')", "r or f2").get());
                 cm.menu.append(new MenuItem(cm.menu, "Delete", "delete", "fm.dialog.trash.show('"+name+"','"+hash+"')", "Del").get());
                 cm.menu.append(new MenuItem(cm.menu, "Download", "download", "fm.download('"+hash+"','"+name+"')").get());
@@ -2936,6 +2954,17 @@ YM      6  M   YP   MM
                 cm.menu.append(new MenuItem(cm.menu, "Move", "folder-move", "fm.dialog.move.show('"+name+"','"+hash+"')", "m").get());
                 cm.menu.append(new MenuItem(cm.menu, "Refresh", "refresh", "fm.refresh('"+hash+"')", "Alt+R").get());
             }
+        }
+    });
+    $(document).on("click", ".file-manager .bar.viewdetails:not([id^='file-detail-']):not(#bar-search) .file-actions-header span", function(e) {
+        e.stopPropagation();
+        e.preventDefault();
+        if (!fm.btnStatus.shift) {
+            var self = $(this).parents('.bar');
+            var hash = self.attr('hash');
+            cm.destroy();
+            cm.menu = new ClickMenu(e.pageX - 180, 112);
+            cm.menu.append(new MenuItem(cm.menu, "View files", 'eye', "fm.toggleInfoView('"+hash+"', false)", 'i').get());
         }
     });
     $(document).on("contextmenu", ".bar[id^='file-detail-']", function(e) {

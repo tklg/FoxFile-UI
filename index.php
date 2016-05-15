@@ -89,9 +89,19 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
             	sub();
             }
 		}
+		if (!pressed && e.keyCode == 9) { //tab
+			pressed = true;
+            if (stage == 0) {
+            	e.preventDefault();
+            	checkEmail();
+            }
+		}
 	});
 	$(document).keyup(function(e) {
 		if (e.keyCode == 13) { //enter
+			pressed = false;
+		}
+		if (e.keyCode == 9) {
 			pressed = false;
 		}
 	});

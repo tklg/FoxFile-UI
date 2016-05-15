@@ -1,7 +1,12 @@
 <?php
 session_start();
+if (!isset($_GET['key']) || !isset($_GET['from'])) {
+    $r = array('error'=>400,
+        'message'=>'missing parameters');
+    echo json_encode($r);
+    die();
+}
 include 'includes/cfgvars.php';
-/*if (!isset ($_SESSION['access_token'])) header ("Location: login");*/
 ?>
 <!DOCTYPE html>
 <html lang="en-US">
@@ -37,23 +42,32 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 <main class="recover float-2">
     <header class="header float" id="header-main">
         <img class="float" src="img/default_avatar.png" alt="profile picture" />
-        <span>Enter recovery email</span>
+        <span>Reset password</span>
     </header>
 	<section class="content">
-        <form name="recover" action="uauth.php" method="post">
-            <p class="instructions">
-                Please enter your email address below and we'll send you instructions on how to set a new password.
+        <form name="recover" action="./api/auth/recover" method="post" onsubmit="return changePass()">
+            <p>
+                <input type="hidden" name="key" value="<?php echo $_GET['key']; ?>">
+                <input type="hidden" name="from" value="<?php echo $_GET['from']; ?>">
             </p>
             <div class="inputbar nosel">
     			<label class="userlabel">
-    				<input name="email" class="userinfo" id="email" type="text" autofocus>
-    				<span class="placeholder-userinfo nosel">Email</span>
+    				<input name="pass" class="userinfo" id="pass" type="password" autofocus>
+    				<span class="placeholder-userinfo nosel">Password</span>
     				<hr class="input-underline"></hr>
-    				<div class="error"><div class="error-message">Invalid Email Address</div></div>
+    				<div class="error" id="e1"><div class="error-message">Password cannot be blank</div></div>
     			</label>
     		</div>
+            <div class="inputbar nosel">
+                <label class="userlabel">
+                    <input name="pass2" class="userinfo" id="pass2" type="password">
+                    <span class="placeholder-userinfo nosel">And again</span>
+                    <hr class="input-underline"></hr>
+                    <div class="error" id="e2"><div class="error-message">Passwords do not match</div></div>
+                </label>
+            </div>
             <a href="./" class="new-account">Log in</a>
-            <button class="btn btn-submit" type="button" onclick="sendEmail()">Send email<link class="rippleJS" /></button>
+            <button class="btn btn-submit" type="submit"">Change<link class="rippleJS" /></button>
         </form>
 	</section>
 </main>
@@ -61,44 +75,27 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
 <script type="text/javascript" src="js/ripple.js"></script>
     <script type="text/javascript">
-    $(document).ready(function() {
-        var user = $('#email').val();
-        $('#email').attr('empty', (user != '') ? 'false' : 'true');
-    });
     $('input.userinfo').change(function() {
         $(this).attr('empty', ($(this).val() != '') ? 'false' : 'true');
     });
-    function sendEmail() {
-        if (/[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/g.test($('#email').val())) {
-            $.ajax({
-                type: "POST",
-                url: "./api/auth/send_recovery",
-                data: {
-                    email: $('#email').val(),
-                    extra: false
-                },
-                success: function(result) {
-                    $('form').html('<p class="instructions">Recovery email sent.</p>');
-                },
-                error: function(request, error) {
-                    $('.error').addClass('active').children('.error-message').text('Failed to send recovery email');
-                }
-            });
+    function changePass() {
+        var pass = $('#pass').val();
+        var pass2 = $('#pass2').val();
+        if (pass == '') {
+            $('#e1').addClass('active');
+            return false;
         } else {
-            if ($('#email').val() != '') {
-                $('.error').addClass('active');
-            }
+            $('#e1').removeClass('active');
         }
+        if (pass != pass2) {
+            $('#e2').addClass('active');
+            return false;
+        } else {
+            $('#e2').removeClass('active');
+        }
+        //$('form')[0].submit();
+        return true;
     }
-    $('#email').blur(function() {
-    	if (/[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/g.test($('#email').val())) {
-    		$('.error').removeClass('active');
-    	} else {
-    		if ($('#email').val() != '') {
-                $('.error').addClass('active');
-            }
-    	}
-    });
     </script>
 </body>
 </html>

@@ -17,6 +17,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 session_start();
 require('../includes/user.php');
 //require('../includes/cfgvars.php');
+$uploadChunkSize = 2097152;
 
 $uri = $_SERVER['REQUEST_URI'];
 if (strpos($uri, '/') !== false) {
@@ -91,7 +92,7 @@ function getUniqLink() {
 }
 function getName($file) {
 	global $uid, $db;
-	$result = mysqli_query($db, "SELECT name from files where hash = '$file' AND owner_id='$uid' LIMIT 1");
+	$result = mysqli_query($db, "SELECT name from files where hash = '$file' LIMIT 1");
 	$res = mysqli_fetch_object($result);
 	return $res->name;
 }
@@ -105,17 +106,30 @@ function dirSize($path){
     }
     return $bytestotal;
 }
-function hasSpaceLeft() {
+function hasSpaceLeft($adding) {
 	global $uhd, $maxstore;
-	return dirSize('./../files/'.$uhd) < $maxstore;
+	return (dirSize('./../files/'.$uhd) + $adding) < $maxstore;
 }
-function getPath($file) { // in theory, this function still works
+function getRoot($file) {
+	global $uhd, $db;
+	$hash = sanitize($file);
+	$q = "SELECT owner_id FROM files WHERE hash='$hash' LIMIT 1";
+	if ($res = mysqli_query($db, $q)) {
+		$oid = mysqli_fetch_object($res)->owner_id;
+		$q = "SELECT root_folder FROM users WHERE PID='$oid' LIMIT 1";
+		if ($res = mysqli_query($db, $q)) {
+			$root = mysqli_fetch_object($res)->root_folder;
+			return $root;
+		}
+	}
+	return $uhd;
+}
+function getPath($file) {
 	//echo 'finding path of '. $file;
 	global $uhd, $db;
 	$file = sanitize($file);
 	if ($file == $uhd) return '../files/'.$file;
 	$pointer = 0;
-	//unset($path);
 	$path = array();
 	$root = 'files';
 
@@ -210,31 +224,20 @@ function Zip($src, $destination, $zipname, $sharedl = false) {
 	echo 'zipname: '.$zipname.'<br>';*/
 	if (!is_dir($destination)) mkdir($destination, 0770, true);
 	global $uhd;
-	if (!$sharedl) {
-	    if (is_string($src)) {
-	    	$source_arr = array(getPath($src)); // convert it to array
-	    	$src = array($src);
-	    	//echo "Source was string, making array<br>";
-	    } else {
-	    	$fileList = array();
-			foreach($src as $file) {
-				$fileList[] = getPath($file);
-			}
-	    	$source_arr = $fileList;
-	    }
-	} else { //zipping from the shared folder
-		if (is_string($src)) {
-	    	$source_arr = array('shared/'.$src); // convert it to array
-	    	$src = array($src);
-	    	//echo "Source was string, making array<br>";
-	    } else {
-	    	$fileList = array();
-			foreach($src as $file) {
-				$fileList[] = 'shared/'.$file;
-			}
-	    	$source_arr = $fileList;
-	    }
+	if (is_string($src)) {
+	    $source_arr = array(getPath($src)); // convert it to array
+	    $src = array($src);
+	    //echo "Source was string, making array<br>";
+	} else {
+	   	$fileList = array();
+		foreach($src as $file) {
+			$fileList[] = getPath($file);
+		}
+	   	$source_arr = $fileList;
 	}
+
+    $fileRoot = getRoot($src[0]);
+
     if (!extension_loaded('zip')) {
         return false;
     }
@@ -243,6 +246,7 @@ function Zip($src, $destination, $zipname, $sharedl = false) {
     //$dest = './../'.str_replace('.', '', str_replace('./../', '', $destination)) . '/'; //makes a normal folder
     //echo $dest.'<br>';
     $oTarget = $destination;
+
     //copy over folders
     foreach ($source_arr as $source) {
     	//echo 'src: '.$source.'<br>';
@@ -260,7 +264,7 @@ function Zip($src, $destination, $zipname, $sharedl = false) {
 		        //$target = str_replace('files', 'temp', $file);
 		        $file = str_replace('\\', '/', realpath($file));
 		        $tmp = str_replace('./../temp/'.$uhd.'/', '', $destination);
-		        $target = str_replace('files/'.$uhd, 'temp/'.$uhd.'/'.$tmp, $file);
+		        $target = str_replace('files/'.$fileRoot, 'temp/'.$uhd.'/'.$tmp, $file);
 		        //echo 'exp: '.explode('/', $target)[array_search($tmp, explode('/',$target)) + 1].'<br>';
 		        $target = str_replace(explode('/', $target)[array_search($tmp, explode('/',$target)) + 1].'/', '', $target);
 
@@ -290,7 +294,7 @@ function Zip($src, $destination, $zipname, $sharedl = false) {
 		} else if (is_file($source)) {
 			$file = str_replace('\\', '/', realpath($source));
 			$tmp = str_replace('./../temp/'.$uhd.'/', '', $destination);
-		    $target = str_replace('files/'.$uhd, 'temp/'.$uhd.'/'.$tmp, $file);
+		    $target = str_replace('files/'.$fileRoot, 'temp/'.$uhd.'/'.$tmp, $file);
 		    $tartmp = str_replace('/'.basename($target), '', $target);
 		    $target = $destination.'/'.basename($file);
 		    //$zip->addFromString(basename($source), file_get_contents($source));
@@ -547,9 +551,6 @@ if ($pageID == 'new_file') {
 	if (!isset($_FILES['file']) || !isset($_POST['parent']) || !isset($_POST['hash'])) 
 		resp(422, "missing parameters");
 
-	if (!hasSpaceLeft()) {
-		resp(507, "No storage space remaining for your account");
-	}
 
 	$fileParent = sanitize($_POST['parent']);
 	$fileHash = sanitize($_POST['hash']);
@@ -559,6 +560,9 @@ if ($pageID == 'new_file') {
 	$fName = $_FILES['file']['name'];
 	$fType = $_FILES['file']['type'];
 	$fSize = $_FILES['file']['size'];
+	if (!hasSpaceLeft($fSize)) {
+		resp(507, "Not enough storage space remaining for this file");
+	}
 
 	if ($fileParent == '' || !$file) resp(422, "missing parameters, or file chunk is too big");
 
@@ -584,17 +588,20 @@ if ($pageID == 'new_file') {
 }
 if ($pageID == 'new_file_chunk') {
 	$wd = './../temp/';
-	if (!hasSpaceLeft()) {
-		resp(507, "No storage space remaining for your account");
+	if (!hasSpaceLeft(0)) {
+		resp(507, "Not enough storage space remaining for this file");
 	}
 	if (isset($_POST['start'])) {
-		if (!isset($_POST['start'])) 
+		if (!isset($_POST['start']) || !isset($_POST['size'])) 
 			resp(422, "missing parameters");
 		$hash = sanitize($_POST['start']);
-		if (!is_dir($wd.$hash)) mkdir($wd.$hash, 0770, true);
-		resp(200, 'start');
-		//make blank file
-		
+		$size = sanitize($_POST['size']);
+		if (!hasSpaceLeft($size)) {
+			resp(507, "Not enough storage space remaining for this file");
+		} else {
+			if (!is_dir($wd.$hash)) mkdir($wd.$hash, 0770, true);
+			resp(200, 'start: '.$size);
+		}		
 	} else if (isset($_POST['append'])) {
 		if (!isset($_POST['append']) || !isset($_POST['length']) || !isset($_POST['num']) || !isset($_FILES['data'])) 
 			resp(422, "missing parameters");
@@ -622,9 +629,9 @@ if ($pageID == 'new_file_chunk') {
 
 		for ($i = 0; $i < $num; $i++) {
 			$file = fopen($wd.$hash.'/'.$hash.'-'.$i.'.part', 'rb');
-	        $buffer = fread($file, 5242880); // 5mb
+	        $buffer = fread($file, $uploadChunkSize); // 5mb
 	        fclose($file);
-	        echo 'merge from: '.$wd.$hash.'/'.$hash.'-'.$i.'.part<br>';
+	        //echo 'merge from: '.$wd.$hash.'/'.$hash.'-'.$i.'.part<br>';
 			$f = fopen($parentPath.'/'.$hash, 'ab');
 			//$f = fopen($wd.$hash.'/'.$hash, 'ab');
 		    $write = fwrite($f, $buffer);
@@ -650,7 +657,8 @@ if ($pageID == 'new_file_chunk') {
 		if (!isset($_POST['remove'])) 
 			resp(422, "missing parameters");
 		$hash = sanitize($_POST['remove']);
-		deleteDir($wd.$hash);
+		if (is_dir($wd.$hash))
+			deleteDir($wd.$hash);
 		resp(200, 'remove');
 	} else {
 		resp(422, 'Invalid request');
@@ -1168,7 +1176,7 @@ if($pageID == 'download') {
 		}
 		if ($type === 'folder') {
 			$isShared = isShared($files);
-			if (getOwner($files) == $uid || $isShared) {
+			if ($isShared || getOwner($files) == $uid) {
 				if (!Zip($files, $destination, $zipname)) resp(500, "Failed to zip files.");
 			} else {
 				//echo "You do not have access to these files.";
@@ -1217,7 +1225,8 @@ if($pageID == 'download') {
 			}
 		    //file should stay until it finishes downloading, then poof by itself
 		    //echo '<br>deleting ' . $destination . '<br>';
-		    @unlink($zipname);
+		    //@unlink($zipname);
+		    deleteDir('./../temp/'.$uhd);
 				//echo "Cleared user temp folder";
 		    exit();
 		} else {
@@ -1263,7 +1272,6 @@ if($pageID == 'download') {
 			    }
 
 			    //download($filePath, $n);
-
 		        exit();
 		    }
 		    else {

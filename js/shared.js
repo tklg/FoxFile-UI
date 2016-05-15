@@ -118,6 +118,9 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
                         shared.hashes.push(resp[i]['hash']);
                         if (resp[i]['type'] == '1') shared.type = 'folder';
                     }
+                    /*if (_.indexOf(['jpg','jpeg','gif','png'], getExt(shared.name)) > -1) {
+                        $('.img-prev').attr('src', './../api/files/view?id='+shared.hashes[0]);
+                    }*/
                     $('.content .inactive').removeClass('inactive');
                 } else {
                      $('.content .file .file-name').text('404');

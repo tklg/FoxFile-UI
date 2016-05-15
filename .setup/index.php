@@ -47,7 +47,7 @@ $dbname = "' . $dbname . '";
 	    password VARCHAR(512),
 	    root_folder VARCHAR(12) character set utf8 collate utf8_bin not null,
 		total_storage DOUBLE(100, 2),
-		account_status VARCHAR(32),
+		account_status VARCHAR(40),
 	    access_level TINYINT,
 	    join_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) charset=utf8 ENGINE=INNODB";
