@@ -64,29 +64,31 @@ function sendVerification($email) {
 
 		//$cdir = 
 		$link = $_SERVER['HTTP_HOST']."/foxfile/verify?key=".$link.'&from='.$email;
-		require_once './../plugins/phpmailer/PHPMailerAutoload.php';
+		$c = curl_init();
+		curl_setopt($c, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+		curl_setopt($c, CURLOPT_USERPWD, 'api:'.$mailkey);
+		curl_setopt($c, CURLOPT_RETURNTRANSFER, 1);
 
-		$mail = new PHPMailer;
-		$mail->isSMTP();
-		$mail->Host = $mailhost;
-		$mail->SMTPAuth = true;
-		$mail->Username = $mailuser;
-		$mail->Password = $mailkey;
-		$mail->SMTPSecure = 'tls';
+	    curl_setopt($c, CURLOPT_CUSTOMREQUEST, 'POST');
+	    curl_setopt($c, CURLOPT_URL, $mailapi);
+	    curl_setopt($c, CURLOPT_POSTFIELDS, array(
+	    	'from' => 'FoxFile <foxfile@'.$_SERVER['HTTP_HOST'].'>',
+	        'to' => $email,
+	        'subject' => 'Foxfile email verification',
+	        'html' => 'Click link to verify your email:<br><a href="'.$link.'">'.$link.'</a>',
+	        'text' => 'Copy/paste link into the address bar to verify your email: '.$link
+	        )
+	    );
 
-		$mail->setFrom('foxfile@'.$_SERVER['HTTP_HOST'], 'FoxFile');
-		$mail->addAddress($email);
-		//$mail->isHTML(true);
+	    curl_exec($c);
+	    $info = curl_getinfo($c);
 
-		$mail->Subject = 'FoxFile email verification';
-		$mail->msgHTML('Click link to verify your email:<br><a href="'.$link.'">'.$link.'</a>');
-		$mail->AltBody = 'Copy/paste link into the address bar to verify your email: '.$link;
 
-		if (!$mail->send()) {
-			resp(500, "Failed to send mail: ".$mail->ErrorInfo);
-		} else {
-			resp(200, "Sent mail");
-		}
+	    if ($info['http_code'] != 200)
+	        resp(500, "Failed to send mail: curl gave ".$info['http_code']);
+
+	    curl_close($c);
+	    resp(200, "Sent mail");
 	} else {
 		resp(500, 'failed to fetch link');
 	}
@@ -121,6 +123,7 @@ if($pageID == 'login') {
 			$_SESSION['foxfile_username'] = $row->firstname.' '.$row->lastname;
 			$_SESSION['foxfile_user_md5'] = md5($row->email);
 			$_SESSION['foxfile_max_storage'] = $row->total_storage;
+			$_SESSION['foxfile_verified_email'] = $row->account_status == 'verified' ? true : false;
 			echo 0;
 		} else {
 			echo 1;
@@ -226,31 +229,29 @@ if ($pageID == 'send_recovery') {
 	$_SESSION['foxfile_recovery_nonce'] = $bytes;
 
 	$link = $_SERVER['HTTP_HOST']."/foxfile/passchange?key=".$bytes.'&from='.$email;
-	require_once './../plugins/phpmailer/PHPMailerAutoload.php';
+	$c = curl_init();
+	curl_setopt($c, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+	curl_setopt($c, CURLOPT_USERPWD, 'api:'.$mailkey);
+	curl_setopt($c, CURLOPT_RETURNTRANSFER, 1);
 
-	$mail = new PHPMailer;
-	$mail->isSMTP();
-	$mail->Host = $mailhost;
-	$mail->SMTPAuth = true;
-	$mail->Username = $mailuser;
-	$mail->Password = $mailkey;
-	$mail->SMTPSecure = 'tls';
-	$mail->SMTPDebug = 2;
+	curl_setopt($c, CURLOPT_CUSTOMREQUEST, 'POST');
+	curl_setopt($c, CURLOPT_URL, $mailapi);
+	curl_setopt($c, CURLOPT_POSTFIELDS, array(
+		'from' => 'foxfile@'.$_SERVER['HTTP_HOST'],
+	    'to' => $email,
+	    'subject' => 'Foxfile password reset',
+	    'html' => 'Click link to reset your password:<br><a href="'.$link.'">'.$link.'</a>',
+	    'text' => 'Copy/paste link into the address bar to reset your password: '.$link
+	    )
+	);
+	curl_exec($c);
+	$info = curl_getinfo($c);
 
-	$mail->setFrom('foxfile@'.$_SERVER['HTTP_HOST'], 'FoxFile');
-	$mail->addAddress($email);
-	//$mail->isHTML(true);
+	if ($info['http_code'] != 200)
+		resp(500, "Failed to send mail: curl gave ".$info['http_code']);
 
-	$mail->Subject = 'FoxFile password reset';
-	$mail->msgHTML('Click link to reset your password:<br><a href="'.$link.'">'.$link.'</a>');
-	$mail->AltBody = 'Copy/paste link into the address bar to reset your password: '.$link;
-
-	if (!$mail->send()) {
-		resp(500, "Failed to send mail: ".$mail->ErrorInfo);
-	} else {
-		resp(200, "Sent mail");
-	}
-
+	curl_close($c);
+	resp(200, "Sent mail");
 }
 if ($pageID == 'verify') {
 	if (!isset($_GET['key']) || !isset($_GET['from'])) {

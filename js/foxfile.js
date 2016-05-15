@@ -1023,7 +1023,10 @@ header3 font
             },
             error: function(xhr, status, e) {
                 fm.dialog.hideCurrentlyActive();
-                fm.snackbar.create("Failed to share file");
+                if (xhr.status == 401)
+                    fm.snackbar.create("Verify your email to share files", 'my account', 'document.location.href=\'account\'');
+                else
+                    fm.snackbar.create("Failed to share file");
             }
         });
     }

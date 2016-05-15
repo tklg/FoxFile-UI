@@ -47,6 +47,7 @@ if(!isset($_SESSION['foxfile_uid'])) {
 	$alvl = $_SESSION['foxfile_access_level'];
 	$uhd = $_SESSION['foxfile_uhd'];
 	$maxstore = $_SESSION['foxfile_max_storage'];
+	$verified = $_SESSION['foxfile_verified_email'];
 }
 date_default_timezone_set('America/New_York');
 
@@ -1124,6 +1125,9 @@ if ($pageID == 'make_public') {
 		resp(422, "missing parameters");
 
 	if ($action === 'add') {
+		if (!$verified) {
+			resp(401, 'Account must have a verified email to share files');
+		}
 		$q = "SELECT hash FROM shared WHERE points_to='$hash' AND owner_id='$uid'";
 		if ($result = mysqli_query($db, $q)) {
 			if (mysqli_num_rows($result) > 0) {
