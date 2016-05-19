@@ -18,6 +18,14 @@ session_start();
 require('../includes/user.php');
 require('../includes/cfgvars.php');
 
+// add ip limit too
+if (!isset($_SESSION['reqnum'])) $_SESSION['reqnum'] = 0;
+if ($_SESSION['reqnum'] == 15) die("reached max of 15 requests for this session");
+$_SESSION['reqnum'] = (int) $_SESSION['reqnum'] + 1;
+if (isset($_SESSION['lastreq']))
+	if ((time() - $_SESSION['lastreq']) < 3) die('one request pre 3 second allowed');
+$_SESSION['lastreq'] = time();
+
 $uri = $_SERVER['REQUEST_URI'];
 if (strpos($uri, '/') !== false) {
     $uri = explode('/', $uri);
@@ -36,6 +44,7 @@ $db = mysqli_connect($dbhost,$dbuname,$dbupass,$dbname);
 date_default_timezone_set('America/New_York');
 
 function resp($code, $message) {
+	header('Content-Type: application/json');
 	http_response_code($code);
 	$res = array(
 		'status' => $code,
@@ -88,10 +97,30 @@ function sendVerification($email) {
 	        resp(500, "Failed to send mail: curl gave ".$info['http_code']);
 
 	    curl_close($c);
-	    resp(200, "Sent mail");
+	    //resp(200, "Sent mail");
 	} else {
 		resp(500, 'failed to fetch link');
 	}
+}
+function getOS() { 
+    $user_agent = $_SERVER['HTTP_USER_AGENT'];
+    $os_platform = "Unknown OS Platform";
+    $os_array = array('/windows nt 10/i'=>'Windows 10', '/windows nt 6.3/i'=>'Windows 8.1', '/windows nt 6.2/i'=>'Windows 8', '/windows nt 6.1/i'=>'Windows 7', '/windows nt 6.0/i'=>'Windows Vista', '/windows nt 5.2/i'=>'Windows Server 2003/XP x64', '/windows nt 5.1/i'=>'Windows XP', '/windows xp/i'=>'Windows XP', '/windows nt 5.0/i'=>'Windows 2000', '/windows me/i'=>'Windows ME', '/win98/i'=>'Windows 98', '/win95/i'=>'Windows 95', '/win16/i'=>'Windows 3.11', '/macintosh|mac os x/i'=>'Mac OS X', '/mac_powerpc/i'=>'Mac OS 9', '/linux/i'=>'Linux', '/ubuntu/i'=>'Ubuntu', '/iphone/i'=>'iPhone', '/ipod/i'=>'iPod', '/ipad/i'=>'iPad', '/android/i'=>'Android', '/blackberry/i'=>'BlackBerry', '/webos/i'=>'Mobile'); foreach ($os_array as $regex => $value) {
+        if (preg_match($regex, $user_agent)) {
+            $os_platform = $value;
+        }
+    }   
+    return $os_platform;
+}
+function getBrowser() {
+	$user_agent = $_SERVER['HTTP_USER_AGENT'];
+    $browser  = "Unknown Browser";
+    $browser_array = array('/msie/i' => 'Internet Explorer', '/firefox/i' => 'Firefox', '/safari/i' => 'Safari', '/chrome/i' => 'Chrome', '/edge/i' => 'Edge', '/opera/i' => 'Opera', '/netscape/i' => 'Netscape', '/maxthon/i' => 'Maxthon', '/konqueror/i' => 'Konqueror', '/mobile/i' => 'Handheld Browser'); foreach ($browser_array as $regex => $value) {
+        if (preg_match($regex, $user_agent)) {
+            $browser = $value;
+        }
+    }
+    return $browser;
 }
 if($pageID == 'userexists') {
 	$useremail = sanitize($_POST['useremail']);
@@ -106,11 +135,54 @@ if($pageID == 'login') {
 	$useremail = sanitize($_POST['useremail']);
 	$sql = "SELECT * from users where email = '$useremail' LIMIT 1";
 	if ($result = mysqli_query($db, $sql)) {
+		if (mysqli_num_rows($result) == 0) {
+			resp(404, "user does not exist");
+		}
 		$row = mysqli_fetch_object($result);
 		$passToMatch = $row->password;
 		$password = $_POST['userpass'];
 		if (password_verify($password, $passToMatch)) {
-			session_destroy();
+
+		    $ip = $_SERVER['REMOTE_ADDR'];
+			$oid = $row->PID;
+			//$ua = $_SERVER['HTTP_USER_AGENT'];
+			$ua = get_browser();
+			$userAgent = sanitize(getBrowser().' on '.getOS());
+			$sql = "SELECT api_key from apikeys where owner_id='$oid' and created_by='$ip' and user_agent='$userAgent' limit 1";
+			if ($res = mysqli_query($db, $sql)) {
+				if (mysqli_num_rows($res) == 0) {
+					//create a new token for this login
+					$token = bin2hex(openssl_random_pseudo_bytes(24));
+				    $sql2 = "INSERT INTO apikeys (owner_id, api_key, user_agent, created_by) VALUES ('$oid', '$token', '$userAgent', '$ip')";
+				    if (mysqli_query($db, $sql2)) {
+					    $r = array(
+					    	'status'=>200,
+					    	'key'=>$token
+					    	);
+					    echo json_encode($r);
+					    die();
+				    } else {
+				    	resp(500, 'failed to create new token');
+				    }
+				} else {
+					$token = mysqli_fetch_object($res)->api_key;
+					$sql2 = "UPDATE apikeys SET last_mod=NOW() where api_key='$token' and owner_id='$oid'";
+					if (mysqli_query($db, $sql2)) {
+						$r = array(
+					    	'status'=>200,
+					    	'key'=>$token
+					    	);
+					    echo json_encode($r);
+					    die();
+					} else {
+						resp(500, 'failed to update token');
+					}
+
+				}
+			} else {
+				resp(500, 'query failed');
+			}
+			/*session_destroy();
 			foreach ($_SESSION as $value)
 				$value = null;
 			session_start();
@@ -124,12 +196,12 @@ if($pageID == 'login') {
 			$_SESSION['foxfile_user_md5'] = md5($row->email);
 			$_SESSION['foxfile_max_storage'] = $row->total_storage;
 			$_SESSION['foxfile_verified_email'] = $row->account_status == 'verified' ? true : false;
-			echo 0;
+			echo 0;*/
 		} else {
-			echo 1;
+			resp(401, 'incorrect password');
 		}
 	} else {
-		echo 2;
+		resp(500, 'query failed');
 	}
 }
 
@@ -221,37 +293,46 @@ if ($pageID == 'send_recovery') {
 	}
 	$email = sanitize($_POST['email']);
 
-	$bytes;
-	if (function_exists('random_bytes'))
-		$bytes = bin2hex(random_bytes(40));
-	else 
-		$bytes = bin2hex(openssl_random_pseudo_bytes(40));
-	$_SESSION['foxfile_recovery_nonce'] = $bytes;
+	$q = "SELECT email FROM users WHERE email='$email' LIMIT 1";
+	if ($r = mysqli_query($db, $q)) {
+		if (mysqli_num_rows($r) == 0) {
+			resp(401, "No account was found with that email");
+		} else {
+			$bytes;
+			if (function_exists('random_bytes'))
+				$bytes = bin2hex(random_bytes(40));
+			else 
+				$bytes = bin2hex(openssl_random_pseudo_bytes(40));
+			$_SESSION['foxfile_recovery_nonce'] = $bytes;
 
-	$link = $_SERVER['HTTP_HOST']."/foxfile/passchange?key=".$bytes.'&from='.$email;
-	$c = curl_init();
-	curl_setopt($c, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-	curl_setopt($c, CURLOPT_USERPWD, 'api:'.$mailkey);
-	curl_setopt($c, CURLOPT_RETURNTRANSFER, 1);
+			$link = $_SERVER['HTTP_HOST']."/foxfile/passchange?key=".$bytes.'&from='.$email;
+			$c = curl_init();
+			curl_setopt($c, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+			curl_setopt($c, CURLOPT_USERPWD, 'api:'.$mailkey);
+			curl_setopt($c, CURLOPT_RETURNTRANSFER, 1);
 
-	curl_setopt($c, CURLOPT_CUSTOMREQUEST, 'POST');
-	curl_setopt($c, CURLOPT_URL, $mailapi);
-	curl_setopt($c, CURLOPT_POSTFIELDS, array(
-		'from' => 'foxfile@'.$_SERVER['HTTP_HOST'],
-	    'to' => $email,
-	    'subject' => 'Foxfile password reset',
-	    'html' => 'Click link to reset your password:<br><a href="'.$link.'">'.$link.'</a>',
-	    'text' => 'Copy/paste link into the address bar to reset your password: '.$link
-	    )
-	);
-	curl_exec($c);
-	$info = curl_getinfo($c);
+			curl_setopt($c, CURLOPT_CUSTOMREQUEST, 'POST');
+			curl_setopt($c, CURLOPT_URL, $mailapi);
+			curl_setopt($c, CURLOPT_POSTFIELDS, array(
+				'from' => 'foxfile@'.$_SERVER['HTTP_HOST'],
+			    'to' => $email,
+			    'subject' => 'Foxfile password reset',
+			    'html' => 'Click link to reset your password:<br><a href="'.$link.'">'.$link.'</a>',
+			    'text' => 'Copy/paste link into the address bar to reset your password: '.$link
+			    )
+			);
+			curl_exec($c);
+			$info = curl_getinfo($c);
 
-	if ($info['http_code'] != 200)
-		resp(500, "Failed to send mail: curl gave ".$info['http_code']);
+			if ($info['http_code'] != 200)
+				resp(500, "Failed to send mail: curl gave ".$info['http_code']);
 
-	curl_close($c);
-	resp(200, "Sent mail");
+			curl_close($c);
+			resp(200, "Sent mail");
+		}
+	} else {
+		resp(500, 'email query failed');
+	}
 }
 if ($pageID == 'verify') {
 	if (!isset($_GET['key']) || !isset($_GET['from'])) {

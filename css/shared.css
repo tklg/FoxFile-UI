@@ -277,6 +277,7 @@ orange A100 #FF9E80
 	color: rgba(0,0,0,.54);
 	font-size: 14px;
 }
-.inactive {
+.inactive,
+.hidden {
 	display: none;
 }

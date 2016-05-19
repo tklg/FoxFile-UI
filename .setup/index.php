@@ -63,7 +63,16 @@ $dbname = "' . $dbname . '";
 			  hashes char(1) NOT NULL DEFAULT '',
 			  UNIQUE(hashes)
 			) ENGINE=INNODB";
-	if (mysqli_query($db, $sql) && mysqli_query($db, $sql1) && mysqli_query($db, $sql2)) {
+		$sql3 = "CREATE TABLE apikeys (
+			PID INT NOT NULL AUTO_INCREMENT,
+			PRIMARY KEY(PID),
+			owner_id int,
+			api_key char(48) character set utf8 collate utf8_bin not null,
+			user_agent varchar(48),
+			last_mod TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			created_by VARCHAR(45)
+		) ENGINE=INNODB";
+	if (mysqli_query($db, $sql) && mysqli_query($db, $sql1) && mysqli_query($db, $sql2) && mysqli_query($db, $sql3)) {
 		mysqli_close($db);
 		echo 0;
 		die();
@@ -111,7 +120,7 @@ $dbname = "' . $dbname . '";
 	        'unverified',
 	        '5')";
 		if (mysqli_query($db, $sql)) {
-			mkdir('../files/'.$root_folder.'/');
+			@mkdir('../files/'.$root_folder.'/');
 			mysqli_close($db);
 			//mkdir('../trashes/'.$root_folder.'/');
 			echo 0;

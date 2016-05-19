@@ -14,7 +14,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     Copyright (C) 2016 Theodore Kluge
     https://tkluge.net
 */
-session_start();
+//session_start();
 require('../includes/user.php');
 //require('../includes/cfgvars.php');
 $uploadChunkSize = 2097152;
@@ -30,25 +30,59 @@ if (strpos($pageID, '?') !== false) {
 	$uri = explode('?', $pageID);
 	$pageID = $uri[0];
 }
+function getUserFromKey($key) {
+	global $db;
+	$q = "SELECT * from users u join (SELECT owner_id from apikeys where api_key='$key' LIMIT 1) k on k.owner_id=u.PID LIMIT 1";
+	if ($res = mysqli_query($db, $q)) {
+		if (mysqli_num_rows($res) == 0) {
+			return null;
+		}
+		$r = mysqli_fetch_object($res);
+		unset($r->password);
+		unset($r->access_level);
+		//$o = new stdClass();
+		$o = $r;
+		// what a mess
+		$o->uid = $r->PID;
+		unset($o->PID);
+		$o->root = $r->root_folder;
+		unset($o->root_folder);
+		$o->username = $r->firstname.' '.$r->lastname;
+		$o->md5 = md5($r->email);
+		$o->joindate = $r->join_date;
+		unset($o->join_date);
+		$o->status = $r->account_status == 'verified' ? 'verified' : 'unverified';
+		unset($o->account_status);
+		return $o;
+	} else {
+		resp(500, 'getUserFromKey failed');
+	}
+}
 
 //connect to database  
 $db = mysqli_connect($dbhost,$dbuname,$dbupass,$dbname);
 $uid = -1;
 $uhd = 'demo';
-if(!isset($_SESSION['foxfile_uid'])) {
+if (!isset($_SERVER['HTTP_X_FOXFILE_AUTH']) && !isset($_GET['api_key'])) {
 	if ($pageID !== 'download')
-		resp(401, "You must be logged in to access the files API");
-} else if(!isset($_SESSION['foxfile_access_level'])) {
-	if ($pageID !== 'download')
-		resp(401, "You must be logged in to access the files API");
+		resp(401, 'missing auth key');
+	$userDetailsFromKey = null;
 } else {
-	$uid = $_SESSION['foxfile_uid'];
-	$uem = $_SESSION['foxfile_email'];
-	$alvl = $_SESSION['foxfile_access_level'];
-	$uhd = $_SESSION['foxfile_uhd'];
-	$maxstore = $_SESSION['foxfile_max_storage'];
-	$verified = $_SESSION['foxfile_verified_email'];
+	if (isset($_GET['api_key']))
+		$userDetailsFromKey = getUserFromKey($_GET['api_key']);
+	else 
+		$userDetailsFromKey = getUserFromKey($_SERVER['HTTP_X_FOXFILE_AUTH']);
 }
+if ($userDetailsFromKey === null) {
+	if ($pageID !== 'download')
+		resp(404, 'key does not match any user');
+} else {
+	$uid = $userDetailsFromKey->uid;
+	$uhd = $userDetailsFromKey->root;
+	$maxstore = $userDetailsFromKey->total_storage;
+	$verified = $userDetailsFromKey->status;
+}
+
 date_default_timezone_set('America/New_York');
 
 function sanitize($s) {
@@ -59,6 +93,7 @@ function br2nl($s) {
     return preg_replace('/\<br(\s*)?\/?\>/i', "\n", $s);
 }
 function resp($code, $message) {
+	
 	http_response_code($code);
 	$res = array(
 		'status' => $code,
@@ -459,6 +494,7 @@ if ($pageID == 'list_files') {
 				'remaining' => $remaining/* > 0 ? $remaining : 0*/,
 				'results' => $rows
 			);
+			
 			echo json_encode($final);
 		} else {
 			resp(500, 'Failed to retrieve contents of folder '.$fileParent);
@@ -502,6 +538,7 @@ if ($pageID == 'list_folders') {
 				'remaining' => $remaining/* > 0 ? $remaining : 0*/,
 				'results' => $rows
 			);
+			
 			echo json_encode($final);
 		} else {
 			resp(500, 'Failed to retrieve contents of folder '.$fileParent);
@@ -515,6 +552,7 @@ if ($pageID == 'get_file') {
 	$sql = "SELECT * FROM files WHERE hash = '$self' AND owner_id = '$uid' LIMIT 1";
 	if ($result = mysqli_query($db, $sql)) {
 		$rows = mysqli_fetch_object($result);
+		
 		echo json_encode($rows);
 	} else {
 		resp(500, 'Failed to retrieve file details: '.$self);
@@ -525,6 +563,7 @@ if ($pageID == 'get_file_info') {
 	$sql = "SELECT name, hash, parent, is_folder FROM files WHERE hash = '$self' AND owner_id = '$uid' LIMIT 1";
 	if ($result = mysqli_query($db, $sql)) {
 		$rows = mysqli_fetch_object($result);
+		
 		echo json_encode($rows);
 	} else {
 		resp(500, 'Failed to retrieve file details: '.$self);
@@ -579,6 +618,7 @@ if ($pageID == 'new_file') {
 			'$fName',
 			'$fSize')";
 		if (mysqli_query($db, $sql)) {	// put some sort of versioning systen instead of just displaying every version as a separate file
+			
 			echo json_encode(array('status' => 200, 'hash' => $fileHash));
 		} else {
 			resp(500, 'SQL file insert failed');
@@ -649,6 +689,7 @@ if ($pageID == 'new_file_chunk') {
 			'$name',
 			'$size')";
 		if (mysqli_query($db, $sql)) {	// put some sort of versioning systen instead of just displaying every version as a separate file
+			
 			echo json_encode(array('status' => 200, 'hash' => $hash));
 		} else {
 			resp(500, 'SQL file insert failed');
@@ -691,6 +732,7 @@ if ($pageID == 'new_folder') {
 	$realfilepath = $realtgtpath.'/'.$fileHash;
 	//echo $realfilepath;
 	if (is_dir($realfilepath)) {
+		
 		echo json_encode(array('status' => 200, 'hash' => $fileHash));
 		die();
 	}
@@ -706,6 +748,7 @@ if ($pageID == 'new_folder') {
 							'$fileParent',
 							'$fileName')";
 				if (mysqli_query($db, $sql)) {
+					
 					echo json_encode(array('status' => 200, 'hash' => $fileHash));
 				} else {
 					resp(500, 'SQL folder insert failed');
@@ -754,6 +797,7 @@ if ($pageID == 'list_trash') {
 				'remaining' => $remaining > 0 ? $remaining : 0,
 				'results' => $rows
 			);
+			
 			echo json_encode($final);
 		} else {
 			resp(500, 'Failed to retrieve contents of folder '.$fileParent);
@@ -779,7 +823,8 @@ if ($pageID == 'list_shared') {
 				'remaining' => 0,
 				'results' => []
 			);
-			echo json_encode($final);
+	
+	echo json_encode($final);
 }
 if ($pageID == 'list_versions') {
 	if (!isset($_POST['hash']))
@@ -795,6 +840,7 @@ if ($pageID == 'list_versions') {
 		while ($row = mysqli_fetch_object($result)) {
 			$rows[] = $row;
 		}
+		
 		echo json_encode($rows);
 	} else {
 		resp(500, 'Failed to retrieve versions of '.$hash);
@@ -805,6 +851,7 @@ if ($pageID == 'touch') {
 		resp(422, "missing parameters");
 	$hash = sanitize($_POST['hash']);
 	if(mysqli_query($db, "UPDATE files SET lastmod=NOW() WHERE hash='$hash' AND owner_id='$uid' LIMIT 1")) {
+		@touch(getPath($hash));
 		resp(200, 'Gave '.$hash.' a poke');
 	} else {	
 		resp(500, 'Failed to give '.$hash.' a poke');
@@ -984,6 +1031,19 @@ if($pageID == 'delete_single') {
 if($pageID == 'view') {
 	if (!isset($_GET['id']))
 		resp(422, "missing parameters");
+	/*if (!isset($_GET['api_key']) && !isset($_SERVER['HTTP_X_FOXFILE_AUTH'])) // not the best
+		resp(401, 'missing auth key');
+	$key;
+	if (isset($_GET['api_key'])) $key = $_GET['api_key'];
+	else $key = $_SERVER['HTTP_X_FOXFILE_AUTH'];
+	$userDetailsFromKey = getUserFromKey($key);
+	if ($userDetailsFromKey === null) {
+		resp(404, 'key does not match any user');
+	} else {
+		$uid = $userDetailsFromKey->uid;
+		$uhd = $userDetailsFromKey->root;
+	}*/
+
 	$fileName = sanitize($_GET['id']);
 	$filePath = getPath($fileName);
 
@@ -1106,6 +1166,7 @@ if ($pageID == 'search') {
 		while ($r = mysqli_fetch_object($result)) {
 			$res[] = $r;
 		}
+		
 		echo json_encode($res);
 	} else {
 		resp(500, "failed to load search results");

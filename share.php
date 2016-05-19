@@ -1,7 +1,7 @@
 <?php
 session_start();
 include 'includes/cfgvars.php';
-if (!isset ($_SESSION['foxfile_uid'])) $logged_in = false;
+/*if (!isset ($_SESSION['foxfile_uid'])) $logged_in = false;
 else {
     $logged_in = true;
     $user_md5 = $_SESSION['foxfile_user_md5'];
@@ -12,7 +12,7 @@ else {
     $user_first = $_SESSION['foxfile_firstname'];
     $user_last = $_SESSION['foxfile_lastname'];
     $user_name = $_SESSION['foxfile_username'];
-}
+}*/
 $uri = $_SERVER['REQUEST_URI'];
 if (strpos($uri, '/') !== false) {
     $uri = explode('/', $uri);
@@ -51,13 +51,13 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     <meta name="viewport" content="initial-scale=1, width=device-width, maximum-scale=1, minimum-scale=1">
     <title>FoxFile</title>
 	<link href='https://fonts.googleapis.com/css?family=Roboto:300,400,700' rel='stylesheet' type='text/css'>
-    <link async rel="stylesheet" href="css/foxfile.css">
+    <!-- <link async rel="stylesheet" href="css/foxfile.css"> -->
     <link async rel="stylesheet" href="../css/foxfile.css">
-    <link async rel="stylesheet" href="css/shared.css">
+    <!-- <link async rel="stylesheet" href="css/shared.css"> -->
 	<link async rel="stylesheet" href="../css/shared.css">
     <link href="css/materialdesignicons.min.css" media="all" rel="stylesheet" type="text/css" />
 	<link href="../css/materialdesignicons.min.css" media="all" rel="stylesheet" type="text/css" />
-    <link rel="icon" type="image/ico" href="img/favicon.png">
+    <!-- <link rel="icon" type="image/ico" href="img/favicon.png"> -->
 	<link rel="icon" type="image/ico" href="../img/favicon.png">
 		
 	<!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
@@ -66,16 +66,6 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
       <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
       <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
     <![endif]-->
-    <script src="../js/reloadr.js"></script>
-    <script>
-    /*Reloadr.go({
-        client: [
-            '../js/shared.js',
-            '../css/shared.css'
-        ],
-        frequency: 1000
-    });*/
-</script>
   </head>
 <body>
 <header class="main">
@@ -84,17 +74,14 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 </header>
 <main>
 	<section class="bar" id="bar-0" type="folder" folder="menu">
-        <?php if ($logged_in) { ?>
-        <header>
+        <header class="hidden">
             <div class="infobox">
-	           	<span class="header-name"><?php echo $user_name; ?></span>
-	           	<span class="header-email"><?php echo $user_email; ?></span>
+	           	<span class="header-name" data-fetch="user-name"></span>
+	           	<span class="header-email" data-fetch="user-email"></span>
 
               </div>
         </header>
-        <?php } ?>
-        <?php if ($logged_in) { ?>
-        <nav class="file-list">
+        <nav class="file-list hidden">
             <ul class="">
 				<li class="menubar-content floatb btn-ctrlbar" id="account" onclick="document.location.href='./../account'">
 					<i class="nocheckbox-icon mdi mdi-account"></i><span class="file-name">My account</span>
@@ -104,17 +91,15 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 				</li>
 			</ul>
 		</nav>
-        <?php } else { ?>
-            <article class="promo">
-                <h2>A place<br>to keep your files</h2>
-                <p>FoxFile starts you with 2GB of free online storage - so you can keep anything.</p>
-                <div>
-                    <a class="btn" href="./../register">Get started</a>
-                    or
-                    <a class="btn" href="./../login">Log in</a>
-                </div>
-            </article>
-        <?php } ?>
+        <article class="promo">
+            <h2>A place<br>to keep your files</h2>
+            <p>FoxFile starts you with 2GB of free online storage - so you can keep anything.</p>
+            <div>
+                <a class="btn" href="./../register">Get started</a>
+                or
+                <a class="btn" href="./../login">Log in</a>
+            </div>
+        </article>
 	</section>
     <section class="bar bar-shared loading active" id="bar-shared">
         <header>
@@ -130,10 +115,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
             </div>
             <div class="inactive">
                 <a class="btn" onclick="shared.download()">Download</a>
-                <?php if ($logged_in && false) { ?>
-                or
-                <a class="btn" onclick="shared.copy()">Copy to my files</a>
-                <?php } ?>
+                <a class="btn hidden" onclick="shared.copy()">Copy to my files</a>
             </div>
         </section>
     </section>
@@ -151,8 +133,11 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     <script src="../js/shared.js"></script>
     <script type="text/javascript" src="../js/ripple.js"></script>
     <script>
-    <?php if ($logged_in) { ?> var foxfile_root = '<?php echo $user_uhd; ?>'; <?php } ?>
+    var logged_in = true;
+    if (!sessionStorage.getItem('api_key')) logged_in = false;
+    var api_key = sessionStorage.getItem('api_key');
     var shared_id = '<?php echo $pageID; ?>';
+    if (shared_id == '') document.location.href = './../';
     $(document).ready(function() {
 	    shared.init();
     });

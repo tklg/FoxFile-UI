@@ -15,6 +15,25 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 */
 (function(shared, $, undefined) {
     shared.init = function(){
+        if (logged_in) {
+            $.ajax({
+                type: "POST",
+                url: "./../api/users/info",
+                headers: {
+                    'X-Foxfile-Auth': api_key
+                },
+                success: function(result, s, x) {
+                    //console.log(result);
+                    json = JSON.parse(result);
+                    $('[fetch-data=user-name]').text(json['username']);
+                    $('[fetch-data=user-email]').text(json['email']);
+                    $('header.hidden, .file-list, .promo').toggleClass('hiden');
+                },
+                error: function(request, error) {
+                    //console.error(request, error);
+                }
+            });
+        }
         shared.fetch(shared_id);
     }
     shared.cbyte = function(bytes) {

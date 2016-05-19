@@ -32,7 +32,9 @@ if (strpos($pageID, '?') !== false) {
 
 //connect to database  
 $db = mysqli_connect($dbhost,$dbuname,$dbupass,$dbname);
-if (isset($_SESSION['foxfile_uid'])) {
+$uid = -1;
+$uhd = 'demo';
+/*if (isset($_SESSION['foxfile_uid'])) {
   $uid = $_SESSION['foxfile_uid'];
   $uem = $_SESSION['foxfile_email'];
   $alvl = $_SESSION['foxfile_access_level'];
@@ -40,7 +42,7 @@ if (isset($_SESSION['foxfile_uid'])) {
   $logged_in = true;
 } else {
   $logged_in = false;
-}
+}*/
 date_default_timezone_set('America/New_York');
 
 function sanitize($s) {
@@ -51,6 +53,7 @@ function br2nl($s) {
     return preg_replace('/\<br(\s*)?\/?\>/i', "\n", $s);
 }
 function resp($code, $message) {
+	header('Content-Type: application/json');
 	http_response_code($code);
 	$res = array(
 		'status' => $code,

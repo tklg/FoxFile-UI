@@ -17,6 +17,10 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     account.init = function(){
         account.routerbox.init();
     }
+    account.logout = function() {
+        sessionStorage.clear();
+        document.location.href = './logout';
+    }
     account.routerbox = {
         router: null,
         init: function() {
@@ -68,20 +72,25 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
         $.ajax({
             type: "POST",
             url: "./api/users/account",
-            data: {
-                id: 'me'
+            headers: {
+                'X-Foxfile-Auth': api_key
             },
             success: function(result) {
                 var json = JSON.parse(result);
                 var c = json['content'];
                 var q = c['quota'];
+                $('[fetch-data=user-first]').text(c['firstname']);
+                $('[fetch-data=user-name]').text(c['username']);
+                $('[fetch-data=user-email]').text(c['email']);
+                $('[fetch-data=user-gravatar]').attr('src', '//gravatar.com/avatar/'+c['md5']+'&r=r');
+
                 $('#firstname').val(c['firstname']);
                 $('#lastname').val(c['lastname']);
                 $('#email').val(c['email']);
                 var date = new Date(c['joindate']);
                 var d = date.toDateString().split(' ');
                 $('#join').text(d[1]+" "+d[2]+", "+d[3] + " " + date.toLocaleTimeString());
-                $('#foxid').text(c['foxid']+":"+c['root']);
+                $('#foxid').text(c['uid']+":"+c['root']);
                 var ev = c['status'];
                 $('#email-ver').text(ev).addClass(ev);
                 if (ev != 'verified') {
@@ -210,12 +219,13 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
         $.ajax({
             type: "POST",
             url: "./api/users/update",
+            headers: {
+                'X-Foxfile-Auth': api_key
+            },
             data: data,
             processData: false,
             contentType: false,
             success: function(result, s, x) {
-                var json = JSON.parse(result);
-
                 $('.bar-account').removeClass('loading');
                 account.snackbar.create("Updated "+which+" name");
             },
@@ -231,13 +241,14 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
             $.ajax({
                 type: "POST",
                 url: "./api/users/update",
+                headers: {
+                    'X-Foxfile-Auth': api_key
+                },
                 data: {
                     id: 'me',
                     email: email
                 },
                 success: function(result) {
-                    var json = JSON.parse(result);
-
                     $('.bar-account').removeClass('loading');
                     account.snackbar.create("Updated email");
                 },
@@ -265,6 +276,9 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
         $.ajax({
             type: "POST",
             url: "./api/users/update",
+            headers: {
+                'X-Foxfile-Auth': api_key
+            },
             data: {
                 id: 'me',
                 pass: pass,
@@ -290,6 +304,9 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
         $.ajax({
             type: "POST",
             url: "./api/auth/send_verification",
+            headers: {
+                'X-Foxfile-Auth': api_key
+            },
             data: {
                 email: email,
                 extra: false

@@ -30,16 +30,25 @@ if (strpos($pageID, '?') !== false) {
 	$pageID = $uri[0];
 } 
 $db = mysqli_connect($dbhost,$dbuname,$dbupass,$dbname);
-if(!isset($_SESSION['foxfile_uid'])) {
-	resp(401, "You must be logged in to access the users API");
+
+if (!isset($_SERVER['HTTP_X_FOXFILE_AUTH']) && !isset($_GET['api_key'])) {
+	resp(401, 'missing auth key');
+	$userDetailsFromKey = null;
+} else {
+	if (isset($_GET['api_key']))
+		$userDetailsFromKey = getUserFromKey($_GET['api_key']);
+	else 
+		$userDetailsFromKey = getUserFromKey($_SERVER['HTTP_X_FOXFILE_AUTH']);
 }
-if(!isset($_SESSION['foxfile_access_level'])) {
-	resp(401, "You must be logged in to access the users API");
+if ($userDetailsFromKey === null) {
+	resp(404, 'key does not match any user');
+} else {
+	$uid = $userDetailsFromKey->uid;
+	$uhd = $userDetailsFromKey->root;
+	$maxstore = $userDetailsFromKey->total_storage;
+	$verified = $userDetailsFromKey->status;
 }
-$uid = $_SESSION['foxfile_uid'];
-$uem = $_SESSION['foxfile_email'];
-$alvl = $_SESSION['foxfile_access_level'];
-$uhd = $_SESSION['foxfile_uhd'];
+
 date_default_timezone_set('America/New_York');
 
 function sanitize($s) {
@@ -50,6 +59,7 @@ function br2nl($s) {
     return preg_replace('/\<br(\s*)?\/?\>/i', "\n", $s);
 }
 function resp($code, $message) {
+	header('Content-Type: application/json');
 	http_response_code($code);
 	$res = array(
 		'status' => $code,
@@ -68,34 +78,66 @@ function dirSize($path){
     }
     return $bytestotal;
 }
+function getUserFromKey($key) {
+	global $db;
+	$q = "SELECT * from users u join (SELECT owner_id from apikeys where api_key='$key' LIMIT 1) k on k.owner_id=u.PID LIMIT 1";
+	if ($res = mysqli_query($db, $q)) {
+		if (mysqli_num_rows($res) == 0) {
+			return null;
+		}
+		$r = mysqli_fetch_object($res);
+		unset($r->password);
+		unset($r->access_level);
+		//$o = new stdClass();
+		$o = $r;
+		// what a mess
+		$o->uid = $r->PID;
+		unset($o->PID);
+		$o->root = $r->root_folder;
+		unset($o->root_folder);
+		$o->username = $r->firstname.' '.$r->lastname;
+		$o->md5 = md5($r->email);
+		$o->joindate = $r->join_date;
+		unset($o->join_date);
+		$o->status = $r->account_status == 'verified' ? 'verified' : 'unverified';
+		unset($o->account_status);
+		return $o;
+	} else {
+		resp(500, 'getUserFromKey failed');
+	}
+}
 if ($pageID == '' || $pageID == null) {
 	resp(422, "must provide an action");
 }
+if ($pageID == 'info') {
+	$r = $userDetailsFromKey;
+	if ($r !== null) {
+		echo json_encode($r);
+		die();
+	} else {
+		resp(404, 'user does not exist');
+	}
+	
+}
 if ($pageID == 'account') {
-	if (!isset($_POST['id']))
+	/*if (!isset($_POST['id']))
 		resp(422, 'missing parameters');
 	$id = sanitize($_POST['id']);
 	if ($id == 'me') $id = $uhd;
-	if ($id != $uhd) resp(403, "currently can only access /users for own account");
-	$q = "SELECT PID as foxid,firstname,lastname,email,root_folder as root,account_status as status,join_date as joindate,total_storage as s_total FROM users WHERE root_folder='$id' LIMIT 1";
-	//$q2 = "SELECT size as s_files FROM files WHERE owner_id='$uid' AND is_trashed=0";
-	//$q3 = "SELECT size as s_trash FROM files WHERE owner_id='$uid' AND is_trashed=1";
-	if($r1 = mysqli_query($db, $q)) {
-		//$r2 = mysqli_query($db, $q2) ;
-		//$r3 = mysqli_query($db, $q3);
-		$r = mysqli_fetch_array($r1);
-		/*$s_f = 0;
-		$s_t = 0;
-		while ($sf = mysqli_fetch_object($r2)) {
-			$s_f += (int) $sf->s_files;
-		}*/
-		/*while($st = mysqli_fetch_object($r3)) {
-			$s_t += (int) $st->s_trash;
-		}*/
-		if ($r['status'] !== 'verified') $r['status'] = 'unverified';
-		$total = (int) $r['s_total'];
-		unset($r['s_total']);
-		$r['quota'] = array(
+	if ($id != $uhd) resp(403, "currently can only access /users for own account");*/
+	//$q = "SELECT PID as foxid,firstname,lastname,email,root_folder as root,account_status as status,join_date as joindate,total_storage as s_total FROM users WHERE root_folder='$id' LIMIT 1";
+	/*if (!isset($_SERVER['HTTP_X_FOXFILE_AUTH']))
+		resp(401, 'missing auth key');
+	$key = sanitize($_SERVER['HTTP_X_FOXFILE_AUTH']);
+	$r = getUserFromKey($key);
+	$uhd = $r->root;*/
+	$r = $userDetailsFromKey;
+	/*if($r1 = mysqli_query($db, $q)) {
+		$r = mysqli_fetch_array($r1);*/
+	if ($r !== null) {
+		$total = (int) $r->total_storage;
+		unset($r->total_storage);
+		$r->quota = array(
 			'total'=>$total,
 			'files'=>dirSize('../files/'.$uhd)
 			//'trash'=>$s_t
@@ -111,30 +153,30 @@ if ($pageID == 'account') {
 	}
 }
 if ($pageID == 'update') {
-	if (!isset($_POST['id']))
+	/*if (!isset($_POST['id']))
 		resp(422, 'missing parameters');
 	$id = sanitize($_POST['id']);
 	if ($id == 'me') $id = $uhd;
-	if ($id != $uhd) resp(403, "currently can only access /users for own account");
+	if ($id != $uhd) resp(403, "currently can only access /users for own account");*/
 	//echo json_encode($_POST);
 	if (isset($_POST['firstname'])) {
 		$val = sanitize($_POST['firstname']);
-		$_SESSION['foxfile_firstname'] = $val;
-		$_SESSION['foxfile_username'] = $val.' '.$_SESSION['foxfile_lastname'];
-		$q = "UPDATE users SET firstname='$val' WHERE root_folder='$id' LIMIT 1";
+		/*$_SESSION['foxfile_firstname'] = $val;
+		$_SESSION['foxfile_username'] = $val.' '.$_SESSION['foxfile_lastname'];*/
+		$q = "UPDATE users SET firstname='$val' WHERE root_folder='$uhd' LIMIT 1";
 	} else if (isset($_POST['lastname'])) {
 		$val = sanitize($_POST['lastname']);
-		$_SESSION['foxfile_lastname'] = $val;
-		$_SESSION['foxfile_username'] = $_SESSION['foxfile_firstname'].' '.$val;
-		$q = "UPDATE users SET lastname='$val' WHERE root_folder='$id' LIMIT 1";
+		/*$_SESSION['foxfile_lastname'] = $val;
+		$_SESSION['foxfile_username'] = $_SESSION['foxfile_firstname'].' '.$val;*/
+		$q = "UPDATE users SET lastname='$val' WHERE root_folder='$uhd' LIMIT 1";
 	} else if (isset($_POST['email'])) {
 		$val = sanitize($_POST['email']);
 		if (!filter_var($val, FILTER_VALIDATE_EMAIL)) {
 		  	resp(422, 'Invalid email format');
 		}
-		$_SESSION['foxfile_email'] = $val;
-		$_SESSION['foxfile_user_md5'] = md5($val);
-		$q = "UPDATE users SET email='$val' WHERE root_folder='$id' LIMIT 1";
+		/*$_SESSION['foxfile_email'] = $val;
+		$_SESSION['foxfile_user_md5'] = md5($val);*/
+		$q = "UPDATE users SET email='$val' WHERE root_folder='$uhd' LIMIT 1";
 	} else if (isset($_POST['pass'])) {
 		$p = sanitize($_POST['pass']);
 		$p2 = sanitize($_POST['pass2']);

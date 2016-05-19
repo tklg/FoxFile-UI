@@ -1,7 +1,7 @@
 <?php
 session_start();
 include 'includes/cfgvars.php';
-if (!isset ($_SESSION['foxfile_uid'])) header ("Location: ./");
+/*if (!isset ($_SESSION['foxfile_uid'])) header ("Location: ./");
 $user_md5 = $_SESSION['foxfile_user_md5'];
 $user_alvl = $_SESSION['foxfile_access_level'];
 $user_uid = $_SESSION['foxfile_uid'];
@@ -9,7 +9,7 @@ $user_email = $_SESSION['foxfile_email'];
 $user_uhd = $_SESSION['foxfile_uhd'];
 $user_first = $_SESSION['foxfile_firstname'];
 $user_last = $_SESSION['foxfile_lastname'];
-$user_name = $_SESSION['foxfile_username'];
+$user_name = $_SESSION['foxfile_username'];*/
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -67,17 +67,17 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
         <h1 class="logo-text"><span class="redfox">Fox</span>File</h1>
     	<div class="file-search"></div>
         <div class="user-menu">
-        	<span class="user-menu-msg">Hello, <?php echo $user_first; ?></span>
-        	<img class="img user-menu-img" src="//gravatar.com/avatar/<?php echo $user_md5; ?>?r=r" alt="user gravatar" />
+        	<span class="user-menu-msg" fetch-data="user-first"></span>
+            <img class="img user-menu-img" fetch-data="user-gravatar" src="img/default_avatar.png" alt="user gravatar" />
         </div>
     </nav>
     <nav class="floatb-2 nav-right " id="nav-right">
     	<ul class="nav nav-vert" id="user-controls">
             <li class="nav-vert-header nointeract">
-            	<img class="img user-menu-img float" src="//gravatar.com/avatar/<?php echo $user_md5; ?>?r=r" alt="user gravatar" />
+            	<img class="img user-menu-img float" fetch-data="user-gravatar" src="img/default_avatar.png" alt="user gravatar" />
             	<div class="infobox">
-	            	<span class="nav-header-name"><?php echo $user_name; ?></span>
-	            	<span class="nav-header-email"><?php echo $user_email; ?></span>
+	            	<span class="nav-header-name" fetch-data="user-name"></span>
+                    <span class="nav-header-email" fetch-data="user-email"></span>
 	            </div>
             </li>
             <hr class="nav-vert-divider">
@@ -85,7 +85,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
             <li class="closeOnClick disabled"><a class="fill" href="installapp">Install desktop app</a></li>
             <li class="closeOnClick"><a class="fill" href="help">Help</a></li>
             <hr class="nav-vert-divider">
-            <li class="nav-vert-footer closeOnClick"><a class="fill" href="logout">Log out</a></li>
+            <li class="nav-vert-footer closeOnClick"><a class="fill" href="#" onclick="account.logout()">Log out</a></li>
         </ul>
     </nav>
     <div class="nav-right-active-cover"></div>
@@ -94,8 +94,8 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 	<section class="bar" id="bar-0" type="folder" folder="menu">
 		<header>
 			<div class="infobox">
-	           	<span class="header-name"><?php echo $user_name; ?></span>
-	           	<span class="header-email"><?php echo $user_email; ?></span>
+	           	<span class="header-name" fetch-data="user-name"></span>
+                    <span class="header-email" fetch-data="user-email"></span>
 		      </div>
 		</header>
 		<nav class="file-list">
@@ -265,7 +265,8 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     <script src="js/account.js"></script>
     <script type="text/javascript" src="js/ripple.js"></script>
     <script>
-    var foxfile_root = '<?php echo $user_uhd; ?>';
+    if (!sessionStorage.getItem('api_key')) location.replace('./login');
+    var api_key = sessionStorage.getItem('api_key');
     $(document).ready(function() {
 	    account.init();
     });

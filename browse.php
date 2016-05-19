@@ -1,7 +1,7 @@
 <?php
 session_start();
 include 'includes/cfgvars.php';
-if (!isset ($_SESSION['foxfile_uid'])) header ("Location: ./");
+/*if (!isset ($_SESSION['foxfile_uid'])) header ("Location: ./");
 $user_md5 = $_SESSION['foxfile_user_md5'];
 $user_alvl = $_SESSION['foxfile_access_level'];
 $user_uid = $_SESSION['foxfile_uid'];
@@ -9,7 +9,8 @@ $user_email = $_SESSION['foxfile_email'];
 $user_uhd = $_SESSION['foxfile_uhd'];
 $user_first = $_SESSION['foxfile_firstname'];
 $user_last = $_SESSION['foxfile_lastname'];
-$user_name = $_SESSION['foxfile_username'];
+$user_name = $_SESSION['foxfile_username'];*/
+//if (empty($_COOKIE['api_key'])) header ("Location: ./");
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -77,18 +78,18 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
         </ul> -->
         <div class="user-menu-box">
 	        <div class="user-menu">
-	        	<span class="user-menu-msg">Hello, <?php echo $user_first; ?></span>
-	        	<img class="img user-menu-img" src="//gravatar.com/avatar/<?php echo $user_md5; ?>?r=r" alt="user gravatar" />
+	        	<span class="user-menu-msg" fetch-data="user-first"></span>
+	        	<img class="img user-menu-img" fetch-data="user-gravatar" src="img/default_avatar.png" alt="user gravatar" />
 	        </div>
         </div>
     </nav>
     <nav class="floatb-2 nav-right " id="nav-right">
     	<ul class="nav nav-vert" id="user-controls">
             <li class="nav-vert-header nointeract">
-            	<img class="img user-menu-img float" src="//gravatar.com/avatar/<?php echo $user_md5; ?>?r=r" alt="user gravatar" />
+            	<img class="img user-menu-img float" fetch-data="user-gravatar" src="img/default_avatar.png" alt="user gravatar" />
             	<div class="infobox">
-	            	<span class="nav-header-name"><?php echo $user_name; ?></span>
-	            	<span class="nav-header-email"><?php echo $user_email; ?></span>
+	            	<span class="nav-header-name" fetch-data="user-name"></span>
+	            	<span class="nav-header-email" fetch-data="user-email"></span>
 	            </div>
             </li>
             <hr class="nav-vert-divider">
@@ -96,7 +97,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
             <li class="closeOnClick disabled"><a class="fill" href="installapp">Install desktop app</a></li>
             <li class="closeOnClick"><a class="fill" href="help">Help</a></li>
             <hr class="nav-vert-divider">
-            <li class="nav-vert-footer closeOnClick"><a class="fill" href="logout">Log out</a></li>
+            <li class="nav-vert-footer closeOnClick"><a class="fill" href="#" onclick="foxfile.logout()">Log out</a></li>
         </ul>
     </nav>
     <div class="nav-right-active-cover"></div>
@@ -160,13 +161,13 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 		<section class="bar" id="bar-0" type="folder" folder="menu">
 			<header>
 				<div class="infobox">
-		           	<span class="header-name"><?php echo $user_name; ?></span>
-		           	<span class="header-email"><?php echo $user_email; ?></span>
+		           	<span class="header-name" fetch-data="user-name"></span>
+		           	<span class="header-email" fetch-data="user-email"></span>
 		        </div>
 			</header>
 			<nav class="file-list">
 				<ul class="">
-					<li class="menubar-content floatb btn-ctrlbar active" id="files" hash="<?php echo $user_uhd; ?>">
+					<li class="menubar-content floatb btn-ctrlbar active" id="files">
 						<i class="nocheckbox-icon mdi mdi-folder-multiple-outline"></i><span class="file-name">My files</span>
 					</li>
 					<!-- <li class="menubar-content floatb btn-ctrlbar" id="shared">
@@ -275,10 +276,10 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 	if (btype == 'text') { %>
 	<textarea id="editor" rows="10" cols="20"></textarea>
 	<% } else if (btype == 'image') { %>
-	<img src="./api/files/view?id=<%= hash %>" alt="<%= name %>" />
+	<img src="./api/files/view?id=<%= hash %>&api_key=<%= key %>" alt="<%= name %>" />
 	<% } else if (btype == 'audio') { %>
 	<audio autoplay controls>
-	<source src="./api/files/view?id=<%= hash %>" />
+	<source src="./api/files/view?id=<%= hash %>&api_key=<%= key %>" />
 	</audio>
 	<!-- <div id="waveform"></div>
 	<div class="wavesurfer-controls">
@@ -288,12 +289,12 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 	</div> -->
 	<% } else if (btype == 'video') { %>
 	<video autoplay controls poster="">
-	<source src="./api/files/view?id=<%= hash %>" />
+	<source src="./api/files/view?id=<%= hash %>&api_key=<%= key %>" />
 	</video>
 	<% } else if (btype == 'flash') { %>
-	<embed src="./api/files/view?id=<%= hash %>" />
+	<embed src="./api/files/view?id=<%= hash %>&api_key=<%= key %>" />
 	<% } else if (btype == 'pdf') { %>
-	<iframe src="./plugins/pdf.js/web/viewer.html?file=./../../../api/files/view%3Fid%3D<%= hash %>"></iframe>
+	<iframe src="./plugins/pdf.js/web/viewer.html?file=./../../../api/files/view%3Fid%3D<%= hash %>%26api_key%3D<%= key %>"></iframe>
 	<% }
 } %>
 </script>
@@ -443,7 +444,9 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 
     <!-- <script src="//cdnjs.cloudflare.com/ajax/libs/wavesurfer.js/1.0.52/wavesurfer.min.js"></script> -->
     <script>
-    var foxfile_root = '<?php echo $user_uhd; ?>';
+    if (!sessionStorage.getItem('api_key')) location.replace('./login');
+    var api_key = sessionStorage.getItem('api_key');
+    var foxfile_root = null;
     $(document).ready(function() {
 	    foxfile.init();
     });

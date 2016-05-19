@@ -16,10 +16,15 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 
 (function(foxfile, $, undefined) {
     foxfile.init = function(){
-        page.init();
-        fm.init();
-        dd.init();
-        foxfile.routerbox.init();
+        page.init(function() {
+            fm.init();
+            dd.init();
+            foxfile.routerbox.init();
+        });
+    }
+    foxfile.logout = function() {
+        sessionStorage.clear();
+        document.location.href = './logout';
     }
     foxfile.routerbox = {
         router: null,
@@ -80,12 +85,33 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     var page = {
         width: $(window).width(),
         numBarsCanBeActive: 1,
-        init: function() {
+        init: function(done) {
             console.info("Initialize page");
-            page.calculateBars();
-            fm.updateSize();
-            fm.resizeToFitCurrentlyActive();
-            fm.moveToFitCurrentlyActive();
+            $.ajax({
+                type: "POST",
+                url: "./api/users/info",
+                headers: {
+                    'X-Foxfile-Auth': api_key
+                },
+                success: function(result, s, x) {
+                    //console.log(result);
+                    json = JSON.parse(result);
+                    $('[fetch-data=user-first]').text(json['firstname']);
+                    $('[fetch-data=user-name]').text(json['username']);
+                    $('[fetch-data=user-email]').text(json['email']);
+                    $('[fetch-data=user-gravatar]').attr('src', '//gravatar.com/avatar/'+json['md5']+'&r=r');
+                    foxfile_root = json['root'];
+
+                    page.calculateBars();
+                    fm.updateSize();
+                    fm.resizeToFitCurrentlyActive();
+                    fm.moveToFitCurrentlyActive();
+                    if (done) done();
+                },
+                error: function(request, error) {
+                    //console.error(request, error);
+                }
+            });
         },
         calculateBars: function() {
             this.width = $(window).width();
@@ -123,7 +149,6 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
             this.isOpen = !this.isOpen;
         }
     }
-
     $(document).on('click', '.btn-ctrlbar', function(e) {
     	$(this).addClass('active').siblings().removeClass('active');
         if ($(this).attr('id') == 'files') {
@@ -252,6 +277,9 @@ header3 font
         $.ajax({
             type: "POST",
             url: "./api/files/get_file_info",
+            headers: {
+                'X-Foxfile-Auth': api_key
+            },
             data: {
                 hash: fHash
             },
@@ -477,6 +505,9 @@ header3 font
                 $.ajax({
                     type: "POST",
                     url: "./api/files/list_folders",
+                    headers: {
+                        'X-Foxfile-Auth': api_key
+                    },
                     data: {
                         hash: hash,
                         offset: _this.offset,
@@ -829,12 +860,14 @@ header3 font
         $.ajax({
             type: "POST",
             url: "./api/files/rename",
+            headers: {
+                'X-Foxfile-Auth': api_key
+            },
             data: {
                 hash: hash,
                 name: name
             },
             success: function(result) {
-                //var json = JSON.parse(result);
                 fm.dialog.hideCurrentlyActive();
                 fm.refresh(parent);
                 fm.snackbar.create('Renamed ' + name);
@@ -858,6 +891,9 @@ header3 font
         $.ajax({
             type: "POST",
             url: "./api/files/delete",
+            headers: {
+                'X-Foxfile-Auth': api_key
+            },
             data: {
                 hashlist: hashlist
             },
@@ -903,11 +939,13 @@ header3 font
         $.ajax({
             type: "POST",
             url: "./api/files/trash",
+            headers: {
+                'X-Foxfile-Auth': api_key
+            },
             data: {
                 hashlist: hashlist
             },
             success: function(result) {
-                //var json = JSON.parse(result);
                 fm.dialog.hideCurrentlyActive();
                 fm.refresh(parent);
                 fm.snackbar.create("Moved file" + (fm.multiSelect.selected.length > 1 ? 's' : '') + " to the trash", "undo", "fm.snackbar.dismiss();fm.restore(fm.hashToRestore)");
@@ -927,12 +965,14 @@ header3 font
             $.ajax({
                 url: './api/files/new_folder',
                 type: 'POST',
+                headers: {
+                    'X-Foxfile-Auth': api_key
+                },
                 data: {
                     name: name,
                     parent: parent
                 },
                 success: function(result, status, xhr) {
-                    //var json = JSON.parse(result);
                     fm.dialog.hideCurrentlyActive();
                     fm.refresh(parent);
                     fm.snackbar.create("Made new folder");
@@ -954,7 +994,7 @@ header3 font
             } else {
                 var hashes = [id];
             }
-            var frame = $("<iframe></iframe>").attr('src', './api/files/download?hashlist='+hashes.toString()+"&name="+name+"&type="+type).attr('id', id).css('display', 'none');
+            var frame = $("<iframe></iframe>").attr('src', './api/files/download?api_key='+api_key+'&hashlist='+hashes.toString()+"&name="+name+"&type="+type).attr('id', id).css('display', 'none');
             frame.appendTo('body');
             var _id = id;
             setTimeout(function() {
@@ -963,7 +1003,7 @@ header3 font
             fm.multiSelect.clear();
             fm.snackbar.create("Downloading files");
         } else {
-            var frame = $("<iframe></iframe>").attr('src', './api/files/download?id='+id+"&name="+name).attr('id', id).css('display', 'none');
+            var frame = $("<iframe></iframe>").attr('src', './api/files/download?api_key='+api_key+'&id='+id+"&name="+name).attr('id', id).css('display', 'none');
             frame.appendTo('body');
             var _id = id;
             setTimeout(function() {
@@ -987,6 +1027,9 @@ header3 font
         $.ajax({
             url: './api/files/move',
             type: 'POST',
+            headers: {
+                'X-Foxfile-Auth': api_key
+            },
             data: {
                 file_multi: filesList,
                 file_target: target
@@ -1008,6 +1051,9 @@ header3 font
         $.ajax({
             url: './api/files/make_public',
             type: 'POST',
+            headers: {
+                'X-Foxfile-Auth': api_key
+            },
             data: {
                 hash: id
             },
@@ -1034,6 +1080,9 @@ header3 font
         $.ajax({
             url: './api/files/make_public',
             type: 'POST',
+            headers: {
+                'X-Foxfile-Auth': api_key
+            },
             data: {
                 remove: id
             },
@@ -1052,6 +1101,9 @@ header3 font
         $.ajax({
             type: "POST",
             url: "./api/files/list_trash",
+            headers: {
+                'X-Foxfile-Auth': api_key
+            },
             data: {
                 offset: 0,
                 limit: 30
@@ -1101,11 +1153,13 @@ header3 font
         $.ajax({
             type: "POST",
             url: "./api/files/restore",
+            headers: {
+                'X-Foxfile-Auth': api_key
+            },
             data: {
                 hashlist: hashlist
             },
             success: function(result) {
-                var json = JSON.parse(result);
                 fm.refreshAll();
                 fm.loadTrash();
                 fm.snackbar.create("Restored file" +(fm.multiTrash.selected.length > 1 ? "s":''));
@@ -1120,6 +1174,9 @@ header3 font
         $.ajax({
             type: "POST",
             url: "./api/files/list_shared",
+            headers: {
+                'X-Foxfile-Auth': api_key
+            },
             data: {
                 offset: 0,
                 limit: 30
@@ -1188,6 +1245,9 @@ header3 font
         $.ajax({
             type: "POST",
             url: "./api/files/touch", //add touch() to the stuff this does to fix the downloading problem
+            headers: {
+                'X-Foxfile-Auth': api_key
+            },
             data: {
                 hash: hash
             },
@@ -1204,6 +1264,9 @@ header3 font
         $.ajax({
             type: "POST",
             url: "./api/files/delete_single",
+            headers: {
+                'X-Foxfile-Auth': api_key
+            },
             data: {
                 hash: hash
             },
@@ -1242,6 +1305,9 @@ header3 font
         $.ajax({
             type: "POST",
             url: "./api/files/search",
+            headers: {
+                'X-Foxfile-Auth': api_key
+            },
             data: {
                 name: name
             },
@@ -1307,6 +1373,9 @@ header3 font
             $.ajax({
                 type: "POST",
                 url: "./api/files/list_files",
+                headers: {
+                    'X-Foxfile-Auth': api_key
+                },
                 data: {
                     hash: _this.hash,
                     offset: _this.offset,
@@ -1518,6 +1587,7 @@ header3 font
             var template = _.template($('#fm-file-preview').html());
             var elem = '#file-detail-'+this.hash+' .file-preview';
             $(elem).empty();
+            this.file.key = api_key;
             $(elem).append(template(this.file));
 
             template = _.template($('#fm-file-history').html());
@@ -1530,6 +1600,9 @@ header3 font
                 $.ajax({
                     type: "GET",
                     url: "./api/files/view",
+                    headers: {
+                        'X-Foxfile-Auth': api_key
+                    },
                     data: {
                         id: _this.file.hash
                     },
@@ -1581,6 +1654,9 @@ header3 font
             $.ajax({
                 type: "POST",
                 url: "./api/files/list_versions",
+                headers: {
+                    'X-Foxfile-Auth': api_key
+                },
                 data: {
                     hash: _this.file.hash
                 },
@@ -1619,6 +1695,9 @@ header3 font
             $.ajax({
                 type: "POST",
                 url: "./api/files/get_file",
+                headers: {
+                    'X-Foxfile-Auth': api_key
+                },
                 data: {
                     hash: _this.hash
                 },
@@ -2188,6 +2267,9 @@ header3 font
                 $.ajax({
                     type: "POST",
                     url: "./api/files/uniqid",
+                    headers: {
+                        'X-Foxfile-Auth': api_key
+                    },
                     data: {
                         name: _this.name,
                         parent: _this.parent.hash
@@ -2225,6 +2307,9 @@ header3 font
                 url: './api/files/new_folder',
                 type: 'POST',
                 enctype: 'multipart/form-data',
+                    headers: {
+                    'X-Foxfile-Auth': api_key
+                },
                 data: {
                     name: _this.name,
                     hash: _this.hash,
@@ -2332,6 +2417,9 @@ header3 font
                 $.ajax({
                     type: "POST",
                     url: "./api/files/uniqid",
+                    headers: {
+                        'X-Foxfile-Auth': api_key
+                    },
                     success: function(result) {
                         var json = JSON.parse(result);
                         _this.hash = json.message;
@@ -2383,6 +2471,9 @@ header3 font
                 },
                 type: 'POST',
                 url: './api/files/new_file',
+                headers: {
+                    'X-Foxfile-Auth': api_key
+                },
                 data: formData,
                 processData: false,
                 contentType: false,
@@ -2469,6 +2560,9 @@ header3 font
                 $.ajax({
                     type: "POST",
                     url: "./api/files/uniqid",
+                    headers: {
+                        'X-Foxfile-Auth': api_key
+                    },
                     success: function(result) {
                         var json = JSON.parse(result);
                         _this.hash = json.message;
@@ -2553,6 +2647,9 @@ header3 font
                 $.ajax({
                     type: 'POST',
                     url: './api/files/new_file_chunk',
+                    headers: {
+                        'X-Foxfile-Auth': api_key // pretty sure mysql caches results
+                    },
                     data: {
                         start: _self.hash,
                         size: _self.item.size
@@ -2583,6 +2680,9 @@ header3 font
                     $.ajax({
                         type: 'POST',
                         url: './api/files/new_file_chunk',
+                        headers: {
+                            'X-Foxfile-Auth': api_key
+                        },
                         data: {
                             finish: _self.hash,
                             parent: _self.parent.hash,
@@ -2612,6 +2712,9 @@ header3 font
                     $.ajax({
                         type: 'POST',
                         url: './api/files/new_file_chunk',
+                        headers: {
+                            'X-Foxfile-Auth': api_key
+                        },
                         data: {
                             remove: _self.hash
                         },
@@ -2685,6 +2788,9 @@ header3 font
                 },
                 type: 'POST',
                 url: './api/files/new_file_chunk',
+                headers: {
+                    'X-Foxfile-Auth': api_key
+                },
                 data: formData,
                 processData: false,
                 contentType: false,

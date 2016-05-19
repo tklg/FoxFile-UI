@@ -40,7 +40,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
         <span>Enter recovery email</span>
     </header>
 	<section class="content">
-        <form name="recover" action="uauth.php" method="post">
+        <form name="recover"  onsubmit="return sendEmail()" method="post">
             <p class="instructions">
                 Please enter your email address below and we'll send you instructions on how to set a new password.
             </p>
@@ -53,7 +53,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     			</label>
     		</div>
             <a href="./" class="new-account">Log in</a>
-            <button class="btn btn-submit" type="button" onclick="sendEmail()">Send email<link class="rippleJS" /></button>
+            <button class="btn btn-submit" type="submit"">Send email<link class="rippleJS" /></button>
         </form>
 	</section>
 </main>
@@ -81,7 +81,11 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
                     $('form').html('<p class="instructions">Recovery email sent.</p>');
                 },
                 error: function(request, error) {
-                    $('.error').addClass('active').children('.error-message').text('Failed to send recovery email');
+                    if (request.status == 401) {
+                        $('.error').addClass('active').children('.error-message').text('No account was found with that email');
+                    } else {
+                        $('.error').addClass('active').children('.error-message').text('Failed to send recovery email');
+                    }
                 }
             });
         } else {
@@ -89,6 +93,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
                 $('.error').addClass('active');
             }
         }
+        return false;
     }
     $('#email').blur(function() {
     	if (/[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/g.test($('#email').val())) {

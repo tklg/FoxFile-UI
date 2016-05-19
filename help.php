@@ -28,7 +28,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 	<meta author="tkluge" />
 	<link rel="stylesheet" href="css/page.css" />
 	<!-- <link href="css/materialdesignicons.min.css" media="all" rel="stylesheet" type="text/css" /> -->
-	<link rel="icon" type="image/ico" href="favicon.png">
+	<link rel="icon" type="image/ico" href="img/favicon.png">
 	<link href='https://fonts.googleapis.com/css?family=Roboto:300,400' rel='stylesheet' type='text/css'>
 	<meta name="viewport" content="initial-scale=1, width=device-width, maximum-scale=1, minimum-scale=1, user-scalable=no">
 </head>
@@ -43,7 +43,8 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 	<main class="main">
 		<h2 class="title">Help</h2>
 		<article class="content float">
-			There is no help here
+			<h2>Heading</h2>
+			<p>Content</p>
 		</article>
 	</main>
 	<?php include './includes/footer.html'; ?>

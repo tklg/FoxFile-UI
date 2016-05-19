@@ -1,7 +1,7 @@
 <?php
 session_start();
 include 'includes/cfgvars.php';
-if (isset ($_SESSION['foxfile_uid'])) header ("Location: browse");
+//if (isset ($_SESSION['foxfile_uid'])) header ("Location: browse");
 /*if (!isset ($_SESSION['access_token'])) header ("Location: login");*/
 ?>
 <!DOCTYPE html>
@@ -114,7 +114,8 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     		setTimeout(function() {
     			$('#userpass').focus();
     		}, 450);
-    		setCookie('useremail', $('#email').val(), 7);
+    		//setCookie('useremail', $('#email').val(), 7);
+    		localStorage.setItem('email', $('#email').val());
     		stage = 1;
     	} else {
     		if ($('#email').val() != '') {
@@ -130,52 +131,35 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     	stage = 0;
     }
     function sub() {
-    	$.post('./api/auth/login',
-			{
+		$.ajax({
+            type: "POST",
+            url: "./api/auth/login",
+            data: {
 				useremail: $('#email').val(),
 				userpass: $('#userpass').val()
 			},
-			function(result) {
-				console.log(result);
-				switch (result) {
-					case '0': //ok
-						window.location.href = "./browse";
-						break;
-					case '1': //invalid u/p
-						$('.error-pass').addClass('active').text('Invalid email/pass');
-						break;
-					case '2':
-						$('.error-pass').addClass('active').text('Database error');
-						break;
-				}
-		});
+            success: function(result, s, x) {
+            	console.log(result);
+                var json = JSON.parse(result);
+
+                var token = json['key'];
+                //setCookie('api_key', token, 7);
+                sessionStorage.setItem('api_key', token);
+
+                window.location.href = "./browse";                
+            },
+            error: function(request, error) {
+                if (request.status == 401 || request.status == 404) {
+                	$('.error-pass').addClass('active').text('Invalid email/pass');
+                } else if (request.status == 500) {
+                	$('.error-pass').addClass('active').text('Database error');
+                }
+            }
+        });
     }
-    function getCookie(c_name) {
-	    var c_value = document.cookie;
-	    var c_start = c_value.indexOf(" " + c_name + "=");
-	    if (c_start == -1) {
-	        c_start = c_value.indexOf(c_name + "=");
-	    }
-	    if (c_start == -1) {
-	        c_value = null;
-	    } else {
-	        c_start = c_value.indexOf("=", c_start) + 1;
-	        var c_end = c_value.indexOf(";", c_start);
-	        if (c_end == -1) {
-	            c_end = c_value.length;
-	        }
-	        c_value = unescape(c_value.substring(c_start, c_end));
-	    }
-	    return c_value;
-	}
-	function setCookie(c_name, value, exdays) {
-	    var exdate = new Date();
-	    exdate.setDate(exdate.getDate() + exdays);
-	    var c_value = escape(value) + ((exdays == null) ? "" : "; expires=" + exdate.toUTCString());
-	    document.cookie = c_name + "=" + c_value;
-	}
 	function removeUser() {
-		setCookie('useremail', '', 7);
+		//setCookie('useremail', '', 7);
+		localStorage.removeItem('email');
 		var user = $('#email').val();
         $('#email').attr('empty', (user != '') ? 'false' : 'true');
         var pass = $('#userpass').val();
@@ -184,7 +168,12 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 	}
 	$(document).ready(function() {
 
-		var u = getCookie("useremail");
+		if (sessionStorage.getItem('api_key')) {
+			document.location.href = './browse';
+		}
+
+		//var u = getCookie("useremail");
+		var u = localStorage.getItem('email');
 	    if (u != null && u != "") {
 	        using_cookie = true;
 	        $('#email').val(u);
