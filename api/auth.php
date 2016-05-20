@@ -19,8 +19,11 @@ require('../includes/user.php');
 require('../includes/cfgvars.php');
 
 // add ip limit too
+if (isset($_SESSION['lastreq']))
+	if ((time() - $_SESSION['lastreq']) > 30) 
+		$_SESSION['reqnum'] = 0;
 if (!isset($_SESSION['reqnum'])) $_SESSION['reqnum'] = 0;
-if ($_SESSION['reqnum'] == 15) die("reached max of 15 requests for this session");
+if ($_SESSION['reqnum'] == 15) die("reached max of 15 requests for this session: please wait 30 seconds before next request");
 $_SESSION['reqnum'] = (int) $_SESSION['reqnum'] + 1;
 if (isset($_SESSION['lastreq']))
 	if ((time() - $_SESSION['lastreq']) < 3) die('one request pre 3 second allowed');
@@ -65,14 +68,16 @@ function sendVerification($email) {
 	require_once './../includes/mailconf.php';
 	$q = "SELECT account_status FROM users WHERE email='$email' LIMIT 1";
 	if ($res = mysqli_query($db, $q)) {
-
+		if (mysqli_num_rows($res) == 0) {
+			resp(404, 'There is no account with that email');
+		}
 		$link = mysqli_fetch_object($res)->account_status;
 		if ($link == 'verified') {
 			resp(500, 'Your email is already verified');
 		}
 
 		//$cdir = 
-		$link = $_SERVER['HTTP_HOST']."/foxfile/verify?key=".$link.'&from='.$email;
+		$link = 'https://'.$_SERVER['HTTP_HOST']."/foxfile/verify?key=".$link.'&from='.$email;
 		$c = curl_init();
 		curl_setopt($c, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
 		curl_setopt($c, CURLOPT_USERPWD, 'api:'.$mailkey);
@@ -94,7 +99,7 @@ function sendVerification($email) {
 
 
 	    if ($info['http_code'] != 200)
-	        resp(500, "Failed to send mail: curl gave ".$info['http_code']);
+	        resp(500, "Failed to send mail: curl gave ".curl_error($c));
 
 	    curl_close($c);
 	    //resp(200, "Sent mail");
@@ -115,7 +120,7 @@ function getOS() {
 function getBrowser() {
 	$user_agent = $_SERVER['HTTP_USER_AGENT'];
     $browser  = "Unknown Browser";
-    $browser_array = array('/msie/i' => 'Internet Explorer', '/firefox/i' => 'Firefox', '/safari/i' => 'Safari', '/chrome/i' => 'Chrome', '/edge/i' => 'Edge', '/opera/i' => 'Opera', '/netscape/i' => 'Netscape', '/maxthon/i' => 'Maxthon', '/konqueror/i' => 'Konqueror', '/mobile/i' => 'Handheld Browser'); foreach ($browser_array as $regex => $value) {
+    $browser_array = array('/msie/i' => 'Internet Explorer', '/firefox/i' => 'Firefox', '/safari/i' => 'Safari', '/chrome/i' => 'Chrome', '/edge/i' => 'Edge', '/opera/i' => 'Opera', '/netscape/i' => 'Netscape', '/maxthon/i' => 'Maxthon', '/konqueror/i' => 'Konqueror', '/mobile/i' => 'Mobile Browser'); foreach ($browser_array as $regex => $value) {
         if (preg_match($regex, $user_agent)) {
             $browser = $value;
         }
@@ -132,76 +137,103 @@ if($pageID == 'userexists') {
 	}
 }
 if($pageID == 'login') {
-	$useremail = sanitize($_POST['useremail']);
-	$sql = "SELECT * from users where email = '$useremail' LIMIT 1";
-	if ($result = mysqli_query($db, $sql)) {
-		if (mysqli_num_rows($result) == 0) {
-			resp(404, "user does not exist");
-		}
-		$row = mysqli_fetch_object($result);
-		$passToMatch = $row->password;
-		$password = $_POST['userpass'];
-		if (password_verify($password, $passToMatch)) {
-
-		    $ip = $_SERVER['REMOTE_ADDR'];
-			$oid = $row->PID;
-			//$ua = $_SERVER['HTTP_USER_AGENT'];
-			$ua = get_browser();
-			$userAgent = sanitize(getBrowser().' on '.getOS());
-			$sql = "SELECT api_key from apikeys where owner_id='$oid' and created_by='$ip' and user_agent='$userAgent' limit 1";
-			if ($res = mysqli_query($db, $sql)) {
-				if (mysqli_num_rows($res) == 0) {
-					//create a new token for this login
-					$token = bin2hex(openssl_random_pseudo_bytes(24));
-				    $sql2 = "INSERT INTO apikeys (owner_id, api_key, user_agent, created_by) VALUES ('$oid', '$token', '$userAgent', '$ip')";
-				    if (mysqli_query($db, $sql2)) {
-					    $r = array(
-					    	'status'=>200,
-					    	'key'=>$token
-					    	);
-					    echo json_encode($r);
-					    die();
-				    } else {
-				    	resp(500, 'failed to create new token');
-				    }
-				} else {
-					$token = mysqli_fetch_object($res)->api_key;
-					$sql2 = "UPDATE apikeys SET last_mod=NOW() where api_key='$token' and owner_id='$oid'";
-					if (mysqli_query($db, $sql2)) {
-						$r = array(
-					    	'status'=>200,
-					    	'key'=>$token
-					    	);
-					    echo json_encode($r);
-					    die();
-					} else {
-						resp(500, 'failed to update token');
-					}
-
-				}
-			} else {
-				resp(500, 'query failed');
+	if (isset($_POST['api_key'])) {
+		$key = sanitize($_POST['api_key']);
+		echo $key;
+		$ip = $_SERVER['REMOTE_ADDR'];
+		$q = "SELECT IF (TIMESTAMPDIFF(WEEK, last_mod , CURRENT_TIMESTAMP()) < 1, 'good', 'expired') as status, active from apikeys where api_key='$key' and created_by='$ip' LIMIT 1";
+		if ($res = mysqli_query($db, $q)) {
+			if (mysqli_num_rows($res) == 0) {
+				resp(404, "That key does not exist. Please log in first");
 			}
-			/*session_destroy();
-			foreach ($_SESSION as $value)
-				$value = null;
-			session_start();
-			$_SESSION['foxfile_access_level'] = $row->access_level;
-			$_SESSION['foxfile_uid'] = $row->PID;
-			$_SESSION['foxfile_email'] = $useremail;
-			$_SESSION['foxfile_uhd'] = $row->root_folder;
-			$_SESSION['foxfile_firstname'] = $row->firstname;
-			$_SESSION['foxfile_lastname'] = $row->lastname;
-			$_SESSION['foxfile_username'] = $row->firstname.' '.$row->lastname;
-			$_SESSION['foxfile_user_md5'] = md5($row->email);
-			$_SESSION['foxfile_max_storage'] = $row->total_storage;
-			$_SESSION['foxfile_verified_email'] = $row->account_status == 'verified' ? true : false;
-			echo 0;*/
-		} else {
-			resp(401, 'incorrect password');
+			$r = mysqli_fetch_object($res);
+			if ($r->status === 'expired' || $r->active == 0) {
+				resp(401, "That key has expired. Please log in again");
+			} else {
+				$sql2 = "UPDATE apikeys SET last_mod=NOW() where api_key='$key'";
+				if (mysqli_query($db, $sql2)) {
+					$r = array(
+						'status'=>200,
+						'key'=>$token
+					);
+					echo json_encode($r);
+					die();
+				} else {
+					resp(500, 'failed to update token');
+				}
+			}
+
 		}
 	} else {
-		resp(500, 'query failed');
+		$useremail = sanitize($_POST['useremail']);
+		$sql = "SELECT * from users where email = '$useremail' LIMIT 1";
+		if ($result = mysqli_query($db, $sql)) {
+			if (mysqli_num_rows($result) == 0) {
+				resp(404, "user does not exist");
+			}
+			$row = mysqli_fetch_object($result);
+			$passToMatch = $row->password;
+			$password = $_POST['userpass'];
+			if (password_verify($password, $passToMatch)) {
+
+			    $ip = $_SERVER['REMOTE_ADDR'];
+				$oid = $row->PID;
+				$userAgent = sanitize(getBrowser().' on '.getOS());
+				$sql = "SELECT api_key from apikeys where owner_id='$oid' and created_by='$ip' and user_agent='$userAgent' and active=1 limit 1";
+				if ($res = mysqli_query($db, $sql)) {
+					if (mysqli_num_rows($res) == 0) {
+						//create a new token for this login
+						$token = bin2hex(openssl_random_pseudo_bytes(24));
+					    $sql2 = "INSERT INTO apikeys (owner_id, api_key, user_agent, created_by) VALUES ('$oid', '$token', '$userAgent', '$ip')";
+					    if (mysqli_query($db, $sql2)) {
+						    $r = array(
+						    	'status'=>200,
+						    	'key'=>$token
+						    	);
+						    echo json_encode($r);
+						    die();
+					    } else {
+					    	resp(500, 'failed to create new token');
+					    }
+					} else {
+						$token = mysqli_fetch_object($res)->api_key;
+						$sql2 = "UPDATE apikeys SET last_mod=NOW() where api_key='$token' and owner_id='$oid'";
+						if (mysqli_query($db, $sql2)) {
+							$r = array(
+						    	'status'=>200,
+						    	'key'=>$token
+						    	);
+						    echo json_encode($r);
+						    die();
+						} else {
+							resp(500, 'failed to update token');
+						}
+
+					}
+				} else {
+					resp(500, 'query failed');
+				}
+				/*session_destroy();
+				foreach ($_SESSION as $value)
+					$value = null;
+				session_start();
+				$_SESSION['foxfile_access_level'] = $row->access_level;
+				$_SESSION['foxfile_uid'] = $row->PID;
+				$_SESSION['foxfile_email'] = $useremail;
+				$_SESSION['foxfile_uhd'] = $row->root_folder;
+				$_SESSION['foxfile_firstname'] = $row->firstname;
+				$_SESSION['foxfile_lastname'] = $row->lastname;
+				$_SESSION['foxfile_username'] = $row->firstname.' '.$row->lastname;
+				$_SESSION['foxfile_user_md5'] = md5($row->email);
+				$_SESSION['foxfile_max_storage'] = $row->total_storage;
+				$_SESSION['foxfile_verified_email'] = $row->account_status == 'verified' ? true : false;
+				echo 0;*/
+			} else {
+				resp(401, 'incorrect password');
+			}
+		} else {
+			resp(500, 'query failed');
+		}
 	}
 }
 
@@ -305,7 +337,7 @@ if ($pageID == 'send_recovery') {
 				$bytes = bin2hex(openssl_random_pseudo_bytes(40));
 			$_SESSION['foxfile_recovery_nonce'] = $bytes;
 
-			$link = $_SERVER['HTTP_HOST']."/foxfile/passchange?key=".$bytes.'&from='.$email;
+			$link = 'https://'.$_SERVER['HTTP_HOST']."/foxfile/passchange?key=".$bytes.'&from='.$email;
 			$c = curl_init();
 			curl_setopt($c, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
 			curl_setopt($c, CURLOPT_USERPWD, 'api:'.$mailkey);
@@ -325,7 +357,7 @@ if ($pageID == 'send_recovery') {
 			$info = curl_getinfo($c);
 
 			if ($info['http_code'] != 200)
-				resp(500, "Failed to send mail: curl gave ".$info['http_code']);
+				resp(500, "Failed to send mail: curl gave ".curl_error($c));
 
 			curl_close($c);
 			resp(200, "Sent mail");
@@ -386,4 +418,5 @@ if ($pageID == 'recover') {
 	}
 
 }
+
 mysqli_close($db);

@@ -1,16 +1,6 @@
 <?php
 session_start();
 include 'includes/cfgvars.php';
-/*if (!isset ($_SESSION['foxfile_uid'])) header ("Location: ./");
-$user_md5 = $_SESSION['foxfile_user_md5'];
-$user_alvl = $_SESSION['foxfile_access_level'];
-$user_uid = $_SESSION['foxfile_uid'];
-$user_email = $_SESSION['foxfile_email'];
-$user_uhd = $_SESSION['foxfile_uhd'];
-$user_first = $_SESSION['foxfile_firstname'];
-$user_last = $_SESSION['foxfile_lastname'];
-$user_name = $_SESSION['foxfile_username'];*/
-//if (empty($_COOKIE['api_key'])) header ("Location: ./");
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -51,21 +41,21 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
       <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
       <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
     <![endif]-->
-    <script src="js/reloadr.js"></script>
+<!--     <script src="js/reloadr.js"></script>
     <script>
-    /*Reloadr.go({
+    Reloadr.go({
         client: [
             'js/foxfile.js',
             'css/foxfile.css'
         ],
         frequency: 1000
-    });*/
-</script>
+    });
+</script> -->
   </head>
 <body>
 <header class="main">
     <nav class="floatb-2" id="nav-header">
-        <h1 class="logo-text"><a href="./"><span class="redfox">Fox</span>File</a></h1>
+        <h1 class="logo-text"><a href="./browse"><span class="redfox">Fox</span>File</a></h1>
         <form class="user-input-box file-search">
 			<input class="user-input input-text input-search" type="text" id="search" />
 			<label class="input-text-icon" for="search"><i class="mdi mdi-magnify"></i></label>
@@ -169,6 +159,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 				<ul class="">
 					<li class="menubar-content floatb btn-ctrlbar active" id="files">
 						<i class="nocheckbox-icon mdi mdi-folder-multiple-outline"></i><span class="file-name">My files</span>
+						<span class="badge badge-info" id="badge-quota">Fetching...</span>
 					</li>
 					<!-- <li class="menubar-content floatb btn-ctrlbar" id="shared">
 						<i class="nocheckbox-icon mdi mdi-account-multiple"></i><span class="file-name">Shared with me</span>
@@ -444,8 +435,8 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 
     <!-- <script src="//cdnjs.cloudflare.com/ajax/libs/wavesurfer.js/1.0.52/wavesurfer.min.js"></script> -->
     <script>
-    if (!sessionStorage.getItem('api_key')) location.replace('./login');
-    var api_key = sessionStorage.getItem('api_key');
+    if (!localStorage.getItem('api_key')) location.replace('./login');
+    var api_key = localStorage.getItem('api_key');
     var foxfile_root = null;
     $(document).ready(function() {
 	    foxfile.init();

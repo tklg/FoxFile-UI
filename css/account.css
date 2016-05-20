@@ -235,21 +235,89 @@ orange A100 #FF9E80
 	display: flex;
 }
 .bar:not(:first-of-type) .acc-h li {
-	line-height: 30px;
-	height: 30px;
-}
-.bar:not(:first-of-type) .acc-h li .property {
-	width: 130px;
+	display: flex;
+	line-height: 40px;
+	height: 40px;
 }
 .bar:not(:first-of-type) .acc-h li span {
-	height: 30px;
-	line-height: 30px;
+	height: 40px;
+	line-height: 40px;
 	margin: 0;
+}
+.bar:not(:first-of-type) .acc-h li .useragent {
+	flex: none;
+	width: 230px;
+}
+.bar:not(:first-of-type) .acc-h li .creator {
+	flex: auto;
+}
+.acc-h li.current .status::before {
+	position: absolute;
+	height: 30px;
+	width: 100px;
+	content: 'CURRENT';
+	background: white;
+	border-radius: 3px;
+	top: 0;
+	left: 0;
+	/*transition: all 0.15s ease-in-out;*/
+}
+.acc-h li.current .status:hover:before,
+.acc-h li.active .status:hover:before {
+	content: 'LOGOUT';
+	background: #FF5722;
+	color: white;
+	position: absolute;
+	height: 30px;
+	width: 100px;
+	border-radius: 3px;
+	top: 0;
+	left: 0;
+}
+.acc-h li.expired .status:hover:before {
+	position: absolute;
+	height: 30px;
+	width: 100px;
+	content: 'REMOVE';
+	background: #FF5722;
+	color: white;
+	border-radius: 3px;
+	top: 0;
+	left: 0;
 }
 .bar:not(:first-of-type) .acc-h li .date {
 	flex: none;
-	width: 130px;
+	width: auto;
+	/*width: 130px;*/
 	text-align: right;
+}
+.bar:not(:first-of-type) .acc-h li button {
+	position: relative;
+	display: inline-block;
+	height: 30px;
+	line-height: 30px;
+	margin: 5px 0 5px 15px;
+	width: 100px;
+	flex: none;
+	/*width: 130px;*/
+}
+.acc-h li.expired .status {
+	color: rgba(0,0,0,.38);
+}
+.ulheader {
+	display: flex;
+}
+.ulheader .useragent {
+	width: 230px;
+}
+.ulheader .creator {
+	flex: auto;
+}
+.ulheader .date {
+	text-align: right;
+}
+.ulheader .status {
+	width: 115px;
 }
 .bar li .desc {
 	font-size: 14px;

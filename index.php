@@ -144,7 +144,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 
                 var token = json['key'];
                 //setCookie('api_key', token, 7);
-                sessionStorage.setItem('api_key', token);
+                localStorage.setItem('api_key', token);
 
                 window.location.href = "./browse";                
             },
@@ -168,22 +168,44 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 	}
 	$(document).ready(function() {
 
-		if (sessionStorage.getItem('api_key')) {
-			document.location.href = './browse';
-		}
-
+		if (localStorage.getItem('api_key')) {
+			$.ajax({
+	            type: "POST",
+	            url: "./api/auth/login",
+	            data: {
+					api_key: localStorage.getItem('api_key')
+				},
+	            success: function(result, s, x) {
+	            	//console.log(result);
+	                window.location.href = "./browse";                
+	            },
+	            error: function(request, error) {
+	            	start();
+	                if (request.status == 401 || request.status == 404) {
+	                	$('.error-pass').addClass('active').text('Invalid auth key - log in again.');
+	                	localStorage.removeItem('api_key');
+	                } else if (request.status == 500) {
+	                	$('.error-pass').addClass('active').text('Database error');
+	                }
+	            }
+	        });
+		} else {
+			start();			
+	    }
+	});
+	function start() {
 		//var u = getCookie("useremail");
 		var u = localStorage.getItem('email');
-	    if (u != null && u != "") {
-	        using_cookie = true;
-	        $('#email').val(u);
-	        checkEmail();
-	    }
-		var user = $('#email').val();
-        $('#email').attr('empty', (user != '') ? 'false' : 'true');
-        var pass = $('#userpass').val();
-        $('#userpass').attr('empty', (pass != '') ? 'false' : 'true');
-	});
+		if (u != null && u != "") {
+		    using_cookie = true;
+		    $('#email').val(u);
+		    checkEmail();
+		}
+		 user = $('#email').val();
+	    $('#email').attr('empty', (user != '') ? 'false' : 'true');
+	    var pass = $('#userpass').val();
+	    $('#userpass').attr('empty', (pass != '') ? 'false' : 'true');
+	}
     </script>
 </body>
 </html>

@@ -23,7 +23,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
         });
     }
     foxfile.logout = function() {
-        sessionStorage.clear();
+        localStorage.removeItem('api_key');
         document.location.href = './logout';
     }
     foxfile.routerbox = {
@@ -109,7 +109,12 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
                     if (done) done();
                 },
                 error: function(request, error) {
-                    //console.error(request, error);
+                    if (request.status == 404) {
+                        fm.snackbar.create('Auth key is invalid','logout','document.location.href=\'./login\'');
+                        setTimeout(function() {
+                            document.location.href = './login';
+                        }, 3000);
+                    }
                 }
             });
         },
@@ -238,6 +243,13 @@ header3 font
                 transition: 'all 0.45s ease-in-out'
             });
         }, 500);
+        fm.fetchQuota();
+    }
+    fm.cbyte = function(bytes) {
+        var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+        if (bytes == 0) return '0 Bytes';
+        var i = parseInt(Math.log(bytes) / Math.log(1024));
+        return (bytes / Math.pow(1024, i)).toFixed(2) + ' ' + sizes[i];
     }
     fm.updateSize = function() {
         //console.info("Resize FileManager");
@@ -902,6 +914,7 @@ header3 font
                 fm.loadTrash();
                 fm.snackbar.create("Deleted file" + (fm.multiTrash.selected.length > 1 ? 's' : ''));
                 fm.multiTrash.clear();
+                fm.fetchQuota();
             },
             error: function(request, error) {
                 fm.dialog.hideCurrentlyActive();
@@ -1345,6 +1358,29 @@ header3 font
         sb.offset = 0;
         dd.addListener(sb);
         $('#bar-search').removeClass('loading');
+    }
+    fm.fetchQuota = function() {
+        $.ajax({
+            type: "POST",
+            url: "./api/users/account",
+            headers: {
+                'X-Foxfile-Auth': api_key
+            },
+            data: {
+                part: 'quota'
+            },
+            success: function(result) {
+                var json = JSON.parse(result);
+                var total = json['total'];
+                var used = json['files'];
+                var qu = Math.round(used / total * 100);
+                var str = qu + "% of " + fm.cbyte(total) + " used";
+                $('#badge-quota').text(str);
+            },
+            error: function(request, error) {
+                $('#badge-quota').text(' ');
+            }
+        });
     }
     var FolderBar = function(name, hash, parent) {
         this.dd;
@@ -2890,6 +2926,7 @@ header3 font
                 else
                     fm.snackbar.create("Failed to upload "+dd.numFilesToUpload+" files", 'view', '$(\'#transfers.btn-ctrlbar\').click()');
                 fm.refreshAll();
+                fm.fetchQuota();
             } else {
                 if (fake) {
                     console.log("%cStarting %cfake upload of LinearQueue","color:green","color:gray");

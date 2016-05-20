@@ -34,14 +34,43 @@ if (strpos($pageID, '?') !== false) {
 $db = mysqli_connect($dbhost,$dbuname,$dbupass,$dbname);
 $uid = -1;
 $uhd = 'demo';
-/*if (isset($_SESSION['foxfile_uid'])) {
-  $uid = $_SESSION['foxfile_uid'];
-  $uem = $_SESSION['foxfile_email'];
-  $alvl = $_SESSION['foxfile_access_level'];
-  $uhd = $_SESSION['foxfile_uhd'];
-  $logged_in = true;
-} else {
-  $logged_in = false;
+/*function getUserFromKey($key) {
+	global $db;
+	$q = "SELECT * from users u join (SELECT owner_id from apikeys where api_key='$key' and active=1 and (TIMESTAMPDIFF(WEEK, last_mod , CURRENT_TIMESTAMP()) < 1) LIMIT 1) k on k.owner_id=u.PID LIMIT 1";
+	if ($res = mysqli_query($db, $q)) {
+		if (mysqli_num_rows($res) == 0) {
+			return null;
+		}
+		$r = mysqli_fetch_object($res);
+		unset($r->password);
+		unset($r->access_level);
+		//$o = new stdClass();
+		$o = $r;
+		// what a mess
+		$o->uid = $r->PID;
+		unset($o->PID);
+		$o->root = $r->root_folder;
+		unset($o->root_folder);
+		$o->username = $r->firstname.' '.$r->lastname;
+		$o->md5 = md5($r->email);
+		$o->joindate = $r->join_date;
+		unset($o->join_date);
+		$o->status = $r->account_status == 'verified' ? 'verified' : 'unverified';
+		unset($o->account_status);
+		return $o;
+	} else {
+		resp(500, 'getUserFromKey failed');
+	}
+}	
+if (isset($_GET['api_key']))
+	$userDetailsFromKey = getUserFromKey($_GET['api_key']);
+else 
+	$userDetailsFromKey = getUserFromKey($_SERVER['HTTP_X_FOXFILE_AUTH']);
+if ($userDetailsFromKey !== null) {
+	$uid = $userDetailsFromKey->uid;
+	$uhd = $userDetailsFromKey->root;
+	$maxstore = $userDetailsFromKey->total_storage;
+	$verified = $userDetailsFromKey->status;
 }*/
 date_default_timezone_set('America/New_York');
 

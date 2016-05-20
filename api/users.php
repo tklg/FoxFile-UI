@@ -41,7 +41,7 @@ if (!isset($_SERVER['HTTP_X_FOXFILE_AUTH']) && !isset($_GET['api_key'])) {
 		$userDetailsFromKey = getUserFromKey($_SERVER['HTTP_X_FOXFILE_AUTH']);
 }
 if ($userDetailsFromKey === null) {
-	resp(404, 'key does not match any user');
+	resp(404, 'auth key is invalid');
 } else {
 	$uid = $userDetailsFromKey->uid;
 	$uhd = $userDetailsFromKey->root;
@@ -80,7 +80,7 @@ function dirSize($path){
 }
 function getUserFromKey($key) {
 	global $db;
-	$q = "SELECT * from users u join (SELECT owner_id from apikeys where api_key='$key' LIMIT 1) k on k.owner_id=u.PID LIMIT 1";
+	$q = "SELECT * from users u join (SELECT owner_id from apikeys where api_key='$key' and active=1 and (TIMESTAMPDIFF(WEEK, last_mod , CURRENT_TIMESTAMP()) < 1) LIMIT 1) k on k.owner_id=u.PID LIMIT 1";
 	if ($res = mysqli_query($db, $q)) {
 		if (mysqli_num_rows($res) == 0) {
 			return null;
@@ -131,23 +131,54 @@ if ($pageID == 'account') {
 	$key = sanitize($_SERVER['HTTP_X_FOXFILE_AUTH']);
 	$r = getUserFromKey($key);
 	$uhd = $r->root;*/
+	if (isset($_POST['part'])) {
+		if ($_POST['part'] == 'quota') {
+			$q = "SELECT total_storage from users where PID='$uid' and root_folder='$uhd' limit 1";
+			if ($r = mysqli_query($db, $q)) {
+				if (mysqli_num_rows($r) == 0) {
+					resp(404, 'user not found');
+				}
+				$res = array(
+					'total'=>(int) mysqli_fetch_object($r)->total_storage,
+					'files'=>dirSize('./../files/'.$uhd)
+					);
+				echo json_encode($res);
+				die();
+			} else {
+				resp(500, 'query failed'.mysqli_error($db));
+			}
+		}
+	}
 	$r = $userDetailsFromKey;
 	/*if($r1 = mysqli_query($db, $q)) {
 		$r = mysqli_fetch_array($r1);*/
 	if ($r !== null) {
-		$total = (int) $r->total_storage;
-		unset($r->total_storage);
-		$r->quota = array(
-			'total'=>$total,
-			'files'=>dirSize('../files/'.$uhd)
-			//'trash'=>$s_t
-			);
-		$f = array(
-			'status'=>200,
-			'content'=>$r
-			);
-		echo json_encode($f);
-		die();
+		$q = "SELECT *, IF (TIMESTAMPDIFF(WEEK, last_mod , CURRENT_TIMESTAMP()) < 1, 'good', 'expired') as status from apikeys where owner_id='$uid' order by last_mod desc limit 50";
+		if ($res = mysqli_query($db, $q)) {
+			if (mysqli_num_rows($res) > 50) {
+				$q = "DELETE from apikeys where ((TIMESTAMPDIFF(WEEK, last_mod , CURRENT_TIMESTAMP()) > 1) or active=0) and owner_id='$uid'";
+				mysqli_query($db, $q);
+			}
+			$keys = array();
+			while($ob = mysqli_fetch_object($res)) {
+				//unset($ob->api_key);
+				$keys[] = $ob;
+			}
+			$total = (int) $r->total_storage;
+			unset($r->total_storage);
+			$r->quota = array(
+				'total'=>$total,
+				'files'=>dirSize('../files/'.$uhd)
+				//'trash'=>$s_t
+				);
+			$r->keys = $keys;
+			$f = array(
+				'status'=>200,
+				'content'=>$r
+				);
+			echo json_encode($f);
+			die();	
+		}
 	} else {
 		resp(500, 'failed to find user details');
 	}
@@ -196,8 +227,29 @@ if ($pageID == 'update') {
 		resp(500, "failed to update user");
 	}
 }
-if ($pageID == 'recover') {
-	
+if ($pageID == 'invalidate_key') {
+	if (!isset($_POST['key'])) {
+		resp(422, 'missing parameters');
+	}
+	$key = sanitize($_POST['key']);
+	$q = "SELECT active from apikeys where api_key='$key' and owner_id='$uid' limit 1";
+	if ($r = mysqli_query($db, $q)) {
+		if (mysqli_num_rows($r) == 0) {
+			resp(404, 'no matching key was found');
+		}
+		if (mysqli_fetch_object($r)->active == 0) {
+			$q = "DELETE from apikeys where api_key='$key' and owner_id='$uid' limit 1";
+			$m = 'removed key';
+		} else {
+			$q = "UPDATE apikeys set active=0 where api_key='$key' and owner_id='$uid' limit 1";
+			$m = 'deactivated key';
+		}
+		if (mysqli_query($db, $q)) {
+			resp(200, $m);
+		} else {
+			resp(500, 'query failed');
+		}
+	}
 }
 
 mysqli_close($db);

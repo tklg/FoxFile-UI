@@ -1,18 +1,7 @@
 <?php
 session_start();
 include 'includes/cfgvars.php';
-/*if (!isset ($_SESSION['foxfile_uid'])) $logged_in = false;
-else {
-    $logged_in = true;
-    $user_md5 = $_SESSION['foxfile_user_md5'];
-    $user_alvl = $_SESSION['foxfile_access_level'];
-    $user_uid = $_SESSION['foxfile_uid'];
-    $user_email = $_SESSION['foxfile_email'];
-    $user_uhd = $_SESSION['foxfile_uhd'];
-    $user_first = $_SESSION['foxfile_firstname'];
-    $user_last = $_SESSION['foxfile_lastname'];
-    $user_name = $_SESSION['foxfile_username'];
-}*/
+
 $uri = $_SERVER['REQUEST_URI'];
 if (strpos($uri, '/') !== false) {
     $uri = explode('/', $uri);
@@ -76,8 +65,8 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 	<section class="bar" id="bar-0" type="folder" folder="menu">
         <header class="hidden">
             <div class="infobox">
-	           	<span class="header-name" data-fetch="user-name"></span>
-	           	<span class="header-email" data-fetch="user-email"></span>
+	           	<span class="header-name" fetch-data="user-name"></span>
+	           	<span class="header-email" fetch-data="user-email"></span>
 
               </div>
         </header>
@@ -115,7 +104,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
             </div>
             <div class="inactive">
                 <a class="btn" onclick="shared.download()">Download</a>
-                <a class="btn hidden" onclick="shared.copy()">Copy to my files</a>
+                <!-- <a class="btn hidden" onclick="shared.copy()">Copy to my files</a> -->
             </div>
         </section>
     </section>
@@ -134,8 +123,8 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     <script type="text/javascript" src="../js/ripple.js"></script>
     <script>
     var logged_in = true;
-    if (!sessionStorage.getItem('api_key')) logged_in = false;
-    var api_key = sessionStorage.getItem('api_key');
+    if (!localStorage.getItem('api_key')) logged_in = false;
+    var api_key = localStorage.getItem('api_key');
     var shared_id = '<?php echo $pageID; ?>';
     if (shared_id == '') document.location.href = './../';
     $(document).ready(function() {

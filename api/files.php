@@ -32,7 +32,7 @@ if (strpos($pageID, '?') !== false) {
 }
 function getUserFromKey($key) {
 	global $db;
-	$q = "SELECT * from users u join (SELECT owner_id from apikeys where api_key='$key' LIMIT 1) k on k.owner_id=u.PID LIMIT 1";
+	$q = "SELECT * from users u join (SELECT owner_id from apikeys where api_key='$key' and active=1 and (TIMESTAMPDIFF(WEEK, last_mod , CURRENT_TIMESTAMP()) < 1) LIMIT 1) k on k.owner_id=u.PID LIMIT 1";
 	if ($res = mysqli_query($db, $q)) {
 		if (mysqli_num_rows($res) == 0) {
 			return null;
@@ -75,7 +75,7 @@ if (!isset($_SERVER['HTTP_X_FOXFILE_AUTH']) && !isset($_GET['api_key'])) {
 }
 if ($userDetailsFromKey === null) {
 	if ($pageID !== 'download')
-		resp(404, 'key does not match any user');
+		resp(404, 'auth key is invalid');
 } else {
 	$uid = $userDetailsFromKey->uid;
 	$uhd = $userDetailsFromKey->root;

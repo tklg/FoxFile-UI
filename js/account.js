@@ -18,7 +18,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
         account.routerbox.init();
     }
     account.logout = function() {
-        sessionStorage.clear();
+        localStorage.removeItem('api_key');
         document.location.href = './logout';
     }
     account.routerbox = {
@@ -31,8 +31,8 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
                     "": "loadAcct",
                     "account": "loadAcct",
                     "settings": "openSettings",
-                    "security": "openSec"
-                    //"history": "openHistory"
+                    "security": "openSec",
+                    "history": "openHistory"
                 }
             });
             this.router = new Router();
@@ -51,13 +51,13 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
                 document.title = 'Account Security - FoxFile';
                 $('#bar-0 li#security').addClass('active').siblings().removeClass('active');
                 $('.bar-security').addClass('active').css('z-index', 401).siblings().css('z-index', 400).removeClass('active');
-                account.loadSecurity();
+                account.loadAcct();
             });
             this.router.on('route:openHistory', function(sort) {
                 document.title = 'Account History - FoxFile';
                 $('#bar-0 li#history').addClass('active').siblings().removeClass('active');
                 $('.bar-history').addClass('active').css('z-index', 401).siblings().css('z-index', 400).removeClass('active');
-                account.loadHistory();
+                account.loadAcct();
             });
             Backbone.history.start();
         }
@@ -68,7 +68,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
         }
     }
     account.loadAcct = function() {
-        $('.bar-account, .bar-settings').addClass('loading');
+        $('.bar-account, .bar-settings, .bar-security, .bar-history').addClass('loading');
         $.ajax({
             type: "POST",
             url: "./api/users/account",
@@ -79,6 +79,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
                 var json = JSON.parse(result);
                 var c = json['content'];
                 var q = c['quota'];
+                var k = c['keys'];
                 $('[fetch-data=user-first]').text(c['firstname']);
                 $('[fetch-data=user-name]').text(c['username']);
                 $('[fetch-data=user-email]').text(c['email']);
@@ -109,10 +110,32 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
                     width: (s_t / s) * 100 + "%"
                 });*/
 
-                $('.bar-account, .bar-settings').removeClass('loading');
+                var template = _.template($('#template-key').html());
+                $('.acc-h').empty();
+                for (var i = 0; i < k.length; i++) {
+                    $('.acc-h').append(template({
+                        ua: k[i]['user_agent'],
+                        date: k[i]['last_mod'],
+                        ip: k[i]['created_by'],
+                        key: k[i]['api_key'],
+                        current: k[i]['api_key'] == api_key ? 'current':'',
+                        status: k[i]['status'] == 'good' 
+                            ? (k[i]['active'] == '1' 
+                                ? 'active' 
+                                : 'expired')
+                            : 'expired'
+                    }));
+                }
+
+                $('.bar-account, .bar-settings, .bar-security, .bar-history').removeClass('loading');
             },
             error: function(request, error) {
-                
+                if (request.status == 404) {
+                    account.snackbar.create('Auth key is invalid','logout','document.location.href=\'./login\'');
+                    setTimeout(function() {
+                        document.location.href = './login';
+                    }, 3000);
+                }
             }
         });
     }
@@ -316,6 +339,26 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
             },
             error: function(request, error) {
                 account.snackbar.create("Failed to send verification email");
+            }
+        });
+    }
+    account.invalidateKey = function(key) {
+        $.ajax({
+            type: "POST",
+            url: "./api/users/invalidate_key",
+            headers: {
+                'X-Foxfile-Auth': api_key
+            },
+            data: {
+                key: key
+            },
+            success: function(result) {
+                $('#'+key).text('Expired');
+                account.snackbar.create("Logged out of one session");
+                account.loadAcct();
+            },
+            error: function(request, error) {
+                account.snackbar.create("Failed to invalidate key");
             }
         });
     }

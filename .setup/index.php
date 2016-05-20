@@ -70,7 +70,8 @@ $dbname = "' . $dbname . '";
 			api_key char(48) character set utf8 collate utf8_bin not null,
 			user_agent varchar(48),
 			last_mod TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-			created_by VARCHAR(45)
+			created_by VARCHAR(45),
+			active BOOLEAN DEFAULT 1
 		) ENGINE=INNODB";
 	if (mysqli_query($db, $sql) && mysqli_query($db, $sql1) && mysqli_query($db, $sql2) && mysqli_query($db, $sql3)) {
 		mysqli_close($db);
@@ -110,6 +111,8 @@ $dbname = "' . $dbname . '";
 		$hashids = new Hashids\Hashids('foxfilesaltisstillbestsalt', 12);
 		$root_folder = $hashids->encode($newIdObj);
 		$total_storage = 2147483648;
+		$bytes = bin2hex(openssl_random_pseudo_bytes(20));
+
 		$sql = "INSERT INTO users (firstname, email, password, root_folder, total_storage, account_status, access_level)
 	        VALUES (
 	        'Administrator',
@@ -117,7 +120,7 @@ $dbname = "' . $dbname . '";
 	        '$password',
 	        '$root_folder',
 	        '$total_storage',
-	        'unverified',
+	        '$bytes',
 	        '5')";
 		if (mysqli_query($db, $sql)) {
 			@mkdir('../files/'.$root_folder.'/');

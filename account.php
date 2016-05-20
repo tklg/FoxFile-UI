@@ -1,15 +1,6 @@
 <?php
 session_start();
 include 'includes/cfgvars.php';
-/*if (!isset ($_SESSION['foxfile_uid'])) header ("Location: ./");
-$user_md5 = $_SESSION['foxfile_user_md5'];
-$user_alvl = $_SESSION['foxfile_access_level'];
-$user_uid = $_SESSION['foxfile_uid'];
-$user_email = $_SESSION['foxfile_email'];
-$user_uhd = $_SESSION['foxfile_uhd'];
-$user_first = $_SESSION['foxfile_firstname'];
-$user_last = $_SESSION['foxfile_lastname'];
-$user_name = $_SESSION['foxfile_username'];*/
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -49,22 +40,22 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
       <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
       <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
     <![endif]-->
-    <script src="js/reloadr.js"></script>
+<!--     <script src="js/reloadr.js"></script>
     <script>
-    /*Reloadr.go({
+    Reloadr.go({
         client: [
             'js/account.js',
             'css/foxfile.css',
             'css/account.css'
         ],
         frequency: 1000
-    });*/
-</script>
+    });
+</script> -->
   </head>
 <body>
 <header class="main">
     <nav class="floatb-2" id="nav-header">
-        <h1 class="logo-text"><span class="redfox">Fox</span>File</h1>
+        <h1 class="logo-text"><a href="./browse"><span class="redfox">Fox</span>File</a></h1>
     	<div class="file-search"></div>
         <div class="user-menu">
         	<span class="user-menu-msg" fetch-data="user-first"></span>
@@ -109,9 +100,9 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 				<li class="menubar-content floatb btn-ctrlbar" id="security">
 					<i class="nocheckbox-icon mdi mdi-security"></i><span class="file-name">Security</span>
 				</li>
-				<!-- <li class="menubar-content floatb btn-ctrlbar" id="history">
+				<li class="menubar-content floatb btn-ctrlbar" id="history">
 					<i class="nocheckbox-icon mdi mdi-history"></i><span class="file-name">Account history</span>
-				</li> -->
+				</li>
 			</ul>
 		</nav>
 	</section>
@@ -232,21 +223,15 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
             <div class="indeterminate"></div>
         </div>
         <section class="content">
-            <h2>Account logins</h2>
+            <h2>Logins</h2>
+            <div class="ulheader">
+                <span class="useragent">Browser</span>
+                <span class="creator">IP</span>
+                <span class="date">Last login</span>
+                <span class="status"></span>
+            </div>
             <ul class="acc-h">
-                <li>
-                    <span class="property">Action</span>
-                    <span class="value detail">Detail</span>
-                    <span class="value date">Date</span>
-                </li><li>
-                    <span class="property">Action</span>
-                    <span class="value detail">Detail</span>
-                    <span class="value date">Date</span>
-                </li><li>
-                    <span class="property">Action</span>
-                    <span class="value detail">Detail</span>
-                    <span class="value date">Date</span>
-                </li>
+                
             </ul>
         </section>
     </section>
@@ -257,6 +242,14 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     <span class="snackbar-msg"><%= message %></span><% if (action != null) { %><button class="btn snackbar-btn" onclick="<%= fn %>"><%= action %></button><% } %>
 </div>
 </script>
+<script type="text/template" id="template-key">
+    <li class="<%= current + ' ' + status %>">
+        <span class="value useragent"><%= ua %></span>
+        <span class="value creator"><%= ip %></span>
+        <span class="value date"><%= date %></span>
+        <button class="btn value status" id="<%= key %>" onclick="account.invalidateKey('<%= key %>')"><%= status %></button>
+    </li>
+</script>
 	<script type="text/javascript" src="//code.jquery.com/jquery-2.1.4.min.js"></script>
 	<!-- <script src="//code.jquery.com/ui/1.11.4/jquery-ui.min.js"></script> -->
 	<!-- <link async rel="stylesheet" type="text/css" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.7.1/themes/base/jquery-ui.css"/> -->
@@ -265,8 +258,8 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     <script src="js/account.js"></script>
     <script type="text/javascript" src="js/ripple.js"></script>
     <script>
-    if (!sessionStorage.getItem('api_key')) location.replace('./login');
-    var api_key = sessionStorage.getItem('api_key');
+    if (!localStorage.getItem('api_key')) location.replace('./login');
+    var api_key = localStorage.getItem('api_key');
     $(document).ready(function() {
 	    account.init();
     });
