@@ -876,6 +876,14 @@ main {
 	text-align: center;
 	padding: 0;
 	display: none;
+	/*transition: all .15s ease-in-out;*/
+}
+.file-detail-viewport .file-decrypting-icon {
+	display: none;
+	/*transition: all .15s ease-in-out;*/
+}
+.file-detail-viewport .file-decrypting-icon.active {
+	display: flex;
 }
 .file-preview #editor {
 	display: inline-block;
@@ -1268,6 +1276,11 @@ main {
 	background: white;
 	border-radius: 4px;
 	box-shadow: 0 15px 24px rgba(0, 0, 0, 0.22), 0 19px 76px rgba(0, 0, 0, 0.3);
+}
+.dialog hr {
+	border: none;
+	border-top: 1px solid rgba(0,0,0,.12);
+	margin: 16px 20px;
 }
 .dialog header {
 	height: 60px;

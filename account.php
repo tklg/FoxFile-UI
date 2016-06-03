@@ -195,7 +195,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
         <section class="content">
             <h2>Security settings</h2>
             <ul>
-                <li class="large">
+                <!-- <li class="large">
                     <span class="property">Password</span>
                     <ul class="passstack">
                         <li>
@@ -206,11 +206,11 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
                             <button class="btn btn-save" onclick="account.changePass();">change</button>
                         </li>
                     </ul>
-                </li>
+                </li> -->
                 <li>
                     <span class="property">Remove my account</span>
                     <span class="value">This cannot be undone.</span>
-                    <button class="btn btn-save" onclick="account.confirmRemove()">remove</button></label>
+                    <button class="btn btn-save" onclick="account.dialog.removeAccount.show()">remove</button></label>
                 </li>
             </ul>
         </section>
@@ -226,7 +226,8 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
             <h2>Logins</h2>
             <div class="ulheader">
                 <span class="useragent">Browser</span>
-                <span class="creator">IP</span>
+                <span class="creator">IP address</span>
+                <!-- <span class="country">Country</span> -->
                 <span class="date">Last login</span>
                 <span class="status"></span>
             </div>
@@ -246,17 +247,31 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     <li class="<%= current + ' ' + status %>">
         <span class="value useragent"><%= ua %></span>
         <span class="value creator"><%= ip %></span>
+        <span class="value country"><%= country %></span>
         <span class="value date"><%= date %></span>
         <button class="btn value status" id="<%= key %>" onclick="account.invalidateKey('<%= key %>')"><%= status %></button>
     </li>
+</script>
+<script type="text/template" id="template-dialog">
+<div class="dialog-cover" id="<%= id %>">
+    <div class="dialog">
+        <%= header %>
+        <article><%= content %></article>
+        <footer><%= footer %></footer>
+    </div>
+</div>
+</script>
+<script type="text/template" id="template-dialog-footer-opt">
+<button class="btn dialog-btn dialog-btn-<%= type %>" onclick="<%= fn %>"><%= name %><link class="rippleJS" /></button>
 </script>
 	<script type="text/javascript" src="//code.jquery.com/jquery-2.1.4.min.js"></script>
 	<!-- <script src="//code.jquery.com/ui/1.11.4/jquery-ui.min.js"></script> -->
 	<!-- <link async rel="stylesheet" type="text/css" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.7.1/themes/base/jquery-ui.css"/> -->
     <script src="js/underscore.min.js"></script>
     <script src="js/backbone.min.js"></script>
+    <script type="text/javascript" src="js/forge.min.js"></script>
     <script src="js/account.js"></script>
-    <script type="text/javascript" src="js/ripple.js"></script>
+    <script async type="text/javascript" src="js/ripple.js"></script>
     <script>
     if (!localStorage.getItem('api_key')) location.replace('./login');
     var api_key = localStorage.getItem('api_key');

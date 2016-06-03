@@ -14,7 +14,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     Copyright (C) 2016 Theodore Kluge
     https://tkluge.net
 */
-session_start();
+//session_start();
 require('../includes/user.php');
 
 $uri = $_SERVER['REQUEST_URI'];
@@ -30,6 +30,15 @@ if (strpos($pageID, '?') !== false) {
 	$pageID = $uri[0];
 } 
 $db = mysqli_connect($dbhost,$dbuname,$dbupass,$dbname);
+date_default_timezone_set('America/New_York');
+
+function sanitize($s) {
+	global $db;
+	return htmlentities(br2nl(mysqli_real_escape_string($db, $s)), ENT_QUOTES);
+}
+function br2nl($s) {
+    return preg_replace('/\<br(\s*)?\/?\>/i', "\n", $s);
+}
 
 if (!isset($_SERVER['HTTP_X_FOXFILE_AUTH']) && !isset($_GET['api_key'])) {
 	resp(401, 'missing auth key');
@@ -43,21 +52,13 @@ if (!isset($_SERVER['HTTP_X_FOXFILE_AUTH']) && !isset($_GET['api_key'])) {
 if ($userDetailsFromKey === null) {
 	resp(404, 'auth key is invalid');
 } else {
-	$uid = $userDetailsFromKey->uid;
-	$uhd = $userDetailsFromKey->root;
+	$uid = sanitize($userDetailsFromKey->uid);
+	$uhd = sanitize($userDetailsFromKey->root);
+	$uem = sanitize($userDetailsFromKey->email);
 	$maxstore = $userDetailsFromKey->total_storage;
 	$verified = $userDetailsFromKey->status;
 }
 
-date_default_timezone_set('America/New_York');
-
-function sanitize($s) {
-	global $db;
-	return htmlentities(br2nl(mysqli_real_escape_string($db, $s)), ENT_QUOTES);
-}
-function br2nl($s) {
-    return preg_replace('/\<br(\s*)?\/?\>/i', "\n", $s);
-}
 function resp($code, $message) {
 	header('Content-Type: application/json');
 	http_response_code($code);
@@ -161,7 +162,8 @@ if ($pageID == 'account') {
 			}
 			$keys = array();
 			while($ob = mysqli_fetch_object($res)) {
-				//unset($ob->api_key);
+				/*$ob->current_key = ($_SERVER['HTTP_X_FOXFILE_AUTH'] == $ob->api_key || $_GET['api_key'] == $ob->api_key);
+				unset($ob->api_key);*/
 				$keys[] = $ob;
 			}
 			$total = (int) $r->total_storage;
@@ -184,6 +186,9 @@ if ($pageID == 'account') {
 	}
 }
 if ($pageID == 'update') {
+	if ($uem == 'test@test.test') {
+		resp(401, "Test user cannot change account information.");
+	}
 	/*if (!isset($_POST['id']))
 		resp(422, 'missing parameters');
 	$id = sanitize($_POST['id']);
@@ -249,6 +254,42 @@ if ($pageID == 'invalidate_key') {
 		} else {
 			resp(500, 'query failed');
 		}
+	}
+}
+if ($pageID == 'remove') {
+	if (!isset($_POST['pass'])) resp(422, 'missing parameters');
+	$pass = $_POST['pass'];
+
+	$q = "SELECT password from users where PID='$uid' and root_folder='$uhd' limit 1";
+	if ($r = mysqli_query($db, $q)) {
+		if (mysqli_num_rows($r) == 0) resp(404, 'user not found');
+		if (!password_verify($pass, mysqli_fetch_object($r)->password)) {
+			resp(401, 'Incorrect password');
+		} else {
+			$q = "DELETE from apikeys where owner_id='$uid'";
+			$q2 = "DELETE from files where owner_id='$uid'";
+			$q3 = "DELETE from shared where owner_id='$uid'";
+			$q4 = "DELETE from users where PID='$uid'";
+			function deleteDir($path) {
+				if (!isset($path) || !$path || $path == '' || $path == '/' || $path == '\\') die();
+				foreach(glob("{$path}/*") as $file) {
+			        if(is_dir($file)) { 
+			            deleteDir($file);
+			        } else {
+			            unlink($file);
+			        }
+			    }
+			    rmdir($path);
+			}
+			if (mysqli_query($db, $q) && mysqli_query($db, $q2) && mysqli_query($db, $q3) && mysqli_query($db, $q4)) {
+				deleteDir('./../files/'.$uhd);
+				resp(200, "Account removed");
+			} else {
+				resp(500, 'query failed');
+			}
+		}
+	} else {
+		resp(500, 'query failed');
 	}
 }
 

@@ -37,6 +37,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
             });
             this.router = new Router();
             this.router.on('route:loadAcct', function(filePath) {
+                document.title = 'My Account - FoxFile';
                 $('#bar-0 li#account').addClass('active').siblings().removeClass('active');
                 $('.bar-account').addClass('active').css('z-index', 401).siblings().css('z-index', 400).removeClass('active');
                 account.loadAcct();
@@ -67,6 +68,11 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     		$('#nav-right').toggleClass('active');
         }
     }
+    function sha512(str) {
+        var md = forge.md.sha512.create();
+        md.update(str);
+        return md.digest().toHex();
+    }
     account.loadAcct = function() {
         $('.bar-account, .bar-settings, .bar-security, .bar-history').addClass('loading');
         $.ajax({
@@ -83,7 +89,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
                 $('[fetch-data=user-first]').text(c['firstname']);
                 $('[fetch-data=user-name]').text(c['username']);
                 $('[fetch-data=user-email]').text(c['email']);
-                $('[fetch-data=user-gravatar]').attr('src', '//gravatar.com/avatar/'+c['md5']+'&r=r');
+                $('[fetch-data=user-gravatar]').attr('src', '//gravatar.com/avatar/'+c['md5']+'?d=retro&r=r');
 
                 $('#firstname').val(c['firstname']);
                 $('#lastname').val(c['lastname']);
@@ -117,6 +123,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
                         ua: k[i]['user_agent'],
                         date: k[i]['last_mod'],
                         ip: k[i]['created_by'],
+                        country: k[i]['country'],
                         key: k[i]['api_key'],
                         current: k[i]['api_key'] == api_key ? 'current':'',
                         status: k[i]['status'] == 'good' 
@@ -228,6 +235,83 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
             this.create();
         }
     }
+    account.dialog = {
+        dialog: null,
+        dialogActive: false,
+        Dialog: function(id, header, content, footer) {
+            this.id = id;
+            this.header = (header != null) ? '<header>'+header+'</header>' : '';
+            this.content = (content != null) ? content : '';
+            this.footer = footer || new DialogFooter();
+            this.show = function() {
+                var template = _.template($('#template-dialog').html());
+                $('body').append(template(this));
+                var _this = this;
+                setTimeout(function() {
+                    $('#'+_this.id+'.dialog-cover').addClass('active');
+                    $('#'+_this.id+'.dialog-cover input').focus().select();
+                }, 150);
+            }
+            this.hide = function() {
+                $('#'+this.id+'.dialog-cover').addClass('removing').removeClass('active');
+                var _this = this;
+                setTimeout(function() {
+                    $('#'+_this.id+'.dialog-cover').remove();
+                }, 1000);
+            }
+        },
+        DialogFooterOption: function(name, type, fn) {
+            this.name = name;
+            this.type = type;
+            this.fn = fn;
+        },
+        DialogFooter: function() {
+            this.opts = [];
+            this.addOpt = function(opt) {
+                this.opts.push(opt);
+                return this;
+            }
+            this.opts2html = function() {
+                var template = _.template($('#template-dialog-footer-opt').html());
+                var res = '';
+                for (i = 0; i < this.opts.length; i++) {
+                    res += template(this.opts[i]);
+                }
+                return res;
+            }
+            this.html = function() {
+                return this.opts2html();
+            }
+        },
+        hideCurrentlyActive: function() {
+            if (this.dialog)
+                this.dialog.hide();
+        },
+        removeAccount: {
+            id: '',
+            show: function(file, id) {
+                id = 0;
+                this.id = id;
+                var footer = new account.dialog.DialogFooter();
+                footer.addOpt(new account.dialog.DialogFooterOption('Cancel', 'default', 'account.dialog.removeAccount.hide()'));
+                footer.addOpt(new account.dialog.DialogFooterOption('Deactivate', 'submit', 'account.deactivate()'));
+                account.dialog.dialog = new account.dialog.Dialog(
+                    id,
+                    'Are you sure?',
+                    'All of your files will be deleted and your account will be removed.<br>This cannot be undone.<br><hr>'
+                    +'Enter your password to continue:<br>'
+                    +'<input type=\'password\' id=\'confpass\' />',
+                    footer.html()
+                );
+                account.dialog.dialog.show();
+                account.dialog.dialogActive = true;
+            },
+            hide: function() {
+                account.dialog.dialog.hide();
+                account.dialog.dialogActive = false;
+            }
+        }
+    }
     account.changeName = function(name, which) {
         console.log(name + " " + which);
         $('.btn-save').blur();
@@ -253,6 +337,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
                 account.snackbar.create("Updated "+which+" name");
             },
             error: function(request, error) {
+                $('.bar-account').removeClass('loading');
                 account.snackbar.create("Failed to save changes");
             }
         });
@@ -276,6 +361,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
                     account.snackbar.create("Updated email");
                 },
                 error: function(request, error) {
+                    $('.bar-account').removeClass('loading');
                     account.snackbar.create("Failed to save changes");
                 }
             });
@@ -314,6 +400,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
                 $('#password2').val('');
             },
             error: function(request, error) {
+                $('.bar-security').removeClass('loading');
                 account.snackbar.create("Failed to save changes");
             }
         });
@@ -359,6 +446,33 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
             },
             error: function(request, error) {
                 account.snackbar.create("Failed to invalidate key");
+            }
+        });
+    }
+    account.deactivate = function() {
+        account.dialog.removeAccount.hide();
+        $.ajax({
+            type: "POST",
+            url: "./api/users/remove",
+            headers: {
+                'X-Foxfile-Auth': api_key
+            },
+            data: {
+                pass: sha512($('#confpass').val())
+            },
+            success: function(result) {
+                account.snackbar.create("Account has been removed.");
+                localStorage.removeItem('api_key');
+                setTimeout(function() {
+                    document.location.href = './';
+                }, 3000);
+            },
+            error: function(request, error) {
+                if (request.status == 401) {
+                    account.snackbar.create('Incorrect password');
+                } else {
+                    account.snackbar.create("Failed to remove account - no escape yet.");
+                }
             }
         });
     }

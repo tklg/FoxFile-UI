@@ -127,6 +127,75 @@ function getBrowser() {
     }
     return $browser;
 }
+function ip_info($ip = NULL, $purpose = "location", $deep_detect = TRUE) {
+	// http://stackoverflow.com/questions/12553160/getting-visitors-country-from-their-ip
+    $output = NULL;
+    if (filter_var($ip, FILTER_VALIDATE_IP) === FALSE) {
+        $ip = $_SERVER["REMOTE_ADDR"];
+        if ($deep_detect) {
+            if (filter_var(@$_SERVER['HTTP_X_FORWARDED_FOR'], FILTER_VALIDATE_IP))
+                $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
+            if (filter_var(@$_SERVER['HTTP_CLIENT_IP'], FILTER_VALIDATE_IP))
+                $ip = $_SERVER['HTTP_CLIENT_IP'];
+        }
+    }
+    $purpose    = str_replace(array("name", "\n", "\t", " ", "-", "_"), NULL, strtolower(trim($purpose)));
+    $support    = array("country", "countrycode", "state", "region", "city", "location", "address");
+    $continents = array(
+        "AF" => "Africa",
+        "AN" => "Antarctica",
+        "AS" => "Asia",
+        "EU" => "Europe",
+        "OC" => "Australia (Oceania)",
+        "NA" => "North America",
+        "SA" => "South America"
+    );
+    if (filter_var($ip, FILTER_VALIDATE_IP) && in_array($purpose, $support)) {
+    	if ($ip == 'localhost' || $ip == '::1') {
+    		$ipdat = @json_decode(file_get_contents("http://www.geoplugin.net/json.gp"));
+    	} else {
+        	$ipdat = @json_decode(file_get_contents("http://www.geoplugin.net/json.gp?ip=" . $ip));
+    	}
+        if (@strlen(trim($ipdat->geoplugin_countryCode)) == 2) {
+            switch ($purpose) {
+                case "location":
+                    $output = array(
+                        "city"           => @$ipdat->geoplugin_city,
+                        "state"          => @$ipdat->geoplugin_regionName,
+                        "country"        => @$ipdat->geoplugin_countryName,
+                        "country_code"   => @$ipdat->geoplugin_countryCode,
+                        "continent"      => @$continents[strtoupper($ipdat->geoplugin_continentCode)],
+                        "continent_code" => @$ipdat->geoplugin_continentCode
+                    );
+                    break;
+                case "address":
+                    $address = array($ipdat->geoplugin_countryName);
+                    if (@strlen($ipdat->geoplugin_regionName) >= 1)
+                        $address[] = $ipdat->geoplugin_regionName;
+                    if (@strlen($ipdat->geoplugin_city) >= 1)
+                        $address[] = $ipdat->geoplugin_city;
+                    $output = implode(", ", array_reverse($address));
+                    break;
+                case "city":
+                    $output = @$ipdat->geoplugin_city;
+                    break;
+                case "state":
+                    $output = @$ipdat->geoplugin_regionName;
+                    break;
+                case "region":
+                    $output = @$ipdat->geoplugin_regionName;
+                    break;
+                case "country":
+                    $output = @$ipdat->geoplugin_countryName;
+                    break;
+                case "countrycode":
+                    $output = @$ipdat->geoplugin_countryCode;
+                    break;
+            }
+        }
+    }
+    return $output;
+}
 if($pageID == 'userexists') {
 	$useremail = sanitize($_POST['useremail']);
 	$result = mysqli_query($db, "SELECT 1 from users where email = '$useremail' LIMIT 1");  
@@ -141,7 +210,8 @@ if($pageID == 'login') {
 		$key = sanitize($_POST['api_key']);
 		echo $key;
 		$ip = $_SERVER['REMOTE_ADDR'];
-		$q = "SELECT IF (TIMESTAMPDIFF(WEEK, last_mod , CURRENT_TIMESTAMP()) < 1, 'good', 'expired') as status, active from apikeys where api_key='$key' and created_by='$ip' LIMIT 1";
+		$country = ip_info($ip, "country");
+		$q = "SELECT IF (TIMESTAMPDIFF(WEEK, last_mod , CURRENT_TIMESTAMP()) < 1, 'good', 'expired') as status, active from apikeys where api_key='$key' and created_by='$ip' and country='$country' LIMIT 1";
 		if ($res = mysqli_query($db, $q)) {
 			if (mysqli_num_rows($res) == 0) {
 				resp(404, "That key does not exist. Please log in first");
@@ -154,7 +224,7 @@ if($pageID == 'login') {
 				if (mysqli_query($db, $sql2)) {
 					$r = array(
 						'status'=>200,
-						'key'=>$token
+						'key'=>$key
 					);
 					echo json_encode($r);
 					die();
@@ -177,14 +247,15 @@ if($pageID == 'login') {
 			if (password_verify($password, $passToMatch)) {
 
 			    $ip = $_SERVER['REMOTE_ADDR'];
+			    $country = ip_info($ip, "country");
 				$oid = $row->PID;
 				$userAgent = sanitize(getBrowser().' on '.getOS());
-				$sql = "SELECT api_key from apikeys where owner_id='$oid' and created_by='$ip' and user_agent='$userAgent' and active=1 limit 1";
+				$sql = "SELECT api_key from apikeys where owner_id='$oid' and created_by='$ip' and user_agent='$userAgent' and country='$country' and active=1 limit 1";
 				if ($res = mysqli_query($db, $sql)) {
 					if (mysqli_num_rows($res) == 0) {
 						//create a new token for this login
 						$token = bin2hex(openssl_random_pseudo_bytes(24));
-					    $sql2 = "INSERT INTO apikeys (owner_id, api_key, user_agent, created_by) VALUES ('$oid', '$token', '$userAgent', '$ip')";
+					    $sql2 = "INSERT INTO apikeys (owner_id, api_key, user_agent, created_by, country) VALUES ('$oid', '$token', '$userAgent', '$ip', '$country')";
 					    if (mysqli_query($db, $sql2)) {
 						    $r = array(
 						    	'status'=>200,
@@ -282,7 +353,9 @@ if($pageID == 'new') {
 					else 
 						$bytes = bin2hex(openssl_random_pseudo_bytes(20));
 
-					$sql = "INSERT INTO users (firstname, lastname, email, password, access_level, root_folder, total_storage, account_status)
+					$privk = sanitize($_POST['privkey']);
+					$pubk = sanitize($_POST['pubkey']);
+					$sql = "INSERT INTO users (firstname, lastname, email, password, access_level, root_folder, total_storage, account_status, privkey, pubkey)
 			                VALUES ('$userfirst',
 			                '$userlast',
 			                '$email',
@@ -290,7 +363,9 @@ if($pageID == 'new') {
 			                '1',
 			                '$root_folder',
 			                2147483648,
-			                '$bytes')";
+			                '$bytes',
+			                '$privk',
+			                '$pubk')";
 					if (mysqli_query($db,$sql)) {
 						mkdir('../files/'.$root_folder.'/');
 						sendVerification($email);
@@ -312,6 +387,9 @@ if($pageID == 'new') {
 		}
 }
 if ($pageID == 'send_verification') {
+	if ($_POST['email'] == 'test@test.test') {
+		resp(401, "Test user cannot send emails.");
+	}
 	if (!isset($_POST['email']) || !isset($_POST['extra'])) {
 		resp(422, 'email address required');
 	}
@@ -319,6 +397,9 @@ if ($pageID == 'send_verification') {
 	sendVerification($email);
 }
 if ($pageID == 'send_recovery') {
+	if ($_POST['email'] == 'test@test.test') {
+		resp(401, "Test user cannot send emails.");
+	}
 	require_once './../includes/mailconf.php';
 	if (!isset($_POST['email']) || !isset($_POST['extra'])) {
 		resp(422, 'email address required');

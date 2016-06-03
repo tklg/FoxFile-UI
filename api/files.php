@@ -77,10 +77,10 @@ if ($userDetailsFromKey === null) {
 	if ($pageID !== 'download')
 		resp(404, 'auth key is invalid');
 } else {
-	$uid = $userDetailsFromKey->uid;
-	$uhd = $userDetailsFromKey->root;
+	$uid = sanitize($userDetailsFromKey->uid);
+	$uhd = sanitize($userDetailsFromKey->root);
 	$maxstore = $userDetailsFromKey->total_storage;
-	$verified = $userDetailsFromKey->status;
+	$verified = $userDetailsFromKey->status == 'verified' ? true : false;
 }
 
 date_default_timezone_set('America/New_York');
@@ -102,28 +102,32 @@ function resp($code, $message) {
 	echo json_encode($res);
 	die();
 }
-function getUniqId() {
+function getUniqId($n = 0) {
 	global $db;
 	$sql = "REPLACE INTO idgen (hashes) VALUES ('a')";
+	if ($n > 5) return -1;
 	if ($result = mysqli_query($db, $sql)) {
 		$newIdObj = mysqli_insert_id($db);
 		require '../plugins/hashids/Hashids.php';
 		$hashids = new Hashids\Hashids('foxfilesaltisstillbestsalt', 12);
 		return $hashids->encode($newIdObj);
 	} else {
-		return -1;
+		//return -1;
+		return getUniqId($n + 1);
 	}
 }
-function getUniqLink() {
+function getUniqLink($n = 0) {
 	global $db;
 	$sql = "REPLACE INTO linkgen (hashes) VALUES ('a')";
+	if ($n > 5) return -1;
 	if ($result = mysqli_query($db, $sql)) {
 		$newIdObj = mysqli_insert_id($db);
 		require '../plugins/hashids/Hashids.php';
 		$hashids = new Hashids\Hashids('foxsaltisbestsalt', 12);
 		return $hashids->encode($newIdObj);
 	} else {
-		return -1;
+		//return -1;
+		return getUniqLink($n + 1);
 	}
 }
 function getName($file) {
@@ -558,16 +562,80 @@ if ($pageID == 'get_file') {
 		resp(500, 'Failed to retrieve file details: '.$self);
 	}
 }
+function getFileTree($hash) {
+	global $db, $uid;
+	$hash = sanitize($hash);
+	$tree = array();
+	$sql = "SELECT name, hash, parent, size, is_folder FROM files WHERE parent = '$hash' AND owner_id = '$uid'";
+	if ($result = mysqli_query($db, $sql)) {
+		if (mysqli_num_rows($result) == 0) {
+			return $tree;
+		}
+		while ($res = mysqli_fetch_object($result)) {
+			if ($res->is_folder == '1') {
+				$tree[] = array(
+					'name' => $res->name,
+					'hash' => $res->hash,
+					'parent' => $res->parent,
+					'children' => getFileTree($res->hash)
+				);
+			} else {
+				$tree[] = array(
+					'name' => $res->name,
+					'hash' => $res->hash,
+					'parent' => $res->parent,
+					'size' => $res->size
+				);
+			}
+		}
+		return $tree;
+	} else {
+		return $tree;
+	}
+}
 if ($pageID == 'get_file_info') {
 	$self = sanitize($_POST['hash']);
 	$sql = "SELECT name, hash, parent, is_folder FROM files WHERE hash = '$self' AND owner_id = '$uid' LIMIT 1";
+	//$res = getFileInfo($self);
+	//if ($res) {
 	if ($result = mysqli_query($db, $sql)) {
-		$rows = mysqli_fetch_object($result);
-		
-		echo json_encode($rows);
+		echo json_encode(mysqli_fetch_object($result));
+		//echo json_encode($res);
 	} else {
 		resp(500, 'Failed to retrieve file details: '.$self);
 	}
+}
+if ($pageID == 'get_file_tree') {
+	if (!isset($_POST['hashlist'])) 
+		resp(422, "missing parameters");
+	$multi = sanitize($_POST['hashlist']);
+	$hashlist = explode(',', $multi);
+	$tree = array();
+
+	foreach ($hashlist as $hash) {
+		$q = "SELECT name, hash, parent, size, is_folder FROM files WHERE hash = '$hash' AND owner_id = '$uid' LIMIT 1";
+		if ($result = mysqli_query($db, $q)) {
+			$res = mysqli_fetch_object($result);
+			if ($res->is_folder == '1') {
+				$tree[] = array(
+					'name' => $res->name,
+					'hash' => $res->hash,
+					'parent' => $res->parent,
+					'children' => getFileTree($res->hash)
+				);
+			} else {
+				$tree[] = array(
+					'name' => $res->name,
+					'hash' => $res->hash,
+					'parent' => $res->parent,
+					'size' => $res->size
+				);
+			}
+		}
+	}
+	/*echo '<pre>';
+	echo print_r($tree);*/
+	echo json_encode($tree);
 }
 if ($pageID == 'uniqid') {
 	//pass this a name and parent hash too so merging uploaded folders becomes possible
@@ -594,12 +662,15 @@ if ($pageID == 'new_file') {
 
 	$fileParent = sanitize($_POST['parent']);
 	$fileHash = sanitize($_POST['hash']);
+	$enckey = sanitize($_POST['key']);
 	$file = $_FILES['file'];
 	$tFile = $_FILES['file']['tmp_name'];
 	//$fExt = pathinfo($_FILES['file']['name'], PATHINFO_EXTENSION);
 	$fName = $_FILES['file']['name'];
-	$fType = $_FILES['file']['type'];
+	//$fName = sanitize($_POST['name']);
 	$fSize = $_FILES['file']['size'];
+	//$fSize = (int) sanitize($_POST['size']);
+	//$fType = $_FILES['file']['type'];
 	if (!hasSpaceLeft($fSize)) {
 		resp(507, "Not enough storage space remaining for this file");
 	}
@@ -609,12 +680,17 @@ if ($pageID == 'new_file') {
 	$parentPath = getPath($fileParent);
 	if (!is_dir($parentPath)) mkdir($parentPath, 0770, true);
 	$dest = $parentPath.'/'.$fileHash;
+	/*echo $_POST['bytes'];
+	$fh = fopen($dest, 'wb');
+	if (fwrite($fh, $_POST['bytes'])) {*/
 	if (move_uploaded_file($tFile, $dest)) {
-		$sql = "INSERT INTO files (owner_id, is_folder, hash, parent, name, size) VALUES
+		//fclose($fh);
+		$sql = "INSERT INTO files (owner_id, is_folder, hash, parent, enckey, name, size) VALUES
 			('$uid',
 			'0',
 			'$fileHash',
 			'$fileParent',
+			'$enckey',
 			'$fName',
 			'$fSize')";
 		if (mysqli_query($db, $sql)) {	// put some sort of versioning systen instead of just displaying every version as a separate file
@@ -666,6 +742,7 @@ if ($pageID == 'new_file_chunk') {
 		$num = sanitize($_POST['num']);
 		$name = sanitize($_POST['name']);
 		$size = sanitize($_POST['size']);
+		$enckey = sanitize($_POST['key']);
 		$parentPath = getPath($parent);
 
 		for ($i = 0; $i < $num; $i++) {
@@ -681,11 +758,12 @@ if ($pageID == 'new_file_chunk') {
 
 		deleteDir($wd.$hash);
 
-		$sql = "INSERT INTO files (owner_id, is_folder, hash, parent, name, size) VALUES
+		$sql = "INSERT INTO files (owner_id, is_folder, hash, parent, enckey, name, size) VALUES
 			('$uid',
 			'0',
 			'$hash',
 			'$parent',
+			'$enckey',
 			'$name',
 			'$size')";
 		if (mysqli_query($db, $sql)) {	// put some sort of versioning systen instead of just displaying every version as a separate file
@@ -1029,22 +1107,10 @@ if($pageID == 'delete_single') {
 	}
 }
 if($pageID == 'view') {
-	if (!isset($_GET['id']))
+	if (!isset($_POST['id']))
 		resp(422, "missing parameters");
-	/*if (!isset($_GET['api_key']) && !isset($_SERVER['HTTP_X_FOXFILE_AUTH'])) // not the best
-		resp(401, 'missing auth key');
-	$key;
-	if (isset($_GET['api_key'])) $key = $_GET['api_key'];
-	else $key = $_SERVER['HTTP_X_FOXFILE_AUTH'];
-	$userDetailsFromKey = getUserFromKey($key);
-	if ($userDetailsFromKey === null) {
-		resp(404, 'key does not match any user');
-	} else {
-		$uid = $userDetailsFromKey->uid;
-		$uhd = $userDetailsFromKey->root;
-	}*/
 
-	$fileName = sanitize($_GET['id']);
+	$fileName = sanitize($_POST['id']);
 	$filePath = getPath($fileName);
 
 	if (!extension_loaded('fileinfo')) {
@@ -1062,29 +1128,29 @@ if($pageID == 'view') {
 			finfo_close($finfo);
 			$maxSize = 2097152;
 			$fileSize = filesize($filePath);
-			header('Content-Type: ' . $fileType);
-
-			if ($fileSize > $maxSize) {
-			    $handle = fopen($filePath, 'rb');
-			    while (!feof($handle)) {
-			    	$buffer = fread($handle, $maxSize);
-        			echo $buffer;
-				   	ob_flush();
-	        		flush();
-			    }
-			    fclose($handle);
-			} else {
-			   	ob_clean();
-				flush();
-			   	readfile($filePath);
-			}
-
 
 			// filter out files that the client wont be able to preview, like .exe and similar
-
-
-			//readfile($filePath);
-			exit();
+			$q = "SELECT enckey from files where hash='$fileName' LIMIT 1";
+			if ($res = mysqli_query($db, $q)) {
+				$filekey = mysqli_fetch_object($res)->enckey;
+				header('Content-Type: ' . $fileType);
+				header('X-FoxFile-Key: '.$filekey);
+				//if ($fileSize > $maxSize) {
+				    $handle = fopen($filePath, 'rb');
+				    while (!feof($handle)) {
+				    	$buffer = fread($handle, $maxSize);
+	        			echo $buffer;
+					   	ob_flush();
+		        		flush();
+				    }
+				    fclose($handle);
+				/*} else {
+				   	ob_clean();
+					flush();
+				   	readfile($filePath);
+				}*/
+				exit();
+			}
 		} else {
 			resp(404, "Could not find the requested file");
 		}

@@ -43,7 +43,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 	<main class="main">
 		<h2 class="title">About FoxFile</h2>
 		<article class="content float">
-			
+			Yet another cloud storage site.
 		</article>
 	</main>
 	<?php include './includes/footer.html'; ?>

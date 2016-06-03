@@ -14,7 +14,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     Copyright (C) 2016 Theodore Kluge
     https://tkluge.net
 */
-session_start();
+//session_start();
 require('../includes/user.php');
 //require('../includes/cfgvars.php');
 

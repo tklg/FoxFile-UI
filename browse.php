@@ -1,5 +1,5 @@
 <?php
-session_start();
+//session_start();
 include 'includes/cfgvars.php';
 ?>
 <!DOCTYPE html>
@@ -29,7 +29,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     <title>FoxFile</title>
 	<link href='https://fonts.googleapis.com/css?family=Roboto:300,400,700' rel='stylesheet' type='text/css'>
 	<link async rel="stylesheet" href="css/codemirror.css">
-    <link async href="js/cm-addon/dialog/dialog.css" rel="stylesheet" />
+	<link async href="js/cm-addon/dialog.css" rel="stylesheet" />
     <link rel="stylesheet" href="css/cm-themes/foxfile-cm.css">
 	<link async rel="stylesheet" href="css/foxfile.css">
 
@@ -97,7 +97,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 		<section class="transfers" id="transfers">
 			<section class="bar bar-transfers" id="bar-2" type="folder" folder="file-transfers">
 				<header>
-					<span class="filename">File uploads</span>
+					<span class="filename">File transfers</span>
 					<section class="file-actions-header">
 						<span title="Clear uploads list" onclick="fm.clearUploads()"><i class="mdi mdi-delete"></i></span>
 						<!-- <span><i class="mdi mdi-dots-vertical"></i></span> -->
@@ -168,7 +168,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 						<i class="nocheckbox-icon mdi mdi-delete"></i><span class="file-name">Trash</span>
 					</li>
 					<li class="menubar-content floatb btn-ctrlbar" id="transfers">
-						<i class="nocheckbox-icon mdi mdi-transfer"></i><span class="file-name">File uploads</span>
+						<i class="nocheckbox-icon mdi mdi-transfer"></i><span class="file-name">File transfers</span>
 						<span class="badge" id="badge-transfers"><span class="badgeval"></span></span>
 					</li>
 				</ul>
@@ -236,7 +236,11 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 	   	<div class="indeterminate"></div>
 	</div>
 	<section class="file-detail-viewport">
-		<section class="file-preview active">
+		<section class="file-preview-icon file-decrypting-icon active">
+			<i class="mdi mdi-timer-sand"></i>
+			<span>Decrypting your file...</span>
+		</section>
+		<section class="file-preview">
 
 		</section>
 		<section class="file-history">
@@ -267,10 +271,10 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 	if (btype == 'text') { %>
 	<textarea id="editor" rows="10" cols="20"></textarea>
 	<% } else if (btype == 'image') { %>
-	<img src="./api/files/view?id=<%= hash %>&api_key=<%= key %>" alt="<%= name %>" />
+	<img src="" alt="<%= name %>" />
 	<% } else if (btype == 'audio') { %>
 	<audio autoplay controls>
-	<source src="./api/files/view?id=<%= hash %>&api_key=<%= key %>" />
+	<source src="" />
 	</audio>
 	<!-- <div id="waveform"></div>
 	<div class="wavesurfer-controls">
@@ -280,10 +284,10 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 	</div> -->
 	<% } else if (btype == 'video') { %>
 	<video autoplay controls poster="">
-	<source src="./api/files/view?id=<%= hash %>&api_key=<%= key %>" />
+	<source src="" />
 	</video>
 	<% } else if (btype == 'flash') { %>
-	<embed src="./api/files/view?id=<%= hash %>&api_key=<%= key %>" />
+	<embed src="" />
 	<% } else if (btype == 'pdf') { %>
 	<iframe src="./plugins/pdf.js/web/viewer.html?file=./../../../api/files/view%3Fid%3D<%= hash %>%26api_key%3D<%= key %>"></iframe>
 	<% }
@@ -358,7 +362,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 <script type="text/template" id="fm-transfers-empty">
 <section class="folder-empty transfers-empty">
 	<i class="mdi mdi-transfer"></i>
-	<span>There are no files in the upload queue</span>
+	<span>There are no files in the transfer queue</span>
 </section>
 </script>
 <script type="text/template" id="contextmenu">
@@ -412,27 +416,19 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 	<!-- <link async rel="stylesheet" type="text/css" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.7.1/themes/base/jquery-ui.css"/> -->
     <script src="js/underscore.min.js"></script>
     <script src="js/backbone.min.js"></script>
+    <script src="js/forge.min.js"></script>
+    <script src="js/crypto-js.min.js"></script>
+    <script src="js/jszip.min.js"></script>
+    <script src="js/filesaver.min.js"></script>
     <script src="js/filetypes.js"></script>
-    <script src="js/foxfile.js"></script>
-    <script type="text/javascript" src="js/ripple.js"></script>
+    <script async type="text/javascript" src="js/ripple.js"></script>
 
 	<script src="js/codemirror.js"></script>
     <script src="js/cm-keymap/sublime.js"></script>
-    <!-- load these in with js when needed -->
-    <script src="js/cm-addon/dialog/dialog.js"></script>
-    <script src="js/cm-addon/search/searchcursor.js"></script>
-    <script src="js/cm-addon/search/search.js"></script>
-    <script src="js/cm-addon/edit/closebrackets.js"></script>
-    <script src="js/cm-addon/comment/comment.js"></script>
-    <script src="js/cm-addon/fold/foldcode.js"></script>
-    <script src="js/cm-addon/fold/foldgutter.js"></script>
-    <link href="js/cm-addon/fold/foldgutter.css" rel="stylesheet" />
-    <script src="js/cm-addon/fold/brace-fold.js"></script>
-    <script src="js/cm-addon/fold/xml-fold.js"></script>
-    <script src="js/cm-addon/fold/markdown-fold.js"></script>
-    <script src="js/cm-addon/fold/comment-fold.js"></script>
-    <script src="js/cm-mode/meta.js"></script>
+    <script src="js/cm-addon/addons.min.js"></script>
+    <link href="js/cm-addon/foldgutter.css" rel="stylesheet" />
 
+    <script src="js/foxfile.js"></script>
     <!-- <script src="//cdnjs.cloudflare.com/ajax/libs/wavesurfer.js/1.0.52/wavesurfer.min.js"></script> -->
     <script>
     if (!localStorage.getItem('api_key')) location.replace('./login');

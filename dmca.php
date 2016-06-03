@@ -38,16 +38,16 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 		<nav class="nav-horiz-buttons">
 			<a class="btn nav-horiz-item float" href="tos">Terms of service<link class="rippleJS"/></a>
 			<a class="btn nav-horiz-item float" href="privacy">Privacy policy<link class="rippleJS"/></a>
-			<a class="btn nav-horiz-item float" href="dmca">DMCA Policy<link class="rippleJS"/></a>
+			<a class="btn nav-horiz-item float" href="dmca">DMCA policy<link class="rippleJS"/></a>
 		</nav>
 	</header>
 	<main class="main">
 		<h2 class="title">DMCA Policy</h2>
 		<article class="content float">
-			<p class="lastmod">Last updated May 12, 2016</p>
+			<p class="lastmod">Last updated May 21, 2016</p>
 			<!-- 2/28/16 <p>dmca currently not set, use 'report' on a file to have it reviewed<br>
 			or something</p> -->
-			<p>Im not really sure how to do this</p>
+			<p>Im not really sure how to do this. Send me an email, I guess.</p>
 		</article>
 	</main>
 	<?php include './includes/footer.html'; ?>

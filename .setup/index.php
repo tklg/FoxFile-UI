@@ -49,6 +49,8 @@ $dbname = "' . $dbname . '";
 		total_storage DOUBLE(100, 2),
 		account_status VARCHAR(40),
 	    access_level TINYINT,
+	    privkey VARCHAR(2048),
+	    pubkey VARCHAR(512),
 	    join_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) charset=utf8 ENGINE=INNODB";
 		$sql1 = "CREATE TABLE idgen (
@@ -71,6 +73,7 @@ $dbname = "' . $dbname . '";
 			user_agent varchar(48),
 			last_mod TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			created_by VARCHAR(45),
+			country VARCHAR(48),
 			active BOOLEAN DEFAULT 1
 		) ENGINE=INNODB";
 	if (mysqli_query($db, $sql) && mysqli_query($db, $sql1) && mysqli_query($db, $sql2) && mysqli_query($db, $sql3)) {
@@ -147,6 +150,7 @@ $dbname = "' . $dbname . '";
 		is_folder BOOLEAN,
 		hash CHAR(12) character set utf8 collate utf8_bin not null,
 		parent CHAR(12) character set utf8 collate utf8_bin not null,
+		enckey CHAR(128) character set utf8 collate utf8_bin not null,
 		name VARCHAR(128),
 		size DOUBLE(30, 2),
         is_trashed BOOLEAN DEFAULT 0,
@@ -155,6 +159,7 @@ $dbname = "' . $dbname . '";
         lastmod TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         UNIQUE(PID,hash)
         ) charset=utf8 ENGINE=INNODB';
+
     $q2 = "CREATE TABLE shared (
     	PID INT NOT NULL AUTO_INCREMENT,
     	PRIMARY KEY(PID),

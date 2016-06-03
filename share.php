@@ -1,7 +1,6 @@
 <?php
 session_start();
 include 'includes/cfgvars.php';
-
 $uri = $_SERVER['REQUEST_URI'];
 if (strpos($uri, '/') !== false) {
     $uri = explode('/', $uri);
@@ -13,6 +12,10 @@ if (strpos($pageID, '?') !== false) {
     $uri = explode('?', $pageID);
     $pageID = $uri[0];
 }
+if ($pageID == '') {
+    header('Location: ./../');
+}
+if ($pageID == 'share') header("Location: ./");
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -38,7 +41,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="initial-scale=1, width=device-width, maximum-scale=1, minimum-scale=1">
-    <title>FoxFile</title>
+    <title>FoxFile - Share</title>
 	<link href='https://fonts.googleapis.com/css?family=Roboto:300,400,700' rel='stylesheet' type='text/css'>
     <!-- <link async rel="stylesheet" href="css/foxfile.css"> -->
     <link async rel="stylesheet" href="../css/foxfile.css">
@@ -126,7 +129,6 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     if (!localStorage.getItem('api_key')) logged_in = false;
     var api_key = localStorage.getItem('api_key');
     var shared_id = '<?php echo $pageID; ?>';
-    if (shared_id == '') document.location.href = './../';
     $(document).ready(function() {
 	    shared.init();
     });

@@ -132,6 +132,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
                         resp[0]['name'] + 
                         (resp.length > 1 ? ' and '+(resp.length - 1)+' others':'')
                     );
+                    document.title = 'FoxFile - ' + resp[0]['name'] + (resp.length > 1 ? ' and '+(resp.length - 1)+' others':'');
                     shared.name = resp[0]['name'];
                     for (var i = 0; i < num; i++) {
                         shared.hashes.push(resp[i]['hash']);

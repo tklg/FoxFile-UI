@@ -72,9 +72,10 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 </main>
 <?php include './includes/footer.html'; ?>
 <script type="text/javascript" src="//code.jquery.com/jquery-2.1.4.min.js"></script>
-<script type="text/javascript" src="js/md5.js"></script>
+<!-- <script type="text/javascript" src="js/md5.js"></script> -->
 <script type="text/javascript" src="js/ripple.js"></script>
-    <script type="text/javascript">
+<script type="text/javascript" src="js/forge.min.js"></script>
+<script type="text/javascript">
     $('input.userinfo').change(function() {
         $(this).attr('empty', ($(this).val() != '') ? 'false' : 'true');
     });
@@ -105,6 +106,16 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 			pressed = false;
 		}
 	});
+	function md5(str) {
+		var md = forge.md.md5.create();
+		md.update(str);
+		return md.digest().toHex();
+	}
+	function sha512(str) {
+		var md = forge.md.sha512.create();
+		md.update(str);
+		return md.digest().toHex();
+	}
     function checkEmail() {
     	if (/[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/g.test($('#email').val())) {
     		$('main').addClass('active');
@@ -136,7 +147,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
             url: "./api/auth/login",
             data: {
 				useremail: $('#email').val(),
-				userpass: $('#userpass').val()
+				userpass: sha512($('#userpass').val())
 			},
             success: function(result, s, x) {
             	console.log(result);
@@ -145,6 +156,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
                 var token = json['key'];
                 //setCookie('api_key', token, 7);
                 localStorage.setItem('api_key', token);
+                localStorage.setItem('basekey', sha512(sha512($('#userpass').val())));
 
                 window.location.href = "./browse";                
             },

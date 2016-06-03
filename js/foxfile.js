@@ -99,14 +99,17 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
                     $('[fetch-data=user-first]').text(json['firstname']);
                     $('[fetch-data=user-name]').text(json['username']);
                     $('[fetch-data=user-email]').text(json['email']);
-                    $('[fetch-data=user-gravatar]').attr('src', '//gravatar.com/avatar/'+json['md5']+'&r=r');
+                    $('[fetch-data=user-gravatar]').attr('src', '//gravatar.com/avatar/'+json['md5']+'?d=retro&r=r');
                     foxfile_root = json['root'];
+                    //localStorage.setItem('privkey', cr.aesD(json['privkey'], localStorage.getItem('basekey')));
+                    localStorage.setItem('privkey', json['privkey']);
+                    localStorage.setItem('pubkey', json['pubkey']);
 
                     page.calculateBars();
                     fm.updateSize();
                     fm.resizeToFitCurrentlyActive();
                     fm.moveToFitCurrentlyActive();
-                    if (done) done();
+                    if (done) done(); // dunnnnnn
                 },
                 error: function(request, error) {
                     if (request.status == 404) {
@@ -213,7 +216,8 @@ header3 font
     fm.wavesurfer = null;
     fm.hashToRestore = '';
     fm.searching = false;
-    fm.simultaneousUploads = 1;
+    fm.simultaneousUploads = 3;
+    fm.simultaneousDownloads = 3;
     fm.uploadSizeLimit = 2097152; //2MB, php default
     fm.uploadChunkSize = 2097152;
     var hashTree = [];
@@ -1001,12 +1005,13 @@ header3 font
         //this will definitely exist SOMEWHERE
         var type = $('.menubar-content[hash='+id+']').attr('type');
         if (type != 'folder') type = 'file';
-        if (fm.multiSelect.selected.length > 1 || type == 'folder') {
-            if (fm.multiSelect.selected.length > 0) {
-                var hashes = _.uniq(fm.multiSelect.selected);
-            } else {
-                var hashes = [id];
-            }
+        if (fm.multiSelect.selected.length > 0) {
+            var hashes = _.uniq(fm.multiSelect.selected);
+        } else {
+            var hashes = [id];
+        }
+        dl.start((fm.multiSelect.selected.length > 1 || type == 'folder'), hashes);
+        /*if (fm.multiSelect.selected.length > 1 || type == 'folder') {
             var frame = $("<iframe></iframe>").attr('src', './api/files/download?api_key='+api_key+'&hashlist='+hashes.toString()+"&name="+name+"&type="+type).attr('id', id).css('display', 'none');
             frame.appendTo('body');
             var _id = id;
@@ -1023,7 +1028,7 @@ header3 font
                 $('body > iframe#'+_id).remove();
             }, 10000);
             fm.snackbar.create("Downloading file");
-        }
+        }*/
         cm.destroy();
     }
     fm.move = function(file, target) { //handles moving both single and multiple files
@@ -1137,6 +1142,7 @@ header3 font
                         var f = new File(res[i].name,
                                          res[i].parent,
                                          res[i].hash,
+                                         res[i].enckey,
                                          res[i].is_folder,
                                          res[i].size,
                                          res[i].lastmod,
@@ -1210,6 +1216,7 @@ header3 font
                         var f = new File(res[i].name,
                                          res[i].parent,
                                          res[i].hash,
+                                         res[i].enckey,
                                          res[i].is_folder,
                                          res[i].size,
                                          res[i].lastmod,
@@ -1346,6 +1353,7 @@ header3 font
             files.push(new File(res[i].name,
                 res[i].parent,
                 res[i].hash,
+                res[i].enckey,
                 res[i].is_folder,
                 res[i].size,
                 res[i].lastmod,
@@ -1420,6 +1428,7 @@ header3 font
                 success: function(result) {
                     var json = JSON.parse(result);
                         // console.log("fm.open("+fHash+") [2] Got response from server: ");
+                    var total = json['total_rows'];
                     var hasMore = json['more'];
                     var resultsRemaining = json['remaining'];
                     var res = json['results'];
@@ -1429,6 +1438,7 @@ header3 font
                         files.push(new File(res[i].name,
                                             res[i].parent,
                                             res[i].hash,
+                                            res[i].enckey,
                                             res[i].is_folder,
                                             res[i].size,
                                             res[i].lastmod,
@@ -1441,7 +1451,7 @@ header3 font
                     _this.setHasMore(hasMore);
 
                     $('.file-manager .bar[hash='+_this.hash+']').removeClass('loading');
-                    _this.loadContent();
+                    _this.loadContent(files.length == 0);
                     dd.addListener(_this);
                     //fm.add(item);
                     // get the current file path so that the router can append this to it
@@ -1453,9 +1463,9 @@ header3 font
                 }
             });
         }
-        this.loadContent = function() {
+        this.loadContent = function(empty) {
             //console.log("Loading bar " + this.hash + " content: " + this.files.length + " files");
-            if (this.files.length > 0) {
+            if (this.files.length > 0 && !empty) {
                 var template = _.template($('#fm-file').html());
                 //console.log('offset: '+this.offset);
                 if (this.offset == 0) {
@@ -1541,6 +1551,7 @@ header3 font
                        _this.refresh(false);
                     }
                 }, 700);
+                $('#bar-'+this.hash+' .file-list').unbind('scroll');
                 $('#bar-'+this.hash+' .file-list').on('scroll', function() {
                     onsc();
                 });
@@ -1632,9 +1643,9 @@ header3 font
             $(elem).append(template(this.file));
 
             var _this = this;
-            if (this.file.btype == 'text') {
+            if (this.file.canPreview) {
                 $.ajax({
-                    type: "GET",
+                    type: "POST",
                     url: "./api/files/view",
                     headers: {
                         'X-Foxfile-Auth': api_key
@@ -1642,14 +1653,70 @@ header3 font
                     data: {
                         id: _this.file.hash
                     },
-                    success: function(result) {
-                        $('.file-manager .bar[hash='+_this.hash+']').removeClass('loading');
-                        switch (_this.file.btype) {
-                            case 'text':
-                                //$(elem+" #editor").val(result);
-                                te.init();
-                                te.setValue(result, _this.name);
-                                break;
+                    success: function(data, response, xhr) {
+                        var worker = ww.create('crypto');
+                        var key = cr.aesD(xhr.getResponseHeader('X-FoxFile-Key'), localStorage.getItem('basekey'));
+                        //console.log(data);
+                        //var data = btoa(data);
+                        //var data = btoa(forge.util.hexToBytes(CryptoJS.enc.Hex.stringify(CryptoJS.enc.u8array.parse(data))));
+
+                        //var data = CryptoJS.enc.Base64.stringify(CryptoJS.enc.u8array.parse(data));
+                        
+                        // transfer back to raw bytes on server to save space
+
+                        /*console.log(xhr.getResponseHeader('X-FoxFile-Key'));;
+                        console.log('data: '+data);
+                        console.log('key: '+ key);
+                        console.log('res: '+cr.aesD(data, key));*/
+                        worker.emit('aes.decrypt', {
+                            content: data,
+                            key: key
+                        });
+                        worker.onmessage = function(msg) {
+                            $('.file-manager .bar[hash='+_this.hash+']').removeClass('loading');
+                            $('.file-manager .bar[hash='+_this.hash+'] .file-decrypting-icon').removeClass('active').next().addClass('active');
+                            //console.log(msg[1].data);
+                            switch (_this.file.btype) {
+                                case 'text':
+                                    te.init();
+                                    te.setValue(msg[1].data, _this.name);
+                                    break;
+                                case 'image':
+                                    //var url = URL.createObjectURL(msg[1].data)
+                                    //$('.file-manager .bar[hash='+_this.hash+'] .file-preview img').attr('src', btoa(msg[1].data));
+                                    $('.file-manager .bar[hash='+_this.hash+'] .file-preview img').attr('src', "data:image/*;base64,"+ btoa(msg[1].data));
+                                    break;
+                                case 'audio':
+                                    switch (getExt(_this.name)) {
+                                        case 'wav':
+                                            $('.file-manager .bar[hash='+_this.hash+'] .file-preview source').attr('src', "data:audio/wave;base64,"+ btoa(msg[1].data));
+                                            break;
+                                        case 'ogg':
+                                            $('.file-manager .bar[hash='+_this.hash+'] .file-preview source').attr('src', "data:audio/ogg;base64,"+ btoa(msg[1].data));
+                                            break;
+                                        default:
+                                            $('.file-manager .bar[hash='+_this.hash+'] .file-preview source').attr('src', "data:audio/mp3;base64,"+ btoa(msg[1].data));
+                                            break;
+                                    }
+                                    break;
+                                case 'video':
+                                    $('.file-manager .bar[hash='+_this.hash+'] .file-preview source').attr('src', "data:video/*;base64,"+ btoa(msg[1].data));
+                                    break;
+                                case 'flash':
+                                    $('.file-manager .bar[hash='+_this.hash+'] .file-preview embed').attr('src', "data:application/x-shockwave-flash;base64,"+ btoa(msg[1].data));
+                                    break;
+                            }
+                            worker.emit('close', {
+                                content: 'pls'
+                            });
+                        }
+                        worker.onerror = function(e) {
+                            $('.file-manager .bar[hash='+_this.hash+']').removeClass('loading');
+                            $('.file-manager .bar[hash='+_this.hash+'] .file-decrypting-icon').removeClass('active').next().addClass('active');
+                            // display some error instead of the preview
+                            worker.emit('close', {
+                                content: 'pls'
+                            });
                         }
                     },
                     error: function(request, error) {
@@ -1657,33 +1724,12 @@ header3 font
                         $('.file-manager .bar[hash='+_this.hash+']').removeClass('loading');
                     }
                 });
-            } /*else if (this.file.btype == 'audio') {
-                if (fm.wavesurfer != null) {
-                    fm.wavesurfer.destroy();
-                }
-                fm.wavesurfer = WaveSurfer.create({
-                    container: '#waveform',
-                    waveColor: '#e1e1e1',
-                    cursorColor: '#ff5722',
-                    progressColor: '#ff5722'
-                });
-                fm.wavesurfer.load('./api/files/view?id='+this.file.hash);
-                fm.wavesurfer.on('ready', function() {
-                    $('.file-manager .bar[hash='+_this.hash+']').removeClass('loading');
-                    fm.wavesurfer.play();
-                });
-                fm.wavesurfer.on('pause', function() {
-                    $('.wavesurfer-controls #play').attr('onclick', 'fm.wavesurfer.play()').text('play');
-                });
-                fm.wavesurfer.on('play', function() {
-                    $('.wavesurfer-controls #play').attr('onclick', 'fm.wavesurfer.pause()').text('pause');
-                });
-                fm.wavesurfer.on('stop', function() {
-                    $('.wavesurfer-controls #play').attr('onclick', 'fm.wavesurfer.play()').text('play');
-                });
-            } */else {
+            } else {
                 $('.file-manager .bar[hash='+_this.hash+']').removeClass('loading');
+                $('.file-manager .bar[hash='+_this.hash+'] .file-decrypting-icon').removeClass('active').next().addClass('active');
+                //$('.file-manager .bar[hash='+_this.hash+'] .file-preview').addClass('active');
             }
+
             template = _.template($('#fm-file-history-file').html());
             elem = '#file-detail-'+this.hash+' .file-history .file-list';
             $(elem).empty();
@@ -1744,6 +1790,7 @@ header3 font
                     file = new File(json.name,
                             json.parent,
                             json.hash,
+                            json.enckey,
                             json.is_folder,
                             json.size,
                             json.lastmod,
@@ -1769,11 +1816,12 @@ header3 font
             });
         }
     }
-    var File = function(name, parent, hash, isFolder, size, lastmod, shared, public, trashed) {
+    var File = function(name, parent, hash, key, isFolder, size, lastmod, shared, public, trashed) {
         this.name = name;
         this.parent = parent;
         this.icon = icon;
         this.hash = hash;
+        this.key = key;
         this.size = size;
         this.trashed = trashed == '0' ? '' : 'trashed';
         this.canPreview = isPreviewable(this);
@@ -2161,6 +2209,7 @@ header3 font
     /* the file inputs need this because they dont fire the same events that drop does */
     /* and there is apparently a bug where the webkitEntry list is always empty. */
     /* this is a nonrecursive function to rebuild the file tree from the webkitRelativePath of the file */
+    // no its not
     function buildFileTree(posInQueue, items, parent, path) {
         //console.table(items);
         var folderNamesSeen = [];
@@ -2220,7 +2269,6 @@ header3 font
             item.file(function(file) {
                 if (!_.contains(dd.ignoredFiles, file.name)) {
                     //console.log("%cfound file to add: " + file.name + ", adding to " + parent.name, "color: green;");
-                    console.log('size: ' + file.size);
                     if (file.size > fm.uploadSizeLimit) {
                         parent.addChild(new ChunkedFile(posInQueue, file, file.name, path, parent));
                     } else {
@@ -2231,16 +2279,24 @@ header3 font
             });
         } else if (item.isDirectory) {
             var dirReader = item.createReader();
-            dirReader.readEntries(function(entries) {
-                //console.log("%cfound folder to add: " + item.name + ", adding to " + parent.name, "color: orange;");
-                var newFolder = new Folder(posInQueue, item.name, path + item.name + "/", parent, false);
-                parent.addChild(newFolder);
-                queue.triggerStart(posInQueue);
-                for (i = 0; i < entries.length; i++) {
-                    //traverseFileTree(entries[i], item.name, path + item.name + "/");
-                    traverseFileTree(posInQueue, entries[i], newFolder, path + item.name + "/");
-                }
-            });
+            var newFolder = new Folder(posInQueue, item.name, path + item.name + "/", parent, false);
+            parent.addChild(newFolder);
+            queue.triggerStart(posInQueue);
+            var readEntries= function() {
+                dirReader.readEntries(function(entries) {
+                    //console.log("%cfound folder to add: " + item.name + ", adding to " + parent.name, "color: orange;");
+                    for (i = 0; i < entries.length; i++) {
+                        //traverseFileTree(entries[i], item.name, path + item.name + "/");
+                        traverseFileTree(posInQueue, entries[i], newFolder, path + item.name + "/");
+                    }
+                    if (!entries.length) {
+                        //done
+                    } else {
+                        readEntries();
+                    }
+                });
+            }
+            readEntries();
         }
     }
     function Folder(posInQueue, name, path, parent, sysf) {
@@ -2253,6 +2309,7 @@ header3 font
         this.hash = null;
         this.children = [];
         this.state = 0;
+        this.password = null;
         this.getSize = function() {
            return null;
         }
@@ -2276,18 +2333,17 @@ header3 font
 
             // sort the list of children
             var tmp = [];
-            for (i = 0; i < this.children.length; i++) 
+            for (var i = 0; i < this.children.length; i++) 
                 if (this.children[i] instanceof Folder) 
                     tmp.push(this.children[i]);
-            for (i = 0; i < this.children.length; i++) 
+            for (var i = 0; i < this.children.length; i++) 
                 if (this.children[i] instanceof SmallFile || this.children[i] instanceof ChunkedFile)
                     tmp.push(this.children[i]);
 
             this.children = tmp;
             //console.log("Contents of folder ["+this.name+"]:");
             //console.table(this.children);
-            
-            //var i = 0; // APPARENTLY THIS IS REQUIRED TO MAKE IT NOT LOOP ENDLESSLY OR SKIP THINGS????
+
             for (var i = 0; i < this.children.length; i++) {
                 if (this.children[i] instanceof Folder)
                     this.children[i].recursiveHash();
@@ -2313,7 +2369,7 @@ header3 font
                     success: function(result) {
                         var json = JSON.parse(result);
                         _this.hash = json.message;
-                        queue.triggerDone(_this.posInQueue);
+                        _this.encrypt();
                         $('#transfers .file-list #tfile-'+_this.id).attr('hash', _this.hash);
                         //console.log("hash for " + _this.name+": "+json.response);
                     },
@@ -2322,6 +2378,10 @@ header3 font
                     }
                 });
             }
+        }
+        this.encrypt = function() {
+            //this.password = cr.randomBytes();
+            queue.triggerDone(_this.posInQueue);
         }
         this.fakeUpload = function() {
             this.state = 1;
@@ -2422,6 +2482,7 @@ header3 font
     function SmallFile(posInQueue, item, name, path, parent) {
         this.posInQueue = posInQueue;
         this.item = item;
+        //this.bytes = null;
         this.name = name;
         this.hash = null;
         this.parent = parent;
@@ -2429,6 +2490,7 @@ header3 font
         this.id = queue.getNextId();
         this.state = 0;
         this.progress = 0;
+        this.password = null;
         this.getSize = function() {
            var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
            if (this.item.size == 0) return '0 Bytes';
@@ -2459,6 +2521,7 @@ header3 font
                     success: function(result) {
                         var json = JSON.parse(result);
                         _this.hash = json.message;
+                        //_this.encrypt();
                         queue.triggerDone(_this.posInQueue);
                         $('#transfers .file-list #tfile-'+_this.id).attr('hash', _this.hash);
                         //console.log("hash for " + _this.name+": "+json.response);
@@ -2469,9 +2532,90 @@ header3 font
                 });
             }
         }
+        this.encrypt = function(fake) {
+            $('#transfers .file-list #tfile-'+this.id+' .file-upload-status').text("Encrypting");
+            this.password = forge.util.encode64(cr.randomBytes());
+            var fr = new FileReader();
+            var buf;
+            var _this = this;
+            var fake = fake || false;
+            fr.onload = function() {
+                //buf = cr.bufferToWord(this.result);
+                buf = this.result;
+                if (window.Worker) {
+                    var worker = ww.create('crypto');
+                    //console.log('original key: '+_this.password);
+                    worker.emit('aes.encrypt', {
+                        content: buf,
+                        key: _this.password
+                    });
+                    worker.onmessage = function(msg) {
+                        var res = msg[0]+": "+msg[1].msg;
+                        //var enc = forge.util.encode64(msg[1].data);
+                        //console.log(msg[1].data);
+                        var enc = msg[1].data;
+                        //var enc = atob(msg[1].data);
+                        //var enc = forge.util.bytesToHex(atob(msg[1].data));
+                        var bytes = [];
+                        for (var i = 0; i < enc.length; i += 512) {
+                            var slice = enc.slice(i, i + 512);
+                            var byteNums = new Array(slice.length);
+                            for (var j = 0; j < slice.length; j++) {
+                                byteNums[j] = slice.charCodeAt(j);
+                            }
+                            var byteArray = new Uint8Array(byteNums);
+                            bytes.push(byteArray);
+                        }
+                        //var bytes = CryptoJS.enc.u8array.stringify(CryptoJS.enc.Base64.parse(msg[1].data));
+                        _this.item = new File([new Blob(bytes)], _this.name);
+                        //_this.bytes = enc;
+                        //console.log(_this.bytes);
+                        //_this.password = cr.aesE(_this.password, localStorage.getItem('basekey')); // this should not crash the browser as its only a few bytes
+                        worker.emit('aes.encrypt', {
+                            content: _this.password,
+                            key: localStorage.getItem('basekey')
+                        });
+                        worker.onmessage = function(msg) {
+                            _this.password = msg[1].data;
+                            $('#transfers .file-list #tfile-'+_this.id+' .file-upload-status').text("Waiting");
+                            worker.emit('close', {
+                                content: 'pls'
+                            });
+                            //queue.triggerDone(_this.posInQueue);
+                            _this.upload(fake)
+                        }
+                    }
+                } else { // this will probably crash the browser if the file is too big
+                    var enc = cr.aesE(buf, _this.password);
+                    var bytes = [];
+                    for (var i = 0; i < enc.length; i += 512) {
+                        var slice = enc.slice(i, i + 512);
+                        var byteNums = new Array(slice.length);
+                        for (var j = 0; j < slice.length; j++) {
+                            byteNums[j] = slice.charCodeAt(j);
+                        }
+                        var byteArray = new Uint8Array(byteNums);
+                        bytes.push(byteArray);
+                    }
+                    //var bytes = CryptoJS.enc.u8array.stringify(CryptoJS.enc.Base64.parse(enc));
+                    _this.item = new File([new Blob(bytes)], _this.name);
+                    //_this.bytes = enc;
+                    //console.log(_this.item);
+                    _this.password = cr.aesE(_this.password, localStorage.getItem('basekey'));
+                    $('#transfers .file-list #tfile-'+_this.id+' .file-upload-status').text("Waiting");
+                    //queue.triggerDone(_this.posInQueue);
+                    _this.upload(fake);
+                }
+            };
+            fr.readAsBinaryString(this.item); // this works
+            //fr.readAsDataURL(this.item); // test this
+            //fr.readAsArrayBuffer(this.item);
+        }
         this.fakeUpload = function() {
             this.state = 1;
             var _this = this;
+            /*console.log('uploading file: ');
+            console.log(this.item);*/
             $('#transfers .file-list #tfile-'+_this.id+' .nameandprogress').addClass('active');
             $('#transfers .file-list #tfile-'+_this.id+' .file-upload-status').text("Uploading");
             setTimeout(function() {
@@ -2482,13 +2626,18 @@ header3 font
                 linearQueue.start(true);
             }, 600);
         }
-        this.upload = function() {
+        this.upload = function(fake) {
+            if (fake) return this.fakeUpload;
             this.state = 1;
             var _this = this;
             var formData = new FormData();
             formData.append('file', this.item);
+            //formData.append('bytes', this.bytes);
+            formData.append('size', this.size);
+            formData.append('name', this.name);
             formData.append('hash', this.hash);
             formData.append('parent', this.parent.hash);
+            formData.append('key', this.password);
             $.ajax({
                 xhr: function() {
                     var xhr = $.ajaxSettings.xhr();
@@ -2543,6 +2692,10 @@ header3 font
         this.remove = function() {
             //this = null;
         }
+        this.cancel = function() {
+            $('#transfers .file-list #tfile-'+this.id).removeClass('active').addClass('upload-fail');
+            $('#transfers .file-list #tfile-'+this.id+' .file-upload-status').text("Canceled");
+        }
         this.addToTransfersPage = function() {
             var template = _.template($('#fm-file-transferring').html());
             if ($('#transfers .file-list').hasClass('empty')) {
@@ -2565,6 +2718,7 @@ header3 font
         this.numChunks = 0;
         this.posInQueue = posInQueue;
         this.item = item;
+        //this.bytes = null;
         this.name = name;
         this.hash = null;
         this.parent = parent;
@@ -2573,6 +2727,7 @@ header3 font
         this.state = 0;
         this.progress = 0;
         this.started = false;
+        this.password = null;
         this.getSize = function() {
            var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
            if (this.item.size == 0) return '0 Bytes';
@@ -2604,29 +2759,9 @@ header3 font
                         _this.hash = json.message;
                         var chunks = Math.ceil(_this.item.size / _this.chunkSize);
                         _this.numChunks = chunks;
-                        /*console.log('fileSize: '+_this.item.size);
-                        console.log("Chunks: "+chunks);
-                        console.log("Chunksize: "+_this.chunkSize);*/
-                        /* var file = $('#uploadFile')[0].files[0];
-          var chunkSize = 1024 * 1024;
-          var fileSize = file.size;
-          var chunks = Math.ceil(file.size/chunkSize,chunkSize);
-          var chunk = 0;
-
-          console.log('file size..',fileSize);
-          console.log('chunks...',chunks);
-
-          while (chunk <= chunks) {
-              var offset = chunk*chunkSize;
-              console.log('current chunk..', chunk);
-              console.log('offset...', chunk*chunkSize);
-              console.log('file blob from offset...', offset)
-              console.log(file.slice(offset,chunkSize));
-              chunk++;
-          }*/
 
                         for (var chunk = 0; chunk < chunks; chunk++) {
-/*                            console.log("chunkoffset: "+_this.chunkOffset);
+    /*                      console.log("chunkoffset: "+_this.chunkOffset);
                             console.log('chunkSize:'+_this.chunkSize);*/
                             _this.chunkQueue.push(new Chunk(
                                 _this,
@@ -2649,6 +2784,75 @@ header3 font
                     }
                 });
             }
+        }
+        this.encrypt = function(fake) {
+            $('#transfers .file-list #tfile-'+this.id+' .file-upload-status').text("Encrypting");
+            this.password = forge.util.encode64(cr.randomBytes());
+            var fr = new FileReader();
+            var buf;
+            var _this = this;
+            var fake = fake || false;
+            fr.onload = function() {
+                //buf = cr.bufferToWord(this.result);
+                buf = this.result;
+                if (window.Worker) {
+                    var worker = ww.create('crypto');
+                    worker.emit('aes.encrypt', {
+                        content: buf,
+                        key: _this.password
+                    });
+                    worker.onmessage = function(msg) {
+                        var res = msg[0]+": "+msg[1].msg;
+                        var enc = msg[1].data;
+                        var bytes = [];
+                        for (var i = 0; i < enc.length; i += 512) {
+                            var slice = enc.slice(i, i + 512);
+                            var byteNums = new Array(slice.length);
+                            for (var j = 0; j < slice.length; j++) {
+                                byteNums[j] = slice.charCodeAt(j);
+                            }
+                            var byteArray = new Uint8Array(byteNums);
+                            bytes.push(byteArray);
+                        }
+                        //var bytes = CryptoJS.enc.u8array.stringify(CryptoJS.enc.Base64.parse(msg[1].data));
+                        _this.item = new File([new Blob(bytes)], _this.name);
+                        //_this.password = cr.aesE(_this.password, localStorage.getItem('basekey')); // this should not crash the browser as its only a few bytes
+                        worker.emit('aes.encrypt', {
+                            content: _this.password,
+                            key: localStorage.getItem('basekey')
+                        });
+                        worker.onmessage = function(msg) {
+                            _this.password = msg[1].data;
+                            $('#transfers .file-list #tfile-'+_this.id+' .file-upload-status').text("Waiting");
+                            worker.emit('close', {
+                                content: 'pls'
+                            });
+                            _this.upload(false, null, fake);
+                        }
+                    }
+                } else { // this will probably crash the browser if the file is too big
+                    var enc = cr.aesE(buf, _this.password);
+                    var bytes = [];
+                    for (var i = 0; i < enc.length; i += 512) {
+                        var slice = enc.slice(i, i + 512);
+                        var byteNums = new Array(slice.length);
+                        for (var j = 0; j < slice.length; j++) {
+                            byteNums[j] = slice.charCodeAt(j);
+                        }
+                        var byteArray = new Uint8Array(byteNums);
+                        bytes.push(byteArray);
+                    }
+                    //var bytes = CryptoJS.enc.u8array.stringify(CryptoJS.enc.Base64.parse(enc));
+                    _this.item = new File([new Blob(bytes)], _this.name);
+                    //console.log(_this.item);
+                    _this.password = cr.aesE(_this.password, localStorage.getItem('basekey'));
+                    $('#transfers .file-list #tfile-'+_this.id+' .file-upload-status').text("Waiting");
+                    _this.upload(false, null, fake);
+                }
+            };
+            fr.readAsBinaryString(this.item); // this works
+            //fr.readAsDataURL(this.item); // test this
+            //fr.readAsArrayBuffer(this.item);
         }
         this.fakeUpload = function() {
             this.state = 1;
@@ -2673,7 +2877,8 @@ header3 font
                 width: (progress / total) * 100 + '%'
             }).attr({value: progress, max: total});
         }
-        this.upload = function(failed, self) {
+        this.upload = function(failed, self, fake) {
+            if (fake) return this.fakeUpload;
             if (self == null) {
                 self = this;
             }
@@ -2722,6 +2927,7 @@ header3 font
                         data: {
                             finish: _self.hash,
                             parent: _self.parent.hash,
+                            key: _self.password,
                             name: _self.name,
                             size: _self.item.size,
                             num: _self.numChunks
@@ -2771,6 +2977,10 @@ header3 font
         }
         this.remove = function() {
             //this = null;
+        }
+        this.cancel = function() {
+            $('#transfers .file-list #tfile-'+this.id).removeClass('active').addClass('upload-fail');
+            $('#transfers .file-list #tfile-'+this.id+' .file-upload-status').text("Canceled");
         }
         this.addToTransfersPage = function() {
             var template = _.template($('#fm-file-transferring').html());
@@ -2870,9 +3080,7 @@ header3 font
             if (this.startTimer) clearTimeout(this.startTimer);
             this.startTimer = null;
             this.startTimer = setTimeout(function() {
-                for (var i = 0; i < fm.simultaneousUploads; i++) {
-                    _this.start(posInQueue);
-                }
+                _this.start(posInQueue);
             }, 500);
         }
         this.start = function(posInQueue) {
@@ -2898,12 +3106,16 @@ header3 font
             //start uploading
             linearQueue.sort();
             //linearQueue.debug();
-            //linearQueue.start(true);
-            linearQueue.start();
+            for (var i = 0; i < fm.simultaneousUploads; i++) {
+                //linearQueue.start(true);
+                linearQueue.start(null, true);
+            }
         }
     }
     function LinearQueue() {
         this.trees = [];
+        this.stopped = 0;
+        this.started = 0;
         this.add = function(item) {
             this.trees.push(item);
         }
@@ -2918,22 +3130,33 @@ header3 font
         this.next = function() {
             return this.trees.shift();
         }
-        this.start = function(fake) {
+        this.start = function(fake, begin) {
+            if (begin) {
+                if (this.trees.length == 0) {
+                    return;
+                }
+                this.started++;
+            }
             if (this.trees.length == 0) {
-                console.log("%cFinishing %cupload of LinearQueue","color:red","color:gray");
-                if (dd.numFilesToUpload == 0)
-                    fm.snackbar.create("Finished uploading files", 'view', '$(\'#transfers.btn-ctrlbar\').click()');
-                else
-                    fm.snackbar.create("Failed to upload "+dd.numFilesToUpload+" files", 'view', '$(\'#transfers.btn-ctrlbar\').click()');
-                fm.refreshAll();
-                fm.fetchQuota();
+                this.stopped++;
+                if (this.stopped == fm.simultaneousUploads || this.stopped == this.started) {
+                    console.log("%cFinishing %cupload of LinearQueue","color:red","color:gray");
+                    this.stopped = 0;
+                    if (dd.numFilesToUpload == 0)
+                        fm.snackbar.create("Finished uploading files", 'view', '$(\'#transfers.btn-ctrlbar\').click()');
+                    else
+                        fm.snackbar.create("Failed to upload "+dd.numFilesToUpload+" files", 'view', '$(\'#transfers.btn-ctrlbar\').click()');
+
+                    fm.refreshAll();
+                    fm.fetchQuota();
+                }
             } else {
                 if (fake) {
-                    console.log("%cStarting %cfake upload of LinearQueue","color:green","color:gray");
-                    this.next().fakeUpload();
+                    console.log("%cStarting %cencryption and fake upload of LinearQueue","color:green","color:gray");
+                    this.next().encrypt(fake);
                 } else {
-                    console.log("%cStarting %cupload of LinearQueue","color:green","color:gray");
-                    this.next().upload();
+                    console.log("%cStarting %cencryption and upload of LinearQueue","color:green","color:gray");
+                    this.next().encrypt();
                 }
             }
         }
@@ -2942,6 +3165,16 @@ header3 font
                 if (this.trees[i].state > 0) this.trees = _.without(this.trees, this.trees[i]);
             }
         }
+        this.stop = function() {
+            while (this.trees.length > 0) {
+                this.next().cancel();
+            }
+            this.trees = [];
+            this.stopped = 0;
+            fm.refreshAll();
+            fm.fetchQuota();
+            fm.snackbar.create("Stopped all uploads");
+        }
         this.debug = function() {
             console.info("Linear queue contents:");
             console.table(this.trees);
@@ -2949,7 +3182,304 @@ header3 font
     }
 
 })(window.dd = window.dd || {}, jQuery);
+/*
+8888888b.  888      
+888  "Y88b 888      
+888    888 888      
+888    888 888      
+888    888 888      
+888    888 888      
+888  .d88P 888      
+8888888P"  88888888 
+*/
+(function(dl, $, undefined) {
+    dl.numFilesToDownload = 0;
+    function DownloadQueue(ziptree) {
+        this.ziptree = ziptree;
+        this.queue = [];
+        this.first = null;
+        this.stopped = 0;
+        this.started = 0;
+        // add all files to download, fetch data and decrypt, then add to downloadtree to be structured if there is more than 1 file, else save the file
+        // add stuff to the tree in a way similar to dd.buildFileTree
+        this.add = function(item) {
+            this.queue.push(item);
+        }
+        this.recursiveAdd = function(parent, items) {
+            //add stuff to the parent
+            if (items.length) {
+                for (var i = 0; i < items.length; i++) {
+                    if (items[i].children) {
+                        var f = new DownloadedFolder(this, items[i].name, items[i].hash);
+                        parent.addChild(f);
+                        this.recursiveAdd(f, items[i].children);
+                    } else {
+                        var f = new DownloadedFile(this, items[i].name, items[i].hash, items[i].size);
+                        f.addToTransfersPage();
+                        parent.addChild(f);
+                        this.add(f);
+                    }
+                }
+            }
+        }
+        this.next = function() {
+            if (this.ziptree)
+                return this.queue.shift();
+            else {
+                this.first = this.queue.shift();
+                return this.first;
+            }
+        }
+        this.sort = function() {
+            var tmp = [];
+            for (i = 0; i < this.queue.length; i++) 
+                if (this.queue[i] instanceof DownloadedFolder) tmp.push(this.queue[i]);
+            for (i = 0; i < this.queue.length; i++) 
+                if (this.queue[i] instanceof DownloadedFile || this.queue[i] instanceof ChunkedDownloadedFile) tmp.push(this.queue[i]);
+            this.queue = tmp;
+        }
+        this.start = function(fake, begin) {
+            var fake = fake || false;
+            var begin = begin || false;
+            if (begin) {
+                if (this.queue.length == 0) {
+                    return;
+                }
+                this.started++;
+            }
+            if (this.queue.length == 0) {
+                this.stopped++;
+                //console.log(this.stopped + " " + fm.simultaneousDownloads + " " + this.started);
+                if (this.stopped == fm.simultaneousDownloads || this.stopped == this.started) {
+                    console.log("%cFinishing %cdownload","color:red","color:gray");
+                    this.stopped = 0;
+                    if (dl.numFilesToDownload == 0)
+                        fm.snackbar.create("Finished downloading files", 'view', '$(\'#transfers.btn-ctrlbar\').click()');
+                    else
+                        fm.snackbar.create("Failed to download "+dl.numFilesToDownload+" files", 'view', '$(\'#transfers.btn-ctrlbar\').click()');
+                    if (this.ziptree) this.ziptree.zip();
+                    else this.save();
+                }
+            } else {
+                console.log("%cStarting %cdecryption and download of DownloadQueue","color:green","color:gray");
+                this.next().download();
+            }
+        }
+        this.save = function() {
+            this.first.save();
+        }
+    }
+    function DownloadTree(name) {
+        this.name = name;
+        this.root = new DownloadedFolder(name, '/');
+        this.file = new JSZip();
+        this.zip = function() {
+            this.recursiveAdd(this.file, this.root.children);
+            return null;
+        }
+        this.recursiveAdd = function(parent, items) {
 
+            for (var i = 0; i < items.length; i++) {
+                if (items[i] instanceof DownloadedFolder) {
+                    this.recursiveAdd(parent.folder(items[i].name), items[i].children);
+                }
+                if (items[i] instanceof DownloadedFile) {
+                    parent.file(items[i].name, items[i].data, {binary: true});
+                    items[i].done();
+                }
+            }
+            this.save();
+        }
+        this.sv = function() {
+            var self = this;
+            this.file.generateAsync({type: "blob"})
+                     .then(function(content) {
+                        saveAs(content, self.name+".zip");
+                     });
+        }
+        this.svo = _.once(this.sv);
+        this.svdb = _.debounce(this.svo, 300);
+        this.save = function() {
+            this.svdb();
+        }
+    }
+    function DownloadedFile(q, name, hash, size) {
+        this.id = hash;
+        this.name = name;
+        this.size = size;
+        this.hash = hash;
+        this.key = null;
+        this.data = null;
+        this.q = q;
+        this.setName = function(name) {
+            this.name = name;
+        }
+        this.getName = function() {
+            return this.name;
+        }
+        this.getType = function() {
+            return getType(this);
+        }
+        this.isFolder = function() {
+            return false; // for filetypes.js
+        }
+        this.getSize = function() {
+            var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            if (this.size == 0) return '0 Bytes';
+            var i = parseInt(Math.log(this.size) / Math.log(1024));
+            return (this.size / Math.pow(1024, i)).toFixed(2) + ' ' + sizes[i];
+        }
+        this.download = function () {
+            var self = this;
+            $('#transfers .file-list #tfile-'+self.id).addClass('active');
+            $('#transfers .file-list #tfile-'+self.id+' .file-upload-status').text("Downloading");
+            $.ajax({
+                type: "POST",
+                url: "./api/files/view",
+                headers: {
+                    'X-Foxfile-Auth': api_key
+                },
+                data: {
+                    id: self.hash
+                },
+                success: function(data, response, xhr) {
+                    self.data = data;
+                    self.key = xhr.getResponseHeader('X-FoxFile-Key');
+                    $('#transfers .file-list #tfile-'+self.id).removeClass('active');
+                    $('#transfers .file-list #tfile-'+self.id+' .file-upload-status').text("Waiting");
+                    self.decrypt();
+                },
+                error: function(request, error) {
+                    
+                }
+            });
+            // when done, decrypt
+        }
+        this.decrypt = function() {
+            // when done, start next
+            //$('#transfers .file-list #tfile-'+self.id).addClass('active');
+            $('#transfers .file-list #tfile-'+this.id+' .file-upload-status').text("Decrypting");
+
+            var self = this;
+            var worker = ww.create('crypto');
+            var key = cr.aesD(this.key, localStorage.getItem('basekey'));
+            worker.emit('aes.decrypt', {
+                content: self.data,
+                key: key
+            });
+            worker.onmessage = function(msg) {
+                self.data = msg[1].data;
+                dd.numFilesToDisplay--;
+                //$('#transfers .file-list #tfile-'+self.id).removeClass('active');
+                $('#transfers .file-list #tfile-'+self.id+' .file-upload-status').text("Waiting");
+                $('#transfers #badge-transfers .badgeval').text(--dl.numFilesToDownload);
+                self.q.start()
+                worker.emit('close', {
+                    content: 'pls'
+                });
+            }
+            worker.onerror = function(e) {
+                worker.emit('close', {
+                    content: 'pls'
+                });
+            }
+        }
+        this.save = function() {
+            var self = this;
+            var data = this.data;
+            var bytes = [];
+            for (var i = 0; i < data.length; i += 512) {
+                var slice = data.slice(i, i + 512);
+                var byteNums = new Array(slice.length);
+                for (var j = 0; j < slice.length; j++) {
+                    byteNums[j] = slice.charCodeAt(j);
+                }
+                var byteArray = new Uint8Array(byteNums);
+                bytes.push(byteArray);
+            }
+            saveAs(new File([new Blob(bytes)], self.name, {type: 'application/octet-binary'}), self.name);
+            this.done();
+        }
+        this.done = function() {
+            $('#transfers .file-list #tfile-'+this.id+' .file-upload-status').text("Done").addClass('upload-success');
+        }
+        this.addToTransfersPage = function() {
+            var template = _.template($('#fm-file-transferring').html());
+            if ($('#transfers .file-list').hasClass('empty')) {
+                $('#transfers .file-list').empty().removeClass('empty');
+                $('#transfers .file-list').append('<ul></ul>');
+            }
+            $('#transfers .file-list ul').append(template(this));
+            $('#transfers #badge-transfers').addClass('new');
+            $('#transfers #badge-transfers .badgeval').text(++dl.numFilesToDownload);
+            dd.numFilesToDisplay++;
+        }
+    }
+    function DownloadedFolder(q, name, hash) {
+        this.q = q;
+        this.name = name;
+        this.hash = hash;
+        //this.path = path;
+        this.children = [];
+        this.setName = function(name) {
+            this.name = name;
+        }
+        this.addChild = function(child) {
+            this.children.push(child);
+        }
+    }
+    function isTree(result) {
+        if (result)
+            if (result[0])
+                if (result[1]) return true;
+                else if (result[0].children) return true;
+        return false;
+    }
+    /*
+    @param isFolder   whether or not its a folder
+    @param hashlist   an array of hashes to get
+    */
+    dl.start = function(isFolder, hashlist) {
+        console.log('downloading');
+        $.ajax({
+            type: 'POST',
+            url: './api/files/get_file_tree',
+            headers: {
+                'X-Foxfile-Auth': api_key
+            },
+            data: {
+                hashlist: hashlist.toString()
+            },
+            success: function(result, status, xhr) {
+                var json = JSON.parse(result);
+                if (!isTree(json)) {
+                    var q = new DownloadQueue();
+                    var f = new DownloadedFile(q, json[0].name, json[0].hash, json[0].size);
+                    f.addToTransfersPage();
+                    q.add(f);
+                    for (var i = 0; i < fm.simultaneousDownloads; i++) {
+                        q.start(null, true);
+                    }
+                } else {
+                    console.log('multi: '+json[0].hash);
+
+                    var t = new DownloadTree(json[0].name);
+                    var q = new DownloadQueue(t);
+
+                    q.recursiveAdd(t.root, json);
+                    q.sort();
+
+                    for (var i = 0; i < fm.simultaneousDownloads; i++) {
+                        q.start(null, true);
+                    }                
+               }
+            },
+            error: function(xhr, status, e) {
+                
+            }
+        });
+    }
+})(window.dl = window.dl || {}, jQuery);
 /*
    ____   ___       ___
   6MMMMb/ `MMb     dMM'
@@ -3272,7 +3802,159 @@ YM      6  M   YP   MM
     }
 
 })(window.te = window.te || {}, jQuery);
+/*
+888       888 888       888 
+888   o   888 888   o   888 
+888  d8b  888 888  d8b  888 
+888 d888b 888 888 d888b 888 
+888d88888b888 888d88888b888 
+88888P Y88888 88888P Y88888 
+8888P   Y8888 8888P   Y8888 
+888P     Y888 888P     Y888                    
+*/
+(function(ww, $, undefined) {
+    ww.create = function(which) {
+        //console.log('Creating new '+which+' worker');
+        if (window.Worker) {
+            switch (which) {
+                case 'crypto': return new FoxFileWorker('./js/ww_crypt.js'+'?'+btoa(cr.randomBytes(2)));
+                case 'xhr': return new FoxFileWorker('./js/ww_xhr.js'+'?'+btoa(cr.randomBytes(2)));
+                default: return false;
+            }
+        }
+        console.warn('WebWorkers are not supported by this browser.');
+        return false;
+    }
+    function FoxFileWorker(script) {
+        var self = this;
+        this.worker = new Worker(script);
+        this.emit = function(msg, data) {
+            this.worker.postMessage([msg, data]);
+        }
+        this.onmessage = null;
+        this.onerror = null;
+        this.worker.addEventListener('message', function(msg) {
+            if (typeof self.onmessage === 'function') {
+                setTimeout(function() {
+                    self.onmessage(msg.data);
+                }, 1);
+            }
+        }, false);
+        this.worker.addEventListener('error', function(e) {
+            console.error(e.filename+"("+e.lineno+"): "+e.message);
+            if (typeof self.onerror === 'function') {
+                setTimeout(function() {
+                    self.onerror(e);
+                }, 1);
+            }
+        });
+        this.emit('init', {
+            basekey: localStorage.getItem('basekey'),
+            privkey: localStorage.getItem('privkey'),
+            pubkey: localStorage.getItem('pubkey')
+        });
+    }
+})(window.ww = window.ww || {}, jQuery);
+/*
+ .d8888b.  8888888b.  
+d88P  Y88b 888   Y88b 
+888    888 888    888 
+888        888   d88P 
+888        8888888P"  
+888    888 888 T88b   
+Y88b  d88P 888  T88b  
+ "Y8888P"  888   T88b 
+*/
+(function(cr, $, undefined) {
+    String.prototype.getBytes = function() {
+        var bytes = [];
+        for (var i = 0; i < this.length; i++) {
+            var charCode = this.charCodeAt(i);
+            var cLen = Math.ceil(Math.log(charCode)/Math.log(256));
+            for (var j = 0; j < cLen; j++) {
+                bytes.push((charCode << (j*8)) & 0xFF);
+            }
+        }
+        return bytes;
+    }
+    function make_bytes(str) {
+        var bytes = str.getBytes();
+        var nearest_power_of_2 = Math.pow(2, Math.ceil(Math.log(bytes.length) / Math.log(2)));
+        if (bytes.length != nearest_power_of_2) {
+            var remainder = nearest_power_of_2 - bytes.length;
+            for(var i=0; i<remainder; i++) {
+                var j = i % bytes.length;
+                bytes.push(bytes[j]);
+            }
+        }
+        return bytes;
+    }
+    CryptoJS.enc.u8array = {
+        // https://groups.google.com/forum/#!msg/crypto-js/TOb92tcJlU0/Eq7VZ5tpi-QJ
+        stringify: function (wordArray) {
+            var words = wordArray.words;
+            var sigBytes = wordArray.sigBytes;
+            var u8 = new Uint8Array(sigBytes);
+            for (var i = 0; i < sigBytes; i++) {
+                var byte = (words[i >>> 2] >>> (24 - (i % 4) * 8)) & 0xff;
+                u8[i]=byte;
+            }
+            return u8;
+        },
+        parse: function (u8arr) {
+            var len = u8arr.length;
+            var words = [];
+            for (var i = 0; i < len; i++) {
+                words[i >>> 2] |= (u8arr[i] & 0xff) << (24 - (i % 4) * 8);
+            }
+            return CryptoJS.lib.WordArray.create(words, len);
+        }
+    }
+    cr.randomBytes = function(bytes) {
+        var bytes = bytes || 32;
+        return forge.random.getBytesSync(bytes);
+    }
+    cr.bufferToWord = function(buffer) {
+        return CryptoJS.lib.WordArray.create(buffer);
+    }
+    cr.aesE = function(str, pass) {
+        // would love to figure out how to use Forge for everything, but I cant figure out how or find any actual documentation
+        // and cant figure out how to decrypt anything
 
+        var enc = CryptoJS.AES.encrypt(str, pass);
+        //var enc = CryptoJS.AES.encrypt(encodeURIComponent(str), pass);
+        //var enc = CryptoJS.AES.encrypt(CryptoJS.enc.Utf16.stringify(CryptoJS.enc.Utf16.parse(str)), pass);
+        //return forge.util.encode64(atob(enc.toString()));
+        return enc.toString();
+        /*return {
+            encrypted: enc.toString(),
+            enc: enc
+        };*/
+    }
+    cr.aesD = function(b64, key) {
+        return CryptoJS.AES.decrypt(b64, key).toString(CryptoJS.enc.Utf8);
+        //return decodeURIComponent(CryptoJS.AES.decrypt(b64, key).toString(CryptoJS.enc.Utf8));
+        //return CryptoJS.AES.decrypt(b64, key).toString(CryptoJS.enc.Utf16);
+        //return CryptoJS.AES.decrypt(b64, key).toString();
+    }
+    cr.rsaE = function(str) {
+        var privk = forge.pki.decryptRsaPrivateKey(localStorage.getItem('privkey'), localStorage.getItem('basekey'));
+        var buf = forge.util.createBuffer(str, 'utf8');
+        var enc = forge.pki.rsa.encrypt(buf.getBytes(), privk, 0x01);;
+        return forge.util.encode64(enc);
+    }
+    cr.rsaD = function(str) {
+        var str = forge.util.decode64(str);
+        var pubk = forge.pki.publicKeyFromPem(localStorage.getItem('pubkey'));
+        var buf = forge.util.createBuffer(str);
+        var dec = forge.pki.rsa.decrypt(buf.getBytes(), pubk, 0x01);
+        return dec;
+    }
+    $().mousemove(function(e) {
+        forge.random.collectInt(e.clientX, 16);
+        forge.random.collectInt(e.clientY, 16);
+    });
+})(window.cr = window.cr || {}, jQuery);
 
 
 /*

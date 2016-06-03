@@ -248,7 +248,8 @@ orange A100 #FF9E80
 	flex: none;
 	width: 230px;
 }
-.bar:not(:first-of-type) .acc-h li .creator {
+.bar:not(:first-of-type) .acc-h li .creator,
+.bar:not(:first-of-type) .acc-h li .country {
 	flex: auto;
 }
 .acc-h li.current .status::before {
@@ -310,7 +311,8 @@ orange A100 #FF9E80
 .ulheader .useragent {
 	width: 230px;
 }
-.ulheader .creator {
+.ulheader .creator,
+.ulheader .country {
 	flex: auto;
 }
 .ulheader .date {
