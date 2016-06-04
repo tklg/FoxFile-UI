@@ -208,6 +208,11 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
                     </ul>
                 </li> -->
                 <li>
+                    <span class="property">Backup my master key</span>
+                    <span class="value">Keep this key somewhere safe.</span>
+                    <button class="btn btn-save" onclick="account.backupKey()">Save</button></label>
+                </li>
+                <li>
                     <span class="property">Remove my account</span>
                     <span class="value">This cannot be undone.</span>
                     <button class="btn btn-save" onclick="account.dialog.removeAccount.show()">remove</button></label>
@@ -249,7 +254,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
         <span class="value creator"><%= ip %></span>
         <span class="value country"><%= country %></span>
         <span class="value date"><%= date %></span>
-        <button class="btn value status" id="<%= key %>" onclick="account.invalidateKey('<%= key %>')"><%= status %></button>
+        <button class="btn status" id="<%= key %>" onclick="account.invalidateKey('<%= key %>')"><%= status %></button>
     </li>
 </script>
 <script type="text/template" id="template-dialog">
@@ -271,6 +276,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     <script src="js/backbone.min.js"></script>
     <script type="text/javascript" src="js/forge.min.js"></script>
     <script src="js/account.js"></script>
+    <script src="js/filesaver.min.js"></script>
     <script async type="text/javascript" src="js/ripple.js"></script>
     <script>
     if (!localStorage.getItem('api_key')) location.replace('./login');

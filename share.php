@@ -103,6 +103,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
         <section class="content">
             <div class="file">
                 <span class="file-name">Fetching...</span>
+                <input type="text" id="enckey" class="input hidden" placeholder="Enter decryption key" />
                 <!-- <span class="file-size">1000mb</span> -->
             </div>
             <div class="inactive">
@@ -122,6 +123,10 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     <script src="../js/underscore.min.js"></script>
     <script src="../js/filetypes.js"></script>
     <script src="../js/backbone.min.js"></script>
+    <script src="../js/forge.min.js"></script>
+    <script src="../js/crypto-js.min.js"></script>
+    <script src="../js/jszip.min.js"></script>
+    <script src="../js/filesaver.min.js"></script>
     <script src="../js/shared.js"></script>
     <script type="text/javascript" src="../js/ripple.js"></script>
     <script>

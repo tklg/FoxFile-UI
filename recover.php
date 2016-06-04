@@ -42,7 +42,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 	<section class="content">
         <form name="recover"  onsubmit="return sendEmail()" method="post">
             <p class="instructions">
-                Please enter your email address below and we'll send you instructions on how to set a new password.
+                Please enter your email address below and we'll send you instructions on how to set a new password. Your existing files will no longer be accessible.
             </p>
             <div class="inputbar nosel">
     			<label class="userlabel">

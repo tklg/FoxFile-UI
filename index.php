@@ -65,7 +65,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 			</div>
 			<a href="register" class="new-account">Need an account?</a>
 	        <button class="btn btn-submit" type="button" onclick="checkEmail()">Next<link class="rippleJS" /></button>
-	        <a href="recover" class="forgot-password">Forgot password?</a>
+	        <a href="recover" class="forgot-password"><!-- Forgot password? --></a>
 	        <button class="btn btn-submit" type="button" onclick="sub()">Sign In<link class="rippleJS" /></button>
 	    </form>
 	</section>

@@ -17,7 +17,9 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 //session_start();
 require('../includes/user.php');
 //require('../includes/cfgvars.php');
-$uploadChunkSize = 2097152;
+
+$fileMaxMemory = 1048576;
+$uploadChunkSize = $fileMaxMemory;
 
 $uri = $_SERVER['REQUEST_URI'];
 if (strpos($uri, '/') !== false) {
@@ -64,7 +66,7 @@ $db = mysqli_connect($dbhost,$dbuname,$dbupass,$dbname);
 $uid = -1;
 $uhd = 'demo';
 if (!isset($_SERVER['HTTP_X_FOXFILE_AUTH']) && !isset($_GET['api_key'])) {
-	if ($pageID !== 'download')
+	if ($pageID !== 'download' && $pageID !== 'get_public_file_info' && $pageID !== 'view')
 		resp(401, 'missing auth key');
 	$userDetailsFromKey = null;
 } else {
@@ -74,7 +76,7 @@ if (!isset($_SERVER['HTTP_X_FOXFILE_AUTH']) && !isset($_GET['api_key'])) {
 		$userDetailsFromKey = getUserFromKey($_SERVER['HTTP_X_FOXFILE_AUTH']);
 }
 if ($userDetailsFromKey === null) {
-	if ($pageID !== 'download')
+	if ($pageID !== 'download' && $pageID !== 'get_public_file_info' && $pageID !== 'view')
 		resp(404, 'auth key is invalid');
 } else {
 	$uid = sanitize($userDetailsFromKey->uid);
@@ -93,7 +95,6 @@ function br2nl($s) {
     return preg_replace('/\<br(\s*)?\/?\>/i', "\n", $s);
 }
 function resp($code, $message) {
-	
 	http_response_code($code);
 	$res = array(
 		'status' => $code,
@@ -594,6 +595,8 @@ function getFileTree($hash) {
 	}
 }
 if ($pageID == 'get_file_info') {
+	if (!isset($_POST['hash'])) 
+		resp(422, "missing parameters");
 	$self = sanitize($_POST['hash']);
 	$sql = "SELECT name, hash, parent, is_folder FROM files WHERE hash = '$self' AND owner_id = '$uid' LIMIT 1";
 	//$res = getFileInfo($self);
@@ -636,6 +639,26 @@ if ($pageID == 'get_file_tree') {
 	/*echo '<pre>';
 	echo print_r($tree);*/
 	echo json_encode($tree);
+	die();
+}
+if ($pageID == 'get_public_file_info') {
+	if (!isset($_POST['hash'])) 
+		resp(422, "missing parameters");
+	$self = sanitize($_POST['hash']);
+	if (isShared($self)) {
+		$sql = "SELECT name, hash, parent, is_folder, size FROM files WHERE hash = '$self' LIMIT 1";
+		if ($result = mysqli_query($db, $sql)) {
+			$tree = array();
+			$tree[] = mysqli_fetch_object($result);
+			echo json_encode($tree);
+			die();
+		} else {
+			resp(500, 'Failed to retrieve file details: '.$self);
+		}
+	} else {
+		resp(403, 'This is not a public file');
+	}
+	die();
 }
 if ($pageID == 'uniqid') {
 	//pass this a name and parent hash too so merging uploaded folders becomes possible
@@ -693,8 +716,7 @@ if ($pageID == 'new_file') {
 			'$enckey',
 			'$fName',
 			'$fSize')";
-		if (mysqli_query($db, $sql)) {	// put some sort of versioning systen instead of just displaying every version as a separate file
-			
+		if (mysqli_query($db, $sql)) {			
 			echo json_encode(array('status' => 200, 'hash' => $fileHash));
 		} else {
 			resp(500, 'SQL file insert failed');
@@ -747,9 +769,9 @@ if ($pageID == 'new_file_chunk') {
 
 		for ($i = 0; $i < $num; $i++) {
 			$file = fopen($wd.$hash.'/'.$hash.'-'.$i.'.part', 'rb');
-	        $buffer = fread($file, $uploadChunkSize); // 5mb
+	        $buffer = fread($file, $uploadChunkSize);
 	        fclose($file);
-	        //echo 'merge from: '.$wd.$hash.'/'.$hash.'-'.$i.'.part<br>';
+	        echo 'merge from: '.$wd.$hash.'/'.$hash.'-'.$i.'.part<br>';
 			$f = fopen($parentPath.'/'.$hash, 'ab');
 			//$f = fopen($wd.$hash.'/'.$hash, 'ab');
 		    $write = fwrite($f, $buffer);
@@ -1122,11 +1144,11 @@ if($pageID == 'view') {
 	}
 
 	if (is_readable($filePath)) {
-		if(getOwner($fileName) == $uid || isShared($fileName)) {
+		if(isShared($fileName) || getOwner($fileName) == $uid) {
 			$finfo = finfo_open(FILEINFO_MIME_TYPE);
 			$fileType = finfo_file($finfo, $filePath);
 			finfo_close($finfo);
-			$maxSize = 2097152;
+			$maxSize = $fileMaxMemory;
 			$fileSize = filesize($filePath);
 
 			// filter out files that the client wont be able to preview, like .exe and similar
@@ -1135,7 +1157,7 @@ if($pageID == 'view') {
 				$filekey = mysqli_fetch_object($res)->enckey;
 				header('Content-Type: ' . $fileType);
 				header('X-FoxFile-Key: '.$filekey);
-				//if ($fileSize > $maxSize) {
+				if ($fileSize > $maxSize) {
 				    $handle = fopen($filePath, 'rb');
 				    while (!feof($handle)) {
 				    	$buffer = fread($handle, $maxSize);
@@ -1144,11 +1166,11 @@ if($pageID == 'view') {
 		        		flush();
 				    }
 				    fclose($handle);
-				/*} else {
+				} else {
 				   	ob_clean();
 					flush();
 				   	readfile($filePath);
-				}*/
+				}
 				exit();
 			}
 		} else {
@@ -1255,18 +1277,26 @@ if ($pageID == 'make_public') {
 		if (!$verified) {
 			resp(401, 'Account must have a verified email to share files');
 		}
-		$q = "SELECT hash FROM shared WHERE points_to='$hash' AND owner_id='$uid'";
+		$q = "SELECT shared.hash, files.enckey FROM shared, files WHERE shared.points_to='$hash' AND shared.owner_id='$uid' and shared.points_to=files.hash";
 		if ($result = mysqli_query($db, $q)) {
 			if (mysqli_num_rows($result) > 0) {
-				$r = mysqli_fetch_object($result)->hash;
-				resp(200, $r);
+				$r = mysqli_fetch_object($result);
+				echo json_encode($r);
+				die();
 			} else {
 				$newid = getUniqLink();
 				$q = "INSERT INTO shared (owner_id,hash,points_to,is_public,shared_with) VALUES ('$uid','$newid','$hash','0','')";
 				$q2 = "UPDATE files SET is_public=1, is_shared=1 WHERE hash='$hash' AND owner_id='$uid'";
+				$q3 = "SELECT enckey from files where hash='$hash' and owner_id='$uid'";
 				if (mysqli_query($db, $q)) {
-					if (mysqli_query($db, $q2)) {
-						resp(200, $newid);
+					if (mysqli_query($db, $q2) && $result = mysqli_query($db, $q3)) {
+						$enckey = mysqli_fetch_object($result)->enckey;
+						$r = array(
+							'hash' => $newid,
+							'enckey' => $enckey
+						);
+						echo json_encode($r);
+						die();
 					} else {
 						resp(500, "Failed to share file or folder");
 					}
@@ -1329,7 +1359,7 @@ if($pageID == 'download') {
 		}
 		if(file_exists($zipname)) {
 			$fileSize = filesize($zipname);
-		    $maxSize = 2097152;//2MB
+		    $maxSize = $fileMaxMemory;//2MB
 			//echo $destination;
 		    header('Pragma: public');
 		    header('Expires: 0');
@@ -1376,7 +1406,7 @@ if($pageID == 'download') {
 
 		    if(is_readable($filePath)) {
 		        $fileSize = filesize($filePath);
-		        $maxSize = 2097152;//2MB
+		        $maxSize = $fileMaxMemory;//2MB
 
 		        header('Content-Description: File Transfer');
 			    header('Content-Type: application/octet-stream');

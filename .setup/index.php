@@ -1,8 +1,8 @@
 <?php
-$db_config_path = '../includes/user.php';
 
 session_start();
-require $db_config_path;
+$db_config_path = '../includes/user.php';
+require($db_config_path);
 function sanitize($s) {
 	global $dbhost, $dbuname, $dbupass, $dbname;
  	$db = mysqli_connect($dbhost,$dbuname,$dbupass,$dbname);
@@ -214,7 +214,7 @@ $installed = true;
 	</header>
 	<section class="content">
     <form id="install" name="install" action="#" method="post">
-		<div class="inputbar nosel">
+		<!-- <div class="inputbar nosel">
 			<label class="userlabel">
 				<input required name="email" class="userinfo" id="email" type="text" autofocus>
 				<span class="placeholder-userinfo nosel">Your email</span>
@@ -228,7 +228,7 @@ $installed = true;
 				<span class="placeholder-userinfo nosel">Your password</span>
 				<hr class="input-underline" />
 			</label>
-		</div>
+		</div> -->
 		<div class="inputbar nosel">
 			<label class="userlabel">
 				<input required name="dbuser" class="userinfo" id="dbuser" type="text">
@@ -297,6 +297,9 @@ $installed = true;
 	.output-status-complete {
 		color: lime;
 	}
+	form .inputbar:first-of-type {
+		margin-top: 20px;
+	}
 	</style>
 	<section class="result">
 		<div class="inputbar nosel" id="1">
@@ -309,11 +312,11 @@ $installed = true;
 			<div class="output-status">Waiting...</div>
 			<div class="output-spinner"></div>
 		</div>
-		<div class="inputbar nosel" id="3">
+		<!--<div class="inputbar nosel" id="3">
 			<div class="output-step">Making your account</div>
 			<div class="output-status">Waiting...</div>
 			<div class="output-spinner"></div>
-		</div>
+		</div>-->
 		<div class="inputbar nosel" id="4">
 			<div class="output-step">Create files table</div>
 			<div class="output-status">Waiting...</div>
@@ -322,6 +325,7 @@ $installed = true;
 	</section>
 <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
 <script type="text/javascript" src="../js/ripple.js"></script>
+<script src="../js/forge.min.js"></script>
     <script type="text/javascript">
     $('input.userinfo').change(function() {
         $(this).attr('empty', ($(this).val() != '') ? 'false' : 'true');
@@ -331,6 +335,11 @@ $installed = true;
     	e.preventDefault()
     	checkEmail();
     });
+    function sha512(str) {
+		var md = forge.md.sha512.create();
+		md.update(str);
+		return md.digest().toHex();
+	}
     function install() {
     	openStat();
     	if (done[0]) {
@@ -376,7 +385,10 @@ $installed = true;
 		});
     }
     function install3() {
-    	if (done[2]) {
+    	install4();
+    	done[2] = true;
+    	return;
+    	/*if (done[2]) {
     		install4();
     		return;
     	}
@@ -384,7 +396,7 @@ $installed = true;
 			{
 			create_user: '',
 			useremail: $('#email').val(),
-			userpass: $('#userpass').val()
+			userpass: sha512($('#userpass').val())
 			},
 			function(errorcode) {
 			if (errorcode == 0) {
@@ -394,7 +406,7 @@ $installed = true;
 			} else {
 			error(3, errorcode);
 			}
-		});
+		});*/
     }
     function install4() {
     	if (done[3]) {
@@ -442,6 +454,10 @@ $installed = true;
     	$('.btn-submit').html("Done!").attr('onclick', 'window.location = "../login"');
     }
     function checkEmail() {
+
+    	install();
+    	return;
+
     	if (/[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/g.test($('#email').val())) {
     		$('.error-email').removeClass('active');
     		install();

@@ -218,8 +218,10 @@ header3 font
     fm.searching = false;
     fm.simultaneousUploads = 3;
     fm.simultaneousDownloads = 3;
-    fm.uploadSizeLimit = 2097152; //2MB, php default
-    fm.uploadChunkSize = 2097152;
+    /*fm.uploadSizeLimit = 2097152; //2MB, php default
+    fm.uploadChunkSize = 2097152;*/
+    fm.uploadSizeLimit = 1048576; //1MB, because base64 encoded aes
+    fm.uploadChunkSize = 1048576;
     var hashTree = [];
     var fileTree = [];
     var currentFilePath = '';
@@ -724,8 +726,11 @@ header3 font
                     +'<input type="text" id="'+id+'" placeholder="Emails" value="" />'
                     +'<p>or make it accessible by everyone:</p>'
                     +'<input type="checkbox" id="'+id+'" '+(fm.isShared(id) ? 'checked':'')+' />'*/
-                    '<p>Anyone with the link can download this file.</p>'
-                    +'<input type="text" id="sharelink-'+id+'" placeholder="Fetching link..." value="" readonly autofocus />',
+                    '<p>Anyone with the link and the key can download this file. Send them separately if possible.</p>'
+                    +'<label for="sharelink">Link</label><input type="text" class="sharelink" id="sharelink" placeholder="Fetching link..." readonly autofocus />'
+                    +'<label for="sharekey">Key</label><input type="text" class="sharekey" id="sharekey" placeholder="Fetching key..." readonly />'
+                    +'<p>You can also combine the link with the key:</p>'
+                    +'<!--<label for="sharelinkkey">Link &amp; key</label>--><input type="text" class="sharelinkkey" id="sharelinkkey" placeholder="Fetching link..." readonly />',
                     footer.html()
                 );
                 fm.share(file, id);
@@ -1077,12 +1082,39 @@ header3 font
             },
             success: function(result, status, xhr) {
                 var json = JSON.parse(result);
-                var link = json['message'];
+                var link = json.hash;
+                var key = json.enckey;
                 var urla = window.location.href.toString().split('browse');
                 var url = urla[0];
                 //url += link;
                 url += 'share/'+link;
-                $('.dialog article input').val(url).select();
+                $('.dialog article .sharelink').val(url).focus().select();
+                var worker = ww.create('crypto');
+                worker.emit('aes.decrypt', {
+                    content: key,
+                    key: localStorage.getItem('basekey')
+                });
+                worker.onmessage = function(msg) {
+
+                    $('.dialog article .sharekey').val(forge.util.bytesToHex(atob(msg[1].data)));
+                    $('.dialog article .sharelinkkey').val(url+'.'+forge.util.bytesToHex(atob(msg[1].data)));
+                    $('.dialog article input#sharelink').focus().select();
+                    worker.emit('close', {
+                        content: 'pls'
+                    });
+
+                    /*console.log(msg[1].data);
+                    worker.emit('rsa.encrypt', {
+                        content: msg[1].data
+                    });
+                    worker.onmessage = function(msg) {
+                        $('.dialog article .sharekey').val(forge.util.bytesToHex(atob(msg[1].data)));
+
+                        worker.emit('close', {
+                            content: 'pls'
+                        });
+                    }*/
+                }
                 fm.refreshAll();
             },
             error: function(xhr, status, e) {
@@ -1105,7 +1137,9 @@ header3 font
                 remove: id
             },
             success: function(result, status, xhr) {
-                $('.dialog article input').val("Link removed");
+                $('.dialog article .sharelink').val("Link removed");
+                $('.dialog article .sharelinkkey').val("Link removed");
+                $('.dialog article .sharekey').val("Key removed");
                 fm.refreshAll();
             },
             error: function(xhr, status, e) {
@@ -2757,24 +2791,6 @@ header3 font
                     success: function(result) {
                         var json = JSON.parse(result);
                         _this.hash = json.message;
-                        var chunks = Math.ceil(_this.item.size / _this.chunkSize);
-                        _this.numChunks = chunks;
-
-                        for (var chunk = 0; chunk < chunks; chunk++) {
-    /*                      console.log("chunkoffset: "+_this.chunkOffset);
-                            console.log('chunkSize:'+_this.chunkSize);*/
-                            _this.chunkQueue.push(new Chunk(
-                                _this,
-                                chunk,
-                                _this.id,
-                                _this.hash,
-                                _this.chunkOffset, 
-                                _this.chunkSize,
-                                _this.item.slice(_this.chunkOffset, _this.chunkOffset+_this.chunkSize),
-                                _this.updateProgress
-                                ));
-                            _this.chunkOffset += _this.chunkSize;
-                        }
                         queue.triggerDone(_this.posInQueue);
                         $('#transfers .file-list #tfile-'+_this.id).attr('hash', _this.hash);
                         //console.log("hash for " + _this.name+": "+json.response);
@@ -2784,6 +2800,27 @@ header3 font
                     }
                 });
             }
+        }
+        this.splitChunks = function(fake) {
+            var chunks = Math.ceil(this.item.size / this.chunkSize);
+            this.numChunks = chunks;
+
+            for (var chunk = 0; chunk < chunks; chunk++) {
+    /*          console.log("chunkoffset: "+_this.chunkOffset);
+                console.log('chunkSize:'+_this.chunkSize);*/
+                this.chunkQueue.push(new Chunk(
+                    this,
+                    chunk,
+                    this.id,
+                    this.hash,
+                    this.chunkOffset, 
+                    this.chunkSize,
+                    this.item.slice(this.chunkOffset, this.chunkOffset+this.chunkSize),
+                    this.updateProgress
+                ));
+                this.chunkOffset += this.chunkSize;
+            }
+            this.upload(false, null, fake);
         }
         this.encrypt = function(fake) {
             $('#transfers .file-list #tfile-'+this.id+' .file-upload-status').text("Encrypting");
@@ -2827,7 +2864,7 @@ header3 font
                             worker.emit('close', {
                                 content: 'pls'
                             });
-                            _this.upload(false, null, fake);
+                            _this.splitChunks(fake);
                         }
                     }
                 } else { // this will probably crash the browser if the file is too big
@@ -2847,7 +2884,7 @@ header3 font
                     //console.log(_this.item);
                     _this.password = cr.aesE(_this.password, localStorage.getItem('basekey'));
                     $('#transfers .file-list #tfile-'+_this.id+' .file-upload-status').text("Waiting");
-                    _this.upload(false, null, fake);
+                    _this.splitChunks(fake);
                 }
             };
             fr.readAsBinaryString(this.item); // this works
@@ -3131,6 +3168,8 @@ header3 font
             return this.trees.shift();
         }
         this.start = function(fake, begin) {
+            var fake = fake || false;
+            var begin = begin || false;
             if (begin) {
                 if (this.trees.length == 0) {
                     return;
@@ -3141,7 +3180,6 @@ header3 font
                 this.stopped++;
                 if (this.stopped == fm.simultaneousUploads || this.stopped == this.started) {
                     console.log("%cFinishing %cupload of LinearQueue","color:red","color:gray");
-                    this.stopped = 0;
                     if (dd.numFilesToUpload == 0)
                         fm.snackbar.create("Finished uploading files", 'view', '$(\'#transfers.btn-ctrlbar\').click()');
                     else
@@ -3149,6 +3187,8 @@ header3 font
 
                     fm.refreshAll();
                     fm.fetchQuota();
+                    this.started = 0;
+                    this.stopped = 0;
                 }
             } else {
                 if (fake) {
@@ -3253,6 +3293,7 @@ header3 font
                 if (this.stopped == fm.simultaneousDownloads || this.stopped == this.started) {
                     console.log("%cFinishing %cdownload","color:red","color:gray");
                     this.stopped = 0;
+                    this.started = 0;
                     if (dl.numFilesToDownload == 0)
                         fm.snackbar.create("Finished downloading files", 'view', '$(\'#transfers.btn-ctrlbar\').click()');
                     else
@@ -3334,6 +3375,21 @@ header3 font
             $('#transfers .file-list #tfile-'+self.id).addClass('active');
             $('#transfers .file-list #tfile-'+self.id+' .file-upload-status').text("Downloading");
             $.ajax({
+                xhr: function() {
+                    var xhr = $.ajaxSettings.xhr();
+                    //var xhr = new window.XMLHttpRequest();
+                    var elem = $('#transfers .file-list #tfile-'+self.id+' .file-upload-progress-bar');
+                    if(xhr.upload){
+                        xhr.upload.addEventListener('progress', function(e) {
+                            if(e.lengthComputable) {
+                                elem.css({
+                                    width: ((e.loaded / e.total) * 100) + '%'
+                                }).attr({value: e.loaded, max: e.total});
+                            }
+                        }, false);
+                    }
+                    return xhr;
+                },
                 type: "POST",
                 url: "./api/files/view",
                 headers: {
@@ -3582,7 +3638,7 @@ YM      6  M   YP   MM
                 cm.menu.append(new MenuItem(cm.menu, "Upload Folder", "folder-upload", "$('#dd-folder-upload').attr('hash','"+hash+"').click()").get());
                 cm.menu.append(new MenuItem(cm.menu, "New Folder", "folder-plus", "fm.dialog.newFolder.show('"+name+"','"+hash+"')", "Alt+N").get());
                 cm.menu.append('<hr class="nav-vert-divider">');
-                cm.menu.append(new MenuItem(cm.menu, "Get public link", "link", "fm.dialog.share.show('"+name+"','"+hash+"')", "L").get());
+                //fcm.menu.append(new MenuItem(cm.menu, "Get public link", "link", "fm.dialog.share.show('"+name+"','"+hash+"')", "L").get());
                 cm.menu.append(new MenuItem(cm.menu, "Move", "folder-move", "fm.dialog.move.show('"+name+"','"+hash+"')", "m").get());
                 cm.menu.append(new MenuItem(cm.menu, "Refresh", "refresh", "fm.refresh('"+parentHash+"')", "Alt+R").get());
             } else if (self.attr('btype') == 'file') {
@@ -3817,8 +3873,8 @@ YM      6  M   YP   MM
         //console.log('Creating new '+which+' worker');
         if (window.Worker) {
             switch (which) {
-                case 'crypto': return new FoxFileWorker('./js/ww_crypt.js'+'?'+btoa(cr.randomBytes(2)));
-                case 'xhr': return new FoxFileWorker('./js/ww_xhr.js'+'?'+btoa(cr.randomBytes(2)));
+                case 'crypto': return new FoxFileWorker('./js/ww_crypt.js'/*+'?'+btoa(cr.randomBytes(2))*/);
+                case 'xhr': return new FoxFileWorker('./js/ww_xhr.js'/*+'?'+btoa(cr.randomBytes(2))*/);
                 default: return false;
             }
         }

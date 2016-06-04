@@ -141,7 +141,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
                 var pki = forge.pki;
                 var rsa = forge.pki.rsa;
                 var pair = rsa.generateKeyPair({bits: 2048, e: 0x10001});
-                var privk = pki.encryptRsaPrivateKey(pair.privateKey, sha512($('#password').val()));
+                var privk = pki.encryptRsaPrivateKey(pair.privateKey, sha512(sha512($('#password').val())));
                 //var privk = pki.privateKeyToPem(pair.privateKey);
                 var pubk = pki.publicKeyToPem(pair.publicKey);
                 $.post('./api/auth/new',

@@ -367,7 +367,7 @@ if($pageID == 'new') {
 			                '$privk',
 			                '$pubk')";
 					if (mysqli_query($db,$sql)) {
-						mkdir('../files/'.$root_folder.'/');
+						mkdir('../files/'.$root_folder.'/', 0775);
 						sendVerification($email);
 						//mkdir('../trashes/'.$root_folder.'/');
 						echo 0;
@@ -493,7 +493,8 @@ if ($pageID == 'recover') {
 
 	$q = "UPDATE users SET password='$pass' WHERE email='$email' LIMIT 1";
 	if (mysqli_query($db, $q)) {
-		header("Location: ./../../logout");
+		//header("Location: ./../../logout");
+		resp(200, 'password changed');
 	} else {
 		resp(500, 'Failed to change password');
 	}

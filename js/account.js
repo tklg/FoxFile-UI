@@ -405,10 +405,6 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
             }
         });
     }
-    account.confirmRemove = function() {
-        $('.btn-save').blur();
-        account.snackbar.create("There is still no escape yet");
-    }
     account.sendVerificationEmail = function() {
         var email = $('#email').val();
         $.ajax({
@@ -475,6 +471,9 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
                 }
             }
         });
+    }
+    account.backupKey = function() {
+        saveAs(new File(['FoxFile Master Key for '+localStorage.getItem('email')+':\r\n'+localStorage.getItem('basekey')], 'FoxFile Master Key.txt'), 'FoxFile Master Key.txt');
     }
     $(document).on('click', '.btn-ctrlbar', function(e) {
         account.routerbox.router.navigate($(this).attr('id'), {trigger: true, replace: true});

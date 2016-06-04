@@ -46,6 +46,9 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     </header>
 	<section class="content">
         <form name="recover" action="./api/auth/recover" method="post" onsubmit="return changePass()">
+            <p class="instructions">
+                Your existing files will no longer be accessible with your new password.
+            </p>
             <p>
                 <input type="hidden" name="key" value="<?php echo $_GET['key']; ?>">
                 <input type="hidden" name="from" value="<?php echo $_GET['from']; ?>">
@@ -74,10 +77,16 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 <?php include './includes/footer.html'; ?>
 <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
 <script type="text/javascript" src="js/ripple.js"></script>
+<script type="text/javascript" src="js/forge.min.js"></script>
     <script type="text/javascript">
     $('input.userinfo').change(function() {
         $(this).attr('empty', ($(this).val() != '') ? 'false' : 'true');
     });
+    function sha512(str) {
+        var md = forge.md.sha512.create();
+        md.update(str);
+        return md.digest().toHex();
+    }
     function changePass() {
         var pass = $('#pass').val();
         var pass2 = $('#pass2').val();
@@ -93,8 +102,24 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
         } else {
             $('#e2').removeClass('active');
         }
-        //$('form')[0].submit();
-        return true;
+        $.ajax({
+            url: './api/files/make_public',
+            type: 'POST',
+            headers: {
+                'X-Foxfile-Auth': api_key
+            },
+            data: {
+                pass: sha512(pass),
+                pass2: sha512(pass2)
+            },
+            success: function(result, status, xhr) {
+                document.location.href = './logout';
+            },
+            error: function(xhr, status, e) {
+                
+            }
+        });
+        return false;
     }
     </script>
 </body>

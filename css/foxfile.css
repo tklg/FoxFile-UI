@@ -1325,6 +1325,15 @@ main {
 .dialog header + article input {
 	margin: 0;
 }
+.dialog article label {
+	display: inline-block;
+}
+.dialog article input + label {
+	margin-top: 10px;
+}
+.dialog article input + p {
+	margin-top: 10px !important;
+}
 .dialog article input:focus {
 	border-bottom: 2px solid #FF5722;
 }

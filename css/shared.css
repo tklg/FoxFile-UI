@@ -255,19 +255,21 @@ orange A100 #FF9E80
 .content .file {
 	/*width: 280px;*/
 	max-width: 80%;
-	height: 40px;
+	/*height: 40px;*/
 	line-height: 40px;
-	display: flex;
+	/*display: flex;*/
 	margin-bottom: 20px;
 }
 .file span {
 	display: inline-block;
+	width: 100%;
 	line-height: 40px;
+	height: 40px;
 }
 .file .file-name {
 	font-size: 20px;
 	text-align: center;
-	flex: 1;
+	/*flex: 1;*/
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
@@ -276,6 +278,22 @@ orange A100 #FF9E80
 	float: right;
 	color: rgba(0,0,0,.54);
 	font-size: 14px;
+}
+.file input {
+	width: 100%;
+	height: 40px;
+	line-height: 40px;
+	padding: 0;
+	border: none;
+	border-bottom: 2px solid rgba(0,0,0,.12);
+	text-indent: 10px;
+	transition: all 0.1s ease-in-out;
+	font-size: 100%;
+	outline: 0 none;
+	cursor: text;
+}
+.file input:focus {
+	border-bottom: 2px solid #FF5722;
 }
 .inactive,
 .hidden {
