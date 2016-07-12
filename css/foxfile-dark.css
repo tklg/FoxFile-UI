@@ -1,0 +1,300 @@
+/*a dark theme for FoxFile*/
+/*
+dark: background: #0E1215;
+light: background: #10171c;
+*/
+.foxfile-dark *::-webkit-scrollbar-track {
+	-webkit-box-shadow: inset 0 0 8px rgba(0,0,0,0.7);
+	background: #243135;
+}
+.foxfile-dark *::-webkit-scrollbar-thumb {
+	background-color: #ff5722;
+	/*border-radius: 9px;*/
+	/*outline: 1px solid #009688;*/
+}
+.foxfile-dark {
+	background: #0E1215;
+}
+.foxfile-dark .redfox {
+	color: #ff5722;
+}
+.foxfile-dark header #nav-header {
+	background: #273138;
+}
+.foxfile-dark header #nav-header .user-menu:hover {
+	background: rgba(255,255,255,.07);
+}
+.foxfile-dark .bar:not(:first-of-type):not(:last-of-type) {
+	border-left: 1px solid rgba(255,255,255,.02);
+}
+.foxfile-dark .bar header {
+	background: #0E1215;
+	color: white;
+}
+.foxfile-dark .nav-right {
+	background: #273138;
+}
+.foxfile-dark .nav-right span,
+.foxfile-dark .nav-right a {
+	color: white;
+}
+.foxfile-dark .nav-right li.disabled a {
+	color: rgba(255,255,255,.3);
+}
+.foxfile-dark .bar .header-email,
+.foxfile-dark .nav-right .nav-header-email {
+	color: rgba(255,255,255,.7);
+}
+.foxfile-dark .bar li {
+	background: #0E1215;
+	color: rgba(255,255,255,.7);
+}
+.foxfile-dark .bar li i {
+	color: rgba(255,255,255,.3);
+}
+.foxfile-dark .badge-info {
+	color: rgba(255,255,255,.5);
+}
+.foxfile-dark .bar:not(.bar-ignore):last-of-type,
+.foxfile-dark .bar:not(.bar-ignore):last-of-type header,
+.foxfile-dark .bar:not(.bar-ignore):last-of-type li {
+	background: #10171c;
+}
+.foxfile-dark .bar:not(.bar-ignore):not(.loading):last-of-type header,
+.foxfile-dark.account .bar.active header {
+	border-bottom: 2px solid rgba(255,255,255,.3);
+}
+.foxfile-dark .bar li {
+	border-bottom: 1px solid rgba(255,255,255,.01);
+}
+.foxfile-dark .bar li:after {
+	color: rgba(255,255,255,.3);
+}
+.foxfile-dark .bar header .file-actions-header span {
+	color: rgba(255,255,255,.7);
+}
+.foxfile-dark .bar .file-preview-icon i,
+.foxfile-dark .bar .file-preview-icon span,
+.foxfile-dark .bar .folder-empty i,
+.foxfile-dark .bar .folder-empty span {
+	color: rgba(255,255,255,.3);
+}
+.foxfile-dark .bar.loading .progress {
+	background-color: rgba(255,255,255,.3);
+}
+.foxfile-dark .clickmenu {
+	background: #273138;
+}
+.foxfile-dark .clickmenu i {
+	color: rgba(255,255,255,.3);
+}
+.foxfile-dark .clickmenu span {
+	color: white;
+}
+.foxfile-dark .dialog {
+	background: #273138;
+}
+.foxfile-dark .dialog input {
+	background: rgba(255,255,255,.07);
+	color: white;
+}
+.foxfile-dark .dialog header {
+	color: white;
+}
+.foxfile-dark .dialog p,
+.foxfile-dark .dialog label {
+	color: rgba(255,255,255,.7);
+}
+.foxfile-dark .minibar span.sep {
+	color: rgba(255,255,255,.5);
+}
+.foxfile-dark .minibar i {
+	color: rgba(255,255,255,.3);
+}
+.foxfile-dark .minibar .file-name {
+	color: rgba(255,255,255,.7);
+}
+.foxfile-dark .bar-transfers .file-upload-status {
+	color: rgba(255,255,255,.5);
+}
+.foxfile-dark .cm-s-foxfile-cm.CodeMirror {
+    background: #10171c;
+    color: rgba(255,255,255,.7);
+}
+.foxfile-dark .cm-s-foxfile-cm .CodeMirror-selected {
+    background: #2DA4FE;
+}
+.foxfile-dark .cm-s-foxfile-cm.CodeMirror::selection {
+    background: #2DA4FE;
+}
+.foxfile-dark .cm-s-foxfile-cm.CodeMirror::-moz-selection {
+    background: #2DA4FE;
+}
+.foxfile-dark .cm-s-foxfile-cm .CodeMirror-gutters {
+    background: #10171c;
+    border-right: 1px solid #ff5722;
+}
+.foxfile-dark .cm-s-foxfile-cm .CodeMirror-guttermarker {
+    color: rgba(255,255,255,.5)
+}
+.foxfile-dark .cm-s-foxfile-cm .CodeMirror-guttermarker-subtle {
+    color: rgba(255,255,255,.3)
+}
+.foxfile-dark .cm-s-foxfile-cm .CodeMirror-linenumber {
+    color: rgba(255,255,255,.5)
+}
+.foxfile-dark .cm-s-foxfile-cm .CodeMirror-cursor {
+    border-left: 1px solid rgba(255,255,255,.7) !important;
+}
+.foxfile-dark .cm-s-foxfile-cm .cm-keyword {
+    color: #ff5722;
+}
+.foxfile-dark .cm-s-foxfile-cm .cm-atom {
+    color: #00BCD4;
+}
+.foxfile-dark .cm-s-foxfile-cm .cm-number {
+    color: #4DD0E1;
+}
+.foxfile-dark .cm-s-foxfile-cm .cm-def {
+    color: #8DA6CE;
+}
+.foxfile-dark .cm-s-foxfile-cm span.cm-variable-2,
+.foxfile-dark .cm-s-foxfile-cm span.cm-tag {
+    color: #C8363F;
+}
+.foxfile-dark .cm-s-foxfile-cm span.cm-variable-3,
+.foxfile-dark .cm-s-foxfile-cm span.cm-def {
+    color: #B3421D;
+}
+.foxfile-dark .cm-s-foxfile-cm .cm-operator {
+    color: #009688;
+}
+.foxfile-dark .cm-s-foxfile-cm .cm-comment {
+    color: rgba(255,255,255,.3);
+    font-style: italic;
+    font-weight: normal;
+}
+.foxfile-dark .cm-s-foxfile-cm .foxfile-dark .cm-string {
+    color: #689F38;
+    font-style: italic;
+}
+.foxfile-dark .cm-s-foxfile-cm .foxfile-dark .cm-string-2 {
+    color: #66BB6A;
+}
+.foxfile-dark .cm-s-foxfile-cm .cm-meta {
+    background-color: #141414;
+    color: #f7f7f7;
+}
+.foxfile-dark .cm-s-foxfile-cm .cm-builtin {
+    color: #00ACC1;
+}
+.foxfile-dark .cm-s-foxfile-cm .cm-tag {
+    color: #997643;
+}
+.foxfile-dark .cm-s-foxfile-cm .cm-attribute {
+    color: #4DB6AC;
+}
+.foxfile-dark .cm-s-foxfile-cm .cm-header {
+    color: #02DBAA;
+}
+.foxfile-dark .cm-s-foxfile-cm .cm-hr {
+    color: #AEAEAE;
+}
+.foxfile-dark .cm-s-foxfile-cm .cm-link {
+    color: #4DB6AC;
+    font-style: italic;
+    text-decoration: none;
+}
+.foxfile-dark .cm-s-foxfile-cm .foxfile-dark .cm-searching {
+	background: #4DB6AC;
+}
+.foxfile-dark .cm-s-foxfile-cm .cm-error {
+    border-bottom: 1px solid red;
+}
+.foxfile-dark .cm-s-foxfile-cm .CodeMirror-activeline-background {
+    background: #2D3940 !important;
+}
+.foxfile-dark .cm-s-foxfile-cm .CodeMirror-matchingbracket {
+    outline: 1px solid grey;
+    color: white !important;
+}
+.foxfile-dark .CodeMirror-scrollbar-filler {
+    background: #10171c;
+}
+.foxfile-dark .CodeMirror-dialog {
+    background: #ddd;
+    color: rgba(0,0,0,.54);
+}
+.foxfile-dark .CodeMirror-dialog-top {
+    border-bottom: 1px solid #FF5722;
+}
+.foxfile-dark .CodeMirror-dialog-bottom {
+    border-top: 1px solid #FF5722;
+}
+.foxfile-dark .CodeMirror-hscrollbar {
+	height: 10px;
+}
+.foxfile-dark .file-history,
+.foxfile-dark .file-history li span,
+.foxfile-dark .hist-file li span {
+	color: rgba(255,255,255,.7) !important;
+}
+.foxfile-dark .hist-file .file-name:after {
+	color: rgba(255,255,255,.5) !important;
+}
+.foxfile-dark .hist-file button {
+	color: rgba(255,255,255,.7);
+}
+.foxfile-dark header.main #nav-header.searching .logo-text a,
+.foxfile-dark header.main #nav-header.searching .user-menu-msg {
+	color: rgba(255,255,255,1);
+}
+.foxfile-dark.account {
+	color: rgba(255,255,255,.7);
+}
+.foxfile-dark.account .bar.active,
+.foxfile-dark.account .bar.active header {
+	background: #10171c;
+}
+.foxfile-dark.account .bar ul li {
+	background: #10171c;
+}
+.foxfile-dark.account .bar li .value {
+	color: rgba(255,255,255,.5);
+}
+.foxfile-dark.account .bar li input {
+	background: rgba(255,255,255,.07);
+	color: white;
+}
+.foxfile-dark.account .bar li .btn,
+.foxfile-dark.account .bar li .btn:before {
+	background: #878B8D;
+	color: #10171c;
+}
+.foxfile-dark.account .bar li .btn:hover {
+	background: #ff5722;
+	color: white;
+}
+.foxfile-dark.account .bar li .graph {
+	background: rgba(255,255,255,.05);
+}
+.foxfile-dark.account .value[type=checkbox] + label {
+	border-color: rgba(255,255,255,.5);
+}
+.foxfile-dark.account .value[type=checkbox]:checked + label {
+	border-color: #BF360C;
+}
+.foxfile-dark.account .value[type=checkbox] + label .switch {
+	position: absolute;
+	left: 0;
+	height: 26px;
+	width: 26px;
+	margin: 2px;
+	border-radius: 50%;
+	background: rgba(255,255,255,.5);
+	transition: all 0.15s cubic-bezier(0.74, 0.02, 0.2, 0.99);
+}
+.foxfile-dark.account .value[type=checkbox]:checked + label .switch {
+	background: #FF5722;
+	left: 50%;
+}

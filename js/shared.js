@@ -399,22 +399,43 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 
             var self = this;
             var worker = ww.create('crypto');
-            //var key = cr.aesD(this.key, localStorage.getItem('basekey'));
-            var key = shared.deckey;
             worker.emit('aes.decrypt', {
-                content: self.data,
-                key: key
+                content: self.key,
+                key: shared.deckey
             });
             worker.onmessage = function(msg) {
-                self.data = msg[1].data;
-                //dd.numFilesToDisplay--;
-                //$('#transfers .file-list #tfile-'+self.id).removeClass('active');
-                $('#transfers .file-list #tfile-'+self.id+' .file-upload-status').text("Waiting");
-                $('#transfers #badge-transfers .badgeval').text(--dl.numFilesToDownload);
-                self.q.start()
-                worker.emit('close', {
-                    content: 'pls'
-                });
+                var key = msg[1].data;
+                var chunks = cr.chunkString(self.data);
+                delete self.data;
+                var cl = chunks.length;
+                console.log('processing '+cl+' chunks');
+                var i = 0;
+                function process() {
+                    //console.log('starting chunk '+(i+1)+' of '+cl);
+                    if (i < cl) {
+                        worker.emit('aes.decrypt.process', {
+                            content: chunks.shift(),
+                            key: key
+                        });
+                    }
+                }
+                process();
+                worker.onmessage = function(msg) {
+                    //console.log('buffer size: '+msg[1].data);
+                    if (++i < cl) {
+                        process();
+                    } else {
+                        console.log('finishing');
+                        worker.emit('aes.decrypt.finalize');
+                        worker.onmessage = function(msg) {                                    
+                            worker.emit('close');
+                            self.data = msg[1].data;
+                            $('#transfers .file-list #tfile-'+self.id+' .file-upload-status').text("Waiting");
+                            $('#transfers #badge-transfers .badgeval').text(--dl.numFilesToDownload);
+                            self.q.start()            
+                        }
+                    }   
+                }   
             }
             worker.onerror = function(e) {
                 shared.snackbar.create("Decryption failed");
@@ -635,6 +656,9 @@ Y88b  d88P 888  T88b
     }
     cr.bufferToWord = function(buffer) {
         return CryptoJS.lib.WordArray.create(buffer);
+    }
+    cr.chunkString = function(str) {
+        return str.match(/(.|[\r\n]){1,8192}/g);
     }
     cr.aesE = function(str, pass) {
         // would love to figure out how to use Forge for everything, but I cant figure out how or find any actual documentation

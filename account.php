@@ -1,5 +1,5 @@
 <?php
-session_start();
+//session_start();
 include 'includes/cfgvars.php';
 ?>
 <!DOCTYPE html>
@@ -28,10 +28,11 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     <meta name="viewport" content="initial-scale=1, width=device-width, maximum-scale=1, minimum-scale=1">
     <title>FoxFile</title>
 <!-- 	<link async href="http://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"> -->
-	<link href='https://fonts.googleapis.com/css?family=Roboto:300,400,700' rel='stylesheet' type='text/css'>
+	<link async href='https://fonts.googleapis.com/css?family=Roboto:300,400,700' rel='stylesheet' type='text/css'>
     <link async rel="stylesheet" href="css/foxfile.css">
+    <link async rel="stylesheet" href="css/foxfile-dark.css">
 	<link async rel="stylesheet" href="css/account.css">
-	<link href="css/materialdesignicons.min.css" media="all" rel="stylesheet" type="text/css" />
+	<link async href="css/materialdesignicons.min.css" media="all" rel="stylesheet" type="text/css" />
 	<link rel="icon" type="image/ico" href="img/favicon.png">
 		
 	<!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
@@ -52,7 +53,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     });
 </script> -->
   </head>
-<body>
+<body class="account">
 <header class="main">
     <nav class="floatb-2" id="nav-header">
         <h1 class="logo-text"><a href="./browse"><span class="redfox">Fox</span>File</a></h1>
@@ -94,9 +95,9 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 				<li class="menubar-content floatb btn-ctrlbar active" id="account">
 					<i class="nocheckbox-icon mdi mdi-account"></i><span class="file-name">My account</span>
 				</li>
-				<!-- <li class="menubar-content floatb btn-ctrlbar" id="settings">
+				<li class="menubar-content floatb btn-ctrlbar" id="settings">
 					<i class="nocheckbox-icon mdi mdi-settings"></i><span class="file-name">Settings</span>
-				</li> -->
+				</li>
 				<li class="menubar-content floatb btn-ctrlbar" id="security">
 					<i class="nocheckbox-icon mdi mdi-security"></i><span class="file-name">Security</span>
 				</li>

@@ -16,6 +16,11 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 (function(account, $, undefined) {
     account.init = function(){
         account.routerbox.init();
+        if (localStorage.getItem('theme'))
+            if (localStorage.getItem('theme') == 'night') {
+                $('body').addClass('foxfile-dark');
+                $('input#theme').prop('checked', true);
+            }
     }
     account.logout = function() {
         localStorage.removeItem('api_key');
@@ -480,5 +485,14 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     });
     $(document).on('click', '.user-menu, .nav-right-active-cover, #nav-right .closeOnClick', function(e) {
     	rightnav.toggle();
+    });
+    $('input#theme').change(function() {
+        if ($(this).prop('checked')) {
+            localStorage.setItem('theme', 'night');
+            $('body').addClass('foxfile-dark');
+        } else {
+            localStorage.removeItem('theme');
+            $('body').removeClass('foxfile-dark');
+        }
     });
 })(window.account = window.account || {}, jQuery);

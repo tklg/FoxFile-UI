@@ -27,11 +27,13 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="initial-scale=1, width=device-width, maximum-scale=1, minimum-scale=1">
     <title>FoxFile</title>
-	<link href='https://fonts.googleapis.com/css?family=Roboto:300,400,700' rel='stylesheet' type='text/css'>
+	<link async href='https://fonts.googleapis.com/css?family=Roboto:300,400,700' rel='stylesheet' type='text/css'>
 	<link async rel="stylesheet" href="css/codemirror.css">
 	<link async href="js/cm-addon/dialog.css" rel="stylesheet" />
-    <link rel="stylesheet" href="css/cm-themes/foxfile-cm.css">
+    <link async rel="stylesheet" href="css/cm-themes/foxfile-cm.css">
 	<link async rel="stylesheet" href="css/foxfile.css">
+	<link async rel="stylesheet" href="css/foxfile-dark.css">
+	<link async href="css/materialdesignicons.min.css" media="all" rel="stylesheet" type="text/css" />
 
 	<link rel="icon" type="image/ico" href="img/favicon.png">
 		
@@ -52,7 +54,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     });
 </script> -->
   </head>
-<body>
+<body class="">
 <header class="main">
     <nav class="floatb-2" id="nav-header">
         <h1 class="logo-text"><a href="./browse"><span class="redfox">Fox</span>File</a></h1>
@@ -408,8 +410,6 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 	<span class="snackbar-msg"><%= message %></span><% if (action != null) { %><button class="btn snackbar-btn" onclick="<%= fn %>"><%= action %></button><% } %>
 </div>
 </script>
-
-<link href="css/materialdesignicons.min.css" media="all" rel="stylesheet" type="text/css" />
 
 	<script type="text/javascript" src="//code.jquery.com/jquery-2.1.4.min.js"></script>
 	<script src="//code.jquery.com/ui/1.11.4/jquery-ui.min.js"></script>

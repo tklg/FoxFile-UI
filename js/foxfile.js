@@ -16,6 +16,9 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 
 (function(foxfile, $, undefined) {
     foxfile.init = function(){
+        if (localStorage.getItem('theme'))
+            if (localStorage.getItem('theme') == 'night')
+                $('body').addClass('foxfile-dark');
         page.init(function() {
             fm.init();
             dd.init();
@@ -1689,7 +1692,7 @@ header3 font
                     },
                     success: function(data, response, xhr) {
                         var worker = ww.create('crypto');
-                        var key = cr.aesD(xhr.getResponseHeader('X-FoxFile-Key'), localStorage.getItem('basekey'));
+                        //var key = cr.aesD(xhr.getResponseHeader('X-FoxFile-Key'), localStorage.getItem('basekey'));
                         //console.log(data);
                         //var data = btoa(data);
                         //var data = btoa(forge.util.hexToBytes(CryptoJS.enc.Hex.stringify(CryptoJS.enc.u8array.parse(data))));
@@ -1697,60 +1700,87 @@ header3 font
                         //var data = CryptoJS.enc.Base64.stringify(CryptoJS.enc.u8array.parse(data));
                         
                         // transfer back to raw bytes on server to save space
-
-                        /*console.log(xhr.getResponseHeader('X-FoxFile-Key'));;
-                        console.log('data: '+data);
-                        console.log('key: '+ key);
-                        console.log('res: '+cr.aesD(data, key));*/
                         worker.emit('aes.decrypt', {
-                            content: data,
-                            key: key
+                            content: xhr.getResponseHeader('X-FoxFile-Key'),
+                            key: localStorage.getItem('basekey')
                         });
                         worker.onmessage = function(msg) {
-                            $('.file-manager .bar[hash='+_this.hash+']').removeClass('loading');
-                            $('.file-manager .bar[hash='+_this.hash+'] .file-decrypting-icon').removeClass('active').next().addClass('active');
-                            //console.log(msg[1].data);
-                            switch (_this.file.btype) {
-                                case 'text':
-                                    te.init();
-                                    te.setValue(msg[1].data, _this.name);
-                                    break;
-                                case 'image':
-                                    //var url = URL.createObjectURL(msg[1].data)
-                                    //$('.file-manager .bar[hash='+_this.hash+'] .file-preview img').attr('src', btoa(msg[1].data));
-                                    $('.file-manager .bar[hash='+_this.hash+'] .file-preview img').attr('src', "data:image/*;base64,"+ btoa(msg[1].data));
-                                    break;
-                                case 'audio':
-                                    switch (getExt(_this.name)) {
-                                        case 'wav':
-                                            $('.file-manager .bar[hash='+_this.hash+'] .file-preview source').attr('src', "data:audio/wave;base64,"+ btoa(msg[1].data));
-                                            break;
-                                        case 'ogg':
-                                            $('.file-manager .bar[hash='+_this.hash+'] .file-preview source').attr('src', "data:audio/ogg;base64,"+ btoa(msg[1].data));
-                                            break;
-                                        default:
-                                            $('.file-manager .bar[hash='+_this.hash+'] .file-preview source').attr('src', "data:audio/mp3;base64,"+ btoa(msg[1].data));
-                                            break;
-                                    }
-                                    break;
-                                case 'video':
-                                    $('.file-manager .bar[hash='+_this.hash+'] .file-preview source').attr('src', "data:video/*;base64,"+ btoa(msg[1].data));
-                                    break;
-                                case 'flash':
-                                    $('.file-manager .bar[hash='+_this.hash+'] .file-preview embed').attr('src', "data:application/x-shockwave-flash;base64,"+ btoa(msg[1].data));
-                                    break;
+                            var key = msg[1].data;
+                            /*var iv = data.substr(0,cr.ivLength);
+                            console.log(iv);
+                            var chunks = cr.chunkString(data.substr(cr.ivLength));*/
+                            var chunks = cr.chunkString(data);
+                            delete data;
+                            var cl = chunks.length;
+                            /*console.log(xhr.getResponseHeader('X-FoxFile-Key'));;
+                            console.log('data: '+data);
+                            console.log('key: '+ key);*/
+                            console.log('processing '+cl+' chunks');
+                            var i = 0;
+                            function process() {
+                                //console.log('starting chunk '+i+' of '+cl);
+                                if (i < cl) {
+                                    worker.emit('aes.decrypt.process', {
+                                        content: chunks.shift(),
+                                        key: key/*,
+                                        iv: iv*/
+                                    });
+                                }
                             }
-                            worker.emit('close', {
-                                content: 'pls'
-                            });
+                            process();
+                            worker.onmessage = function(msg) {
+                                //console.log('buffer size: '+msg[1].data);
+                                if (++i < cl) {
+                                    process();
+                                } else {
+                                    console.log('finishing');
+                                    worker.emit('aes.decrypt.finalize');
+                                    worker.onmessage = function(msg) {   
+                                        //console.log('got '+cr.chunkString(msg[1].data).length+' chunks');
+                                        worker.emit('close');
+                                        $('.file-manager .bar[hash='+_this.hash+']').removeClass('loading');
+                                        $('.file-manager .bar[hash='+_this.hash+'] .file-decrypting-icon').removeClass('active').next().addClass('active');
+                                        //console.log(msg[1].data);
+                                        switch (_this.file.btype) {
+                                            case 'text':
+                                                te.init();
+                                                te.setValue(msg[1].data, _this.name);
+                                                break;
+                                            case 'image':
+                                                //var url = URL.createObjectURL(msg[1].data)
+                                                //$('.file-manager .bar[hash='+_this.hash+'] .file-preview img').attr('src', btoa(msg[1].data));
+                                                $('.file-manager .bar[hash='+_this.hash+'] .file-preview img').attr('src', "data:image/*;base64,"+ btoa(msg[1].data));
+                                                break;
+                                            case 'audio':
+                                                switch (getExt(_this.name)) {
+                                                    case 'wav':
+                                                        $('.file-manager .bar[hash='+_this.hash+'] .file-preview source').attr('src', "data:audio/wave;base64,"+ btoa(msg[1].data));
+                                                        break;
+                                                    case 'ogg':
+                                                        $('.file-manager .bar[hash='+_this.hash+'] .file-preview source').attr('src', "data:audio/ogg;base64,"+ btoa(msg[1].data));
+                                                        break;
+                                                    default:
+                                                        $('.file-manager .bar[hash='+_this.hash+'] .file-preview source').attr('src', "data:audio/mp3;base64,"+ btoa(msg[1].data));
+                                                        break;
+                                                }
+                                                break;
+                                            case 'video':
+                                                $('.file-manager .bar[hash='+_this.hash+'] .file-preview source').attr('src', "data:video/*;base64,"+ btoa(msg[1].data));
+                                                break;
+                                            case 'flash':
+                                                $('.file-manager .bar[hash='+_this.hash+'] .file-preview embed').attr('src', "data:application/x-shockwave-flash;base64,"+ btoa(msg[1].data));
+                                                break;
+                                        }
+                                    }
+                                }
+                            }
                         }
+
                         worker.onerror = function(e) {
                             $('.file-manager .bar[hash='+_this.hash+']').removeClass('loading');
                             $('.file-manager .bar[hash='+_this.hash+'] .file-decrypting-icon').removeClass('active').next().addClass('active');
                             // display some error instead of the preview
-                            worker.emit('close', {
-                                content: 'pls'
-                            });
+                            worker.emit('close');
                         }
                     },
                     error: function(request, error) {
@@ -2403,7 +2433,8 @@ header3 font
                     success: function(result) {
                         var json = JSON.parse(result);
                         _this.hash = json.message;
-                        _this.encrypt();
+                        //_this.encrypt();
+                        queue.triggerDone(_this.posInQueue);
                         $('#transfers .file-list #tfile-'+_this.id).attr('hash', _this.hash);
                         //console.log("hash for " + _this.name+": "+json.response);
                     },
@@ -2412,10 +2443,6 @@ header3 font
                     }
                 });
             }
-        }
-        this.encrypt = function() {
-            //this.password = cr.randomBytes();
-            queue.triggerDone(_this.posInQueue);
         }
         this.fakeUpload = function() {
             this.state = 1;
@@ -2472,6 +2499,9 @@ header3 font
         }
         this.remove = function() {
             //this = null;
+        }
+        this.encrypt = function() {
+            this.upload();
         }
         this.addToTransfersPage = function() {
             var template = _.template($('#fm-file-transferring').html());
@@ -2573,53 +2603,68 @@ header3 font
             var buf;
             var _this = this;
             var fake = fake || false;
-            fr.onload = function() {
-                //buf = cr.bufferToWord(this.result);
+            fr.onloadend = function() {
+                //buf = cr.bufferToWord(this.result).toString(CryptoJS.enc.Base64);
                 buf = this.result;
                 if (window.Worker) {
                     var worker = ww.create('crypto');
-                    //console.log('original key: '+_this.password);
-                    worker.emit('aes.encrypt', {
-                        content: buf,
-                        key: _this.password
-                    });
-                    worker.onmessage = function(msg) {
-                        var res = msg[0]+": "+msg[1].msg;
-                        //var enc = forge.util.encode64(msg[1].data);
-                        //console.log(msg[1].data);
-                        var enc = msg[1].data;
-                        //var enc = atob(msg[1].data);
-                        //var enc = forge.util.bytesToHex(atob(msg[1].data));
-                        var bytes = [];
-                        for (var i = 0; i < enc.length; i += 512) {
-                            var slice = enc.slice(i, i + 512);
-                            var byteNums = new Array(slice.length);
-                            for (var j = 0; j < slice.length; j++) {
-                                byteNums[j] = slice.charCodeAt(j);
-                            }
-                            var byteArray = new Uint8Array(byteNums);
-                            bytes.push(byteArray);
-                        }
-                        //var bytes = CryptoJS.enc.u8array.stringify(CryptoJS.enc.Base64.parse(msg[1].data));
-                        _this.item = new File([new Blob(bytes)], _this.name);
-                        //_this.bytes = enc;
-                        //console.log(_this.bytes);
-                        //_this.password = cr.aesE(_this.password, localStorage.getItem('basekey')); // this should not crash the browser as its only a few bytes
-                        worker.emit('aes.encrypt', {
-                            content: _this.password,
-                            key: localStorage.getItem('basekey')
-                        });
-                        worker.onmessage = function(msg) {
-                            _this.password = msg[1].data;
-                            $('#transfers .file-list #tfile-'+_this.id+' .file-upload-status').text("Waiting");
-                            worker.emit('close', {
-                                content: 'pls'
+                    var chunks = cr.chunkString(buf);
+                    var cl = chunks.length;
+                    console.log('processing '+cl+' chunks');
+                    $('#transfers .file-list #tfile-'+_this.id+' .nameandprogress').addClass('active');
+                    var elem = $('#transfers .file-list #tfile-'+_this.id+' .file-upload-progress-bar');
+                    var i = 0;
+                    function process() {
+                        //console.log('starting chunk '+(i+1)+' of '+cl);
+                        elem.css({
+                            width: (((i+1) / cl) * 100) + '%'
+                        }).attr({value: (i+1), max: cl});
+                        
+                        if (i < cl) {
+                            worker.emit('aes.encrypt.process', {
+                                content: chunks.shift(),
+                                key: _this.password
                             });
-                            //queue.triggerDone(_this.posInQueue);
-                            _this.upload(fake)
                         }
                     }
-                } else { // this will probably crash the browser if the file is too big
+                    process();
+                    worker.onmessage = function(msg) {
+                        //console.log('buffer size: '+msg[1].data);
+                        if (++i < cl) {
+                            process();
+                        } else {
+                            console.log('finishing');
+                            $('#transfers .file-list #tfile-'+_this.id+' .nameandprogress').removeClass('active');
+                            worker.emit('aes.encrypt.finalize');
+                            worker.onmessage = function(msg) {
+                                var enc = msg[1].data;
+                                var bytes = [];
+                                for (var i = 0; i < enc.length; i += 512) {
+                                    var slice = enc.slice(i, i + 512);
+                                    var byteNums = new Array(slice.length);
+                                    for (var j = 0; j < slice.length; j++) {
+                                        byteNums[j] = slice.charCodeAt(j);
+                                    }
+                                    var byteArray = new Uint8Array(byteNums);
+                                    bytes.push(byteArray);
+                                }
+                                //var bytes = CryptoJS.enc.u8array.stringify(CryptoJS.enc.Base64.parse(msg[1].data));
+                                _this.item = new File([new Blob(bytes)], _this.name);
+                                worker.emit('aes.encrypt', {
+                                    content: _this.password,
+                                    key: localStorage.getItem('basekey')
+                                });
+                                worker.onmessage = function(msg) {
+                                    _this.password = msg[1].data;
+                                    $('#transfers .file-list #tfile-'+_this.id+' .file-upload-status').text("Waiting");
+                                    worker.emit('close');
+                                    _this.upload(fake);
+                                }
+                            }
+                        }
+                    }
+                } else { // this will crash the browser if the file is too big
+                    // this will probably also not work because ive changed how the enc/dec functions work
                     var enc = cr.aesE(buf, _this.password);
                     var bytes = [];
                     for (var i = 0; i < enc.length; i += 512) {
@@ -2650,10 +2695,10 @@ header3 font
             var _this = this;
             /*console.log('uploading file: ');
             console.log(this.item);*/
-            $('#transfers .file-list #tfile-'+_this.id+' .nameandprogress').addClass('active');
+            $('#transfers .file-list #tfile-'+_this.id).addClass('active');
             $('#transfers .file-list #tfile-'+_this.id+' .file-upload-status').text("Uploading");
             setTimeout(function() {
-                $('#transfers .file-list #tfile-'+_this.id+' .nameandprogress').removeClass('active');
+                $('#transfers .file-list #tfile-'+_this.id).removeClass('active');
                 $('#transfers .file-list #tfile-'+_this.id+' .file-upload-status').text("Done");
                 $('#transfers #badge-transfers .badgeval').text(--dd.numFilesToUpload);    
                 _this.state = 2;
@@ -2823,18 +2868,82 @@ header3 font
             this.upload(false, null, fake);
         }
         this.encrypt = function(fake) {
+
+            // TODO:
+            // this should be moved to the individual chunks so that encrypting a file that is >10MB doesnt crash the browser
+            // this means that the chunks will need their own encryption queue
+
+            // currently it is working a little better, but still crashes when CryptoJS' finalize() is called on large data.
+            // maybe forge can do it better?
+
             $('#transfers .file-list #tfile-'+this.id+' .file-upload-status').text("Encrypting");
             this.password = forge.util.encode64(cr.randomBytes());
             var fr = new FileReader();
             var buf;
             var _this = this;
             var fake = fake || false;
-            fr.onload = function() {
+            fr.onloadend = function() {
                 //buf = cr.bufferToWord(this.result);
                 buf = this.result;
+                //buf = cr.bufferToWord(this.result).toString(CryptoJS.enc.Base64);
                 if (window.Worker) {
                     var worker = ww.create('crypto');
-                    worker.emit('aes.encrypt', {
+                    var chunks = cr.chunkString(buf);
+                    var cl = chunks.length;
+                    console.log('processing '+cl+' chunks');
+                    
+                    $('#transfers .file-list #tfile-'+_this.id).addClass('active');
+                    var elem = $('#transfers .file-list #tfile-'+_this.id+' .file-upload-progress-bar');
+                    var i = 0;
+                    function process() {
+                        //console.log('starting chunk '+(i+1)+' of '+cl);
+                        if (i < cl) {
+                            elem.css({
+                                width: (((i+1) / cl) * 100) + '%'
+                            }).attr({value: (i+1), max: cl});
+                            worker.emit('aes.encrypt.process', {
+                                content: chunks.shift(),
+                                key: _this.password
+                            });
+                        }
+                    }
+                    process();
+                    worker.onmessage = function(msg) {
+                        //console.log('buffer size: '+msg[1].data);
+                        if (++i < cl) {
+                            process();
+                        } else {
+                            console.log('finishing');
+                            $('#transfers .file-list #tfile-'+_this.id).removeClass('active');
+                            worker.emit('aes.encrypt.finalize');
+                            worker.onmessage = function(msg) {
+                                var enc = msg[1].data;
+                                var bytes = [];
+                                for (var i = 0; i < enc.length; i += 512) {
+                                    var slice = enc.slice(i, i + 512);
+                                    var byteNums = new Array(slice.length);
+                                    for (var j = 0; j < slice.length; j++) {
+                                        byteNums[j] = slice.charCodeAt(j);
+                                    }
+                                    var byteArray = new Uint8Array(byteNums);
+                                    bytes.push(byteArray);
+                                }
+                                //var bytes = CryptoJS.enc.u8array.stringify(CryptoJS.enc.Base64.parse(msg[1].data));
+                                _this.item = new File([new Blob(bytes)], _this.name);
+                                worker.emit('aes.encrypt', {
+                                    content: _this.password,
+                                    key: localStorage.getItem('basekey')
+                                });
+                                worker.onmessage = function(msg) {
+                                    _this.password = msg[1].data;
+                                    $('#transfers .file-list #tfile-'+_this.id+' .file-upload-status').text("Waiting");
+                                    worker.emit('close');
+                                    _this.splitChunks(fake);
+                                }
+                            }
+                        }
+                    }
+                    /*worker.emit('aes.encrypt', {
                         content: buf,
                         key: _this.password
                     });
@@ -2853,7 +2962,6 @@ header3 font
                         }
                         //var bytes = CryptoJS.enc.u8array.stringify(CryptoJS.enc.Base64.parse(msg[1].data));
                         _this.item = new File([new Blob(bytes)], _this.name);
-                        //_this.password = cr.aesE(_this.password, localStorage.getItem('basekey')); // this should not crash the browser as its only a few bytes
                         worker.emit('aes.encrypt', {
                             content: _this.password,
                             key: localStorage.getItem('basekey')
@@ -2866,8 +2974,8 @@ header3 font
                             });
                             _this.splitChunks(fake);
                         }
-                    }
-                } else { // this will probably crash the browser if the file is too big
+                    }*/
+                } else { // this will crash the browser if the file is too big
                     var enc = cr.aesE(buf, _this.password);
                     var bytes = [];
                     for (var i = 0; i < enc.length; i += 512) {
@@ -2894,10 +3002,10 @@ header3 font
         this.fakeUpload = function() {
             this.state = 1;
             var _this = this;
-            $('#transfers .file-list #tfile-'+_this.id+' .nameandprogress').addClass('active');
+            $('#transfers .file-list #tfile-'+_this.id).addClass('active');
             $('#transfers .file-list #tfile-'+_this.id+' .file-upload-status').text("Uploading");
             setTimeout(function() {
-                $('#transfers .file-list #tfile-'+_this.id+' .nameandprogress').removeClass('active');
+                $('#transfers .file-list #tfile-'+_this.id).removeClass('active');
                 $('#transfers .file-list #tfile-'+_this.id+' .file-upload-status').text("Done");
                 $('#transfers #badge-transfers .badgeval').text(--dd.numFilesToUpload);    
                 _this.state = 2;
@@ -3417,7 +3525,7 @@ header3 font
             $('#transfers .file-list #tfile-'+this.id+' .file-upload-status').text("Decrypting");
 
             var self = this;
-            var worker = ww.create('crypto');
+            /*var worker = ww.create('crypto');
             var key = cr.aesD(this.key, localStorage.getItem('basekey'));
             worker.emit('aes.decrypt', {
                 content: self.data,
@@ -3433,11 +3541,52 @@ header3 font
                 worker.emit('close', {
                     content: 'pls'
                 });
+            }*/
+            var worker = ww.create('crypto');
+            worker.emit('aes.decrypt', {
+                content: self.key,
+                key: localStorage.getItem('basekey')
+            });
+            worker.onmessage = function(msg) {
+                var key = msg[1].data;
+                /*var iv = self.data.substr(0, cr.ivLength);
+                var chunks = cr.chunkString(self.data.substr(cr.ivLength));*/
+                var chunks = cr.chunkString(self.data);
+                delete self.data;
+                var cl = chunks.length;
+                console.log('processing '+cl+' chunks');
+                var i = 0;
+                function process() {
+                    //console.log('starting chunk '+(i+1)+' of '+cl);
+                    if (i < cl) {
+                        worker.emit('aes.decrypt.process', {
+                            content: chunks.shift(),
+                            key: key/*,
+                            iv: iv*/
+                        });
+                    }
+                }
+                process();
+                worker.onmessage = function(msg) {
+                    //console.log('buffer size: '+msg[1].data);
+                    if (++i < cl) {
+                        process();
+                    } else {
+                        console.log('finishing');
+                        worker.emit('aes.decrypt.finalize');
+                        worker.onmessage = function(msg) {                                    
+                            worker.emit('close');
+                            self.data = msg[1].data;
+                            dd.numFilesToDisplay--;
+                            $('#transfers .file-list #tfile-'+self.id+' .file-upload-status').text("Waiting");
+                            $('#transfers #badge-transfers .badgeval').text(--dl.numFilesToDownload);
+                            self.q.start()            
+                        }
+                    }   
+                }   
             }
             worker.onerror = function(e) {
-                worker.emit('close', {
-                    content: 'pls'
-                });
+                worker.emit('close');
             }
         }
         this.save = function() {
@@ -3457,7 +3606,8 @@ header3 font
             this.done();
         }
         this.done = function() {
-            $('#transfers .file-list #tfile-'+this.id+' .file-upload-status').text("Done").addClass('upload-success');
+            $('#transfers .file-list #tfile-'+this.id).addClass('upload-success');
+            $('#transfers .file-list #tfile-'+this.id+' .file-upload-status').text("Done");
         }
         this.addToTransfersPage = function() {
             var template = _.template($('#fm-file-transferring').html());
@@ -3873,8 +4023,8 @@ YM      6  M   YP   MM
         //console.log('Creating new '+which+' worker');
         if (window.Worker) {
             switch (which) {
-                case 'crypto': return new FoxFileWorker('./js/ww_crypt.js'/*+'?'+btoa(cr.randomBytes(2))*/);
-                case 'xhr': return new FoxFileWorker('./js/ww_xhr.js'/*+'?'+btoa(cr.randomBytes(2))*/);
+                case 'crypto': return new FoxFileWorker('./js/ww_crypt.js'+'?'+btoa(cr.randomBytes(2)));
+                case 'xhr': return new FoxFileWorker('./js/ww_xhr.js'+'?'+btoa(cr.randomBytes(2)));
                 default: return false;
             }
         }
@@ -3973,25 +4123,67 @@ Y88b  d88P 888  T88b
     cr.bufferToWord = function(buffer) {
         return CryptoJS.lib.WordArray.create(buffer);
     }
-    cr.aesE = function(str, pass) {
-        // would love to figure out how to use Forge for everything, but I cant figure out how or find any actual documentation
-        // and cant figure out how to decrypt anything
-
-        var enc = CryptoJS.AES.encrypt(str, pass);
-        //var enc = CryptoJS.AES.encrypt(encodeURIComponent(str), pass);
-        //var enc = CryptoJS.AES.encrypt(CryptoJS.enc.Utf16.stringify(CryptoJS.enc.Utf16.parse(str)), pass);
-        //return forge.util.encode64(atob(enc.toString()));
+    cr.chunkString = function(str) {
+        return str.match(/(.|[\r\n]){1,8192}/g);
+    }
+    function mapper(k) {
+        return parseInt(k, null);
+    }
+    function sorter(a, b) {
+        return a - b;
+    }
+    cr.ivLength = 24;
+    cr.aesE = function(str, key) {
+        var iv = CryptoJS.lib.WordArray.random(cr.ivLength / 3 * 2);
+        //var iv = CryptoJS.enc.Hex.parse('101112131415161718191a1b1c1d1e1f');
+        /*var enc = CryptoJS.AES.encrypt(str, key, {iv: iv});
         return enc.toString();
-        /*return {
-            encrypted: enc.toString(),
-            enc: enc
-        };*/
+        console.log(enc.toString());*/
+        var en = CryptoJS.algo.AES.createEncryptor(key, {iv: iv});
+        var chunks = cr.chunkString(str);
+        //console.log(chunks);
+        var enc = null;
+        delete str;
+        _.each(_.map(_.keys(chunks), mapper).sort(sorter),
+            function(i) {
+                var chunk = CryptoJS.enc.Utf8.parse(chunks[i]);
+                //var chunk = chunks[i];
+                var block = en.process(chunk);
+                if (!enc) enc = block;
+                else enc.concat(block);
+            });
+        enc.concat(en.finalize());
+        //console.log('encIV: '+iv.toString(CryptoJS.enc.Base64));
+        //console.log(enc);
+        //console.log('encE: '+enc.toString(CryptoJS.enc.Base64));
+        return iv.toString(CryptoJS.enc.Base64) + enc.toString(CryptoJS.enc.Base64);
     }
     cr.aesD = function(b64, key) {
-        return CryptoJS.AES.decrypt(b64, key).toString(CryptoJS.enc.Utf8);
-        //return decodeURIComponent(CryptoJS.AES.decrypt(b64, key).toString(CryptoJS.enc.Utf8));
-        //return CryptoJS.AES.decrypt(b64, key).toString(CryptoJS.enc.Utf16);
-        //return CryptoJS.AES.decrypt(b64, key).toString();
+        //return CryptoJS.AES.decrypt(b64.substr(24), key).toString(CryptoJS.enc.Utf8);
+        var iv = CryptoJS.enc.Base64.parse(b64.substr(0, cr.ivLength));
+        //var iv = CryptoJS.enc.Hex.parse('101112131415161718191a1b1c1d1e1f');
+        var chunks = cr.chunkString(b64.substr(cr.ivLength));
+        //console.log('decIV: '+iv.toString(CryptoJS.enc.Base64));
+        //console.log(chunks);
+        delete b64;
+        var en = CryptoJS.algo.AES.createDecryptor(key, {iv: iv});
+        var enc = null;
+        _.each(_.map(_.keys(chunks), mapper).sort(sorter),
+            function(i) {
+                var chunk = CryptoJS.enc.Base64.parse(chunks[i]);    
+                var block = en.process(chunk);
+                if (!enc) enc = block;
+                else enc.concat(block);
+            });
+        enc.concat(en.finalize());
+        //console.log('dec: '+enc.toString(CryptoJS.enc.Utf8));
+        return enc.toString(CryptoJS.enc.Utf8);
+    }
+    cr.aesES = function(str, key) {
+        return CryptoJS.AES.encrypt(str, key).toString();
+    }
+    cr.aesDS = function(str, key) {
+        return CryptoJS.AES.decrypt(str, key).toString(CryptoJS.enc.Utf8);
     }
     cr.rsaE = function(str) {
         var privk = forge.pki.decryptRsaPrivateKey(localStorage.getItem('privkey'), localStorage.getItem('basekey'));
