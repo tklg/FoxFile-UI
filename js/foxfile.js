@@ -987,6 +987,7 @@ header3 font
         if (name == "") {
             console.warn("Folder name cannot be blank.");
         } else {
+            var pass = forge.util.encode64(cr.randomBytes());
             $.ajax({
                 url: './api/files/new_folder',
                 type: 'POST',
@@ -994,8 +995,10 @@ header3 font
                     'X-Foxfile-Auth': api_key
                 },
                 data: {
+                    //name: cr.aesES(name, pass),
                     name: name,
-                    parent: parent
+                    parent: parent,
+                    key: cr.aesES(pass, localStorage.getItem('basekey'))
                 },
                 success: function(result, status, xhr) {
                     fm.dialog.hideCurrentlyActive();
@@ -1429,7 +1432,7 @@ header3 font
     }
     var FolderBar = function(name, hash, parent) {
         this.dd;
-        this.name = name;
+        this.name = name.addSlashes();
         this.hash = hash;
         this.parent = parent;
         this.hasMore = false;
@@ -1642,7 +1645,7 @@ header3 font
         }
     }
     var FileBar = function(name, hash, parent, type, file) {
-        this.name = name;
+        this.name = name.addSlashes();
         this.hash = hash;
         this.parent = parent;
         this.type = type;
@@ -1881,7 +1884,7 @@ header3 font
         }
     }
     var File = function(name, parent, hash, key, isFolder, size, lastmod, shared, public, trashed) {
-        this.name = name;
+        this.name = name.addSlashes();
         this.parent = parent;
         this.icon = icon;
         this.hash = hash;
@@ -2417,6 +2420,7 @@ header3 font
         }
         this.generateHash = function() {
             //console.log("Generating hash for FOLDER: " + this.name + " with parent " + this.parent.name);
+            this.password = forge.util.encode64(cr.randomBytes());
             if (this.hash == null) {
                 this.addToTransfersPage();
                 var _this = this;
@@ -2427,8 +2431,10 @@ header3 font
                         'X-Foxfile-Auth': api_key
                     },
                     data: {
+                        //name: cr.aesES(_this.name, this.password),
                         name: _this.name,
-                        parent: _this.parent.hash
+                        parent: _this.parent.hash,
+                        key: cr.aesES(this.password, localStorage.getItem('basekey'))
                     },
                     success: function(result) {
                         var json = JSON.parse(result);
@@ -2468,9 +2474,11 @@ header3 font
                     'X-Foxfile-Auth': api_key
                 },
                 data: {
+                    //name: cr.aesES(_this.name, this.password),
                     name: _this.name,
                     hash: _this.hash,
-                    parent: _this.parent.hash
+                    parent: _this.parent.hash,
+                    key: cr.aesES(this.password, localStorage.getItem('basekey'))
                 },
                 beforeSend: function() {
                     console.log(_this.name);
@@ -2573,6 +2581,7 @@ header3 font
         }
         this.generateHash = function() {
             //console.log("Generating hash for FILE: " + this.name + " with parent " + this.parent.name);
+            this.password = forge.util.encode64(cr.randomBytes());
             if (this.hash == null) {
                 this.addToTransfersPage();
                 var _this = this;
@@ -2598,7 +2607,6 @@ header3 font
         }
         this.encrypt = function(fake) {
             $('#transfers .file-list #tfile-'+this.id+' .file-upload-status').text("Encrypting");
-            this.password = forge.util.encode64(cr.randomBytes());
             var fr = new FileReader();
             var buf;
             var _this = this;
@@ -2713,6 +2721,7 @@ header3 font
             formData.append('file', this.item);
             //formData.append('bytes', this.bytes);
             formData.append('size', this.size);
+            //formData.append('name', cr.aesES(this.name, this.password));
             formData.append('name', this.name);
             formData.append('hash', this.hash);
             formData.append('parent', this.parent.hash);
@@ -2824,6 +2833,7 @@ header3 font
         }
         this.generateHash = function() {
             //console.log("Generating hash for FILE: " + this.name + " with parent " + this.parent.name);
+            this.password = forge.util.encode64(cr.randomBytes());
             if (this.hash == null) {
                 this.addToTransfersPage();
                 var _this = this;
@@ -2877,7 +2887,6 @@ header3 font
             // maybe forge can do it better?
 
             $('#transfers .file-list #tfile-'+this.id+' .file-upload-status').text("Encrypting");
-            this.password = forge.util.encode64(cr.randomBytes());
             var fr = new FileReader();
             var buf;
             var _this = this;
@@ -2943,38 +2952,6 @@ header3 font
                             }
                         }
                     }
-                    /*worker.emit('aes.encrypt', {
-                        content: buf,
-                        key: _this.password
-                    });
-                    worker.onmessage = function(msg) {
-                        var res = msg[0]+": "+msg[1].msg;
-                        var enc = msg[1].data;
-                        var bytes = [];
-                        for (var i = 0; i < enc.length; i += 512) {
-                            var slice = enc.slice(i, i + 512);
-                            var byteNums = new Array(slice.length);
-                            for (var j = 0; j < slice.length; j++) {
-                                byteNums[j] = slice.charCodeAt(j);
-                            }
-                            var byteArray = new Uint8Array(byteNums);
-                            bytes.push(byteArray);
-                        }
-                        //var bytes = CryptoJS.enc.u8array.stringify(CryptoJS.enc.Base64.parse(msg[1].data));
-                        _this.item = new File([new Blob(bytes)], _this.name);
-                        worker.emit('aes.encrypt', {
-                            content: _this.password,
-                            key: localStorage.getItem('basekey')
-                        });
-                        worker.onmessage = function(msg) {
-                            _this.password = msg[1].data;
-                            $('#transfers .file-list #tfile-'+_this.id+' .file-upload-status').text("Waiting");
-                            worker.emit('close', {
-                                content: 'pls'
-                            });
-                            _this.splitChunks(fake);
-                        }
-                    }*/
                 } else { // this will crash the browser if the file is too big
                     var enc = cr.aesE(buf, _this.password);
                     var bytes = [];
@@ -3074,6 +3051,7 @@ header3 font
                             parent: _self.parent.hash,
                             key: _self.password,
                             name: _self.name,
+                            //name: cr.aesES(_self.name),
                             size: _self.item.size,
                             num: _self.numChunks
                         },
@@ -3096,21 +3074,7 @@ header3 font
                     $('#transfers .file-list #tfile-'+self.id).removeClass('active').addClass('upload-fail');
                     $('#transfers .file-list #tfile-'+self.id+' .file-upload-status').text("Failed");
                     var _self = self;
-                    $.ajax({
-                        type: 'POST',
-                        url: './api/files/new_file_chunk',
-                        headers: {
-                            'X-Foxfile-Auth': api_key
-                        },
-                        data: {
-                            remove: _self.hash
-                        },
-                        success: function(result, status, xhr) {
-                        },
-                        error: function(xhr, status, e) {
-                            console.log("onError: " + status + " " + e);
-                        }
-                    });
+                    this.removePartial();
                     self.state = 3;
                     linearQueue.start();
                 } else { //append
@@ -3122,6 +3086,25 @@ header3 font
         }
         this.remove = function() {
             //this = null;
+        }
+        this.removePartial = function() {
+            var _self = this;
+             $.ajax({
+                type: 'POST',
+                url: './api/files/new_file_chunk',
+                headers: {
+                    'X-Foxfile-Auth': api_key
+                },
+                data: {
+                    remove: _self.hash
+                },
+                success: function(result, status, xhr) {
+                
+                },
+                error: function(xhr, status, e) {
+                    console.log("onError: " + status + " " + e);
+                }
+            });
         }
         this.cancel = function() {
             $('#transfers .file-list #tfile-'+this.id).removeClass('active').addClass('upload-fail');
@@ -3556,9 +3539,14 @@ header3 font
                 var cl = chunks.length;
                 console.log('processing '+cl+' chunks');
                 var i = 0;
+                $('#transfers .file-list #tfile-'+self.id).addClass('active');
+                var elem = $('#transfers .file-list #tfile-'+self.id+' .file-upload-progress-bar');
                 function process() {
-                    //console.log('starting chunk '+(i+1)+' of '+cl);
+                    console.log('starting chunk '+(i+1)+' of '+cl);
                     if (i < cl) {
+                        elem.css({
+                            width: (i / cl) * 100 + '%'
+                        }).attr({value: i, max: cl});
                         worker.emit('aes.decrypt.process', {
                             content: chunks.shift(),
                             key: key/*,
@@ -3574,10 +3562,14 @@ header3 font
                     } else {
                         console.log('finishing');
                         worker.emit('aes.decrypt.finalize');
-                        worker.onmessage = function(msg) {                                    
+                        worker.onmessage = function(msg) {   
+                            elem.css({
+                                width: '100%'
+                            });                                 
                             worker.emit('close');
                             self.data = msg[1].data;
                             dd.numFilesToDisplay--;
+                            $('#transfers .file-list #tfile-'+self.id).removeClass('active');
                             $('#transfers .file-list #tfile-'+self.id+' .file-upload-status').text("Waiting");
                             $('#transfers #badge-transfers .badgeval').text(--dl.numFilesToDownload);
                             self.q.start()            

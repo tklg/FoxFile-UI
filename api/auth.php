@@ -89,7 +89,8 @@ function sendVerification($email) {
 	    	'from' => 'FoxFile <foxfile@'.$_SERVER['HTTP_HOST'].'>',
 	        'to' => $email,
 	        'subject' => 'Foxfile email verification',
-	        'html' => 'Click link to verify your email:<br><a href="'.$link.'">'.$link.'</a>',
+	        //'html' => 'Click link to verify your email:<br><a href="'.$link.'">'.$link.'</a>',
+	        'html' => str_replace('{{verification_link}}', $link, file_get_contents('./../includes/email_templates/confirm_email.html')),
 	        'text' => 'Copy/paste link into the address bar to verify your email: '.$link
 	        )
 	    );
@@ -196,6 +197,28 @@ function ip_info($ip = NULL, $purpose = "location", $deep_detect = TRUE) {
     }
     return $output;
 }
+function recaptchaCheck($response) {
+	global $foxfile_recaptcha_secret;
+    try {
+        $url = 'https://www.google.com/recaptcha/api/siteverify';
+        $data = ['secret' => $foxfile_recaptcha_secret,
+                 'response' => $response,
+                 'remoteip' => $_SERVER['REMOTE_ADDR']
+                ];
+        $options = [
+            'http' => [
+                'header'  => "Content-type: application/x-www-form-urlencoded\r\n",
+                'method'  => 'POST',
+                'content' => http_build_query($data) 
+            ]
+        ];
+        $context  = stream_context_create($options);
+        $result = file_get_contents($url, false, $context);
+        return json_decode($result)->success;
+    } catch (Exception $e) {
+        return null;
+    }
+}
 if($pageID == 'userexists') {
 	$useremail = sanitize($_POST['useremail']);
 	$result = mysqli_query($db, "SELECT 1 from users where email = '$useremail' LIMIT 1");  
@@ -250,7 +273,7 @@ if($pageID == 'login') {
 			    $country = ip_info($ip, "country");
 				$oid = $row->PID;
 				$userAgent = sanitize(getBrowser().' on '.getOS());
-				$sql = "SELECT api_key from apikeys where owner_id='$oid' and created_by='$ip' and user_agent='$userAgent' and country='$country' and active=1 limit 1";
+				$sql = "SELECT api_key from apikeys where owner_id='$oid' and created_by='$ip' and user_agent='$userAgent' and country='$country' and active=1 and TIMESTAMPDIFF(WEEK, last_mod , CURRENT_TIMESTAMP()) < 1 limit 1";
 				if ($res = mysqli_query($db, $sql)) {
 					if (mysqli_num_rows($res) == 0) {
 						//create a new token for this login
@@ -284,21 +307,6 @@ if($pageID == 'login') {
 				} else {
 					resp(500, 'query failed');
 				}
-				/*session_destroy();
-				foreach ($_SESSION as $value)
-					$value = null;
-				session_start();
-				$_SESSION['foxfile_access_level'] = $row->access_level;
-				$_SESSION['foxfile_uid'] = $row->PID;
-				$_SESSION['foxfile_email'] = $useremail;
-				$_SESSION['foxfile_uhd'] = $row->root_folder;
-				$_SESSION['foxfile_firstname'] = $row->firstname;
-				$_SESSION['foxfile_lastname'] = $row->lastname;
-				$_SESSION['foxfile_username'] = $row->firstname.' '.$row->lastname;
-				$_SESSION['foxfile_user_md5'] = md5($row->email);
-				$_SESSION['foxfile_max_storage'] = $row->total_storage;
-				$_SESSION['foxfile_verified_email'] = $row->account_status == 'verified' ? true : false;
-				echo 0;*/
 			} else {
 				resp(401, 'incorrect password');
 			}
@@ -316,7 +324,7 @@ if($pageID == 'logout') {
 	header('Location: ./');
 }
 if($pageID == 'new') {
-	$gp = false;
+	/*$gp = false;
 	if ($foxfile_require_access_code) {
 		$gp = true;
 		if ($_POST['gpass'] == $foxfile_access_code) { //change this to use password_verify
@@ -329,7 +337,12 @@ if($pageID == 'new') {
 	} else {
 		$gp = false;
 	}
-		if (!$gp || $v) {
+		if (!$gp || $v) {*/
+
+		//recaptcha verification
+		$captcha = $_POST['captcha'];
+
+		if (recaptchaCheck($captcha) === true) {
 
 	        $email = sanitize($_POST['useremail']);  
 			$result = mysqli_query($db, "SELECT PID from users where email = '$email' LIMIT 1");  
@@ -345,7 +358,7 @@ if($pageID == 'new') {
 				$sql = "REPLACE INTO idgen (hashes) VALUES ('a')";
 				if ($result = mysqli_query($db, $sql)) {
 					$newIdObj = mysqli_insert_id($db);
-					$hashids = new Hashids\Hashids('foxfilesaltisstillbestsalt', 12);
+					$hashids = new Hashids\Hashids($foxfile_hashids_salt, 12);
 					$root_folder = $hashids->encode($newIdObj);
 					$bytes;
 					if (function_exists('random_bytes'))
@@ -353,9 +366,9 @@ if($pageID == 'new') {
 					else 
 						$bytes = bin2hex(openssl_random_pseudo_bytes(20));
 
-					$privk = sanitize($_POST['privkey']);
-					$pubk = sanitize($_POST['pubkey']);
-					$sql = "INSERT INTO users (firstname, lastname, email, password, access_level, root_folder, total_storage, account_status, privkey, pubkey)
+					/*$privk = sanitize($_POST['privkey']);
+					$pubk = sanitize($_POST['pubkey']);*/
+					$sql = "INSERT INTO users (firstname, lastname, email, password, access_level, root_folder, total_storage, account_status)
 			                VALUES ('$userfirst',
 			                '$userlast',
 			                '$email',
@@ -363,9 +376,7 @@ if($pageID == 'new') {
 			                '1',
 			                '$root_folder',
 			                2147483648,
-			                '$bytes',
-			                '$privk',
-			                '$pubk')";
+			                '$bytes')";
 					if (mysqli_query($db,$sql)) {
 						mkdir('../files/'.$root_folder.'/', 0775);
 						sendVerification($email);
@@ -404,47 +415,55 @@ if ($pageID == 'send_recovery') {
 	if (!isset($_POST['email']) || !isset($_POST['extra'])) {
 		resp(422, 'email address required');
 	}
-	$email = sanitize($_POST['email']);
 
-	$q = "SELECT email FROM users WHERE email='$email' LIMIT 1";
-	if ($r = mysqli_query($db, $q)) {
-		if (mysqli_num_rows($r) == 0) {
-			resp(401, "No account was found with that email");
+	$captcha = $_POST['captcha'];
+
+	if (recaptchaCheck($captcha) === true) {
+
+		$email = sanitize($_POST['email']);
+
+		$q = "SELECT email FROM users WHERE email='$email' LIMIT 1";
+		if ($r = mysqli_query($db, $q)) {
+			if (mysqli_num_rows($r) == 0) {
+				resp(401, "No account was found with that email");
+			} else {
+				$bytes;
+				if (function_exists('random_bytes'))
+					$bytes = bin2hex(random_bytes(40));
+				else 
+					$bytes = bin2hex(openssl_random_pseudo_bytes(40));
+				$_SESSION['foxfile_recovery_nonce'] = $bytes;
+
+				$link = 'https://'.$_SERVER['HTTP_HOST']."/foxfile/passchange?key=".$bytes.'&from='.$email;
+				$c = curl_init();
+				curl_setopt($c, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+				curl_setopt($c, CURLOPT_USERPWD, 'api:'.$mailkey);
+				curl_setopt($c, CURLOPT_RETURNTRANSFER, 1);
+
+				curl_setopt($c, CURLOPT_CUSTOMREQUEST, 'POST');
+				curl_setopt($c, CURLOPT_URL, $mailapi);
+				curl_setopt($c, CURLOPT_POSTFIELDS, array(
+					'from' => 'foxfile@'.$_SERVER['HTTP_HOST'],
+				    'to' => $email,
+				    'subject' => 'Foxfile password reset',
+				    'html' => 'Click link to reset your password:<br><a href="'.$link.'">'.$link.'</a>',
+				    'text' => 'Copy/paste link into the address bar to reset your password: '.$link
+				    )
+				);
+				curl_exec($c);
+				$info = curl_getinfo($c);
+
+				if ($info['http_code'] != 200)
+					resp(500, "Failed to send mail: curl gave ".curl_error($c));
+
+				curl_close($c);
+				resp(200, "Sent mail");
+			}
 		} else {
-			$bytes;
-			if (function_exists('random_bytes'))
-				$bytes = bin2hex(random_bytes(40));
-			else 
-				$bytes = bin2hex(openssl_random_pseudo_bytes(40));
-			$_SESSION['foxfile_recovery_nonce'] = $bytes;
-
-			$link = 'https://'.$_SERVER['HTTP_HOST']."/foxfile/passchange?key=".$bytes.'&from='.$email;
-			$c = curl_init();
-			curl_setopt($c, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-			curl_setopt($c, CURLOPT_USERPWD, 'api:'.$mailkey);
-			curl_setopt($c, CURLOPT_RETURNTRANSFER, 1);
-
-			curl_setopt($c, CURLOPT_CUSTOMREQUEST, 'POST');
-			curl_setopt($c, CURLOPT_URL, $mailapi);
-			curl_setopt($c, CURLOPT_POSTFIELDS, array(
-				'from' => 'foxfile@'.$_SERVER['HTTP_HOST'],
-			    'to' => $email,
-			    'subject' => 'Foxfile password reset',
-			    'html' => 'Click link to reset your password:<br><a href="'.$link.'">'.$link.'</a>',
-			    'text' => 'Copy/paste link into the address bar to reset your password: '.$link
-			    )
-			);
-			curl_exec($c);
-			$info = curl_getinfo($c);
-
-			if ($info['http_code'] != 200)
-				resp(500, "Failed to send mail: curl gave ".curl_error($c));
-
-			curl_close($c);
-			resp(200, "Sent mail");
+			resp(500, 'email query failed');
 		}
 	} else {
-		resp(500, 'email query failed');
+		resp(500, 'recaptcha check failed');
 	}
 }
 if ($pageID == 'verify') {

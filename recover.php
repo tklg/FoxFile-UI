@@ -1,5 +1,5 @@
 <?php
-session_start();
+//session_start();
 include 'includes/cfgvars.php';
 /*if (!isset ($_SESSION['access_token'])) header ("Location: login");*/
 ?>
@@ -52,6 +52,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     				<div class="error"><div class="error-message">Invalid Email Address</div></div>
     			</label>
     		</div>
+            <div class="g-recaptcha" data-sitekey="<?php echo $foxfile_recaptcha_public; ?>"></div>
             <a href="./" class="new-account">Log in</a>
             <button class="btn btn-submit" type="submit"">Send email<link class="rippleJS" /></button>
         </form>
@@ -60,6 +61,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 <?php include './includes/footer.html'; ?>
 <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
 <script type="text/javascript" src="js/ripple.js"></script>
+<script src='https://www.google.com/recaptcha/api.js'></script>
     <script type="text/javascript">
     $(document).ready(function() {
         var user = $('#email').val();
@@ -70,24 +72,29 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     });
     function sendEmail() {
         if (/[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/g.test($('#email').val())) {
-            $.ajax({
-                type: "POST",
-                url: "./api/auth/send_recovery",
-                data: {
-                    email: $('#email').val(),
-                    extra: false
-                },
-                success: function(result) {
-                    $('form').html('<p class="instructions">Recovery email sent.</p>');
-                },
-                error: function(request, error) {
-                    if (request.status == 401) {
-                        $('.error').addClass('active').children('.error-message').text('No account was found with that email');
-                    } else {
-                        $('.error').addClass('active').children('.error-message').text('Failed to send recovery email');
+            if (grecaptcha.getResponse().length > 0) {
+                $.ajax({
+                    type: "POST",
+                    url: "./api/auth/send_recovery",
+                    data: {
+                        email: $('#email').val(),
+                        extra: false,
+                        captcha: grecaptcha.getResponse()
+                    },
+                    success: function(result) {
+                        console.log(result);
+                        $('form').html('<p class="instructions">Recovery email sent.</p>');
+                    },
+                    error: function(request, error) {
+                        grecaptcha.reset();
+                        if (request.status == 401) {
+                            $('.error').addClass('active').children('.error-message').text('No account was found with that email');
+                        } else {
+                            $('.error').addClass('active').children('.error-message').text('Failed to send recovery email');
+                        }
                     }
-                }
-            });
+                });
+            }
         } else {
             if ($('#email').val() != '') {
                 $('.error').addClass('active');

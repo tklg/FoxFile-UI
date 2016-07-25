@@ -1,5 +1,5 @@
 <?php
-session_start();
+include 'includes/cfgvars.php';
 ?>
 <!--
                                                               
@@ -76,14 +76,15 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
                     <div class="error error-pass"><div class="error-message">Passwords do not Match</div></div>
                 </label>
             </div>
-            <div class="inputbar nosel">
+            <!-- <div class="inputbar nosel">
                 <label class="userlabel">
                     <input name="gpass" class="userinfo" id="gpass" type="password" required>
                     <span class="placeholder-userinfo nosel">Access code</span>
                     <hr class="input-underline" />
                     <div class="error error-gpass"><div class="error-message">Nope</div></div>
                 </label>
-            </div>
+            </div> -->
+            <div class="g-recaptcha" data-sitekey="<?php echo $foxfile_recaptcha_public; ?>"></div>
             <a href="./" class="new-account">Got an account?</a>
             <button class="btn btn-submit" type="submit">Create<link class="rippleJS" /></button>
         </form>
@@ -94,6 +95,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 <script type="text/javascript" src="js/ripple.js"></script>
 <script type="text/javascript" src="js/forge.min.js"></script>
 <script type="text/javascript" src="js/crypto-js.min.js"></script>
+<script src='https://www.google.com/recaptcha/api.js'></script>
     <script type="text/javascript">
     $(document).ready(function() {
         var user = $('#email').val();
@@ -137,49 +139,57 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
         if (/[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/g.test($('#email').val())) {
             $('.error-email').removeClass('active');
             if (passMatch) {
-                $('#header-main span').text('Genarating keys...');
-                var pki = forge.pki;
-                var rsa = forge.pki.rsa;
-                var pair = rsa.generateKeyPair({bits: 2048, e: 0x10001});
-                var privk = pki.encryptRsaPrivateKey(pair.privateKey, sha512(sha512($('#password').val())));
-                //var privk = pki.privateKeyToPem(pair.privateKey);
-                var pubk = pki.publicKeyToPem(pair.publicKey);
-                $.post('./api/auth/new',
-                    {
-                        useremail: $('#email').val(),
-                        userpass: sha512($('#password').val()),
-                        userfirst: $('#firstname').val(),
-                        userlast: $('#lastname').val(),
-                        //privkey: aesE(privk, sha512($('#password').val())),
-                        privkey: privk,
-                        pubkey: pubk,
-                        gpass: $('#gpass').val()
-                    },
-                    function(result) {
-                        $('#header-main span').text('Create a new account');
-                        console.log(result);
-                        switch (result) {
-                            case '0': //ok
-                            case '{"status":500,"message":"Failed to send mail: curl gave SSL certificate problem: unable to get local issuer certificate"}': // because localhost
-                                window.location.href = "./login";
-                                break;
-                            case '1': //invalid u/p
-                                $('.error-email').addClass('active').text('Invalid email');
-                                break;
-                            case '2':
-                                $('.error-email').addClass('active').text('Account with that email already exists');
-                                break;
-                            case '3':
-                                $('.error-pass').addClass('active').text('Passwords do not match');
-                                break;
-                            case '4':
-                                $('.error-gpass').addClass('active').text('Incorrect access key');
-                                break;
-                            case '5':
-                                $('.error-email').addClass('active').text('Database error');
-                                break;
-                        }
-                });
+                if (grecaptcha.getResponse().length > 0) {
+                    //$('#header-main span').text('Genarating keys...');
+                    //var pki = forge.pki;
+                    //var rsa = forge.pki.rsa;
+                    //var pair = rsa.generateKeyPair({bits: 2048, e: 0x10001});
+                    //var privk = pki.encryptRsaPrivateKey(pair.privateKey, sha512(sha512($('#password').val())));
+                    //var privk = pki.privateKeyToPem(pair.privateKey);
+                    //var pubk = pki.publicKeyToPem(pair.publicKey);
+                    $.post('./api/auth/new',
+                        {
+                            useremail: $('#email').val(),
+                            userpass: sha512($('#password').val()),
+                            userfirst: $('#firstname').val(),
+                            userlast: $('#lastname').val(),
+                            //privkey: aesE(privk, sha512($('#password').val())),
+                            //privkey: privk,
+                            //pubkey: pubk,
+                            gpass: $('#gpass').val(),
+                            captcha: grecaptcha.getResponse()
+                        },
+                        function(result) {
+                            $('#header-main span').text('Create a new account');
+                            console.log(result);
+                            switch (result) {
+                                case '0': //ok
+                                //case '{"status":500,"message":"Failed to send mail: curl gave SSL certificate problem: unable to get local issuer certificate"}': // because localhost
+                                    window.location.href = "./login";
+                                    break;
+                                case '1': //invalid u/p
+                                    $('.error-email').addClass('active').text('Invalid email');
+                                    grecaptcha.reset();
+                                    break;
+                                case '2':
+                                    $('.error-email').addClass('active').text('Account with that email already exists');
+                                    grecaptcha.reset();
+                                    break;
+                                case '3':
+                                    $('.error-pass').addClass('active').text('Passwords do not match');
+                                    grecaptcha.reset();
+                                    break;
+                                case '4':
+                                    $('.error-gpass').addClass('active').text('Incorrect access key');
+                                    grecaptcha.reset();
+                                    break;
+                                case '5':
+                                    $('.error-email').addClass('active').text('Database error');
+                                    grecaptcha.reset();
+                                    break;
+                            }
+                    });
+                }
             }
     	} else {
     		if ($('#email').val() != '') {

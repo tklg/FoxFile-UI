@@ -289,7 +289,10 @@ a:focus {
 	float: right;
 }
 main.register {
-	height: 520px;
+	height: 556px;
+}
+main.recover {
+	height: 460px;
 }
 main.register .content,
 main.setup .content {
@@ -379,4 +382,9 @@ main.setup {
 }
 .copyright:hover #c2 {
 	display: inline;
+}
+.g-recaptcha {
+	padding: 0 30px;
+	margin-bottom: 16px;
+	height: 78px;
 }

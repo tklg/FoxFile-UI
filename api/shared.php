@@ -16,7 +16,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 */
 //session_start();
 require('../includes/user.php');
-//require('../includes/cfgvars.php');
+require('../includes/cfgvars.php');
 
 $uri = $_SERVER['REQUEST_URI'];
 if (strpos($uri, '/') !== false) {
@@ -92,12 +92,12 @@ function resp($code, $message) {
 	die();
 }
 function getUniqId() {
-	global $db;
+	global $db, $foxfile_hashids_salt;
 	$sql = "REPLACE INTO idgen (hashes) VALUES ('a')";
 	if ($result = mysqli_query($db, $sql)) {
 		$newIdObj = mysqli_insert_id($db);
 		require '../plugins/hashids/Hashids.php';
-		$hashids = new Hashids\Hashids('foxfilesaltisstillbestsalt', 12);
+		$hashids = new Hashids\Hashids($foxfile_hashids_salt, 12);
 		return $hashids->encode($newIdObj);
 	} else {
 		return -1;

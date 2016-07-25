@@ -49,8 +49,6 @@ $dbname = "' . $dbname . '";
 		total_storage DOUBLE(100, 2),
 		account_status VARCHAR(40),
 	    access_level TINYINT,
-	    privkey VARCHAR(2048),
-	    pubkey VARCHAR(512),
 	    join_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) charset=utf8 ENGINE=INNODB";
 		$sql1 = "CREATE TABLE idgen (

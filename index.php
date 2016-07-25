@@ -1,5 +1,5 @@
 <?php
-session_start();
+//session_start();
 include 'includes/cfgvars.php';
 //if (isset ($_SESSION['foxfile_uid'])) header ("Location: browse");
 /*if (!isset ($_SESSION['access_token'])) header ("Location: login");*/
@@ -75,6 +75,12 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 <!-- <script type="text/javascript" src="js/md5.js"></script> -->
 <script type="text/javascript" src="js/ripple.js"></script>
 <script type="text/javascript" src="js/forge.min.js"></script>
+<?php if (isset($_GET['demo']) && false) { ?>
+<script type="text/javascript">
+$('#email').val('test@test.test');
+$('#userpass').val('test');
+</script>
+<?php } ?>
 <script type="text/javascript">
     $('input.userinfo').change(function() {
         $(this).attr('empty', ($(this).val() != '') ? 'false' : 'true');

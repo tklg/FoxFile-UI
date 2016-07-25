@@ -16,7 +16,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 */
 //session_start();
 require('../includes/user.php');
-//require('../includes/cfgvars.php');
+require('../includes/cfgvars.php');
 
 $fileMaxMemory = 1048576;
 $uploadChunkSize = $fileMaxMemory;
@@ -94,6 +94,9 @@ function sanitize($s) {
 function br2nl($s) {
     return preg_replace('/\<br(\s*)?\/?\>/i', "\n", $s);
 }
+function stripInvalidCharacters($s) {
+	return preg_replace('/[^a-zA-Z0-9\.\ \-+_,!&()^$#@?%]/', '', $s);
+}
 function resp($code, $message) {
 	http_response_code($code);
 	$res = array(
@@ -104,13 +107,13 @@ function resp($code, $message) {
 	die();
 }
 function getUniqId($n = 0) {
-	global $db;
+	global $db, $foxfile_hashids_salt;
 	$sql = "REPLACE INTO idgen (hashes) VALUES ('a')";
 	if ($n > 5) return -1;
 	if ($result = mysqli_query($db, $sql)) {
 		$newIdObj = mysqli_insert_id($db);
 		require '../plugins/hashids/Hashids.php';
-		$hashids = new Hashids\Hashids('foxfilesaltisstillbestsalt', 12);
+		$hashids = new Hashids\Hashids($foxfile_hashids_salt, 12);
 		return $hashids->encode($newIdObj);
 	} else {
 		//return -1;
@@ -118,13 +121,13 @@ function getUniqId($n = 0) {
 	}
 }
 function getUniqLink($n = 0) {
-	global $db;
+	global $db, $foxfile_hashids_salt;
 	$sql = "REPLACE INTO linkgen (hashes) VALUES ('a')";
 	if ($n > 5) return -1;
 	if ($result = mysqli_query($db, $sql)) {
 		$newIdObj = mysqli_insert_id($db);
 		require '../plugins/hashids/Hashids.php';
-		$hashids = new Hashids\Hashids('foxsaltisbestsalt', 12);
+		$hashids = new Hashids\Hashids($foxfile_hashids_salt, 12);
 		return $hashids->encode($newIdObj);
 	} else {
 		//return -1;
@@ -689,7 +692,7 @@ if ($pageID == 'new_file') {
 	$file = $_FILES['file'];
 	$tFile = $_FILES['file']['tmp_name'];
 	//$fExt = pathinfo($_FILES['file']['name'], PATHINFO_EXTENSION);
-	$fName = $_FILES['file']['name'];
+	$fName = stripInvalidCharacters($_FILES['file']['name']);
 	//$fName = sanitize($_POST['name']);
 	$fSize = $_FILES['file']['size'];
 	//$fSize = (int) sanitize($_POST['size']);
@@ -762,7 +765,7 @@ if ($pageID == 'new_file_chunk') {
 		$hash = sanitize($_POST['finish']);
 		$parent = sanitize($_POST['parent']);
 		$num = sanitize($_POST['num']);
-		$name = sanitize($_POST['name']);
+		$name = sanitize(stripInvalidCharacters($_POST['name']));
 		$size = sanitize($_POST['size']);
 		$enckey = sanitize($_POST['key']);
 		$parentPath = getPath($parent);
@@ -810,8 +813,9 @@ if ($pageID == 'new_folder') {
 	if (!isset($_POST['name']) || !isset($_POST['parent']))
 		resp(422, "missing parameters");
 
-	$fileName = sanitize($_POST['name']);
+	$fileName = sanitize(stripInvalidCharacters($_POST['name']));
 	$fileParent = sanitize($_POST['parent']);
+	$enckey = sanitize($_POST['key']);
 	if (isset($_POST['hash'])) {
 		$fileHash = $_POST['hash'];
 	} else {
@@ -841,11 +845,12 @@ if ($pageID == 'new_folder') {
 		if ($result = mysqli_query($db, $sql)) {
 			$total = mysqli_num_rows($result);
 			if ($total == 0) {*/
-				$sql = "INSERT INTO files (owner_id, is_folder, hash, parent, name) VALUES
+				$sql = "INSERT INTO files (owner_id, is_folder, hash, parent, enckey, name) VALUES
 							('$uid',
 							'1',
 							'$fileHash',
 							'$fileParent',
+							'$enckey',
 							'$fileName')";
 				if (mysqli_query($db, $sql)) {
 					
@@ -961,7 +966,7 @@ if ($pageID == 'rename') {
 	if (!isset($_POST['name']) || !isset($_POST['hash']))
 		resp(422, "missing parameters");
 	$hash = sanitize($_POST['hash']);
-	$newName = sanitize($_POST['name']);
+	$newName = sanitize(stripInvalidCharacters($_POST['name']));
 	if ($hash == $uhd) {
 		resp(400, 'Cannot rename the home directory!');
 	} else {
