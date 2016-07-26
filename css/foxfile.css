@@ -51,6 +51,9 @@ body {
 	height: 100%;
 	padding: 0;
 	margin: 0;
+	/*position: absolute;
+	top: 0;
+	left: 0;*/
     background: #f2f2f2;
     color: rgba(0,0,0,.87);
     font-family: 'Roboto', sans-serif;
@@ -95,6 +98,9 @@ img {
   opacity: 0.15;
   background: rgba(0,0,0,.38);
   /*background: blue;*/
+}
+header.main {
+	z-index: 600;
 }
 #nav-header {
 	position: relative;
@@ -406,16 +412,86 @@ nav ul {
 	font-size: 14px;
 }
 main {
-	height: calc(100% - 60px);
+	height: calc(100% - 90px);
 	width: 100%;
 	display: flex;
+	z-index: 20;
+	overflow: hidden;
 }
+.breadcrumbs {
+	position: relative;
+	display: inline-block;
+	/*flex: none;*/
+	height: 30px;
+	line-height: 30px;
+	width: calc(100% - 36px);
+	background: white;
+	/*background: red;*/
+	z-index: 500;
+	padding: 0 18px;
+	/*overflow: hidden;*/
+	/*overflow-x: auto;
+	overflow-y: hidden;*/
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	cursor: default;
+	box-shadow: 0 1.5px 4px rgba(0, 0, 0, 0.24), 0 1.5px 6px rgba(0, 0, 0, 0.12);
+}
+.breadcrumbs::-webkit-scrollbar { 
+    display: none; 
+}
+.crumb {
+	/*float: left;*/
+	position: relative;
+	display: inline-block;
+	color: rgba(0,0,0,.87);
+	font-size: .95em;
+	padding: 0 2px;
+	border-radius: 3px;
+	transition: all .15s ease-in-out;
+	/*overflow-x: auto;*/
+}
+.crumb-div {
+	/*float: left;*/
+	display: inline-block;
+	position: relative;
+	color: rgba(0,0,0,.38);
+	height: 30px;
+	line-height: 30px;
+	font-size: .95em;
+	/*font-size: 1.2em;*/
+}
+/*.crumb:first-of-type {
+	padding-left: 20px;
+}*/
+.crumb:hover {
+	color: #ff5722;
+	/*background: rgba(0,0,0,.06);*/
+}
+/*.crumb:nth-last-child(2):hover {
+	color: rgba(0,0,0,.87);
+}*/
+/*.crumb:not(:last-of-type) {
+	padding-right: 20px;
+}*/
+.crumb-div:last-of-type {
+	display: none;
+}
+/*.crumb:not(:last-of-type):after {
+	content: '\203a';
+	display: block;
+	position: absolute;
+	top: -2px;
+	right: 6px;
+	font-size: 20px;
+	color: rgba(0,0,0,.38);
+}*/
 /* ---------------------------------------------------------------------------------------------------------
 ==========================================    FILE MANAGER    ==============================================
 ----------------------------------------------------------------------------------------------------------*/
 .file-manager {
 	position: absolute;
-	height: calc(100% - 60px);
+	height: calc(100% - 90px);
 	width: 100%;
 	display: flex;
 	padding: 0;
@@ -451,7 +527,7 @@ main {
 .bar header {
 	display: flex;
 	position: relative;
-	background: #f2f2f2;
+	/*background: #f2f2f2;*/
 	border-bottom: 2px solid #FF5722;
 	height: 58px;
 	/*margin-bottom: 1px;*/
@@ -459,8 +535,11 @@ main {
 	z-index: 15;
 	transition: background 0.15s ease-in-out;
 }
+.bar:not(:first-of-type):not(:last-of-type) header:hover {
+	background: rgba(0,0,0,.06);
+}
 .bar:last-of-type header {
-	background: white;
+	/*background: white;*/
 	border-bottom: 2px solid rgba(0,0,0,.12);
 	/*border-bottom: 1px solid transparent;*/
 }
@@ -479,7 +558,11 @@ main {
 	white-space: nowrap;
 	text-overflow: ellipsis;
 	transition: color 0.15s ease-in-out;
+	cursor: default;
 }
+/*.bar:not(:last-of-type) header .filename:hover {
+	color: #FF5722;
+}*/
 .bar.leftmost header .filename {
 	padding-left: 30px;
 }
@@ -553,7 +636,7 @@ main {
 	width: 100px;
 }
 .bar[type=folder] .file-list {
-	height: calc(100% - 60px);
+	height: calc(100% - 90px);
 	width: 100%;
 	overflow-y: auto;
 	/*display: inline-block;*/
@@ -588,7 +671,8 @@ main {
 	/*cursor: default;*/
 	white-space: nowrap;
 	line-height: 40px;
-	font-size: 15px;
+	/*font-size: 15px;*/
+	font-size: 0.95em;
 	display: flex;
 	/*transition: color 0.15s ease-in-out;*/
 	-webkit-touch-callout: none;-webkit-user-select: none;-khtml-user-select: none;-moz-user-select: none;-ms-user-select: none;user-select: none;
@@ -762,7 +846,20 @@ main {
 /*.bar header .file-actions-header {
 	display: none;
 }*/
-/*.bar:last-of-type header .file-actions-header,*/
+.bar:last-of-type header .file-actions-header {
+	display: inline-block;
+	/*height: 40px;
+	line-height: 40px;*/
+}
+.bar:last-of-type header .file-actions-header-collapsed {
+	display: none;
+}
+.bar:not(:last-of-type) header .file-actions-header {
+	display: none;
+}
+.bar:not(:last-of-type) header .file-actions-header-collapsed {
+	display: inline-block;
+}
 .bar header .file-actions-header {
 	display: inline-block;
 	margin-right: 10px;
@@ -802,6 +899,33 @@ main {
 	background: rgba(0,0,0,.12);
 	color: rgba(0,0,0,.87);
 	box-shadow: 0 1.5px 4px rgba(0, 0, 0, 0.24), 0 1.5px 6px rgba(0, 0, 0, 0.12);
+}
+.bar .labels {
+	position: relative;
+	display: block;
+	display: none;
+	width: 100%;
+	height: 20px;
+	line-height: 20px;
+	border-bottom: 1px solid rgba(0,0,0,.04);
+}
+.bar[type=folder] .labels .file-det-header {
+	width: calc(100% - 20px);
+	margin-right: 0;
+	padding: 0 10px;
+	display: flex;
+	cursor: default;
+	-webkit-touch-callout: none;-webkit-user-select: none;-khtml-user-select: none;-moz-user-select: none;-ms-user-select: none;user-select: none;
+}
+.bar[type=folder]:not(:last-of-type) .labels .file-det-header span:not(:first-of-type) {
+	display: none;
+}
+.bar .labels span:first-of-type {
+	flex: 1;
+	margin-left: 30px;
+}
+.bar .labels span:not(:last-of-type) {
+	margin-right: 2px;
 }
 .bar .folder-empty {
 	/*display: inline-block;*/

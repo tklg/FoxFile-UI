@@ -258,6 +258,9 @@ if ($pageID == 'invalidate_key') {
 }
 if ($pageID == 'remove') {
 	if (!isset($_POST['pass'])) resp(422, 'missing parameters');
+	if ($uem == 'test@test.test') {
+		resp(401, "Test user cannot change account information.");
+	}
 	$pass = $_POST['pass'];
 
 	$q = "SELECT password from users where PID='$uid' and root_folder='$uhd' limit 1";

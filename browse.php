@@ -94,6 +94,12 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     </nav>
     <div class="nav-right-active-cover"></div>
 </header>
+<nav class="breadcrumbs">
+	<!-- <div class="crumb">My Files</div>
+	<div class="crumb-div"><i class="mdi mdi-chevron-right"></i></div>
+	<div class="crumb">Folder 2</div>
+	<div class="crumb-div"><i class="mdi mdi-chevron-right"></i></div> -->
+</nav>
 <main>
 	<section class="pages">
 		<section class="transfers" id="transfers">
@@ -179,25 +185,42 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 	</section>
 </main>
 </body>
+<script type="text/template" id="fm-crumb">
+<div class="crumb" hash="<%= hash %>"><%= name %></div>
+<div class="crumb-div"><i class="mdi mdi-chevron-right"></i></div>
+</script>
 <script type="text/template" id="fm-folder">
 <section class="bar loading" id="bar-<%= hash %>" type="folder" hash="<%= hash %>" parent="<%= parent %>" name="<%= name %>">
 	<header>
 		<span class="btn-back"><i class="mdi mdi-chevron-left"></i></span>
 		<span class="filename"><%= name %></span>
-		<section class="file-det-header">
+		<!-- <section class="file-det-header">
 			<span>Shared</span>
 			<span>File info</span>
 			<span>Modified</span>
+		</section> -->
+		<section class="file-actions-header file-actions-header-collapsed">
+			<span><i class="mdi mdi-dots-vertical"></i><link class="rippleJS lightgray" /></span>
 		</section>
 		<section class="file-actions-header">
-			<span><i class="mdi mdi-dots-vertical"></i><link class="rippleJS lightgray" /></span>
+			<span title="Upload file" onclick="$('#dd-file-upload').attr('hash','<%= hash %>').click()"><i class="mdi mdi-upload"></i><link class="rippleJS lightgray" /></span>
+			<span title="Upload folder" onclick="$('#dd-folder-upload').attr('hash','<%= hash %>').click()"><i class="mdi mdi-folder-upload"></i><link class="rippleJS lightgray" /></span>
+			<span title="New folder" onclick="fm.dialog.newFolder.show('<%= name %>','<%= hash %>')"><i class="mdi mdi-folder-plus"></i><link class="rippleJS lightgray" /></span>
+			<span title="Reload" onclick="fm.refresh('<%= hash %>')"><i class="mdi mdi-reload"></i><link class="rippleJS lightgray" /></span>
 		</section>
 	</header>
 	<div class="progress">
 	   	<div class="indeterminate"></div>
 	</div>
-	<nav class="file-list">
-	</nav>
+	<div class="labels">
+		<section class="file-det-header">
+			<span>File name</span>
+			<span>Shared</span>
+			<span>File info</span>
+			<span>Modified</span>
+		</section>
+	</div>
+	<nav class="file-list"></nav>
 	<section class="file-history">
 
 	</section>

@@ -105,8 +105,8 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
                     $('[fetch-data=user-gravatar]').attr('src', '//gravatar.com/avatar/'+json['md5']+'?d=retro&r=r');
                     foxfile_root = json['root'];
                     //localStorage.setItem('privkey', cr.aesD(json['privkey'], localStorage.getItem('basekey')));
-                    localStorage.setItem('privkey', json['privkey']);
-                    localStorage.setItem('pubkey', json['pubkey']);
+                    /*localStorage.setItem('privkey', json['privkey']);
+                    localStorage.setItem('pubkey', json['pubkey']);*/
 
                     page.calculateBars();
                     fm.updateSize();
@@ -170,6 +170,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
                 fm.searching = false;
                 fm.isActive = true;
                 fm.clearTrees();
+                $('.breadcrumbs').empty();
                 $('.file-manager .bar:not(#bar-0)').remove();
                 fm.open(foxfile_root);
                 var path = fm.calcFilePath();
@@ -372,7 +373,11 @@ header3 font
             console.warn("Tried to call fm.replace(barItem) with illegal argument \"" + barItem + "\"");
             return;
         }
+        var crumb = null;
+        crumb = _.template($('#fm-crumb').html());
+
         $('.file-manager').append(template(barItem));
+        $('.breadcrumbs').append(crumb(barItem));
         if (fileTree.length > 1) fileTree[fileTree.length - 2].setWidth(fm.barWidth);
 
         if (fileTree.length > fm.numBarsCanBeActive) {
@@ -387,13 +392,19 @@ header3 font
         //console.log(barItem);
         if (barItem.getHash() == fm.getLast().getHash()) { // removing the last one
             //console.log("removing last ("+fm.getLast().getHash()+")");
-            $('.file-manager .bar[hash='+fileTree.pop().getHash()+']').remove();
+            var last = fileTree.pop();
+            $('.file-manager .bar[hash='+last.getHash()+']').remove();
+            $('.breadcrumbs .crumb[hash='+last.getHash()+']').next().remove();
+            $('.breadcrumbs .crumb[hash='+last.getHash()+']').remove();
             hashTree.pop();
         } else {
             //console.log("removing all after ("+fm.getLast().getHash()+"), inclusive");
             var ftl = fileTree.length - 1;
             for (i = _.indexOf(fileTree, barItem); i < ftl; i++) {
-                $('.file-manager .bar[hash='+fileTree.pop().getHash()+']').remove();
+                var last = fileTree.pop();
+                $('.file-manager .bar[hash='+last.getHash()+']').remove();
+                $('.breadcrumbs .crumb[hash='+last.getHash()+']').next().remove();
+                $('.breadcrumbs .crumb[hash='+last.getHash()+']').remove();
                 hashTree.pop();
             }
         }
@@ -414,6 +425,7 @@ header3 font
             if (fileTree.length > 1) {
                 fm.remove(fileTree[0]);
             }
+            //$('.breadcrumbs').empty();
             foxfile.routerbox.router.navigate('files/'+foxfile_root+'/', {replace: true});
             document.title = "My Files - FoxFile";
         } else {
@@ -1345,6 +1357,7 @@ header3 font
             fm.isActive = true;
             fm.clearTrees();
             $('.file-manager .bar:not(#bar-0)').remove();
+            $('.breadcrumbs').empty();
             fm.open(foxfile_root);
             var path = fm.calcFilePath();
             foxfile.routerbox.router.navigate('files/'+path, {replace: true});
@@ -1359,6 +1372,8 @@ header3 font
             fm.clearTrees();
             $('.file-manager .bar:not(#bar-0)').remove();
             openSearchFolder();
+            $('.breadcrumbs').empty();
+            $('.breadcrumbs').append(_.template($('#fm-crumb').html())({name: 'Search',hash: ''}));
             fm.isActive = false;
             fm.searching = true;
         }
@@ -1432,7 +1447,7 @@ header3 font
     }
     var FolderBar = function(name, hash, parent) {
         this.dd;
-        this.name = name.addSlashes();
+        this.name = name;
         this.hash = hash;
         this.parent = parent;
         this.hasMore = false;
@@ -1645,7 +1660,7 @@ header3 font
         }
     }
     var FileBar = function(name, hash, parent, type, file) {
-        this.name = name.addSlashes();
+        this.name = name;
         this.hash = hash;
         this.parent = parent;
         this.type = type;
@@ -1884,7 +1899,7 @@ header3 font
         }
     }
     var File = function(name, parent, hash, key, isFolder, size, lastmod, shared, public, trashed) {
-        this.name = name.addSlashes();
+        this.name = name;
         this.parent = parent;
         this.icon = icon;
         this.hash = hash;
@@ -1932,6 +1947,7 @@ header3 font
             return this.lastmod.toLocaleTimeString();
         }
     }
+    // clicks on the files
     $(document).on('click', '.file-manager .menubar-content:not(.btn-ctrlbar):not([trashed])', function(e) {
         e.stopPropagation();
         if($(e.target).parents('.file-multiselect-checkbox-container').length > 0) {
@@ -1955,6 +1971,38 @@ header3 font
                 fm.isActive = true;
             }
         }
+    });
+    // clicks on the view headers
+    $(document).on('click', '.file-manager .bar:not(#bar-0):not(:last-of-type) header .filename', function(e) {
+        e.stopPropagation();
+        var dest = $(this).parents('.bar').attr('hash');
+        if (dest == hashTree[0]) {
+            fm.back('all');
+        } else if (dest == hashTree[hashTree.length - 2]) {
+            fm.back();
+        } else {
+            fm.open(dest);
+        }
+        $('#bar-'+dest+'.bar .file-list').children().removeClass('active');
+        $('.pages').children().removeClass('active').css('z-index', 400);
+        fm.isActive = true;
+    });
+    // clicks on the breadcrumbs
+    $(document).on('click', '.breadcrumbs .crumb', function(e) {
+        e.stopPropagation();
+        var dest = $(this).attr('hash');
+        if (fm.isActive && dest == hashTree[hashTree.length - 1]) return;
+        if (dest == hashTree[0]) {
+            fm.back('all');
+        } else if (dest == hashTree[hashTree.length - 2]) {
+            fm.back();
+        } else {
+            fm.open(dest);
+        }
+        $('#bar-'+dest+'.bar .file-list').children().removeClass('active');
+        $('#files.btn-ctrlbar').addClass('active').siblings().removeClass('active');
+        $('.pages').children().removeClass('active').css('z-index', 400);
+        fm.isActive = true;
     });
     $(document).on('click', '.menubar-content .file-multiselect-checkbox-container .label', function(e) {
         e.stopPropagation();
@@ -3754,7 +3802,7 @@ YM      6  M   YP   MM
                 cm.menu.append(new MenuItem(cm.menu, "Upload Folder", "folder-upload", "$('#dd-folder-upload').attr('hash','"+hash+"').click()").get());
                 cm.menu.append(new MenuItem(cm.menu, "New Folder", "folder-plus", "fm.dialog.newFolder.show('"+name+"','"+hash+"')", "Alt+N").get());
                 cm.menu.append('<hr class="nav-vert-divider">');
-                cm.menu.append(new MenuItem(cm.menu, "Get public link", "link", "fm.dialog.share.show('"+name+"','"+hash+"')", "L").get());
+                //cm.menu.append(new MenuItem(cm.menu, "Get public link", "link", "fm.dialog.share.show('"+name+"','"+hash+"')", "L").get());
                 cm.menu.append(new MenuItem(cm.menu, "Move", "folder-move", "fm.dialog.move.show('"+name+"','"+hash+"')", "m").get());
                 cm.menu.append(new MenuItem(cm.menu, "Refresh", "refresh", "fm.refresh('"+hash+"')", "Alt+R").get());
             }
@@ -3797,7 +3845,7 @@ YM      6  M   YP   MM
             }
         }
     });
-    $(document).on("click", ".file-manager .bar:not([id^='file-detail-']):not(#bar-search):not(.active) .file-actions-header span", function(e) {
+    $(document).on("click", ".file-manager .bar:not([id^='file-detail-']):not(#bar-search):not(.active) .file-actions-header-collapsed span", function(e) {
         e.stopPropagation();
         e.preventDefault();
         if (!fm.btnStatus.shift) {
@@ -3805,7 +3853,7 @@ YM      6  M   YP   MM
             var hash = self.attr('hash');
             var name = self.attr('name');
             cm.destroy();
-            cm.menu = new ClickMenu(e.pageX - 180, 112);
+            cm.menu = new ClickMenu(e.pageX - 180, 142);
             if (hash == foxfile_root) {
                 //cm.menu.append(new MenuItem(cm.menu, "Information", 'information-outline', "fm.toggleInfoView('"+hash+"', false)", 'i').get());
                 //cm.menu.append('<hr class="nav-vert-divider">');
@@ -3824,7 +3872,7 @@ YM      6  M   YP   MM
                 cm.menu.append(new MenuItem(cm.menu, "Upload Folder", "folder-upload", "$('#dd-folder-upload').attr('hash','"+hash+"').click()").get());
                 cm.menu.append(new MenuItem(cm.menu, "New Folder", "folder-plus", "fm.dialog.newFolder.show('"+name+"','"+hash+"')", "Alt+N").get());
                 cm.menu.append('<hr class="nav-vert-divider">');
-                cm.menu.append(new MenuItem(cm.menu, "Get public link", "link", "fm.dialog.share.show('"+name+"','"+hash+"')", "L").get());
+                //cm.menu.append(new MenuItem(cm.menu, "Get public link", "link", "fm.dialog.share.show('"+name+"','"+hash+"')", "L").get());
                 cm.menu.append(new MenuItem(cm.menu, "Move", "folder-move", "fm.dialog.move.show('"+name+"','"+hash+"')", "m").get());
                 cm.menu.append(new MenuItem(cm.menu, "Refresh", "refresh", "fm.refresh('"+hash+"')", "Alt+R").get());
             }
@@ -3837,7 +3885,7 @@ YM      6  M   YP   MM
             var self = $(this).parents('.bar');
             var hash = self.attr('hash');
             cm.destroy();
-            cm.menu = new ClickMenu(e.pageX - 180, 112);
+            cm.menu = new ClickMenu(e.pageX - 180, 142);
             cm.menu.append(new MenuItem(cm.menu, "View files", 'eye', "fm.toggleInfoView('"+hash+"', false)", 'i').get());
         }
     });
@@ -3960,7 +4008,10 @@ YM      6  M   YP   MM
         });
     }
     te.setLanguage = function(language) {
-        if (language == 'null') return;
+        if (!language || language == 'null') {
+            editor.setOption('mode', 'plain text');
+            return;
+        }
         if (!_.contains(te.langsLoaded, language)) {
             if (language == 'htmlmixed') { //because html has so many dependencies
                 var _te = te;
@@ -3993,7 +4044,8 @@ YM      6  M   YP   MM
     }
     te.setValue = function(data, name) {
         editor.setValue(data);
-        te.setLanguage(CodeMirror.findModeByFileName(name).mode);
+        if (!CodeMirror.findModeByFileName(name)) te.setLanguage(null);
+        else te.setLanguage(CodeMirror.findModeByFileName(name).mode);
     }
     te.save = function() {
 

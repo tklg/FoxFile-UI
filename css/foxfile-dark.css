@@ -64,6 +64,25 @@ light: background: #10171c;
 .foxfile-dark.account .bar.active header {
 	border-bottom: 2px solid rgba(255,255,255,.3);
 }
+.foxfile-dark .bar:not(:first-of-type):not(:last-of-type) header:hover {
+	background: rgba(255,255,255,.06);
+}
+.foxfile-dark .bar[type=folder] li:not(.active):hover::before,
+.foxfile-dark .menubar-content.selected:before {
+    background: rgba(255,255,255,.06);
+}
+.foxfile-dark .breadcrumbs {
+	background: #10171c;
+}
+.foxfile-dark .crumb {
+	color: rgba(255,255,255,.5);
+}
+.foxfile-dark .crumb:hover {
+	color: #ff5722;
+}
+.foxfile-dark .crumb-div {
+	color: rgba(255,255,255,.7);
+}
 .foxfile-dark .bar li {
 	border-bottom: 1px solid rgba(255,255,255,.01);
 }
@@ -72,6 +91,12 @@ light: background: #10171c;
 }
 .foxfile-dark .bar header .file-actions-header span {
 	color: rgba(255,255,255,.7);
+}
+.foxfile-dark .bar header .btn-back i {
+	color: rgba(255,255,255,.5);
+}
+.foxfile-dark .bar header .btn-back:hover i {
+	color: #ff5722;
 }
 .foxfile-dark .bar .file-preview-icon i,
 .foxfile-dark .bar .file-preview-icon span,
@@ -116,6 +141,10 @@ light: background: #10171c;
 }
 .foxfile-dark .bar-transfers .file-upload-status {
 	color: rgba(255,255,255,.5);
+}
+.foxfile-dark .bar .labels .file-det-header {
+	color: rgba(255,255,255,.7);
+	border-bottom: 1px solid rgba(0,0,0,.2);
 }
 .foxfile-dark .cm-s-foxfile-cm.CodeMirror {
     background: #10171c;

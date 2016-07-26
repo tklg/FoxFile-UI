@@ -470,11 +470,11 @@ if ($pageID == 'list_files') {
 	$limit = intval((int) $_POST['limit']);
 	//echo 'limit: '.$offset;
 	$sortBy = 'f.is_folder DESC, f.name, f.lastmod DESC';
-	if (isset($_POST['sortby'])) {
+	/*if (isset($_POST['sortby'])) {
 		$sortBy = '';
-		if ($_POST['sortby'] == 'name') $sortBy .= 'name';
-		if ($_POST['sortby_direction'] == 'asc') $sortBy .= ' ASC';
-	}
+		if ($_POST['sortby'] == 'name') $sortBy .= 'f.name';
+		if ($_POST['sortby_direction'] == 'asc') $sortBy .= ' f.lastmod ASC';
+	}*/
 	//$sql = "SELECT COUNT(*) AS total FROM files WHERE parent = '$fileParent' AND owner_id = '$uid' GROUP BY name";
 	$sql = "SELECT COUNT(DISTINCT name) AS total FROM files WHERE parent = '$fileParent' AND owner_id = '$uid'";
 	if ($result = mysqli_query($db, $sql)) {
@@ -517,11 +517,11 @@ if ($pageID == 'list_folders') {
 	$limit = intval((int) $_POST['limit']);
 	//echo 'limit: '.$offset;
 	$sortBy = 'f.is_folder DESC, f.name, f.lastmod DESC';
-	if (isset($_POST['sortby'])) {
+	/*if (isset($_POST['sortby'])) {
 		$sortBy = '';
-		if ($_POST['sortby'] == 'name') $sortBy .= 'name';
-		if ($_POST['sortby_direction'] == 'asc') $sortBy .= ' ASC';
-	}
+		if ($_POST['sortby'] == 'name') $sortBy .= 'f.name';
+		if ($_POST['sortby_direction'] == 'asc') $sortBy .= ' f.lastmod ASC';
+	}*/
 	//$sql = "SELECT COUNT(*) AS total FROM files WHERE parent = '$fileParent' AND owner_id = '$uid' GROUP BY name";
 	$sql = "SELECT COUNT(DISTINCT name) AS total FROM files WHERE parent = '$fileParent' AND owner_id = '$uid'";
 	if ($result = mysqli_query($db, $sql)) {
