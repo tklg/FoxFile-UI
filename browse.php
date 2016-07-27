@@ -56,6 +56,10 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
   </head>
 <body class="">
 <header class="main">
+	<div class="header-alert alert-hidden">
+		<span class="alert-message">This current site is not permanent. As such, it may be taken offline at any time.</span>
+		<button class="alert-button alert-dismiss" onclick="localStorage.setItem('has_read_temp_alert', true);$('.header-alert').addClass('alert-hidden');">Dismiss</button>
+	</div>
     <nav class="floatb-2" id="nav-header">
         <h1 class="logo-text"><a href="./browse"><span class="redfox">Fox</span>File</a></h1>
         <form class="user-input-box file-search">
@@ -63,17 +67,22 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 			<label class="input-text-icon" for="search"><i class="mdi mdi-magnify"></i></label>
 			<label class="input-text-placeholder" for="search">Search</label>
 		</form>
-        <!-- <ul class="nav nav-horiz" id="folder-controls">
-            <li>Upload</li>
-            <li>Create</li>
-            <li class="btn-more"><i class="mdi mdi-unfold-more"></i><span>More</span></li>
-        </ul> -->
         <div class="user-menu-box">
 	        <div class="user-menu">
 	        	<span class="user-menu-msg" fetch-data="user-first"></span>
 	        	<img class="img user-menu-img" fetch-data="user-gravatar" src="img/default_avatar.png" alt="user gravatar" />
 	        </div>
         </div>
+    </nav>
+    <nav class="hidden" id="nav-multiselect">
+    	<h1 class="nav-exit" onclick="fm.multiSelect.clear()"><i class="mdi mdi-window-close"></i></h1>
+    	<div class="nav-pipe"></div>
+    	<h1 class="header-text"><span id="num-sel">0</span><span id="sel-m">Select files</span></h1>
+    	<section class="file-actions-header">
+			<span title="Move to trash" id="tr" onclick="fm.dialog.trash.show('Multiple files', 'multiple')"><i class="mdi mdi-delete"></i><link class="rippleJS lightgray" /></span>
+			<span title="Download" id="dl" onclick="fm.download('multiple', 'Multiple files')"><i class="mdi mdi-download"></i><link class="rippleJS lightgray" /></span>
+			<span title="Move" id="mv" onclick="fm.dialog.move.show('Multiple files', 'multiple')"><i class="mdi mdi-folder-move"></i><link class="rippleJS lightgray" /></span>
+		</section>
     </nav>
     <nav class="floatb-2 nav-right " id="nav-right">
     	<ul class="nav nav-vert" id="user-controls">
@@ -457,6 +466,11 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     if (!localStorage.getItem('api_key')) location.replace('./login');
     var api_key = localStorage.getItem('api_key');
     var foxfile_root = null;
+
+    if (!localStorage.getItem('has_read_temp_alert')) {
+    	$('.header-alert').removeClass('alert-hidden');
+    }
+
     $(document).ready(function() {
 	    foxfile.init();
     });

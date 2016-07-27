@@ -1,5 +1,5 @@
 <?php
-$foxfile_version = '1.5.1';
+$foxfile_version = '1.5.2';
 $foxfile_ga_script = "<script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
   (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
@@ -8,8 +8,6 @@ $foxfile_ga_script = "<script>
   ga('create', 'UA-76953501-1', 'auto');
   ga('send', 'pageview');
 </script>";
-$foxfile_require_access_code = true;
-$foxfile_access_code = 'foxfoxfoxfoxfilefilefilefile';
 $foxfile_hashids_salt = 'replaceswithspacesthebracesincaseswherebracesinplacescausestasis';
 $foxfile_recaptcha_public = '6LeTNyUTAAAAAFWfRMwQ_Iq1L-keizB0kI4BHIEA';
 $foxfile_recaptcha_secret = '6LeTNyUTAAAAAE2_cldgQejhbmK8SRgeSns1AeqO';

@@ -99,6 +99,38 @@ img {
   background: rgba(0,0,0,.38);
   /*background: blue;*/
 }
+.header-alert {
+	height: 40px;
+	line-height: 40px;
+	width: 100%;
+	z-index: 500;
+	background: #FF483D;
+	color: white;
+	text-align: center;
+}
+.alert-hidden {
+	display: none;
+}
+.alert-message {
+	margin: 0 20px;
+}
+.alert-button {
+	height: 30px;
+	line-height: 30px;
+	padding: 0 20px;
+	margin: 5px 0;
+	border: none;
+	border-radius: 3px;
+	background: #FF635B;
+	color: white;
+	cursor: pointer;
+	transition: all .15s ease-in-out;
+	box-shadow: 0 1.5px 4px rgba(0, 0, 0, 0.24), 0 1.5px 6px rgba(0, 0, 0, 0.12);
+}
+.alert-button:hover {
+	background: #FF7470;
+	box-shadow: 0 0 4px rgba(0,0,0,.14),0 4px 8px rgba(0,0,0,.28);
+}
 header.main {
 	z-index: 600;
 }
@@ -117,6 +149,56 @@ header.main {
 	background: #f2f2f2;
 	/*background: #FF9E80;*/
 	color: rgba(0,0,0,.87);
+}
+#nav-multiselect {
+	position: absolute;
+	display: inline-block;
+	height: 60px;
+	width: calc(100% - 10px);
+	top: 0;
+	left: 0;
+	background: #FF5722;
+	color: white;
+	display: flex;
+	z-index: 1000;
+	transition: all 0.15s ease-in-out;
+	padding: 0 0 0 10px;
+	opacity: 1;
+}
+#nav-multiselect.hidden {
+	top: -60px;
+	opacity: 0;
+}
+#nav-multiselect h1 {
+	display: inline-block;
+	line-height: 60px;
+	height: 60px;
+	margin: 0;
+}
+#nav-multiselect .file-actions-header span:hover {
+	background: rgba(255,255,255,.15);
+}
+#nav-multiselect .file-actions-header i {
+	color: white;
+}
+#nav-multiselect #num-sel {
+	margin-right: 5px;
+}
+.nav-exit {
+	padding: 0 16px;
+	cursor: pointer;
+}
+.nav-pipe {
+	height: 40px;
+	width: 1px;
+	margin: 10px 0;
+	background: #BF360C;
+}
+.header-text {
+	font-size: 20px;
+	font-weight: 400;
+	padding: 0 0 0 14px;
+	flex: 1;
 }
 .logo-text {
 	display: inline-block;
@@ -860,7 +942,7 @@ main {
 .bar:not(:last-of-type) header .file-actions-header-collapsed {
 	display: inline-block;
 }
-.bar header .file-actions-header {
+header .file-actions-header {
 	display: inline-block;
 	margin-right: 10px;
 	margin-top: 4px;
@@ -872,7 +954,7 @@ main {
 .bar#bar-search .file-actions-header {
 	display: none;
 }
-.bar .file-actions-header span {
+.file-actions-header span {
 	position: relative;
 	display: inline-block;
 	font-size: 21px;
@@ -884,7 +966,7 @@ main {
 	cursor: pointer;
 	transition: all .15s ease-in-out;
 }
-.bar .file-actions-header i {
+.file-actions-header i {
 	display: inline-block;
 	height: 36px;
 	width: 36px;
@@ -895,7 +977,7 @@ main {
 	text-align: center;
 	border-radius: 50%;
 }
-.bar .file-actions-header span:hover {
+.file-actions-header span:hover {
 	background: rgba(0,0,0,.12);
 	color: rgba(0,0,0,.87);
 	box-shadow: 0 1.5px 4px rgba(0, 0, 0, 0.24), 0 1.5px 6px rgba(0, 0, 0, 0.12);

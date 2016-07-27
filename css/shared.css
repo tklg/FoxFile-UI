@@ -25,6 +25,9 @@ orange A100 #FF9E80
 .float-3 {box-shadow: 0 8px 17px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19); }
 .float-4 {box-shadow: 0 10px 20px rgba(0, 0, 0, 0.22), 0 14px 56px rgba(0, 0, 0, 0.25);}
 .float-5 {box-shadow: 0 15px 24px rgba(0, 0, 0, 0.22), 0 19px 76px rgba(0, 0, 0, 0.3);}
+main {
+	height: calc(100% - 60px);
+}
 #bar-0 {
 	width: 25%;
 	max-width: 340px;

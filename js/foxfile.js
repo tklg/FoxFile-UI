@@ -835,12 +835,25 @@ header3 font
         dedup: function() {
             this.selected = _.uniq(this.selected);
         },
-        add: function(hash) {
+        add: function(hash, name) {
             this.selected.push(hash);
+            $('#nav-multiselect').removeClass('hidden');
+            if (this.selected.length == 1) {
+                $('#nav-multiselect #tr').attr('onclick', "fm.dialog.trash.show('"+name+"', 'multiple')");
+                $('#nav-multiselect #dl').attr('onclick', "fm.download('multiple', '"+name+"')");
+                $('#nav-multiselect #mv').attr('onclick', "fm.dialog.move.show('"+name+"', 'multiple')");
+            }
+            $('#nav-multiselect #num-sel').text(this.selected.length);
+            $('#nav-multiselect #sel-m').text('file'+(this.selected.length == 1 ? '' : 's')+" selected");
             this.dedup();
         },
         remove: function(hash) {
             this.selected = _.without(this.selected, hash);
+            $('#nav-multiselect #num-sel').text(this.selected.length);
+            $('#nav-multiselect #sel-m').text('file'+(this.selected.length == 1 ? '' : 's')+" selected");
+            if (this.selected.length == 0) {
+                fm.multiSelect.clear();
+            }
         },
         contains: function(hash) {
             return _.contains(this.selected, hash);
@@ -848,8 +861,12 @@ header3 font
         clear: function() {
             var l = this.selected.length;
             for (i = 0; i < l; i++) {
-                $('#cb-'+this.selected.shift()).prop('checked', false);
+                var hash = this.selected.shift();
+                $(".file-list li[hash="+hash+"]").removeClass('selected');
+                $('#cb-'+hash).prop('checked', false);
             }
+            $('#nav-multiselect').addClass('hidden');
+            $('#nav-multiselect #sel-m').text('Select files');
         },
         get: function() {
             this.dedup();
@@ -1528,6 +1545,12 @@ header3 font
                 }
                 for (var i = 0; i < this.files.length; i++) {
                     $('#bar-'+this.hash+' .file-list').append(template(this.files[i]));
+
+                    if (fm.multiSelect.selected.indexOf(this.files[i].hash) > -1) {
+                        $("#bar-" + this.hash + " .file-list li[hash="+this.files[i].hash+"]").addClass('selected');
+                        $('#cb-'+this.files[i].hash).prop('checked', true);
+                    }
+
                     var _this = this;
                     var _i = i;
                     var targetHash = this.files[i].hash;
@@ -2007,11 +2030,12 @@ header3 font
     $(document).on('click', '.menubar-content .file-multiselect-checkbox-container .label', function(e) {
         e.stopPropagation();
         var hash = $(this).parents('.menubar-content').attr('hash');
+        var name = $(this).parents('.menubar-content').attr('name')
         $(this).parents('.menubar-content').addClass('selected');
         if ($(this).parents('.menubar-content[trashed]').length > 0) {
-            fm.multiTrash.add(hash);
+            fm.multiTrash.add(hash, name);
         } else {
-            fm.multiSelect.add(hash);
+            fm.multiSelect.add(hash, name);
         }
     });
     $(document).on('click', '.menubar-content .file-multiselect-checkbox-container .label-checked', function(e) {
@@ -3965,9 +3989,9 @@ YM      6  M   YP   MM
             tabSize: 4,
             readOnly: true,
             keyMap: 'sublime',
-            foldGutter: true,
+            foldGutter: false,
             styleLineActive: true,
-            gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
+            gutters: ["CodeMirror-linenumbers"/*, "CodeMirror-foldgutter"*/],
             extraKeys: {
                 "Ctrl-S": function(instance) {
                     te.save();

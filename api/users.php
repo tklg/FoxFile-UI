@@ -81,7 +81,8 @@ function dirSize($path){
 }
 function getUserFromKey($key) {
 	global $db;
-	$q = "SELECT * from users u join (SELECT owner_id from apikeys where api_key='$key' and active=1 and (TIMESTAMPDIFF(WEEK, last_mod , CURRENT_TIMESTAMP()) < 1) LIMIT 1) k on k.owner_id=u.PID LIMIT 1";
+	$ip = $_SERVER['REMOTE_ADDR'];
+	$q = "SELECT * from users u join (SELECT owner_id from apikeys where api_key='$key' and active=1 and created_by='$ip' and (TIMESTAMPDIFF(WEEK, last_mod , CURRENT_TIMESTAMP()) < 1) LIMIT 1) k on k.owner_id=u.PID LIMIT 1";
 	if ($res = mysqli_query($db, $q)) {
 		if (mysqli_num_rows($res) == 0) {
 			return null;
@@ -156,7 +157,7 @@ if ($pageID == 'account') {
 	if ($r !== null) {
 		$q = "SELECT *, IF (TIMESTAMPDIFF(WEEK, last_mod , CURRENT_TIMESTAMP()) < 1, 'good', 'expired') as status from apikeys where owner_id='$uid' order by last_mod desc limit 50";
 		if ($res = mysqli_query($db, $q)) {
-			if (mysqli_num_rows($res) > 50) {
+			if (mysqli_num_rows($res) > 50) { // ....
 				$q = "DELETE from apikeys where ((TIMESTAMPDIFF(WEEK, last_mod , CURRENT_TIMESTAMP()) > 1) or active=0) and owner_id='$uid'";
 				mysqli_query($db, $q);
 			}
