@@ -67,7 +67,7 @@ $dbname = "' . $dbname . '";
 			PID INT NOT NULL AUTO_INCREMENT,
 			PRIMARY KEY(PID),
 			owner_id int,
-			api_key char(48) character set utf8 collate utf8_bin not null,
+			api_key char(128) character set utf8 collate utf8_bin not null,
 			user_agent varchar(48),
 			last_mod TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			created_by VARCHAR(45),

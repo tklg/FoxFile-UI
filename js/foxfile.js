@@ -2525,10 +2525,10 @@ header3 font
         this.fakeUpload = function() {
             this.state = 1;
             var _this = this;
-            $('#transfers .file-list #tfile-'+_this.id+' .nameandprogress').addClass('active');
+            $('#transfers .file-list #tfile-'+_this.id).addClass('active');
             $('#transfers .file-list #tfile-'+_this.id+' .file-upload-status').text("Uploading");
             setTimeout(function() {
-                $('#transfers .file-list #tfile-'+_this.id+' .nameandprogress').removeClass('active');
+                $('#transfers .file-list #tfile-'+_this.id).removeClass('active');
                 $('#transfers .file-list #tfile-'+_this.id+' .file-upload-status').text("Done");
                 $('#transfers #badge-transfers .badgeval').text(--dd.numFilesToUpload);    
                 _this.state = 2;
@@ -2691,7 +2691,7 @@ header3 font
                     var chunks = cr.chunkString(buf);
                     var cl = chunks.length;
                     console.log('processing '+cl+' chunks');
-                    $('#transfers .file-list #tfile-'+_this.id+' .nameandprogress').addClass('active');
+                    $('#transfers .file-list #tfile-'+_this.id).addClass('active');
                     var elem = $('#transfers .file-list #tfile-'+_this.id+' .file-upload-progress-bar');
                     var i = 0;
                     function process() {
@@ -2714,7 +2714,7 @@ header3 font
                             process();
                         } else {
                             console.log('finishing');
-                            $('#transfers .file-list #tfile-'+_this.id+' .nameandprogress').removeClass('active');
+                            $('#transfers .file-list #tfile-'+_this.id).removeClass('active');
                             worker.emit('aes.encrypt.finalize');
                             worker.onmessage = function(msg) {
                                 var enc = msg[1].data;

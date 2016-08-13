@@ -231,10 +231,11 @@ if($pageID == 'userexists') {
 if($pageID == 'login') {
 	if (isset($_POST['api_key'])) {
 		$key = sanitize($_POST['api_key']);
-		echo $key;
+		$keyhash = hash('sha512', $key);
+		//echo $key;
 		$ip = $_SERVER['REMOTE_ADDR'];
 		$country = ip_info($ip, "country");
-		$q = "SELECT IF (TIMESTAMPDIFF(WEEK, last_mod , CURRENT_TIMESTAMP()) < 1, 'good', 'expired') as status, active from apikeys where api_key='$key' and created_by='$ip' and country='$country' LIMIT 1";
+		$q = "SELECT IF (TIMESTAMPDIFF(WEEK, last_mod , CURRENT_TIMESTAMP()) < 1, 'good', 'expired') as status, active from apikeys where api_key='$keyhash' and created_by='$ip' and country='$country' LIMIT 1";
 		if ($res = mysqli_query($db, $q)) {
 			if (mysqli_num_rows($res) == 0) {
 				resp(404, "That key does not exist. Please log in first");
@@ -243,7 +244,7 @@ if($pageID == 'login') {
 			if ($r->status === 'expired' || $r->active == 0) {
 				resp(401, "That key has expired. Please log in again");
 			} else {
-				$sql2 = "UPDATE apikeys SET last_mod=NOW() where api_key='$key'";
+				$sql2 = "UPDATE apikeys SET last_mod=NOW() where api_key='$keyhash'";
 				if (mysqli_query($db, $sql2)) {
 					$r = array(
 						'status'=>200,
@@ -275,10 +276,11 @@ if($pageID == 'login') {
 				$userAgent = sanitize(getBrowser().' on '.getOS());
 				$sql = "SELECT api_key from apikeys where owner_id='$oid' and created_by='$ip' and user_agent='$userAgent' and country='$country' and active=1 and TIMESTAMPDIFF(WEEK, last_mod , CURRENT_TIMESTAMP()) < 1 limit 1";
 				if ($res = mysqli_query($db, $sql)) {
-					if (mysqli_num_rows($res) == 0) {
+					//if (mysqli_num_rows($res) == 0) {
 						//create a new token for this login
 						$token = bin2hex(openssl_random_pseudo_bytes(24));
-					    $sql2 = "INSERT INTO apikeys (owner_id, api_key, user_agent, created_by, country) VALUES ('$oid', '$token', '$userAgent', '$ip', '$country')";
+						$tokenhash = hash('sha512', $token);
+					    $sql2 = "INSERT INTO apikeys (owner_id, api_key, user_agent, created_by, country) VALUES ('$oid', '$tokenhash', '$userAgent', '$ip', '$country')";
 					    if (mysqli_query($db, $sql2)) {
 						    $r = array(
 						    	'status'=>200,
@@ -289,7 +291,7 @@ if($pageID == 'login') {
 					    } else {
 					    	resp(500, 'failed to create new token');
 					    }
-					} else {
+					/*} else {
 						$token = mysqli_fetch_object($res)->api_key;
 						$sql2 = "UPDATE apikeys SET last_mod=NOW() where api_key='$token' and owner_id='$oid'";
 						if (mysqli_query($db, $sql2)) {
@@ -303,7 +305,7 @@ if($pageID == 'login') {
 							resp(500, 'failed to update token');
 						}
 
-					}
+					}*/
 				} else {
 					resp(500, 'query failed');
 				}

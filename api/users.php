@@ -81,6 +81,7 @@ function dirSize($path){
 }
 function getUserFromKey($key) {
 	global $db;
+	$key = hash('sha512', $key);
 	$ip = $_SERVER['REMOTE_ADDR'];
 	$q = "SELECT * from users u join (SELECT owner_id from apikeys where api_key='$key' and active=1 and created_by='$ip' and (TIMESTAMPDIFF(WEEK, last_mod , CURRENT_TIMESTAMP()) < 1) LIMIT 1) k on k.owner_id=u.PID LIMIT 1";
 	if ($res = mysqli_query($db, $q)) {
@@ -237,7 +238,7 @@ if ($pageID == 'invalidate_key') {
 	if (!isset($_POST['key'])) {
 		resp(422, 'missing parameters');
 	}
-	$key = sanitize($_POST['key']);
+	$key = hash('sha512', sanitize($_POST['key']));
 	$q = "SELECT active from apikeys where api_key='$key' and owner_id='$uid' limit 1";
 	if ($r = mysqli_query($db, $q)) {
 		if (mysqli_num_rows($r) == 0) {

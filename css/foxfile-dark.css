@@ -18,7 +18,8 @@ light: background: #10171c;
 .foxfile-dark .redfox {
 	color: #ff5722;
 }
-.foxfile-dark header #nav-header {
+.foxfile-dark header #nav-header,
+.foxfile-dark #nav-multiselect {
 	background: #273138;
 }
 .foxfile-dark header #nav-header .user-menu:hover {

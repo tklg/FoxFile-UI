@@ -36,6 +36,7 @@ $uid = -1;
 $uhd = 'demo';
 /*function getUserFromKey($key) {
 	global $db;
+	$key = hash('sha512', $key);
 	$q = "SELECT * from users u join (SELECT owner_id from apikeys where api_key='$key' and active=1 and (TIMESTAMPDIFF(WEEK, last_mod , CURRENT_TIMESTAMP()) < 1) LIMIT 1) k on k.owner_id=u.PID LIMIT 1";
 	if ($res = mysqli_query($db, $q)) {
 		if (mysqli_num_rows($res) == 0) {

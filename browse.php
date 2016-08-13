@@ -57,7 +57,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 <body class="">
 <header class="main">
 	<div class="header-alert alert-hidden">
-		<span class="alert-message">This current site is not permanent. As such, it may be taken offline at any time.</span>
+		<span class="alert-message">This current site is not permanent. As such, it (and your files) may be taken offline at any time.</span>
 		<button class="alert-button alert-dismiss" onclick="localStorage.setItem('has_read_temp_alert', true);$('.header-alert').addClass('alert-hidden');">Dismiss</button>
 	</div>
     <nav class="floatb-2" id="nav-header">

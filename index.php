@@ -36,7 +36,6 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 </head>
 <body>
 <main class="float-2">
-	<!-- add rememberme cookie thing from github -->
 	<span class="back" onclick="removeUser()"><i class="mdi mdi-arrow-left"></i></span>
 	<header class="header float" id="header-main">
 		<img class="float" src="img/default_avatar.png" alt="profile picture" />
