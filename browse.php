@@ -199,7 +199,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 <div class="crumb-div"><i class="mdi mdi-chevron-right"></i></div>
 </script>
 <script type="text/template" id="fm-folder">
-<section class="bar loading" id="bar-<%= hash %>" type="folder" hash="<%= hash %>" parent="<%= parent %>" name="<%= name %>">
+<section class="bar loading" id="bar-<%= hash %>" type="folder" hash="<%= hash %>" parent="<%= parent %>" name="<%= name %>" plain-key="<%= key %>" okey="<%= okey %>">
 	<header>
 		<span class="btn-back"><i class="mdi mdi-chevron-left"></i></span>
 		<span class="filename"><%= name %></span>
@@ -236,7 +236,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 </section>
 </script>
 <script type="text/template" id="fm-file">
-<li class="menubar-content floatb" parent="<%= getParent() %>" type="<%= getType() %>" btype="<%= btype %>" hash="<%= hash %>" id="file-<%= hash %>" name="<%= name %>" shared="<%= shared %>" <%= trashed %>>
+<li class="menubar-content fm-file floatb" parent="<%= getParent() %>" type="<%= getType() %>" btype="<%= btype %>" hash="<%= hash %>" id="file-<%= hash %>" name="<%= name %>" shared="<%= shared %>" <%= trashed %> plain-key="<%= key %>" okey="<%= okey %>">
 	<div class="dragdrop-border"></div>
 	<span class="file-multiselect-checkbox-container">
 		<input type="checkbox" id="cb-<%= hash %>" value="abcdef" />
@@ -270,6 +270,10 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 	   	<div class="indeterminate"></div>
 	</div>
 	<section class="file-detail-viewport">
+		<section class="file-preview-icon file-decrypting-error-icon">
+			<i class="mdi mdi-alert"></i>
+			<span>Decryption failed</span>
+		</section>
 		<section class="file-preview-icon file-decrypting-icon active">
 			<i class="mdi mdi-timer-sand"></i>
 			<span>Decrypting your file...</span>
@@ -458,7 +462,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 	<script src="js/codemirror.js"></script>
     <script src="js/cm-keymap/sublime.js"></script>
     <script src="js/cm-addon/addons.min.js"></script>
-    <link href="js/cm-addon/foldgutter.css" rel="stylesheet" />
+    <!-- <link href="js/cm-addon/foldgutter.css" rel="stylesheet" /> -->
 
     <script src="js/foxfile.js"></script>
     <!-- <script src="//cdnjs.cloudflare.com/ajax/libs/wavesurfer.js/1.0.52/wavesurfer.min.js"></script> -->
@@ -470,10 +474,27 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     if (!localStorage.getItem('has_read_temp_alert')) {
     	$('.header-alert').removeClass('alert-hidden');
     }
+    if (localStorage.getItem('theme'))
+        if (localStorage.getItem('theme') == 'night')
+            $('body').addClass('foxfile-dark');
 
     $(document).ready(function() {
 	    foxfile.init();
     });
+
+/*    var key = CryptoJS.enc.Hex.parse('000102030405060708090a0b0c0d0e0f');
+var iv = CryptoJS.enc.Hex.parse('101112131415161718191a1b1c1d1e1f');
+var aesEncryptor = CryptoJS.algo.AES.createEncryptor(key, { iv: iv });
+var ciphertextPart1 = aesEncryptor.process("Message Part 1");
+var ciphertextPart2 = aesEncryptor.process("Message Part 2");
+var ciphertextPart3 = aesEncryptor.process("Message Part 3");
+var ciphertextPart4 = aesEncryptor.finalize();
+var aesDecryptor = CryptoJS.algo.AES.createDecryptor(key, { iv: iv });
+var plaintextPart1 = aesDecryptor.process(ciphertextPart1);
+var plaintextPart2 = aesDecryptor.process(ciphertextPart2);
+var plaintextPart3 = aesDecryptor.process(ciphertextPart3);
+var plaintextPart4 = aesDecryptor.process(ciphertextPart4);
+var plaintextPart5 = aesDecryptor.finalize();*/
     </script>
 	
 	<?php echo $foxfile_ga_script; ?>

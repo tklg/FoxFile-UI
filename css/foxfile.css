@@ -222,7 +222,8 @@ header.main {
 }
 .redfox {
 	/*color: #BF360C;*/
-	color: #AF2900;
+	/*color: #AF2900;*/
+	color: white;
 }
 nav ul {
 	list-style: none;
@@ -718,7 +719,7 @@ main {
 	width: 100px;
 }
 .bar[type=folder] .file-list {
-	height: calc(100% - 90px);
+	height: calc(100% - 60px);
 	width: 100%;
 	overflow-y: auto;
 	/*display: inline-block;*/
@@ -1096,11 +1097,13 @@ header .file-actions-header {
 	display: none;
 	/*transition: all .15s ease-in-out;*/
 }
-.file-detail-viewport .file-decrypting-icon {
+.file-detail-viewport .file-decrypting-icon,
+.file-detail-viewport .file-decrypting-error-icon {
 	display: none;
 	/*transition: all .15s ease-in-out;*/
 }
-.file-detail-viewport .file-decrypting-icon.active {
+.file-detail-viewport .file-decrypting-icon.active,
+.file-detail-viewport .file-decrypting-error-icon.active {
 	display: flex;
 }
 .file-preview #editor {

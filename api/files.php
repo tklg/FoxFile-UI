@@ -67,7 +67,7 @@ $db = mysqli_connect($dbhost,$dbuname,$dbupass,$dbname);
 $uid = -1;
 $uhd = 'demo';
 if (!isset($_SERVER['HTTP_X_FOXFILE_AUTH']) && !isset($_GET['api_key'])) {
-	if ($pageID !== 'download' && $pageID !== 'get_public_file_info' && $pageID !== 'view')
+	if ($pageID !== 'download' && $pageID !== 'get_public_file_info' && $pageID !== 'get_public_file_tree' && $pageID !== 'view')
 		resp(401, 'missing auth key');
 	$userDetailsFromKey = null;
 } else {
@@ -77,7 +77,7 @@ if (!isset($_SERVER['HTTP_X_FOXFILE_AUTH']) && !isset($_GET['api_key'])) {
 		$userDetailsFromKey = getUserFromKey($_SERVER['HTTP_X_FOXFILE_AUTH']);
 }
 if ($userDetailsFromKey === null) {
-	if ($pageID !== 'download' && $pageID !== 'get_public_file_info' && $pageID !== 'view')
+	if ($pageID !== 'download' && $pageID !== 'get_public_file_info' && $pageID !== 'get_public_file_tree' && $pageID !== 'view')
 		resp(404, 'auth key is invalid');
 } else {
 	$uid = sanitize($userDetailsFromKey->uid);
@@ -173,7 +173,7 @@ function getPath($file) {
 	//echo 'finding path of '. $file;
 	global $uhd, $db;
 	$file = sanitize($file);
-	if ($file == $uhd) return '../files/'.$file;
+	if ($file == $uhd) return './../files/'.$file;
 	$pointer = 0;
 	$path = array();
 	$root = 'files';
@@ -219,7 +219,7 @@ function getPath($file) {
 			$root .= '/' . $value;
 		} else {
 			$root .= '/' . $value . '/' . $file;
-			return '../'.$root;
+			return './../'.$root;
 		}
 		$pointer++;
 	}
@@ -465,6 +465,23 @@ function isShared($file) {
 	$row = mysqli_fetch_array($result);
 	return $row['is_shared'] === '1';
 }
+function isPublic($file) {
+	//echo 'checking public: '. $file;
+	global $db;
+	$file = sanitize($file);
+
+	$q = "SELECT PID from users where root_folder = '$file' limit 1";
+	$res = mysqli_query($db, $q);
+	if (mysqli_num_rows($res) > 0) return false;
+	else {
+		$q = "SELECT parent, is_public from files where hash = '$file' limit 1";
+		$res = mysqli_query($db, $q);
+		$ob = mysqli_fetch_object($res);
+		$isPublic = $ob->is_public;
+		if ($isPublic == 1) return true;
+		else return isPublic($ob->parent);
+	}
+}
 if ($pageID == 'list_files') {
 	$fileParent = sanitize($_POST['hash']);
 	$offset = intval((int) $_POST['offset']);
@@ -526,6 +543,12 @@ if ($pageID == 'list_folders') {
 	//$sql = "SELECT COUNT(*) AS total FROM files WHERE parent = '$fileParent' AND owner_id = '$uid' GROUP BY name";
 	$sql = "SELECT COUNT(DISTINCT name) AS total FROM files WHERE parent = '$fileParent' AND owner_id = '$uid'";
 	if ($result = mysqli_query($db, $sql)) {
+		$key = '';
+		if ($fileParent !== $uhd) {
+			$sql2 = "SELECT enckey from files where hash='$fileParent' and owner_id='$uid' limit 1";
+			$result2 = mysqli_query($db, $sql2);
+			$key = mysqli_fetch_object($result2)->enckey;
+		}
 		$total = mysqli_fetch_object($result)->total;
 		$total = (int) $total;
 		$total = ($total > 0 ? $total : 0);
@@ -540,6 +563,7 @@ if ($pageID == 'list_folders') {
 				$rows[] = $row;
 			}
 			$final = array(
+				'key' => $key,
 				'total_rows' => $total,
 				'offset' => $offset,
 				'limit' => $limit,
@@ -567,11 +591,14 @@ if ($pageID == 'get_file') {
 		resp(500, 'Failed to retrieve file details: '.$self);
 	}
 }
-function getFileTree($hash) {
+function getFileTree($hash, $public) {
 	global $db, $uid;
 	$hash = sanitize($hash);
 	$tree = array();
-	$sql = "SELECT name, hash, parent, size, is_folder FROM files WHERE parent = '$hash' AND owner_id = '$uid'";
+	if (!$public)
+		$sql = "SELECT name, hash, parent, size, is_folder, enckey FROM files WHERE parent = '$hash' AND owner_id = '$uid'";
+	else 
+		$sql = "SELECT name, hash, parent, size, is_folder, enckey FROM files WHERE parent = '$hash'";
 	if ($result = mysqli_query($db, $sql)) {
 		if (mysqli_num_rows($result) == 0) {
 			return $tree;
@@ -581,13 +608,15 @@ function getFileTree($hash) {
 				$tree[] = array(
 					'name' => $res->name,
 					'hash' => $res->hash,
+					'key' => $res->enckey,
 					'parent' => $res->parent,
-					'children' => getFileTree($res->hash)
+					'children' => getFileTree($res->hash, $public)
 				);
 			} else {
 				$tree[] = array(
 					'name' => $res->name,
 					'hash' => $res->hash,
+					'key' => $res->enckey,
 					'parent' => $res->parent,
 					'size' => $res->size
 				);
@@ -602,7 +631,7 @@ if ($pageID == 'get_file_info') {
 	if (!isset($_POST['hash'])) 
 		resp(422, "missing parameters");
 	$self = sanitize($_POST['hash']);
-	$sql = "SELECT name, hash, parent, is_folder FROM files WHERE hash = '$self' AND owner_id = '$uid' LIMIT 1";
+	$sql = "SELECT name, hash, parent, is_folder, enckey FROM files WHERE hash = '$self' AND owner_id = '$uid' LIMIT 1";
 	//$res = getFileInfo($self);
 	//if ($res) {
 	if ($result = mysqli_query($db, $sql)) {
@@ -620,20 +649,57 @@ if ($pageID == 'get_file_tree') {
 	$tree = array();
 
 	foreach ($hashlist as $hash) {
-		$q = "SELECT name, hash, parent, size, is_folder FROM files WHERE hash = '$hash' AND owner_id = '$uid' LIMIT 1";
+		$q = "SELECT name, hash, parent, size, is_folder, enckey FROM files WHERE hash = '$hash' AND owner_id = '$uid' LIMIT 1";
 		if ($result = mysqli_query($db, $q)) {
 			$res = mysqli_fetch_object($result);
 			if ($res->is_folder == '1') {
 				$tree[] = array(
 					'name' => $res->name,
 					'hash' => $res->hash,
+					'key' => $res->enckey,
 					'parent' => $res->parent,
-					'children' => getFileTree($res->hash)
+					'children' => getFileTree($res->hash, false)
 				);
 			} else {
 				$tree[] = array(
 					'name' => $res->name,
 					'hash' => $res->hash,
+					'key' => $res->enckey,
+					'parent' => $res->parent,
+					'size' => $res->size
+				);
+			}
+		}
+	}
+	/*echo '<pre>';
+	echo print_r($tree);*/
+	echo json_encode($tree);
+	die();
+}
+if ($pageID == 'get_public_file_tree') {
+	if (!isset($_POST['hashlist'])) 
+		resp(422, "missing parameters");
+	$multi = sanitize($_POST['hashlist']);
+	$hashlist = explode(',', $multi);
+	$tree = array();
+
+	foreach ($hashlist as $hash) {
+		$q = "SELECT name, hash, parent, size, is_folder, enckey FROM files WHERE hash = '$hash' AND is_public = 1 LIMIT 1";
+		if ($result = mysqli_query($db, $q)) {
+			$res = mysqli_fetch_object($result);
+			if ($res->is_folder == '1') {
+				$tree[] = array(
+					'name' => $res->name,
+					'hash' => $res->hash,
+					'key' => $res->enckey,
+					'parent' => $res->parent,
+					'children' => getFileTree($res->hash, true)
+				);
+			} else {
+				$tree[] = array(
+					'name' => $res->name,
+					'hash' => $res->hash,
+					'key' => $res->enckey,
 					'parent' => $res->parent,
 					'size' => $res->size
 				);
@@ -1150,7 +1216,14 @@ if($pageID == 'view') {
 	}
 
 	if (is_readable($filePath)) {
-		if(isShared($fileName) || getOwner($fileName) == $uid) {
+
+
+		// change this so that files below shared folders can check to see if there is a shared parent directory
+		// because currently this isnt secure
+
+
+		if(isPublic($fileName) || getOwner($fileName) == $uid) {
+		//if(true || getOwner($fileName) == $uid) {
 			$finfo = finfo_open(FILEINFO_MIME_TYPE);
 			$fileType = finfo_file($finfo, $filePath);
 			finfo_close($finfo);
@@ -1183,13 +1256,16 @@ if($pageID == 'view') {
 			resp(404, "Could not find the requested file");
 		}
 	} else {
-		res(404, "Invalid file path provided");
+		resp(404, "Invalid file path provided");
 	}
 }
 if ($pageID == 'move') {
 	$file_multi = sanitize($_POST['file_multi']);
+	$file_data = json_decode($_POST['file_data'], true); // filtered later
 	$target = sanitize($_POST['file_target']);
-	$file_multi_array = explode(',', $file_multi);
+	//$file_multi_array = explode(',', $file_multi);
+	//print_r($file_data);
+	$file_multi_array = $file_data;
 	$file_target_path = getPath($target);
 
 	$isOwner = true;
@@ -1200,7 +1276,9 @@ if ($pageID == 'move') {
 		}
 	}
 	$fails = 0;
-	foreach ($file_multi_array as $hash_self) {
+	foreach ($file_multi_array as $item) {
+		$hash_self = filter_var($item['hash'], FILTER_SANITIZE_STRING);
+		$new_key = filter_var($item['key'], FILTER_SANITIZE_STRING);
 		if ($hash_self == $uhd) {
 			resp(500, 'Cannot move the home directory!');
 		//} else if (strpos(getPath($hash_self), $target) !== false) {
@@ -1227,7 +1305,7 @@ if ($pageID == 'move') {
 			foreach($otherHashes as $hash) {
 				if ($isOwner) {
 					if (rename(getPath($hash), $file_target_path . '/' . $hash)) {
-						if(mysqli_query($db, "UPDATE files SET parent = '$target', lastmod = NOW() WHERE hash='$hash' LIMIT 1")) {
+						if(mysqli_query($db, "UPDATE files SET parent = '$target', enckey = '$new_key', lastmod = NOW() WHERE hash='$hash' LIMIT 1")) {
 							
 						} else {
 							resp(500, "DB move failed!");

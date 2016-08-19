@@ -13,12 +13,28 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     Copyright (C) 2016 Theodore Kluge
     https://tkluge.net
 */
+/*
+http://stackoverflow.com/questions/18346054/how-does-megas-encryption-work-for-sharing
+12.3 Shared folders
 
+The owner of the folder is solely responsible for managing access; shares are non-transitive (shares cannot be created on folders in incoming shares).
+All participants in a shared folder gain cryptographic access through a common share-specific key,
+which is passed from the owner (theoretically, from anyone participating in the share, but this would
+create a significant security risk in the event of a compromise of the core infrastructure) to new
+participants through RSA. All keys of the nodes in a shared folder, including its root node, are encrypted to
+this share key. The party adding a new node to a shared folder is responsible for supplying the appropriate
+node/share-specific key. Missing node/share-specific keys can only be supplied by the share owner.
+
+so the user's basekey encrypts the sharekeys of the folders in root
+the root sharekeys are used to encrypt the sharekeys of the folders directly under it and the enckeys of its files
+each folder's sharekey is used to encrypt the folders under it and its files
+
+to share, the user decrypts the sharekey with the basekey, which is then shared with the link
+the sharekey can then be used to decrypt all keys and files under it
+*/
 (function(foxfile, $, undefined) {
     foxfile.init = function(){
-        if (localStorage.getItem('theme'))
-            if (localStorage.getItem('theme') == 'night')
-                $('body').addClass('foxfile-dark');
+        
         page.init(function() {
             fm.init();
             dd.init();
@@ -27,6 +43,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
     }
     foxfile.logout = function() {
         localStorage.removeItem('api_key');
+        localStorage.removeItem('basekey');
         document.location.href = './logout';
     }
     foxfile.routerbox = {
@@ -289,6 +306,16 @@ header3 font
         for (i = 0; i < fileTree.length; i++) {
             if (fileTree[i].getHash() == hash) return fileTree[i];
         }
+        //return {key: localStorage.getItem('basekey')};
+        //return {key: $('li.menubar-content[hash='+hash+']').attr('plain-key')};
+        //return $.extend(fileTree[0], {key: $('li.menubar-content[hash='+hash+']').attr('plain-key')});
+        var k = $('li.menubar-content.fm-file[hash='+hash+']').attr('plain-key');
+        if (!k) k = $('.bar[type=folder][hash='+hash+']').attr('plain-key');
+        if (!k) k = localStorage.getItem('basekey');
+        return {
+            key: k,
+            getFileFromHash: fileTree[0].getFileFromHash
+        };
     }
     fm.open = function(hash) {
         var item = null;
@@ -317,14 +344,16 @@ header3 font
                     name = "My Files";
                     hash = foxfile_root;
                     parent = 'root';
+                    key = localStorage.getItem('basekey');
                     isFolder = true;
                 } else {
                     name = json.name;
                     hash = json.hash;
                     parent = json.parent;
+                    key = json.enckey;
                     isFolder = json.is_folder == '1' ? true : false;
                 }
-                if (isFolder) item = new FolderBar(name, hash, parent);
+                if (isFolder) item = new FolderBar(name, hash, parent, key);
                 else item = new FileBar(name, hash, parent);
 
                 fm.add(item);
@@ -518,6 +547,7 @@ header3 font
             var template = _.template($('#template-dialog-minibar').html());
             var hashTree = [];
             var nameTree = [];
+            var keyTree = [];
             //var folderTree = [];
             this.limit = 30;
             this.offset = 0;
@@ -550,6 +580,21 @@ header3 font
                         $('.minibar').removeClass('loading');
                         $('#minibar-target').attr('cdir', hash);
                         var json = JSON.parse(result);
+                        if (keyTree.length == 0) {
+                            keyTree.push(localStorage.getItem('basekey'));
+                        } else {
+                            if (json['key'] != '')
+                                keyTree.push(cr.aesDS(json['key'], keyTree[keyTree.length - 1]));
+                        }
+                        keyTree = _.uniq(keyTree);
+                        console.log(nameTree);
+                        console.log(keyTree);
+                        /*if (json['key'] === '') {
+                            $('#minibar-target').attr('cdirkey', localStorage.getItem('basekey'));
+                        } else {
+                            $('#minibar-target').attr('cdirkey', cr.aesDS(json['key'], keyTree[keyTree.length - 1]));
+                        }*/
+                        $('#minibar-target').attr('cdirkey', keyTree[keyTree.length - 1]);
                             // console.log("fm.open("+fHash+") [2] Got response from server: ");
                             // console.log(json);
                         var hasMore = json['more'];
@@ -577,6 +622,7 @@ header3 font
                 if (hashTree.length > 1) {
                     hashTree.pop();
                     nameTree.pop();
+                    keyTree.pop();
                     this.load(hashTree[hashTree.length - 1], nameTree[nameTree.length - 1], true);
                 }
             }
@@ -709,7 +755,7 @@ header3 font
             show: function(file, id) {
                 var footer = new fm.dialog.DialogFooter();
                 footer.addOpt(new fm.dialog.DialogFooterOption('Cancel', 'default', 'fm.dialog.move.hide()'));
-                footer.addOpt(new fm.dialog.DialogFooterOption('Move', 'submit', 'fm.move(\''+id+'\',$(\'#minibar-target\').attr(\'cdir\'))'));
+                footer.addOpt(new fm.dialog.DialogFooterOption('Move', 'submit', 'fm.move(\''+id+'\',$(\'#minibar-target\').attr(\'cdir\'),$(\'#minibar-target\').attr(\'cdirkey\'))'));
                 fm.dialog.minibar = new fm.dialog.MiniBar();
                 fm.dialog.dialog = new fm.dialog.Dialog(
                     id,
@@ -904,9 +950,20 @@ header3 font
         cm.destroy();
     }
     fm.refreshAll = function() {
+        console.log("Reloading all bars");
         for (i = 0; i < fileTree.length; i++) {
             fileTree[i].refresh(true);
         }
+        /*var filePath = fm.calcFilePath();
+        fm.back('all');
+        if (filePath.lastIndexOf('/') == filePath.length - 1)
+            filePath = filePath.substr(0, filePath.length - 1);
+        var loadQueue = filePath.split('/');
+        if (loadQueue.length > 1) {
+            for (i = 1; i < loadQueue.length; i++) {
+                fm.open(loadQueue[i]);
+           }
+        }*/
     }
     fm.rename = function(hash, name) {
         var parent = $('#file-'+hash+'.menubar-content').attr('parent');
@@ -1017,6 +1074,8 @@ header3 font
             console.warn("Folder name cannot be blank.");
         } else {
             var pass = forge.util.encode64(cr.randomBytes());
+            var parentKey = fm.getFromHash(parent).key; // the decrypted parent key used to encrypt this folders key
+            console.log('creating folder with key %c'+pass+" %cand parent key %c"+parentKey+" %c"+name, 'color: red', 'color: gray', 'color: red', 'color:gray');
             $.ajax({
                 url: './api/files/new_folder',
                 type: 'POST',
@@ -1027,7 +1086,7 @@ header3 font
                     //name: cr.aesES(name, pass),
                     name: name,
                     parent: parent,
-                    key: cr.aesES(pass, localStorage.getItem('basekey'))
+                    key: cr.aesES(pass, parentKey)
                 },
                 success: function(result, status, xhr) {
                     fm.dialog.hideCurrentlyActive();
@@ -1051,27 +1110,9 @@ header3 font
             var hashes = [id];
         }
         dl.start((fm.multiSelect.selected.length > 1 || type == 'folder'), hashes);
-        /*if (fm.multiSelect.selected.length > 1 || type == 'folder') {
-            var frame = $("<iframe></iframe>").attr('src', './api/files/download?api_key='+api_key+'&hashlist='+hashes.toString()+"&name="+name+"&type="+type).attr('id', id).css('display', 'none');
-            frame.appendTo('body');
-            var _id = id;
-            setTimeout(function() {
-                $('body > iframe#'+_id).remove();
-            }, 10000);
-            fm.multiSelect.clear();
-            fm.snackbar.create("Downloading files");
-        } else {
-            var frame = $("<iframe></iframe>").attr('src', './api/files/download?api_key='+api_key+'&id='+id+"&name="+name).attr('id', id).css('display', 'none');
-            frame.appendTo('body');
-            var _id = id;
-            setTimeout(function() {
-                $('body > iframe#'+_id).remove();
-            }, 10000);
-            fm.snackbar.create("Downloading file");
-        }*/
         cm.destroy();
     }
-    fm.move = function(file, target) { //handles moving both single and multiple files
+    fm.move = function(file, target, targetKey) { //handles moving both single and multiple files
         if (fm.multiSelect.selected.length < 2) {
             if (!_.isArray(file)) { //if its a single thing
                 var tmp = [file];
@@ -1081,6 +1122,36 @@ header3 font
             file = fm.multiSelect.selected;
         }
         var hashes = _.uniq(file);
+        //var newKeys = new Array(hashes.length);
+        var newData = [];
+
+        // for each hash, get the old parent folder key, decrypt the file key with it, then encrypt the file key with the new parent key
+        for(var i = 0; i < hashes.length; i++) {
+            //console.log('changing key:');
+            var ch = hashes[i];
+            console.log('moving: ' +ch);
+            var parent = fm.getFromHash($('li.menubar-content.fm-file[hash='+ch+']').attr('parent'));
+            if (parent.key == localStorage.getItem('basekey')) {
+                console.log('a '+ch);
+                var oldKey = localStorage.getItem('basekey');
+                var fileKey = $('li.menubar-content.fm-file[hash='+ch+']').attr('plain-key');
+            } else {
+                console.log('b');
+                var oldKey = parent.key;
+                //var fileKey = parent.getFileFromHash(ch).key;
+                var fileKey = $('li.menubar-content.fm-file[hash='+ch+']').attr('plain-key');
+            }
+            var newKey = targetKey;
+            //console.log('old: %c'+oldKey+'\n%cnew: %c'+newKey+'\n%cfile:%c '+fileKey,'color:red','color:black','color:red','color:black','color:red');
+            //var unE = cr.aesDS(fileKey, oldKey);
+            var unE = fileKey;
+            var reE = cr.aesES(unE, newKey);
+            newData.push({
+                hash: ch,
+                key: reE
+            });
+        }
+        //console.log(newData);
         var filesList = hashes.toString();
         $.ajax({
             url: './api/files/move',
@@ -1090,6 +1161,7 @@ header3 font
             },
             data: {
                 file_multi: filesList,
+                file_data: JSON.stringify(newData),
                 file_target: target
             },
             success: function(result, status, xhr) {
@@ -1125,12 +1197,18 @@ header3 font
                 url += 'share/'+link;
                 $('.dialog article .sharelink').val(url).focus().select();
                 var worker = ww.create('crypto');
+                var parentHash = $('li.menubar-content.fm-file[hash='+id+']').attr('parent')
+                console.log('parent: '+parentHash);
+                var parentKey = fm.getFromHash(parentHash).key;
+                if (parentHash == foxfile_root) parentKey = localStorage.getItem('basekey');
+                console.log('key: '+parentKey);
                 worker.emit('aes.decrypt', {
                     content: key,
-                    key: localStorage.getItem('basekey')
+                    key: parentKey
+                    //key: cr.aesDS()
                 });
                 worker.onmessage = function(msg) {
-
+                    console.log(msg[1].data);
                     $('.dialog article .sharekey').val(forge.util.bytesToHex(atob(msg[1].data)));
                     $('.dialog article .sharelinkkey').val(url+'.'+forge.util.bytesToHex(atob(msg[1].data)));
                     $('.dialog article input#sharelink').focus().select();
@@ -1462,11 +1540,16 @@ header3 font
             }
         });
     }
-    var FolderBar = function(name, hash, parent) {
+    var FolderBar = function(name, hash, parent, key) {
         this.dd;
         this.name = name;
         this.hash = hash;
         this.parent = parent;
+        if (key === localStorage.getItem('basekey'))
+            this.key = key;
+        else 
+            this.key = cr.aesDS(key, fm.getFromHash(parent).key);
+        this.okey = key;
         this.hasMore = false;
         this.remaining = 0;
         this.offset = 0;
@@ -1479,6 +1562,12 @@ header3 font
         this.setFiles = function(fileGroup) {
             //$.merge(this.files, fileGroup);
             this.files = fileGroup;
+        }
+        this.getFileFromHash = function(hash) {
+            for (var i = 0; i < this.files.length; i++) {
+                if (this.files[i].hash === hash) return this.files[i];
+            }
+            return null;
         }
         this.refresh = function(fromstart) {
             if (fromstart) {
@@ -1594,7 +1683,9 @@ header3 font
                                 e.stopPropagation();
                                 e.preventDefault();
                                 var target = $(this).attr('hash');
-                                console.log("#bar-" + _this.hash + " .file-list li[hash="+target+"]");
+                                var targetKey = $(this).attr('plain-key');
+                                //console.log("KEY: "+targetKey);
+                                //console.log("#bar-" + _this.hash + " .file-list li[hash="+target+"]");
                                 if (fm.multiSelect.selected.length > 0) {
                                     hash = fm.multiSelect.selected;
                                 } else {
@@ -1602,11 +1693,11 @@ header3 font
                                 }
                                 var hashes = _.uniq(hash);
                                 var hashlist = hashes.toString();
-                                console.log(hashlist, target);
+                                //console.log(hashlist, target);
                                 if (_.contains(hashes, target))
                                     fm.snackbar.create("Cannot move a folder into itself");
                                 else if ($('#bar-' + _this.parent + ' .file-list').children('[hash='+hashes[0]+']').length == 0)
-                                    fm.move(hashlist, target);
+                                    fm.move(hashlist, target, targetKey);
                             }
                         });
                     }
@@ -1655,10 +1746,11 @@ header3 font
                         var hashes = _.uniq(hash);
                         var hashlist = hashes.toString();
                         var target = _this.hash;
+                        var targetKey = _this.key;
                         if (_.contains(hashes, target))
                             fm.snackbar.create("Cannot move a folder into itself");
                         else if ($('#bar-' + _this.hash + ' .file-list').children('[hash='+hashes[0]+']').length == 0)
-                            fm.move(hashlist, target);
+                            fm.move(hashlist, target, _this.key);
                     }
                 });
             }
@@ -1732,6 +1824,10 @@ header3 font
                         id: _this.file.hash
                     },
                     success: function(data, response, xhr) {
+                        /*$('.bar[hash='+_this.hash+']').removeClass('loading');
+                        $('.file-manager .bar[hash='+_this.hash+'] .file-decrypting-icon').removeClass('active').next().addClass('active');
+                        $('.file-manager .bar[hash='+_this.hash+'] .file-preview img').attr('src', "data:image/*;base64,"+ btoa(data));
+                        return;*/
                         var worker = ww.create('crypto');
                         //var key = cr.aesD(xhr.getResponseHeader('X-FoxFile-Key'), localStorage.getItem('basekey'));
                         //console.log(data);
@@ -1739,14 +1835,25 @@ header3 font
                         //var data = btoa(forge.util.hexToBytes(CryptoJS.enc.Hex.stringify(CryptoJS.enc.u8array.parse(data))));
 
                         //var data = CryptoJS.enc.Base64.stringify(CryptoJS.enc.u8array.parse(data));
-                        
-                        // transfer back to raw bytes on server to save space
+                        var key = fm.getFromHash(_this.parent).key;
+
+                        //key = 'asdasdadas';
+
+                        console.log('decrypting %c'+xhr.getResponseHeader('X-FoxFile-Key')+'%c with %c'+key, 'color:red','color:black','color:red');
                         worker.emit('aes.decrypt', {
                             content: xhr.getResponseHeader('X-FoxFile-Key'),
-                            key: localStorage.getItem('basekey')
+                            //key: localStorage.getItem('basekey')
+                            key: key
                         });
                         worker.onmessage = function(msg) {
+                            worker.emit('reset');
                             var key = msg[1].data;
+                            //key = 'asdadadsad';
+                            //console.log('result: '+key);
+                            if (key.length == 0) {
+                                console.error('key decryption failed');
+                            }
+
                             /*var iv = data.substr(0,cr.ivLength);
                             console.log(iv);
                             var chunks = cr.chunkString(data.substr(cr.ivLength));*/
@@ -1756,15 +1863,16 @@ header3 font
                             /*console.log(xhr.getResponseHeader('X-FoxFile-Key'));;
                             console.log('data: '+data);
                             console.log('key: '+ key);*/
+                            //console.log(data);
                             console.log('processing '+cl+' chunks');
                             var i = 0;
+                            console.log('decrypting %c'+_this.name+'%c with %c'+key,'color:red','color:black','color:red');
                             function process() {
                                 //console.log('starting chunk '+i+' of '+cl);
                                 if (i < cl) {
                                     worker.emit('aes.decrypt.process', {
                                         content: chunks.shift(),
-                                        key: key/*,
-                                        iv: iv*/
+                                        key: key
                                     });
                                 }
                             }
@@ -1780,12 +1888,14 @@ header3 font
                                         //console.log('got '+cr.chunkString(msg[1].data).length+' chunks');
                                         worker.emit('close');
                                         $('.file-manager .bar[hash='+_this.hash+']').removeClass('loading');
+                                        $('.file-manager .bar[hash='+_this.hash+'] .file-decrypting-error-icon').removeClass('active');
                                         $('.file-manager .bar[hash='+_this.hash+'] .file-decrypting-icon').removeClass('active').next().addClass('active');
                                         //console.log(msg[1].data);
                                         switch (_this.file.btype) {
                                             case 'text':
                                                 te.init();
                                                 te.setValue(msg[1].data, _this.name);
+                                                //te.setValue(data+'\n'+msg[1].data, _this.name);
                                                 break;
                                             case 'image':
                                                 //var url = URL.createObjectURL(msg[1].data)
@@ -1819,8 +1929,10 @@ header3 font
 
                         worker.onerror = function(e) {
                             $('.file-manager .bar[hash='+_this.hash+']').removeClass('loading');
-                            $('.file-manager .bar[hash='+_this.hash+'] .file-decrypting-icon').removeClass('active').next().addClass('active');
+                            $('.file-manager .bar[hash='+_this.hash+'] .file-decrypting-icon').removeClass('active');
+                            $('.file-manager .bar[hash='+_this.hash+'] .file-decrypting-error-icon').addClass('active');
                             // display some error instead of the preview
+                            console.error('decryption failed');
                             worker.emit('close');
                         }
                     },
@@ -1926,7 +2038,17 @@ header3 font
         this.parent = parent;
         this.icon = icon;
         this.hash = hash;
-        this.key = key;
+        this.okey = key;
+        //console.log(name+ ' OKEY: %c'+key, 'color:blue');
+        //console.log(fm.getFromHash(parent).key);
+        this.key = null;
+        //console.log(name + " " + parent);
+        //console.log(fm.getFromHash(parent));
+        if (trashed == '0') {
+            this.key = cr.aesDS(key, fm.getFromHash(parent).key);
+            //this.key = cr.aesDS(key, $('li.menubar-content[hash='+parent+']').attr('plain-key'));
+        }
+        //console.log('FILEKEY: '+this.key);
         this.size = size;
         this.trashed = trashed == '0' ? '' : 'trashed';
         this.canPreview = isPreviewable(this);
@@ -2252,6 +2374,9 @@ header3 font
         e.preventDefault();
         var hash = $(elem).attr('hash');
         var parent = $(elem).attr('parent');
+        if (elem instanceof HTMLInputElement) {
+            parent = fm.getFromHash(hash).parent;
+        }
         //var parent;
         console.log(internal);
         if (internal) return;
@@ -2270,8 +2395,12 @@ header3 font
         var nextAvailablePositionInQueue = queue.getNextPos();
         var parentParent = $('#bar-'+parent).attr('parent');
         var parentName = $('#bar-'+parent).attr('name');
-        var tempFolder = new Folder(nextAvailablePositionInQueue, parentName, parent, parentParent, true);
+        var equivName = $('#bar-'+hash).attr('name');
+        //var tempFolder = new Folder(nextAvailablePositionInQueue, parentName, parent, parentParent, true);
+        var tempFolder = new Folder(nextAvailablePositionInQueue, equivName, hash, parent, true, hash);
         tempFolder.hash = hash;
+        console.log('creating temp folder: '+parent);
+        //console.log(tempFolder);
         //console.log("next available tree queue position: " + nextAvailablePositionInQueue);
         queue.add(tempFolder);
 
@@ -2290,7 +2419,7 @@ header3 font
                     var item = items[i].webkitGetAsEntry();
                     if (item) {
                         traverseFileTree(nextAvailablePositionInQueue, item, tempFolder);
-                        }
+                    }
                 }
             }
         } else if (ua.ua == 'firefox' && e.dataTransfer) {
@@ -2315,7 +2444,7 @@ header3 font
             for (var i = 0; i < items.length; i++) {
                 if (items[i].getAsEntry) {
                     var item = items[i].getAsEntry();
-                        if (item) {
+                    if (item) {
                         traverseFileTree(nextAvailablePositionInQueue, item, tempFolder);
                     }
                 }
@@ -2438,14 +2567,15 @@ header3 font
             readEntries();
         }
     }
-    function Folder(posInQueue, name, path, parent, sysf) {
+    function Folder(posInQueue, name, path, parent, sysf, sysfhash) {
         this.sysf = sysf;
         this.posInQueue = posInQueue;
         this.name = name;
         this.path = path;
         this.parent = parent;
+        this.parentKey = null;
         this.id = queue.getNextId();
-        this.hash = null;
+        this.hash = sysfhash;
         this.children = [];
         this.state = 0;
         this.password = null;
@@ -2466,9 +2596,22 @@ header3 font
             this.children.push(item);
             //this.uploaded.push(false);
         }
-        this.recursiveHash = function() {
-            if (!this.sysf)
-                if (this.hash == null) this.generateHash();
+        this.recursiveHash = function(parentKey) {
+
+            if (parentKey == null) {
+            }
+
+            if (!this.sysf) {
+                if (this.hash == null) this.generateHash(parentKey);
+                this.password = forge.util.encode64(cr.randomBytes());
+                this.parentKey = parentKey;
+                console.log('creating folder with key %c'+this.password+" %cand parent key %c"+this.parentKey+" %c"+this.name, 'color: red', 'color: black', 'color: red', 'color:black');
+            } else {
+                //console.log(this);
+                parentKey = fm.getFromHash(sysfhash).key;
+                this.password = parentKey;
+                console.log('creating temporary system folder with password %c'+parentKey,'color:red');
+            }
 
             // sort the list of children
             var tmp = [];
@@ -2485,14 +2628,14 @@ header3 font
 
             for (var i = 0; i < this.children.length; i++) {
                 if (this.children[i] instanceof Folder)
-                    this.children[i].recursiveHash();
+                    this.children[i].recursiveHash(this.password);
                 else 
-                    this.children[i].generateHash();
+                    this.children[i].generateHash(this.password);
             }
         }
-        this.generateHash = function() {
+        this.generateHash = function(parentKey) {
             //console.log("Generating hash for FOLDER: " + this.name + " with parent " + this.parent.name);
-            this.password = forge.util.encode64(cr.randomBytes());
+            //this.password = forge.util.encode64(cr.randomBytes());
             if (this.hash == null) {
                 this.addToTransfersPage();
                 var _this = this;
@@ -2506,7 +2649,7 @@ header3 font
                         //name: cr.aesES(_this.name, this.password),
                         name: _this.name,
                         parent: _this.parent.hash,
-                        key: cr.aesES(this.password, localStorage.getItem('basekey'))
+                        key: cr.aesES(_this.password, parentKey) // replace basekey with the password of the parent folder. if the parent is root, use basekey
                     },
                     success: function(result) {
                         var json = JSON.parse(result);
@@ -2550,10 +2693,11 @@ header3 font
                     name: _this.name,
                     hash: _this.hash,
                     parent: _this.parent.hash,
-                    key: cr.aesES(this.password, localStorage.getItem('basekey'))
+                    key: cr.aesES(_this.password, _this.parentKey)
                 },
                 beforeSend: function() {
-                    console.log(_this.name);
+                    //console.log(_this.name);
+                    console.log('uploading %c'+_this.name+" %cwith key%c "+cr.aesES(_this.password, _this.parentKey), 'color:red', 'color:black','color:red');
                     $('#transfers .file-list #tfile-'+_this.id).addClass('active');
                     $('#transfers .file-list #tfile-'+_this.id+' .file-upload-status').text("Creating");
                 },
@@ -2630,6 +2774,7 @@ header3 font
         this.name = name;
         this.hash = null;
         this.parent = parent;
+        this.parentKey = null;
         this.path = path;
         this.id = queue.getNextId();
         this.state = 0;
@@ -2651,9 +2796,11 @@ header3 font
             //return getType(this.item.name);
             return "File";
         }
-        this.generateHash = function() {
+        this.generateHash = function(parentKey) {
             //console.log("Generating hash for FILE: " + this.name + " with parent " + this.parent.name);
             this.password = forge.util.encode64(cr.randomBytes());
+            this.parentKey = parentKey;
+            console.log('creating file   with key %c'+this.password+" %cand parent key %c"+this.parentKey+" %c"+this.name, 'color: red', 'color: black', 'color: red', 'color:black');
             if (this.hash == null) {
                 this.addToTransfersPage();
                 var _this = this;
@@ -2694,6 +2841,7 @@ header3 font
                     $('#transfers .file-list #tfile-'+_this.id).addClass('active');
                     var elem = $('#transfers .file-list #tfile-'+_this.id+' .file-upload-progress-bar');
                     var i = 0;
+                    console.log('encrypting %c'+_this.name+"%c with%c "+_this.password, 'color:red','color:black','color:red');
                     function process() {
                         //console.log('starting chunk '+(i+1)+' of '+cl);
                         elem.css({
@@ -2701,6 +2849,7 @@ header3 font
                         }).attr({value: (i+1), max: cl});
                         
                         if (i < cl) {
+                            //console.log('encrypting part: %c'+chunks[0], 'color:red');
                             worker.emit('aes.encrypt.process', {
                                 content: chunks.shift(),
                                 key: _this.password
@@ -2717,6 +2866,7 @@ header3 font
                             $('#transfers .file-list #tfile-'+_this.id).removeClass('active');
                             worker.emit('aes.encrypt.finalize');
                             worker.onmessage = function(msg) {
+                                //console.log('encrypt result: %c'+msg[1].data,'color:red');
                                 var enc = msg[1].data;
                                 var bytes = [];
                                 for (var i = 0; i < enc.length; i += 512) {
@@ -2730,12 +2880,15 @@ header3 font
                                 }
                                 //var bytes = CryptoJS.enc.u8array.stringify(CryptoJS.enc.Base64.parse(msg[1].data));
                                 _this.item = new File([new Blob(bytes)], _this.name);
+                                console.log('encrypting %c'+_this.password+"%c with%c "+_this.parentKey, 'color:red','color:black','color:red');
                                 worker.emit('aes.encrypt', {
                                     content: _this.password,
-                                    key: localStorage.getItem('basekey')
+                                    //key: localStorage.getItem('basekey')
+                                    key: _this.parentKey
                                 });
                                 worker.onmessage = function(msg) {
                                     _this.password = msg[1].data;
+                                    console.log('new password: %c'+_this.password, 'color:red');
                                     $('#transfers .file-list #tfile-'+_this.id+' .file-upload-status').text("Waiting");
                                     worker.emit('close');
                                     _this.upload(fake);
@@ -2823,6 +2976,7 @@ header3 font
                 processData: false,
                 contentType: false,
                 beforeSend: function() {
+                    console.log('uploading %c'+_this.name+" %cwith key%c "+_this.password, 'color:red', 'color:black','color:red');
                     $('#transfers .file-list #tfile-'+_this.id).addClass('active');
                     $('#transfers .file-list #tfile-'+_this.id+' .file-upload-status').text("Uploading");
                 },
@@ -2882,6 +3036,7 @@ header3 font
         this.name = name;
         this.hash = null;
         this.parent = parent;
+        this.parentKey = null;
         this.path = path;
         this.id = queue.getNextId();
         this.state = 0;
@@ -2903,9 +3058,10 @@ header3 font
         this.getType = function() {
             return "File";
         }
-        this.generateHash = function() {
+        this.generateHash = function(parentKey) {
             //console.log("Generating hash for FILE: " + this.name + " with parent " + this.parent.name);
             this.password = forge.util.encode64(cr.randomBytes());
+            this.parentKey = parentKey;
             if (this.hash == null) {
                 this.addToTransfersPage();
                 var _this = this;
@@ -3013,7 +3169,8 @@ header3 font
                                 _this.item = new File([new Blob(bytes)], _this.name);
                                 worker.emit('aes.encrypt', {
                                     content: _this.password,
-                                    key: localStorage.getItem('basekey')
+                                    //key: localStorage.getItem('basekey')
+                                    key: _this.parentKey
                                 });
                                 worker.onmessage = function(msg) {
                                     _this.password = msg[1].data;
@@ -3287,7 +3444,7 @@ header3 font
             if (!this.trees[posInQueue].started) { // not needed, because setTimeout SHOULD work
                 console.log("%cStarting %cTree traversal of tree ["+posInQueue+"]", "color: green;font-weight:bold", "color: gray");
                 this.trees[posInQueue].started = true;
-                this.trees[posInQueue].root.recursiveHash();
+                this.trees[posInQueue].root.recursiveHash(null);
             }
         }
         this.triggerDone = function(posInQueue) {
@@ -3413,11 +3570,15 @@ header3 font
             if (items.length) {
                 for (var i = 0; i < items.length; i++) {
                     if (items[i].children) {
-                        var f = new DownloadedFolder(this, items[i].name, items[i].hash);
+                        //var f = new DownloadedFolder(this, parent, items[i].name, items[i].hash, items[i].key);
+                        //console.log('adding folder: '+items[i].name);
+                        var f = new DownloadedFolder(this, items[i].name, items[i].hash, items[i].key, parent.key);
                         parent.addChild(f);
                         this.recursiveAdd(f, items[i].children);
                     } else {
-                        var f = new DownloadedFile(this, items[i].name, items[i].hash, items[i].size);
+                        //var f = new DownloadedFile(this, parent, items[i].name, items[i].hash, items[i].size, items[i].key);
+                        //console.log('adding file: '+items[i].name);
+                        var f = new DownloadedFile(this, items[i].name, items[i].hash, items[i].size, items[i].key, parent.key);
                         f.addToTransfersPage();
                         parent.addChild(f);
                         this.add(f);
@@ -3473,9 +3634,12 @@ header3 font
             this.first.save();
         }
     }
-    function DownloadTree(name) {
+    function DownloadTree(name, hash, key) {
         this.name = name;
-        this.root = new DownloadedFolder(name, '/');
+        console.log('adding temp system folder to download tree');
+        // 5CTBI16VyBYobY/UQkTnYRuO2cz8Xx6gQbPmlxq8C20=
+        this.root = new DownloadedFolder(null, name, hash, key, fm.getFromHash($('li.menubar-content.fm-file[hash='+hash+']').attr('parent')).key, true);
+        //this.root = new DownloadedFolder(null, name, hash, key, fm.getFromHash(hash).key);
         this.file = new JSZip();
         this.zip = function() {
             this.recursiveAdd(this.file, this.root.children);
@@ -3507,14 +3671,16 @@ header3 font
             this.svdb();
         }
     }
-    function DownloadedFile(q, name, hash, size) {
+    function DownloadedFile(q, name, hash, size, key, parentKey) {
+        this.q = q;
         this.id = hash;
         this.name = name;
         this.size = size;
         this.hash = hash;
-        this.key = null;
+        this.okey = key;
+        this.key = key;
+        this.parentKey = parentKey;
         this.data = null;
-        this.q = q;
         this.setName = function(name) {
             this.name = name;
         }
@@ -3564,6 +3730,7 @@ header3 font
                 success: function(data, response, xhr) {
                     self.data = data;
                     self.key = xhr.getResponseHeader('X-FoxFile-Key');
+                    self.okey = xhr.getResponseHeader('X-FoxFile-Key');
                     $('#transfers .file-list #tfile-'+self.id).removeClass('active');
                     $('#transfers .file-list #tfile-'+self.id+' .file-upload-status').text("Waiting");
                     self.decrypt();
@@ -3580,27 +3747,11 @@ header3 font
             $('#transfers .file-list #tfile-'+this.id+' .file-upload-status').text("Decrypting");
 
             var self = this;
-            /*var worker = ww.create('crypto');
-            var key = cr.aesD(this.key, localStorage.getItem('basekey'));
-            worker.emit('aes.decrypt', {
-                content: self.data,
-                key: key
-            });
-            worker.onmessage = function(msg) {
-                self.data = msg[1].data;
-                dd.numFilesToDisplay--;
-                //$('#transfers .file-list #tfile-'+self.id).removeClass('active');
-                $('#transfers .file-list #tfile-'+self.id+' .file-upload-status').text("Waiting");
-                $('#transfers #badge-transfers .badgeval').text(--dl.numFilesToDownload);
-                self.q.start()
-                worker.emit('close', {
-                    content: 'pls'
-                });
-            }*/
+            //console.log('key: %c'+self.key,'color:red');
             var worker = ww.create('crypto');
             worker.emit('aes.decrypt', {
                 content: self.key,
-                key: localStorage.getItem('basekey')
+                key: self.parentKey
             });
             worker.onmessage = function(msg) {
                 var key = msg[1].data;
@@ -3685,11 +3836,27 @@ header3 font
             dd.numFilesToDisplay++;
         }
     }
-    function DownloadedFolder(q, name, hash) {
+    function DownloadedFolder(q, name, hash, key, parentKey, sysf) {
         this.q = q;
+        /*if (!parent) {
+            this.parent = {key: fm.getFromHash($('li.menubar-content[hash='+hash+']').attr('parent')).key};
+        } else {
+            this.parent = parent;
+        }*/
         this.name = name;
         this.hash = hash;
         //this.path = path;
+        this.okey = key;
+        this.parentKey = parentKey;
+        if (sysf)
+            this.key = parentKey;
+        else 
+            this.key = cr.aesDS(key, this.parentKey);
+
+        /*console.log('name: %c'+this.name,'color:blue');
+        console.log('key: %c '+key,'color:red');
+        console.log('parent: %c'+parentKey,'color:red');
+        console.log('decr:%c '+this.key,'color:red');*/
         this.children = [];
         this.setName = function(name) {
             this.name = name;
@@ -3723,8 +3890,9 @@ header3 font
             success: function(result, status, xhr) {
                 var json = JSON.parse(result);
                 if (!isTree(json)) {
+                    console.log("single");
                     var q = new DownloadQueue();
-                    var f = new DownloadedFile(q, json[0].name, json[0].hash, json[0].size);
+                    var f = new DownloadedFile(q, json[0].name, json[0].hash, json[0].size, json[0].key, fm.getFromHash($('li.menubar-content.fm-file[hash='+json[0].hash+']').attr('parent')).key);
                     f.addToTransfersPage();
                     q.add(f);
                     for (var i = 0; i < fm.simultaneousDownloads; i++) {
@@ -3733,7 +3901,7 @@ header3 font
                 } else {
                     console.log('multi: '+json[0].hash);
 
-                    var t = new DownloadTree(json[0].name);
+                    var t = new DownloadTree(json[0].name, json[0].hash, json[0].key);
                     var q = new DownloadQueue(t);
 
                     q.recursiveAdd(t.root, json);
@@ -3826,7 +3994,7 @@ YM      6  M   YP   MM
                 cm.menu.append(new MenuItem(cm.menu, "Upload Folder", "folder-upload", "$('#dd-folder-upload').attr('hash','"+hash+"').click()").get());
                 cm.menu.append(new MenuItem(cm.menu, "New Folder", "folder-plus", "fm.dialog.newFolder.show('"+name+"','"+hash+"')", "Alt+N").get());
                 cm.menu.append('<hr class="nav-vert-divider">');
-                //cm.menu.append(new MenuItem(cm.menu, "Get public link", "link", "fm.dialog.share.show('"+name+"','"+hash+"')", "L").get());
+                cm.menu.append(new MenuItem(cm.menu, "Get public link", "link", "fm.dialog.share.show('"+name+"','"+hash+"')", "L").get());
                 cm.menu.append(new MenuItem(cm.menu, "Move", "folder-move", "fm.dialog.move.show('"+name+"','"+hash+"')", "m").get());
                 cm.menu.append(new MenuItem(cm.menu, "Refresh", "refresh", "fm.refresh('"+hash+"')", "Alt+R").get());
             }
@@ -3852,7 +4020,7 @@ YM      6  M   YP   MM
                 cm.menu.append(new MenuItem(cm.menu, "Upload Folder", "folder-upload", "$('#dd-folder-upload').attr('hash','"+hash+"').click()").get());
                 cm.menu.append(new MenuItem(cm.menu, "New Folder", "folder-plus", "fm.dialog.newFolder.show('"+name+"','"+hash+"')", "Alt+N").get());
                 cm.menu.append('<hr class="nav-vert-divider">');
-                //fcm.menu.append(new MenuItem(cm.menu, "Get public link", "link", "fm.dialog.share.show('"+name+"','"+hash+"')", "L").get());
+                cm.menu.append(new MenuItem(cm.menu, "Get public link", "link", "fm.dialog.share.show('"+name+"','"+hash+"')", "L").get());
                 cm.menu.append(new MenuItem(cm.menu, "Move", "folder-move", "fm.dialog.move.show('"+name+"','"+hash+"')", "m").get());
                 cm.menu.append(new MenuItem(cm.menu, "Refresh", "refresh", "fm.refresh('"+parentHash+"')", "Alt+R").get());
             } else if (self.attr('btype') == 'file') {
@@ -3896,7 +4064,7 @@ YM      6  M   YP   MM
                 cm.menu.append(new MenuItem(cm.menu, "Upload Folder", "folder-upload", "$('#dd-folder-upload').attr('hash','"+hash+"').click()").get());
                 cm.menu.append(new MenuItem(cm.menu, "New Folder", "folder-plus", "fm.dialog.newFolder.show('"+name+"','"+hash+"')", "Alt+N").get());
                 cm.menu.append('<hr class="nav-vert-divider">');
-                //cm.menu.append(new MenuItem(cm.menu, "Get public link", "link", "fm.dialog.share.show('"+name+"','"+hash+"')", "L").get());
+                cm.menu.append(new MenuItem(cm.menu, "Get public link", "link", "fm.dialog.share.show('"+name+"','"+hash+"')", "L").get());
                 cm.menu.append(new MenuItem(cm.menu, "Move", "folder-move", "fm.dialog.move.show('"+name+"','"+hash+"')", "m").get());
                 cm.menu.append(new MenuItem(cm.menu, "Refresh", "refresh", "fm.refresh('"+hash+"')", "Alt+R").get());
             }
@@ -4123,7 +4291,7 @@ YM      6  M   YP   MM
             }
         });
         this.emit('init', {
-            basekey: localStorage.getItem('basekey'),
+            //basekey: localStorage.getItem('basekey'),
             privkey: localStorage.getItem('privkey'),
             pubkey: localStorage.getItem('pubkey')
         });

@@ -214,7 +214,12 @@ if ($pageID == 'update') {
 		}
 		/*$_SESSION['foxfile_email'] = $val;
 		$_SESSION['foxfile_user_md5'] = md5($val);*/
-		$q = "UPDATE users SET email='$val' WHERE root_folder='$uhd' LIMIT 1";
+		$bytes;
+		if (function_exists('random_bytes'))
+			$bytes = bin2hex(random_bytes(20));
+		else 
+			$bytes = bin2hex(openssl_random_pseudo_bytes(20));
+		$q = "UPDATE users SET email='$val', account_status='$bytes' WHERE root_folder='$uhd' LIMIT 1";
 	} else if (isset($_POST['pass'])) {
 		$p = sanitize($_POST['pass']);
 		$p2 = sanitize($_POST['pass2']);
@@ -274,7 +279,7 @@ if ($pageID == 'remove') {
 			$q = "DELETE from apikeys where owner_id='$uid'";
 			$q2 = "DELETE from files where owner_id='$uid'";
 			$q3 = "DELETE from shared where owner_id='$uid'";
-			$q4 = "DELETE from users where PID='$uid'";
+			$q4 = "DELETE from users where PID='$uid' limit 1";
 			function deleteDir($path) {
 				if (!isset($path) || !$path || $path == '' || $path == '/' || $path == '\\') die();
 				foreach(glob("{$path}/*") as $file) {

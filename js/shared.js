@@ -232,6 +232,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
         this.ziptree = ziptree;
         this.queue = [];
         this.first = null;
+        this.second = true;
         this.stopped = 0;
         this.started = 0;
         // add all files to download, fetch data and decrypt, then add to downloadtree to be structured if there is more than 1 file, else save the file
@@ -244,11 +245,13 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
             if (items.length) {
                 for (var i = 0; i < items.length; i++) {
                     if (items[i].children) {
-                        var f = new DownloadedFolder(this, items[i].name, items[i].hash);
+                        //var f = new DownloadedFolder(this, items[i].name, items[i].hash);
+                        var f = new DownloadedFolder(this, items[i].name, items[i].hash, items[i].key, parent.key);
                         parent.addChild(f);
                         this.recursiveAdd(f, items[i].children);
                     } else {
-                        var f = new DownloadedFile(this, items[i].name, items[i].hash, items[i].size);
+                        //var f = new DownloadedFile(this, items[i].name, items[i].hash, items[i].size);
+                        var f = new DownloadedFile(this, items[i].name, items[i].hash, items[i].size, items[i].key, parent.key);
                         f.addToTransfersPage();
                         parent.addChild(f);
                         this.add(f);
@@ -306,9 +309,11 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
             this.first.save();
         }
     }
-    function DownloadTree(name) {
+    function DownloadTree(name, hash, key) {
+        console.log('adding temp system folder to download tree');
         this.name = name;
-        this.root = new DownloadedFolder(name, '/');
+        //this.root = new DownloadedFolder(name, '/');
+        this.root = new DownloadedFolder(null, name, hash, key, shared.deckey, true);
         this.file = new JSZip();
         this.zip = function() {
             this.recursiveAdd(this.file, this.root.children);
@@ -340,12 +345,16 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
             this.svdb();
         }
     }
-    function DownloadedFile(q, name, hash, size) {
+    function DownloadedFile(q, name, hash, size, key, parentKey, single) {
+        this.q = q;
         this.id = hash;
         this.name = name;
         this.size = size;
         this.hash = hash;
-        this.key = null;
+        this.okey = key;
+        this.key = key;
+        //if (single) this.key = parentKey;
+        this.parentKey = parentKey;
         this.data = null;
         this.q = q;
         this.setName = function(name) {
@@ -382,6 +391,7 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
                 success: function(data, response, xhr) {
                     self.data = data;
                     self.key = xhr.getResponseHeader('X-FoxFile-Key');
+                    self.okey = xhr.getResponseHeader('X-FoxFile-Key');
                     $('#transfers .file-list #tfile-'+self.id).removeClass('active');
                     $('#transfers .file-list #tfile-'+self.id+' .file-upload-status').text("Waiting");
                     self.decrypt();
@@ -399,11 +409,18 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
 
             var self = this;
             var worker = ww.create('crypto');
-            worker.emit('aes.decrypt', {
-                content: self.key,
-                key: shared.deckey
-            });
+            if (!single) {
+                worker.emit('aes.decrypt', {
+                    content: self.key,
+                    key: self.parentKey
+                });
+            }
+            console.log('file name: %c'+this.name,'color:blue');
+            console.log('key: %c '+this.key,'color:red');
+            console.log('parent: %c'+this.parentKey,'color:red');
+
             worker.onmessage = function(msg) {
+            console.log('decr:%c '+msg[1].data,'color:red');
                 var key = msg[1].data;
                 var chunks = cr.chunkString(self.data);
                 delete self.data;
@@ -445,6 +462,9 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
                     content: 'pls'
                 });
             }
+            if (single) {
+                worker.onmessage([{pls: 'no'}, {data: self.parentKey}]);
+            }
         }
         this.save = function() {
             var self = this;
@@ -477,11 +497,27 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
             //dd.numFilesToDisplay++;
         }
     }
-    function DownloadedFolder(q, name, hash) {
+    function DownloadedFolder(q, name, hash, key, parentKey, sysf) {
         this.q = q;
         this.name = name;
         this.hash = hash;
         //this.path = path;
+        this.okey = key;
+        this.parentKey = parentKey;
+        console.log('folder name: %c'+this.name,'color:blue');
+        if (!sysf && q.second) {
+            console.log('second');
+            this.key = parentKey;
+            q.second = false;
+        } else {
+            if (sysf)
+                this.key = parentKey;
+            else 
+                this.key = cr.aesDS(key, this.parentKey);
+        }
+        console.log('key: %c '+key,'color:red');
+        console.log('parent: %c'+parentKey,'color:red');
+        console.log('decr:%c '+this.key,'color:red');
         this.children = [];
         this.setName = function(name) {
             this.name = name;
@@ -505,18 +541,20 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
         console.log('downloading');
         $.ajax({
             type: 'POST',
-            url: './../api/files/get_public_file_info',
+            url: './../api/files/get_public_file_tree',
             headers: {
                 'X-Foxfile-Auth': api_key
             },
             data: {
-                hash: hashlist[0]
+                hashlist: hashlist[0]
             },
             success: function(result, status, xhr) {
                 var json = JSON.parse(result);
                 if (!isTree(json)) {
+                    console.log('single');
                     var q = new DownloadQueue();
-                    var f = new DownloadedFile(q, json[0].name, json[0].hash, json[0].size);
+                    //var f = new DownloadedFile(q, json[0].name, json[0].hash, json[0].size);
+                     var f = new DownloadedFile(q, json[0].name, json[0].hash, json[0].size, json[0].key, shared.deckey, true);
                     f.addToTransfersPage();
                     q.add(f);
                     for (var i = 0; i < shared.simultaneousDownloads; i++) {
@@ -525,7 +563,8 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
                 } else {
                     console.log('multi: '+json[0].hash);
 
-                    var t = new DownloadTree(json[0].name);
+                    //var t = new DownloadTree(json[0].name);
+                     var t = new DownloadTree(json[0].name, json[0].hash, json[0].key);
                     var q = new DownloadQueue(t);
 
                     q.recursiveAdd(t.root, json);
@@ -557,8 +596,8 @@ MM88MMM  ,adPPYba,  8b,     ,d8  MM88MMM  88  88   ,adPPYba,
         //console.log('Creating new '+which+' worker');
         if (window.Worker) {
             switch (which) {
-                case 'crypto': return new FoxFileWorker('./../js/ww_crypt.js'/*+'?'+btoa(cr.randomBytes(2))*/);
-                case 'xhr': return new FoxFileWorker('./../js/ww_xhr.js'/*+'?'+btoa(cr.randomBytes(2))*/);
+                case 'crypto': return new FoxFileWorker('./../js/ww_crypt.js'+'?'+btoa(cr.randomBytes(2)));
+                case 'xhr': return new FoxFileWorker('./../js/ww_xhr.js'+'?'+btoa(cr.randomBytes(2)));
                 default: return false;
             }
         }
@@ -679,6 +718,12 @@ Y88b  d88P 888  T88b
         //return decodeURIComponent(CryptoJS.AES.decrypt(b64, key).toString(CryptoJS.enc.Utf8));
         //return CryptoJS.AES.decrypt(b64, key).toString(CryptoJS.enc.Utf16);
         //return CryptoJS.AES.decrypt(b64, key).toString();
+    }
+    cr.aesES = function(str, key) {
+        return CryptoJS.AES.encrypt(str, key).toString();
+    }
+    cr.aesDS = function(str, key) {
+        return CryptoJS.AES.decrypt(str, key).toString(CryptoJS.enc.Utf8);
     }
     cr.rsaE = function(str) {
         var privk = forge.pki.decryptRsaPrivateKey(localStorage.getItem('privkey'), localStorage.getItem('basekey'));

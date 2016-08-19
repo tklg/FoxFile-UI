@@ -24,7 +24,7 @@ this.onmessage = function(e) {
 
 	switch (type) {
 		case 'init':
-			basekey = data.basekey;
+			//basekey = data.basekey;
 			privkey = data.privkey;
 			pubkey = data.pubkey;
 			break;
@@ -49,7 +49,8 @@ this.onmessage = function(e) {
 				iv = CryptoJS.lib.WordArray.random(ivLength / 3 * 2);
 				addiv = true;
 			}
-			if (!cryptor) cryptor = CryptoJS.algo.AES.createEncryptor(data.key, {iv: iv});
+			//if (!cryptor) cryptor = CryptoJS.algo.AES.createEncryptor(data.key, {iv: iv});
+			if (!cryptor) cryptor = CryptoJS.algo.AES.createEncryptor(CryptoJS.enc.Base64.parse(data.key), {iv: iv});
 			cr.aesE(data.content, data.key, function(data) {
 				emit('success', {
 					msg: 'aes part encryption done',
@@ -64,7 +65,9 @@ this.onmessage = function(e) {
 				data.content = data.content.substr(ivLength);
 				//iv = CryptoJS.enc.Base64.parse(data.iv);
 			}
-			if (!cryptor) cryptor = CryptoJS.algo.AES.createDecryptor(data.key, {iv: iv});
+			//if (!cryptor) cryptor = CryptoJS.algo.AES.createDecryptor(data.key, {iv: iv});
+			if (!cryptor) cryptor = CryptoJS.algo.AES.createDecryptor(CryptoJS.enc.Base64.parse(data.key), {iv: iv});
+			//console.log('decrypting part: %c'+data.content,'color:red');
 			cr.aesD(data.content, data.key, function(data) {
 				emit('success', {
 					msg: 'aes part decryption done',
