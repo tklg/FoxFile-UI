@@ -1,0 +1,232 @@
+@import 'styles';
+
+.root {
+	height: 100%;
+}
+.page-header {
+	height: 50px;
+	box-shadow: $shadow-1;
+	background: $accent-1;
+	color: $text-light-primary;
+	z-index: 2;
+
+	.title {
+		margin: 0;
+		font-weight: normal;
+		display: inline-block;
+		line-height: 50px;
+		font-size: $font-size-large;
+		margin-left: 10px; 
+	}
+}
+.breadcrumbs {
+	$breadcrumb-height: 30px;
+	height: $breadcrumb-height;
+	box-shadow: $shadow-0;
+	background: white;
+	z-index: 1;
+
+	.breadcrumb {
+		position: relative;
+		display: inline-block;
+		height: $breadcrumb-height;
+		line-height: $breadcrumb-height;
+		padding: 0 18px 0 0;
+		cursor: default;
+		user-select: none;
+
+		&:first-of-type {
+			margin-left: 10px;
+		}
+		&:before {
+			content: '›';
+			position: absolute;
+			right: 6px;
+			top: 0;
+			line-height: $breadcrumb-height;
+			color: $text-dark-secondary;
+		}
+		&:last-of-type {
+			padding: 0;
+
+			&:before {
+				content: '';
+			}
+		}
+		&:hover {
+			color: $accent-1;
+		}
+	}
+}
+.file-manager {
+	width: 100%;
+	height: 100%;
+
+	$header-height: 50px;
+	$file-height: 40px;
+	.folder-menu {
+		width: 300px;
+		height: 100%;
+		display: inline-block;
+		position: relative;
+		
+		header {
+			height: $header-height;
+			position: relative;
+			border-bottom: 2px solid $accent-1;
+
+			span {
+				position: absolute;
+				display: inline-block;
+				height: #{$header-height / 2 - 6px};
+				line-height: #{$header-height / 2 - 6px};
+				width: 100%;
+				padding: 0 10px;
+				@include ellipsis();
+
+				&.user-name {
+					top: 6px;
+				}
+				&.user-email {
+					bottom: 6px;
+					color: $text-dark-secondary;
+				}
+			}
+		}
+		ul {
+			margin: 0;
+			padding: 0;
+			list-style: none;
+
+			li {
+				height: $file-height;
+				line-height: $file-height;
+				padding: 0 10px;
+				border-bottom: 1px solid $black-5;
+				user-select: none;
+
+				&:last-of-type {
+					border-bottom: none;
+				}
+				&:hover,
+				&.selected {
+					background: $black-5;
+				}
+			}
+		}
+	}
+	.folder {
+		width: 300px;
+		height: 100%;
+		display: inline-block;
+		position: relative;
+
+		&:before {
+			position: absolute;
+			content: '';
+			height: 100%;
+			width: 1px;
+			top: 0;
+			left: 0;
+			background: $black-5;
+		}
+		header {
+			position: relative;
+			height: $header-height;
+			cursor: default;
+
+			button {
+				width: 10px;
+				height: $header-height;
+				padding: 0;
+				border: none;
+				outline: none;
+				background: transparent;
+				font-size: $font-size-large;
+				color: transparent;
+			
+				&.leftmost {
+					width: 30px;
+					color: $text-dark-secondary;
+
+					&:hover {
+						color: $accent-1;
+					}
+				}
+			}
+			h1 {
+				position: relative;
+				font-weight: normal;
+				margin: 0;
+				font-size: $font-size-large;
+				display: inline-block;
+				line-height: $header-height;
+				padding: 0 10px 0 0;
+				@include ellipsis();
+			}
+			.progress {
+				position: absolute;
+				bottom: 0;
+				left: 0;
+				height: 2px;
+			}
+			.bottom-border {
+				position: absolute;
+				bottom: 0;
+				left: 0;
+				right: 0;
+				height: 2px;
+				background: $accent-1;
+			}
+			&:hover {
+				background: $black-5;
+			}
+		}
+		.scroller {
+			outline: none;
+			width: 100% !important;
+
+			& > div {
+				max-width: 100% !important;
+			}
+			.file {
+				padding: 0 10px;
+				line-height: 40px;
+				border-bottom: 1px solid $black-5;
+				will-change: background;
+				cursor: default;
+				user-select: none;
+
+				&:last-of-type {
+					border-bottom: none;
+				}
+				&:hover,
+				&.selected {
+					background: $black-5;
+				}
+				&[data-type=folder] {
+
+				}
+			}
+		}
+		&:last-of-type {
+			box-shadow: $shadow-3;
+			flex: 1;
+			background: white;
+
+			&:before {
+				background: transparent;
+			}
+			.bottom-border {
+				background: $black-4;
+			}
+			header:hover {
+				background: transparent;
+			}
+		}
+	}
+	.files {
+		height: 100%;
+		display: flex;
+	}
+}
