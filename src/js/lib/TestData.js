@@ -1,17 +1,38 @@
 import XFile from '../classes/XFile';
 import XFolder from '../classes/XFolder';
+let TreeString = `
+img
+	favicon.ico
+	avatar.jpg
+css
+	mod
+		custom.scss
+	style.scss
+	colors.scss
+js
+	index.js
+	classes
+		Timer.js
+		Connect.js
+	util.js
+.git
+
+index.html
+`;
 
 let index = 0;
-const createTestData = data => {
+const createTestData = (data, path) => {
 	if (data.files !== undefined) {
 		let folder = new XFolder(data.name);
-		let files = data.files.map(file => createTestData(file));
+		let files = data.files.map((file, i) => createTestData(file, [...path, i]));
 		folder.index = index++;
 		folder.files = files;
+		folder.path = path;
 		return folder;
 	} else {
 		let file = new XFile(data.name, 'file');
 		file.index = index++;
+		file.path = path;
 		return file;
 	}
 }
@@ -56,9 +77,11 @@ const TestData = createTestData({
 			],
 		},
 	],
-});
-const TestFolders = createFolderChain(TestData, [2]);
+}, []);
+const TestFolders = createFolderChain(TestData, []);
 
 export {
-	TestFolders
+	createFolderChain,
+	TestData,
+	TestFolders,
 };

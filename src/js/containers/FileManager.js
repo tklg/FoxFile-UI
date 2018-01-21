@@ -1,12 +1,10 @@
 import {connect} from 'react-redux';
 import _FileManager from '../components/FileManager';
-import {TestFolders} from '../lib/TestData';
-
-const defaultFolders = TestFolders;
+import {TestData, createFolderChain} from '../lib/TestData';
 
 const mapStateToProps = state => {
 	return {
-		shownFolders: defaultFolders,
+		shownFolders: createFolderChain(TestData, state.filePath),
 	}
 }
 

@@ -1,5 +1,8 @@
 @import 'styles';
 
+body {
+	// overflow: hidden;
+}
 .root {
 	height: 100%;
 }
@@ -70,6 +73,11 @@
 		display: inline-block;
 		position: relative;
 		
+		&.hidden {
+			position: absolute;
+			left: 0;
+			top: 0;
+		}
 		header {
 			height: $header-height;
 			position: relative;
@@ -116,7 +124,7 @@
 		}
 	}
 	.folder {
-		width: 300px;
+		// min-width: 340px;
 		height: 100%;
 		display: inline-block;
 		position: relative;
@@ -129,6 +137,11 @@
 			top: 0;
 			left: 0;
 			background: $black-5;
+		}
+		&.hidden {
+			position: absolute;
+			left: 0;
+			top: 0;
 		}
 		header {
 			position: relative;
@@ -200,9 +213,11 @@
 				&:last-of-type {
 					border-bottom: none;
 				}
-				&:hover,
 				&.selected {
 					background: $black-5;
+				}
+				&:hover:not(.selected) {
+					background: $black-6;
 				}
 				&[data-type=folder] {
 
@@ -226,7 +241,11 @@
 		}
 	}
 	.files {
-		height: 100%;
+		height: calc(100% - 80px);
+		// right: 0;
+		// left: 0;
+		// min-width: 100%;
 		display: flex;
+		position: absolute;
 	}
 }

@@ -3,6 +3,8 @@ class XFile {
 		this._index = -1;
 		this._name = name;
 		this._type = type;
+		this._position = 0;
+		this._path = [];
 	}
 	get index() {
 		return this._index;
@@ -21,6 +23,18 @@ class XFile {
 	}
 	set type(type) {
 		this._type = type;
+	}
+	get position() {
+		return this._position;
+	}
+	set position(position) {
+		this._position = position;
+	}
+	get path() {
+		return this._path;
+	}
+	set path(path) {
+		this._path = path;
 	}
 }
 

@@ -1,35 +1,16 @@
-import {Actions} from '../actions/index.js';
+import Actions from '../actions';
 
-const initialState = {
-	folders: {},
-	openedFolders: [],
-	folderIndex: 0,
-	modal: null,
-	selected: [],
-}
+const openedFolders = [];
 
-const sidescroll = (state = initialState, action) => {
-	let distance, index;
+const sidescroll = (state = openedFolders, action) => {
+	let distance;
 	switch (action.type) {
 		case Actions.SCROLL_LEFT:
-			if (state.folderIndex === 0) return state;
-			distance = action.distance || 1;
-			return {
-				...state,
-				folderIndex: state.folderIndex - distance,
-			}
-		case Actions.SCROLL_RIGHT:
-			distance = action.distance || 1;
-			return {
-				...state,
-				folderIndex: state.folderIndex + distance,
-			}
+			if (!state.length) return state;
+			return state.slice(0, state.length -1);
 		case Actions.SCROLL_TO:
-			index = action.index || 0;
-			return {
-				...state,
-				folderIndex: index,
-			}
+			let path = action.path;
+			return path;
 		default:
 			return state;
 	}

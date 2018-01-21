@@ -2,6 +2,8 @@ import React from 'react';
 import FolderItem from './FolderItem';
 import {connect} from 'react-redux';
 import {List} from 'react-virtualized';
+import Dimensions from '../classes/Dimensions';
+import {scrollLeft, scrollTo} from '../actions/sidescroll';
 
 const rowRenderer = ({key, index, isScrolling, isVisible, style, content, active}) => {
 	return (
@@ -9,17 +11,20 @@ const rowRenderer = ({key, index, isScrolling, isVisible, style, content, active
 	);
 }
 
-let Folder = ({id, name, files, activeIndex}) => (
-	<div className="folder" data-id={id}>
-		<header className="flex-container fc-horizontal">
-			<button className={"leftmost"}>‹</button>
-			<h1 className="flex">{id + ": " + name}</h1>
+let Folder = ({id, name, position, files, activeIndex, onBackClick, onHeaderClick, isLeftmost}) => (
+	<div 
+		className={"folder" + (position === 'hidden-left' ? ' hidden' : '')} 
+		data-id={id} 
+		style={{width: Dimensions.barWidth, height: Dimensions.barHeight}}>
+		<header className="flex-container fc-horizontal" onClick={onHeaderClick}>
+			<button className={isLeftmost ? 'leftmost' : ''} onClick={onBackClick}>‹</button>
+			<h1 className="flex">{id + ": " + name + " (" + position + ")"}</h1>
 			<div className="bottom-border"><div className="indeterminate"></div></div>
 		</header>
 		<List 
 			className="scroller"
-			width={300}
-			height={400}
+			width={Dimensions.barWidth}
+			height={Dimensions.barHeight - 50}
 			rowCount={files.length}
 			rowHeight={40}
 			rowRenderer={(args) => rowRenderer({...args, content: files, active: activeIndex})}
@@ -27,6 +32,19 @@ let Folder = ({id, name, files, activeIndex}) => (
 	</div>
 );
 
-Folder = connect()(Folder);
+const mapDispatchToProps = (dispatch, props) => {
+	return {
+		onBackClick(e) {
+			e.stopPropagation();
+			dispatch(scrollLeft());
+		},
+		onHeaderClick(e) {
+			e.stopPropagation();
+			dispatch(scrollTo(props.path));
+		}
+	}
+};
+
+Folder = connect(null, mapDispatchToProps)(Folder);
 
 export default Folder;
