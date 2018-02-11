@@ -71,7 +71,10 @@ body {
 		width: 300px;
 		height: 100%;
 		display: inline-block;
-		position: relative;
+		position: absolute;
+		will-change: left, background;
+		transition: left .5s $transition,
+					background .5s $transition;
 		
 		&.hidden {
 			position: absolute;
@@ -127,7 +130,11 @@ body {
 		// min-width: 340px;
 		height: 100%;
 		display: inline-block;
-		position: relative;
+		// position: relative;
+		position: absolute;
+		will-change: left, background;
+		transition: left .5s $transition,
+					background .5s $transition;
 
 		&:before {
 			position: absolute;
@@ -142,6 +149,22 @@ body {
 			position: absolute;
 			left: 0;
 			top: 0;
+		}
+		// &:last-of-type,
+		&.folder-last {
+			box-shadow: $shadow-3;
+			flex: 1;
+			background: white;
+
+			&:before {
+				background: transparent;
+			}
+			.bottom-border {
+				background: $black-4;
+			}
+			header:hover {
+				background: transparent;
+			}
 		}
 		header {
 			position: relative;
@@ -222,21 +245,6 @@ body {
 				&[data-type=folder] {
 
 				}
-			}
-		}
-		&:last-of-type {
-			box-shadow: $shadow-3;
-			flex: 1;
-			background: white;
-
-			&:before {
-				background: transparent;
-			}
-			.bottom-border {
-				background: $black-4;
-			}
-			header:hover {
-				background: transparent;
 			}
 		}
 	}

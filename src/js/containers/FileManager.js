@@ -1,10 +1,15 @@
 import {connect} from 'react-redux';
 import _FileManager from '../components/FileManager';
-import {TestData, createFolderChain} from '../lib/TestData';
+import {TestData, createFolderChain, findFile} from '../lib/TestData';
 
 const mapStateToProps = state => {
+	//console.log(state.sidescroll);
 	return {
-		shownFolders: createFolderChain(TestData, state.filePath),
+		shownFolders: createFolderChain(TestData, state.sidescroll.path),
+		scrolling: {
+			...state.sidescroll.scrolling,
+			folders: (state.sidescroll.scrolling.folders || []).map(x => findFile(TestData, x)),
+		},
 	}
 }
 

@@ -29,6 +29,8 @@
     "react-router-dom": "^4.2.2",
     "react-virtualized": "^9.17.1",
     "redux": "^3.7.2",
+    "redux-thunk": "^2.2.0",
+    "uuid": "^3.2.1",
     "webpack": "^2.6.1",
     "yargs": "^8.0.1"
   },

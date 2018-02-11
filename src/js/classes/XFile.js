@@ -4,6 +4,7 @@ class XFile {
 		this._name = name;
 		this._type = type;
 		this._position = 0;
+		this._isLast = false;
 		this._path = [];
 	}
 	get index() {
@@ -29,6 +30,12 @@ class XFile {
 	}
 	set position(position) {
 		this._position = position;
+	}
+	set isLast(bool) {
+		this._isLast = bool;
+	}
+	get isLast() {
+		return this._isLast;
 	}
 	get path() {
 		return this._path;

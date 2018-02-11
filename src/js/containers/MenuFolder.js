@@ -2,7 +2,7 @@ import React from 'react';
 import {connect} from 'react-redux';
 
 let MenuFolder = ({user, location, position, style}) => (
-	<div className={"folder-menu" + (position === 'hidden-left' ? ' hidden' : '')} style={style}>
+	<div className={"folder-menu"} style={style}>
 		<header>
 			<span className="user-name">{'name (' + position + ')'}</span>
 			<span className="user-email">email</span>
