@@ -1,5 +1,3 @@
-import Actions from './';
-
 export const sidescroll = {
 	SCROLL_LEFT: 'scroll_left',
 	SCROLL_TO: 'scroll_to',

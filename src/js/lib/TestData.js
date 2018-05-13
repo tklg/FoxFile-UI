@@ -28,7 +28,7 @@ const createTestData = (data, path) => {
 	if (data.files !== undefined) {
 		let folder = new XFolder(data.name);
 		let files = data.files.map((file, i) => createTestData(file, nextPath));
-		folder.index = id;
+		folder.id = id;
 		folder.files = files;
 		folder.path = nextPath;
 		//index++;
@@ -36,7 +36,7 @@ const createTestData = (data, path) => {
 	} else {
 		let file = new XFile(data.name, 'file');
 		file.path = nextPath;
-		file.index = id;
+		file.id = id;
 		//index++;
 		return file;
 	}
@@ -49,7 +49,7 @@ const createFolderChain = (data, opened) => {
 	//console.log(folder);
 	//console.log(opened);
 	for (let index of opened) {
-		let tgt = folder.files.find(x => x.index === index);
+		let tgt = folder.files.find(x => x.id === index);
 		if (!tgt) throw "???";
 		res.push(tgt);
 		if (tgt && tgt.files !== undefined) 
@@ -60,13 +60,13 @@ const createFolderChain = (data, opened) => {
 }
 const findFile = (data, index) => {
 	// dfs
-	if (data.index === index) {
+	if (data.id === index) {
 		return data;
 	} else {
 		let res;
 		for (const file of data.files) {
 			//console.log(file);
-			if (file.index === index) return file;
+			if (file.id === index) return file;
 			else if (file.type === 'folder') {
 				res = findFile(file, index);
 				if (res) return res;

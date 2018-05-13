@@ -6,8 +6,8 @@ import Dimensions from '../classes/Dimensions';
 
 const getFolder = (folder, activeIndex, isLeftmost, numShown) => (
 	<Folder 
-		key={folder.index}
-		id={folder.index}
+		key={folder.id}
+		id={folder.id}
 		position={folder.position}
 		numShown={numShown}
 		isLeftmost={isLeftmost}
@@ -20,8 +20,8 @@ const getFolder = (folder, activeIndex, isLeftmost, numShown) => (
 
 const getFilePreview = (folder, isLeftmost, numShown) => (
 	<FilePreview 
-		key={folder.index}
-		id={folder.index}
+		key={folder.id}
+		id={folder.id}
 		position={folder.position}
 		numShown={numShown}
 		isLeftmost={isLeftmost}
@@ -33,8 +33,8 @@ const getFilePreview = (folder, isLeftmost, numShown) => (
 
 const getPlaceholder = (folder) => (
 	<FolderPlaceholder 
-		key={folder.index} 
-		id={folder.index} 
+		key={folder.id} 
+		id={folder.id} 
 		position={folder.position} />
 );
 
@@ -68,7 +68,7 @@ const FileManager = ({shownFolders, scrolling}) => {
 	if (scrolling.diff !== 0 && scrolling.direction === 'remove') {
 		//placeholdersForFolderRemoval = scrolling.folders.map(getPlaceholder);
 		// placeholdersForFolderRemoval = getPlaceholder(scrolling.folders[0]);
-		console.log(scrolling.folders);
+		//console.log(scrolling.folders);
 	}
 	return (
 	<div className={"file-manager flex flex-container fc-horizontal" + (scrolling.diff !== 0 ? ' scrolling' : '')} style={fmStyle}>
@@ -85,11 +85,11 @@ const FileManager = ({shownFolders, scrolling}) => {
 			...shownFolders.map((folder, i) => {
 				let isLeftmost = folder.position === maxFolders - 1;
 				if (false && scrolling.diff !== 0 && scrolling.direction === 'add' && i === shownFolders.length - 1) {
-					console.log(scrolling.folders);
+					//console.log(scrolling.folders);
 					return getPlaceholder(folder);
 				} else {
 					if (folder.type === 'folder') {
-						return getFolder(folder, (shownFolders[i + 1] || {}).index, isLeftmost, shownFolders.length);
+						return getFolder(folder, (shownFolders[i + 1] || {}).id, isLeftmost, shownFolders.length);
 					} else {
 						return getFilePreview(folder, isLeftmost, shownFolders.length);
 					}

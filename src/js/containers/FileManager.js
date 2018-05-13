@@ -3,7 +3,7 @@ import _FileManager from '../components/FileManager';
 import {TestData, createFolderChain, findFile} from '../lib/TestData';
 
 const mapStateToProps = state => {
-	//console.log(state.sidescroll);
+	//console.log(state);
 	return {
 		shownFolders: createFolderChain(TestData, state.sidescroll.path),
 		scrolling: {

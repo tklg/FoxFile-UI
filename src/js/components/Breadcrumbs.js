@@ -1,7 +1,7 @@
 import React from 'react';
 
 const getBreadcrumb = file => (
-	<div key={file.index} data-id={file.index} className="breadcrumb">{file.name}</div>
+	<div key={file.id} data-id={file.id} className="breadcrumb">{file.name}</div>
 );
 
 const Breadcrumbs = ({files}) => (

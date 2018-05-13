@@ -1,17 +1,17 @@
 class XFile {
 	constructor(name, type) {
-		this._index = -1;
+		this._id = -1;
 		this._name = name;
 		this._type = type;
 		this._position = 0;
 		this._isLast = false;
 		this._path = [];
 	}
-	get index() {
-		return this._index;
+	get id() {
+		return this._id;
 	}
-	set index(index) {
-		this._index = index;
+	set id(id) {
+		this._id = id;
 	}
 	get name() {
 		return this._name;

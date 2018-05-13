@@ -166,6 +166,9 @@ body {
 				background: transparent;
 			}
 		}
+		&.dragging {
+			background: $black-4;
+		}
 		header {
 			position: relative;
 			height: $header-height;
@@ -221,6 +224,7 @@ body {
 		.scroller {
 			outline: none;
 			width: 100% !important;
+			// pointer-events: none;
 
 			& > div {
 				max-width: 100% !important;
@@ -236,8 +240,11 @@ body {
 				&:last-of-type {
 					border-bottom: none;
 				}
-				&.selected {
+				&.selected, {
 					background: $black-5;
+				}
+				&.dragging {
+					background: $black-4;
 				}
 				&:hover:not(.selected) {
 					background: $black-6;
