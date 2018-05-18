@@ -132,6 +132,7 @@ body {
 		display: inline-block;
 		// position: relative;
 		position: absolute;
+		pointer-events: initial;
 		will-change: left, background;
 		transition: left .5s $transition,
 					background .5s $transition;
@@ -224,12 +225,13 @@ body {
 		.scroller {
 			outline: none;
 			width: 100% !important;
-			// pointer-events: none;
+			pointer-events: none;
 
 			& > div {
 				max-width: 100% !important;
 			}
 			.file {
+				pointer-events: initial;
 				padding: 0 10px;
 				line-height: 40px;
 				border-bottom: 1px solid $black-5;

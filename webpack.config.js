@@ -18,23 +18,19 @@ module.exports = {
         path: __dirname + dest
     },
     module: {
-	 	loaders: [
-            /*{
-                test: /\.jsx?$/,
-                loader: 'babel-loader',
-                exclude: /node_modules/,
-                query: {
-                    presets: [
-                        'env',
-                        'es2015'
-                    ]
-                }
-            }*/
-           { test: /\.jsx?$/, loader: 'babel-loader', exclude: /node_modules/ },
-	//	   { test: /\.vue?$/, loader: 'vue-loader', exclude: /node_modules/ },
-		   //{ test: /\.css$/, loader: 'style-loader!css-loader' },
-		   //{ test: /\.less$/, loader: 'style-loader!css-loader!less-loader'}
-	   ]
+	 	rules: [
+        {
+          test: /\.jsx?$/,
+          exclude: /(node_modules)/,
+          use: {
+            loader: 'babel-loader',
+            options: {
+              presets: [/*'@babel/preset-env', */'@babel/preset-react'],
+              plugins: [require('@babel/plugin-proposal-object-rest-spread')]
+            }
+          }
+        }
+      ]
 	},
     plugins: is_dev ? [] : [
         new webpack.DefinePlugin({

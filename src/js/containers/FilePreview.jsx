@@ -1,5 +1,5 @@
 import React from 'react';
-import {connect} from 'react-redux';
+//import {connect} from 'react-redux';
 import Dimensions from '../classes/Dimensions';
 
 let FilePreview = ({id, name, file, position, numShown, isLeftmost, isLast}) => {
@@ -30,6 +30,6 @@ let FilePreview = ({id, name, file, position, numShown, isLeftmost, isLast}) => 
 	</div>);
 };
 
-FilePreview = connect()(FilePreview);
+//FilePreview = connect()(FilePreview);
 
 export default FilePreview;

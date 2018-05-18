@@ -1,4 +1,5 @@
 import Ajax from './Ajax';
+import fc from 'filecrypt';
 
 class UploadQueue {
 	constructor(max) {
@@ -18,47 +19,66 @@ class UploadQueue {
 		}
 		this.upload();
 	}
-	upload() {
+	async upload() {
 		if (this._working < this._maxWorking && this._files.length) {
 			this._working++;
 			this.upload();
 		} else {
 			return;
 		}
-		//this._working++;
 		const _this = this;
 		const file = this._files.shift();
-		const xhr = new XMLHttpRequest();
-		xhr.upload.addEventListener('progress', function(e) {
-			_this.emit('progress', {
-				parent: file.parent,
-				loaded: e.loaded,
-				total: e.total,
+		try {
+
+			this.emit('encrypt', {
+				id: file.id,
+				parent: file.parent
 			});
-		}, false);
-		console.log('uploading ' + file.file);
-		Ajax.post({
-			url: 'api/file',
-			xhr: xhr,
-			data: {
-				parent: file.parent,
-				file: file.file,
-			},
-			success(resp, xhr) {
-				_this._working--;
-				_this.emit('upload', resp);
-				if (!_this._files.length && !_this._working) {
-					_this.emit('done', _this._uploads);
-					_this._uploads = 0;
+
+			const key = await fc.generateKey();
+			const {iv, result} = await fc.encrypt(key, file.file);
+			const encryptedCombinedBuffer = fc.mergeIvAndData(iv.buffer, result);
+			const encryptedFile = fc.ab2file(encryptedCombinedBuffer);
+
+			//this._working++;
+			const xhr = new XMLHttpRequest();
+			xhr.upload.addEventListener('progress', function(e) {
+				_this.emit('progress', {
+					id: file.id,
+					parent: file.parent,
+					loaded: e.loaded,
+					total: e.total,
+				});
+			}, false);
+			console.log('uploading ' + file.file.name);
+			Ajax.post({
+				url: 'api/file',
+				xhr: xhr,
+				data: {
+					parent: file.parent,
+					file: encryptedFile,
+				},
+				success(resp, xhr) {
+					_this._working--;
+					_this.emit('upload', resp);
+					if (!_this._files.length && !_this._working) {
+						_this.emit('done', _this._uploads);
+						_this._uploads = 0;
+					}
+					_this.upload();
+				},
+				error(resp, xhr) {
+					
+					_this._working--;
+					_this.emit('error', resp);
 				}
-				_this.upload();
-			},
-			error(resp, xhr) {
-				
-				_this._working--;
-				_this.emit('error', resp);
-			}
-		});
+			});
+		} catch (e) {
+			this.emit('error', {
+				id: file.id,
+				error: e,
+			});
+		}
 	}
 	on(event, func) {
 		if (!event instanceof String) throw new Error('event must be string');

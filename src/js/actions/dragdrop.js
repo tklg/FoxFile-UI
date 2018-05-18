@@ -1,4 +1,5 @@
 import queue from '../classes/UploadQueue';
+import uuid from 'uuid/v4';
 
 export const dragdrop = {
 	DRAG_ENTER: 'drag_enter',
@@ -6,6 +7,7 @@ export const dragdrop = {
 	DRAG_DROP: 'drag_drop',
 	UPLOAD_SINGLE: 'upload_single',
 	UPLOAD_PROGRESS: 'upload_progress',
+	UPLOAD_ENCRYPT: 'upload_encrypt',
 	UPLOAD_DONE: 'upload_done',
 };
 
@@ -31,7 +33,7 @@ export const uploadStart = (id, files) => {
 	}
 }
 export const uploadSingle = data => {
-	console.log('upevent');
+	console.log('upevent: ' + data.id);
 	return {
 		type: dragdrop.UPLOAD_SINGLE,
 	}
@@ -42,8 +44,14 @@ export const uploadProgress = data => {
 		type: dragdrop.UPLOAD_PROGRESS,
 	}
 }
+export const uploadEncrypt = data => {
+	console.log(data);
+	return {
+		type: dragdrop.UPLOAD_ENCRYPT,
+	}
+}
 export const uploadDone = data => {
-	console.log('updone');
+	console.log('updone: ' + data);
 	return {
 		type: dragdrop.UPLOAD_DONE,
 	}
@@ -52,6 +60,7 @@ export const dragDrop = (id, files) => {
 
 	files = files.map(file => {
 		return {
+			id: uuid(), // temporary id, assigned final id by server
 			parent: id,
 			file,
 		}
@@ -63,9 +72,13 @@ export const dragDrop = (id, files) => {
 		queue.offAll('done');
 		queue.offAll('upload');
 		queue.offAll('progress');
+		queue.offAll('encrypt');
 
 		queue.on('progress', data => {
 			dispatch(uploadProgress(data));
+		});
+		queue.on('encrypt', data => {
+			dispatch(uploadEncrypt(data));
 		});
 		queue.on('upload', data => {
 			dispatch(uploadSingle(data));

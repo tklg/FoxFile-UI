@@ -1,18 +1,10 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-//import {Provider} from 'react-redux';
-//import thunkMiddleware from 'redux-thunk';
-//import {createStore, applyMiddleware} from 'redux';
-//import reducers from './reducers';
 import FoxFileUI from './containers/FoxFileUI.js';
 
-/*const store = createStore(reducers, applyMiddleware(
-	thunkMiddleware
-));*/
-
 ReactDOM.render(
-	//<Provider store={store}>
-		<FoxFileUI />
-	//</Provider>,
+	<FoxFileUI />,
 	document.getElementById('root')
 );
+
+// http://localhost/auth3/src/public/authorize?response_type=code&client_id=foxfile&redirect_uri=localhost/foxfile/src/public/auth_redirect&scope=user.all&state=1
