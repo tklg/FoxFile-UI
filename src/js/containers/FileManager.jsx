@@ -1,8 +1,8 @@
 import React from 'react';
-import Folder, {FolderPlaceholder} from './Folder';
+import Folder, {FolderPlaceholder} from './Folder.jsx';
 import {scrollTo} from '../actions/sidescroll';
-import FilePreview from './FilePreview';
-import MenuFolder from './MenuFolder';
+import FilePreview from './FilePreview.jsx';
+import MenuFolder from './MenuFolder.jsx';
 import Dimensions from '../classes/Dimensions';
 
 const getFolder = (folder, activeIndex, isLeftmost, numShown, dragging, dispatch) => (

@@ -3,7 +3,7 @@ import {scrollLeft, scrollTo} from '../actions/sidescroll';
 import {dragEnter, dragLeave, dragDrop} from '../actions/dragdrop';
 //import _Folder, {FolderPlaceholder} from '../components/Folder';
 import Dimensions from '../classes/Dimensions';
-import FolderItem from './FolderItem';
+import FolderItem from './FolderItem.jsx';
 import {List} from 'react-virtualized';
 import React from 'react';
 

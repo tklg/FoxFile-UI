@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import FoxFileUI from './containers/FoxFileUI.js';
+import FoxFileUI from './containers/FoxFileUI.jsx';
 
 ReactDOM.render(
 	<FoxFileUI />,

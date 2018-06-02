@@ -1,8 +1,8 @@
 import React from 'react';
-import Header from '../components/Header';
-import Breadcrumbs from './Breadcrumbs';
-import FileManager from './FileManager';
-import Preloader from './Preloader';
+import Header from '../components/Header.jsx';
+import Breadcrumbs from './Breadcrumbs.jsx';
+import FileManager from './FileManager.jsx';
+import Preloader from '../components/Preloader.jsx';
 import {TestData, createFolderChain, findFile} from '../lib/TestData';
 import reducer from '../reducers'
 
@@ -12,6 +12,10 @@ class FoxFileUI extends React.Component {
 	constructor() {
 		super();
 		this.state = reducer({
+			readyState: {
+				user: false, // log in
+				files: false, // download file list
+			},
 			path: [],
 			folders: TestData,
 			scrolling: {
@@ -37,7 +41,6 @@ class FoxFileUI extends React.Component {
 	render() {
 		const openFolders = createFolderChain(this.state.folders, this.state.path);
 		return (<div className="root flex-container fc-vertical">
-			<Preloader />
 			<Header />
 			<Breadcrumbs 
 				dispatch={this.dispatch}
@@ -48,6 +51,9 @@ class FoxFileUI extends React.Component {
 				folders={openFolders}
 				scrolling={this.state.scrolling}
 				dragging={this.state.dragging} />
+			<Preloader 
+				dispatch={this.dispatch}
+				readyState={this.state.readyState} />
 		</div>);
 	}
 }
