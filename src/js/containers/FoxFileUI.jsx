@@ -13,8 +13,9 @@ class FoxFileUI extends React.Component {
 		super();
 		this.state = reducer({
 			readyState: {
-				user: false, // log in
-				files: false, // download file list
+				user: 'waiting', // log in
+				files: 'waiting', // download file list
+				decrypt: 'waiting',
 			},
 			path: [],
 			folders: TestData,

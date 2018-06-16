@@ -43,16 +43,18 @@
 			}
 
 			.spinner {
+				// display: none;
+				float: left;
 				height: 20px;
 				width: 20px;
 				margin: 5px;
-				vertical-align: middle;
+				// vertical-align: middle;
 			}
 			span {
 				display: inline-block;
 				line-height: 30px;
 				margin-left: 5px;
-				vertical-align: middle;
+				// vertical-align: middle;
 			}
 		}
 	}
