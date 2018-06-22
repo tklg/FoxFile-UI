@@ -11,6 +11,8 @@
 	top: 0;
 	left: 0;
 	z-index: 3;
+	opacity: 1;
+	transition: all 0.3s $transition;
 
 	.steps {
 		// width: 300px;
@@ -23,6 +25,7 @@
 			height: 30px;
 			line-height: 30px;
 			font-size: 20px;
+			transition: 0.3s color $transition;
 
 			&.done {
 				color: $black-3;
@@ -61,6 +64,10 @@
 	.progress {
 		position: absolute;
 		top: 0;
+	}
+	&.done {
+		opacity: 0;
+		pointer-events: none;
 	}
 }
 .page-header {

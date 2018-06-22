@@ -5,6 +5,12 @@ import FileManager from './FileManager.jsx';
 import Preloader from '../components/Preloader.jsx';
 import {TestData, createFolderChain, findFile} from '../lib/TestData';
 import reducer from '../reducers'
+import Ajax from '../classes/Ajax.js'
+
+Ajax.setTokenData({
+	...JSON.parse(localStorage.getItem('foxfile_token')),
+	refresh_url: 'http://localhost/foxfile/src/public/api/token'
+});
 
 const defaultPassword = 'foxfoxfox';
 
@@ -15,8 +21,9 @@ class FoxFileUI extends React.Component {
 			readyState: {
 				user: 'waiting', // log in
 				files: 'waiting', // download file list
-				decrypt: 'waiting',
+				decrypt: 'waiting', // waiting, working, done
 			},
+			user: {},
 			path: [],
 			folders: TestData,
 			scrolling: {

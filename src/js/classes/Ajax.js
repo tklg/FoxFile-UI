@@ -93,7 +93,7 @@ export default class Ajax {
 		if (opts.headers) {
 			for (let key in opts.headers) xhr.setRequestHeader(key, opts.headers[key]);
 		}
-		if (ajaxcfg.access_token && !(opts.headers || {}).Authorization) xhr.setRequestHeader('Authorization', ajaxcfg.access_token);
+		if (ajaxcfg.access_token && !(opts.headers || {}).Authorization) xhr.setRequestHeader('Authorization', 'Bearer ' + ajaxcfg.access_token);
 
 		xhr.send(fd);
 	}
@@ -105,9 +105,8 @@ export default class Ajax {
 		const OAUTH_TOKEN_REQUEST = {
 			grant_type: 'refresh_token',
 			refresh_token: ajaxcfg.refresh_token,
-			client_id: 'auth3-c2f0ebded9',
+			client_id: 'foxfile',
 			client_secret: 1,
-			//scope: 'test',
 		};
 		for (var key in OAUTH_TOKEN_REQUEST) {
 			fd.append(key, OAUTH_TOKEN_REQUEST[key]);

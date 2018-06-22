@@ -15,6 +15,42 @@ const actionHandler = (state = {}, action) => {
 
 	switch (type) {
 
+// PRELOAD 	===============
+		case Actions.LOAD_USER:
+			let user = action.data;
+			return {
+				...state,
+				readyState: {
+					...state.readyState,
+					user: user ? 'done' : 'working'
+				},
+				user,
+			};
+		case Actions.LOAD_TREE:
+			let tree = action.data;
+			return {
+				...state,
+				readyState: {
+					...state.readyState,
+					files: tree ? 'done' : 'working'
+				},
+				tree,
+			};
+		case Actions.DECRYPT_TREE:
+			let decryptedTree = action.data;
+			return {
+				...state,
+				readyState: {
+					...state.readyState,
+					decrypt: decryptedTree ? 'done' : 'working'
+				},
+				tree: decryptedTree,
+			};
+		case Actions.PRELOAD_DONE:
+			return {
+				...state,
+			};
+
 // DRAGDROP ===============
 		case Actions.DRAG_ENTER:
 			if (state.dragging.id) return state;
