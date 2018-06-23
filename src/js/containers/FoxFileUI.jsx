@@ -11,6 +11,12 @@ Ajax.setTokenData({
 	...JSON.parse(localStorage.getItem('foxfile_token')),
 	refresh_url: 'http://localhost/foxfile/src/public/api/token'
 });
+Ajax.onRefresh(function(data) {
+	localStorage.setItem('foxfile_token', JSON.stringify({
+		...JSON.parse(localStorage.getItem('foxfile_token')),
+		...JSON.parse(data),
+	}));
+});
 
 const defaultPassword = 'foxfoxfox';
 

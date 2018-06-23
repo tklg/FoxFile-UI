@@ -1,6 +1,8 @@
 import Ajax from './Ajax';
 import fc from 'filecrypt';
 
+// https://github.com/diafygi/webcrypto-examples#aes-gcm---importkey
+
 class UploadQueue {
 	constructor(max) {
 		this._files = [];
@@ -35,10 +37,14 @@ class UploadQueue {
 				parent: file.parent
 			});
 
+			const parentKey = await fc.importPassword('foxfoxfox');
 			const key = await fc.generateKey();
+			const enc = new TextDecoder('utf-8');
 			const {iv, result} = await fc.encrypt(key, file.file);
 			const encryptedCombinedBuffer = fc.mergeIvAndData(iv.buffer, result);
 			const encryptedFile = fc.ab2file(encryptedCombinedBuffer);
+			const keyBuf = await fc.wrapKey(key, parentKey);
+			const keyString = enc.decode(fc.mergeIvAndData(keyBuf.iv.buffer, keyBuf.key));
 
 			//this._working++;
 			const xhr = new XMLHttpRequest();
@@ -52,11 +58,12 @@ class UploadQueue {
 			}, false);
 			console.log('uploading ' + file.file.name);
 			Ajax.post({
-				url: 'api/file',
+				url: 'api/files',
 				xhr: xhr,
 				data: {
 					parent: file.parent,
 					file: encryptedFile,
+					key: keyString,
 				},
 				success(resp, xhr) {
 					_this._working--;
@@ -74,6 +81,7 @@ class UploadQueue {
 				}
 			});
 		} catch (e) {
+			console.error(e)
 			this.emit('error', {
 				id: file.id,
 				error: e,
