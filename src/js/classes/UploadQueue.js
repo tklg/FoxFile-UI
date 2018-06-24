@@ -1,5 +1,6 @@
 import Ajax from './Ajax';
 import fc from 'filecrypt';
+import Util from './Util.js';
 
 // https://github.com/diafygi/webcrypto-examples#aes-gcm---importkey
 
@@ -37,16 +38,26 @@ class UploadQueue {
 				parent: file.parent
 			});
 
-			const parentKey = await fc.importPassword('foxfoxfox');
+			const parentKey = await fc.importPassword('foxfoxfox'); // should be raw key of parent folder
 			const key = await fc.generateKey();
-			const enc = new TextDecoder('utf-8');
-			const {iv, result} = await fc.encrypt(key, file.file);
-			const encryptedCombinedBuffer = fc.mergeIvAndData(iv.buffer, result);
-			const encryptedFile = fc.ab2file(encryptedCombinedBuffer);
+			const encoder = new TextEncoder('utf-8');
+			const decoder = new TextDecoder('utf-8');
+			let encryptedFile;
+			if (file.file.isFile) {
+				// encrypt file with file key
+				const encryptedFileData = await fc.encrypt(key, file.file);
+				encryptedFile = fc.ab2file(fc.mergeIvAndData(encryptedFileData.iv.buffer, encryptedFileData.result));
+			}
+			// encrypt file name with file key
+			const fileNameAsBuffer = encoder.encode(file.file.name);
+			const encryptedFilenameData = await fc.encrypt(key, fileNameAsBuffer);
+			const encryptedFilenameString = Util.btoa64(decoder.decode(fc.mergeIvAndData(encryptedFilenameData.iv.buffer, encryptedFilenameData.result)));
+			//console.log(encryptedFilenameString);
+			// secure wrap file key with parent key
 			const keyBuf = await fc.wrapKey(key, parentKey);
-			const keyString = enc.decode(fc.mergeIvAndData(keyBuf.iv.buffer, keyBuf.key));
+			const keyString = Util.btoa64(decoder.decode(fc.mergeIvAndData(keyBuf.iv.buffer, keyBuf.key)));
+			//console.log(keyString);
 
-			//this._working++;
 			const xhr = new XMLHttpRequest();
 			xhr.upload.addEventListener('progress', function(e) {
 				_this.emit('progress', {
@@ -61,9 +72,11 @@ class UploadQueue {
 				url: 'api/files',
 				xhr: xhr,
 				data: {
+					name: encryptedFilenameString,
 					parent: file.parent,
-					file: encryptedFile,
 					key: keyString,
+					file: encryptedFile ? encryptedFile : undefined,
+					folder: encryptedFile ? undefined : true,
 				},
 				success(resp, xhr) {
 					_this._working--;

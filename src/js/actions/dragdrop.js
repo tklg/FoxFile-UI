@@ -65,6 +65,7 @@ export const dragDrop = (id, files) => {
 			file,
 		}
 	})
+	files.sort((a, b) => a.isFile - b.isFile);
 
 	const fn = (dispatch, getState) => {
 		dispatch(uploadStart(id, files));

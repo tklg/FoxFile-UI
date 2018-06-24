@@ -24,7 +24,7 @@ class Preloader extends React.Component {
 		const _this = this;
 		switch (this.state.step) {
 			case 0:
-				console.log('user');
+				//console.log('user');
 				dispatch(loadUser());
 				Ajax.get({
 					url: `${urlBase}/user`,
@@ -44,7 +44,7 @@ class Preloader extends React.Component {
 				});
 				break;
 			case 1:
-				console.log('files');
+				//console.log('files');
 				dispatch(loadTree());
 				Ajax.get({
 					url: `${urlBase}/files`,
@@ -64,8 +64,10 @@ class Preloader extends React.Component {
 				});
 				break;
 			case 2:
-				console.log('decrypt');
+				//console.log('decrypt');
 				dispatch(decryptTree());
+				// build tree from list of folders and files
+				// decrypt file and folder names
 				setTimeout(() => {
 					dispatch(decryptTree('data'));
 					_this.setState({
@@ -76,7 +78,7 @@ class Preloader extends React.Component {
 				}, 400) ;
 				break;
 			case 3:
-				console.log('preloaddone');
+				//console.log('preloaddone');
 				dispatch(preloadDone());
 				setTimeout(() => {
 					_this.setState({
