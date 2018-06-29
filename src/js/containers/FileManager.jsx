@@ -74,7 +74,7 @@ class FileManager extends React.Component {
 			folder.position = dist;
 			folder.isLast = false;
 		});
-		folders[folders.length - 1].isLast = true;
+		if (folders.length) folders[folders.length - 1].isLast = true;
 		const fmStyle = {
 			width: Dimensions.windowWidth,
 		};

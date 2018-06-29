@@ -9,6 +9,23 @@ export default class Util {
 	        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
 	    }).join(''));
 	}
+	static ab2str(b) {
+	    // return String.fromCharCode(...new Uint16Array(b));
+	    console.log('len: ' + b.byteLength)
+	    return Array.from(new Uint16Array(b)).map(n => {
+	    	return String.fromCharCode(n);
+	    }).join('');
+	}
+	static str2ab(s) {
+		console.log('len: ' + s.length * 2)
+	    var b = new ArrayBuffer(s.length * 2);
+	    var bufView = new Uint16Array(b);
+	    for (var i = 0, sLen = s.length; i < sLen; i++) {
+	        bufView[i] = s.charCodeAt(i);
+	        console.log(s.charCodeAt(i) === s.codePointAt(i));
+	    }
+	    return b;
+	}
 	static bytesToSize(bytes, precision = 2) {
 	    const kilobyte = 1024;
 	    const megabyte = kilobyte * 1024;

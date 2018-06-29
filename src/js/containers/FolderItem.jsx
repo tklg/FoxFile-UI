@@ -68,7 +68,8 @@ class FolderItem extends React.Component {
 					this.onDrop(e)
 				}
 			}} >
-			{item.id + ": " + item.name}
+			{/*item.id + ": " + item.name*/}
+			{item.name}
 		</div>);
 	}
 }

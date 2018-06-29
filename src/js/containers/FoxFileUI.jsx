@@ -3,7 +3,7 @@ import Header from '../components/Header.jsx';
 import Breadcrumbs from './Breadcrumbs.jsx';
 import FileManager from './FileManager.jsx';
 import Preloader from '../components/Preloader.jsx';
-import {TestData, createFolderChain, findFile} from '../lib/TestData';
+// import {TestData, createFolderChain, findFile} from '../lib/TestData';
 import reducer from '../reducers'
 import Ajax from '../classes/Ajax.js'
 
@@ -18,7 +18,15 @@ Ajax.onRefresh(function(data) {
 	}));
 });
 
-const defaultPassword = 'foxfoxfox';
+function createFolderChain(tree, path) {
+	const opened = [];
+	let current = tree;
+	for (const uuid of path) {
+		current = current.find(node => node.uuid === uuid);
+		opened.push(current);
+	}
+	return opened;
+}
 
 class FoxFileUI extends React.Component {
 	constructor() {
@@ -31,7 +39,8 @@ class FoxFileUI extends React.Component {
 			},
 			user: {},
 			path: [],
-			folders: TestData,
+			// folders: TestData,
+			tree: null,
 			scrolling: {
 				diff: 0,
 			},
@@ -53,7 +62,9 @@ class FoxFileUI extends React.Component {
 		}
 	}
 	render() {
-		const openFolders = createFolderChain(this.state.folders, this.state.path);
+		let openFolders = [];
+		if (this.state.readyState.decrypt === 'done') openFolders = createFolderChain(this.state.tree, this.state.path);
+		// console.log(openFolders)
 		return (<div className="root flex-container fc-vertical">
 			<Header />
 			<Breadcrumbs 
@@ -67,7 +78,8 @@ class FoxFileUI extends React.Component {
 				dragging={this.state.dragging} />
 			<Preloader 
 				dispatch={this.dispatch}
-				readyState={this.state.readyState} />
+				readyState={this.state.readyState}
+				user={this.state.user} />
 		</div>);
 	}
 }

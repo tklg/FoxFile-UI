@@ -22,9 +22,10 @@ const actionHandler = (state = {}, action) => {
 				...state,
 				readyState: {
 					...state.readyState,
-					user: user ? 'done' : 'working'
+					user: user ? 'done' : 'working',
 				},
 				user,
+				path: user ? [user.uuid] : [],
 			};
 		case Actions.LOAD_TREE:
 			let tree = action.data;

@@ -1,5 +1,5 @@
 class XFile {
-	constructor(name, type) {
+	constructor(name, type = 'file') {
 		this._id = -1;
 		this._name = name;
 		this._type = type;

@@ -109,7 +109,8 @@ class Folder extends React.Component {
 			}} >
 			<header className="flex-container fc-horizontal" onClick={this.onHeaderClick}>
 				<button className={isLeftmost ? 'leftmost' : ''} onClick={this.onBackClick}>‹</button>
-				<h1 className="flex">{id + ": " + name + " (" + position + ")"}</h1>
+				{/*<h1 className="flex">{id + ": " + name + " (" + position + ")"}</h1>*/}
+				<h1 className="flex">{name}</h1>
 				<div className="bottom-border"><div className="indeterminate"></div></div>
 			</header>
 			<List 

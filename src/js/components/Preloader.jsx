@@ -1,5 +1,7 @@
 import React from 'react';
 import Ajax from '../classes/Ajax.js';
+import Tree from '../classes/Tree';
+import Crypto from '../classes/Crypto';
 import {loadUser, loadTree, decryptTree, preloadDone} from '../actions/preload.js';
 
 const stepDetails = {
@@ -15,6 +17,7 @@ class Preloader extends React.Component {
 		this.state = {
 			step: 0,
 			error: null,
+			data: null,
 		};
 	}
 	load() {
@@ -49,9 +52,11 @@ class Preloader extends React.Component {
 				Ajax.get({
 					url: `${urlBase}/files`,
 					success(data) {
+						try {data = JSON.parse(data);} catch (e) {console.warn(e)}
 						dispatch(loadTree(data || 'done'));
 						_this.setState({
 							step: 2,
+							data: data,
 						}, () => {
 							_this.load();
 						});
@@ -67,9 +72,28 @@ class Preloader extends React.Component {
 				//console.log('decrypt');
 				dispatch(decryptTree());
 				// build tree from list of folders and files
+				const tree = new Tree(_this.props.user.uuid);
+				tree.import(_this.state.data);
 				// decrypt file and folder names
+				tree.map(async (node) => {
+					if (node.encrypted) {
+						const data = {
+							fileName: node.name,
+							file: null,
+							fileKey: node.key,
+						};
+						const res = await Crypto.decrypt(data, null);
+						if (res.fileName) node.name = res.fileName;
+						else node.file = res.file;
+						node.encrypted = false;
+						return node;
+					} else {
+						return node;
+					}
+				});
+				console.log(tree.root);
 				setTimeout(() => {
-					dispatch(decryptTree('data'));
+					dispatch(decryptTree(tree));
 					_this.setState({
 						step: 3,
 					}, () => {

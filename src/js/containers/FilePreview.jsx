@@ -24,7 +24,7 @@ let FilePreview = ({id, name, file, position, numShown, isLeftmost, isLast}) => 
 		style={folderStyle}>
 		<header className="flex-container fc-horizontal">
 			<button className={isLeftmost ? 'leftmost' : ''}>‹</button>
-			<h1 className="flex">{id + ": " + name}</h1>
+			<h1 className="flex">{name}</h1>
 			<div className="bottom-border"><div className="indeterminate"></div></div>
 		</header>
 	</div>);

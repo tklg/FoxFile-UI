@@ -49,7 +49,13 @@ export default class Ajax {
 		var qs = '';
 		if (opts.data && opts.method.toLowerCase() != 'get') {
 			fd = new FormData();
-			for (let key in opts.data) fd.append(key, opts.data[key]);
+			for (let key in opts.data) {
+				fd.append(key, opts.data[key]);
+				/*if (typeof opts.data[key] === 'object') {
+					fd.append(key, )
+				} else {
+				}*/
+			}
 		} else if (opts.data) {
 			qs += '?';
 			let params = [];
