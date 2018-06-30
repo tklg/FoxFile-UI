@@ -27,6 +27,11 @@ const actionHandler = (state = {}, action) => {
 				user,
 				path: user ? [user.uuid] : [],
 			};
+		case Actions.CHECK_KEY:
+			return {
+				...state,
+				baseKey: action.data,
+			};
 		case Actions.LOAD_TREE:
 			let tree = action.data;
 			return {
