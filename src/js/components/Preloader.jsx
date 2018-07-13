@@ -2,6 +2,7 @@ import React from 'react';
 import Ajax from '../classes/Ajax.js';
 import Tree from '../classes/Tree';
 import Crypto from '../classes/Crypto';
+import Util from '../classes/Util';
 import {loadUser, loadTree, decryptTree, preloadDone} from '../actions/preload.js';
 
 const stepDetails = {
@@ -9,6 +10,8 @@ const stepDetails = {
 	files: 'Downloading file tree',
 	decrypt: 'Decrypting file data',
 };
+const urlBase = '/foxfile/src/public/api';
+const HMAC_TEST_STRING = 'foxfile';
 
 class Preloader extends React.Component {
 	constructor() {
@@ -26,9 +29,10 @@ class Preloader extends React.Component {
 			keyWorking: false,
 			keyError: '',
 		};
+		this.onPasswordChange = this.onPasswordChange.bind(this);
+		this.setMasterKey = this.setMasterKey.bind(this);
 	}
 	load() {
-		const urlBase = '/foxfile/src/public/api';
 
 		const dispatch = this.props.dispatch;
 		const _this = this;
@@ -49,6 +53,10 @@ class Preloader extends React.Component {
 						});
 					},
 					error(err) {
+						try {err = JSON.parse(err)} catch (e) {}
+						if (err.error && err.error === 'access_denied' && err.hint && err.hint.includes('header')) {
+							document.location.href += 'login'
+						}
 						_this.setState({
 							error: err,
 						});
@@ -128,7 +136,7 @@ class Preloader extends React.Component {
 	async handleKeyCheck() {
 		let basekey = localStorage.getItem('foxfile_key');
 		// key does not exist, let user enter it
-		if (this.state.user.haskey == 0) {
+		if (!this.state.user.signed || !this.state.user.signed.length) {
 			this.setState({
 				hasKey: false,
 				needsKey: true,
@@ -136,7 +144,7 @@ class Preloader extends React.Component {
 			return;
 		}
 		// user has key but needs to enter it
-		if (!basekey && this.state.user.haskey == 1) {
+		if (!basekey && this.state.user.signed && this.state.user.signed.length) {
 			this.setState({
 				hasKey: true,
 				needsKey: true,
@@ -150,6 +158,7 @@ class Preloader extends React.Component {
 			needsKey: false,
 			keyWorking: false,
 			step: 2,
+			error: null
 		}, () => {
 			this.load();
 		})
@@ -157,6 +166,73 @@ class Preloader extends React.Component {
 	}
 	componentDidMount() {
 		if (!this.state.step) this.load();
+  	}
+  	onPasswordChange(e) {
+  		this.setState({
+  			password: e.target.value
+  		})
+  	}
+  	async setMasterKey(e) {
+  		e.preventDefault();
+  		this.setState({
+  			error: ' '
+  		})
+  		const _this = this;
+  		const passwordBuffer = await crypto.subtle.digest('SHA-512', new TextEncoder('utf-8').encode(this.state.password));
+  		const password = Util.ab2hex(passwordBuffer);
+  		const signed = await Crypto.sign(HMAC_TEST_STRING, password);
+  		const res = await Crypto.verify(signed, HMAC_TEST_STRING, password);
+	  	if (!res) {
+	  		this.setState({
+	  			error: 'Test verification failed'
+	  		})
+	  		return;
+	  	}
+
+  		if (!this.state.hasKey) {
+	  		Ajax.post({
+	  			url: `${urlBase}/user/key`,
+	  			data: {
+	  				signed: signed
+	  			},
+	  			success(data) {
+	  				localStorage.setItem('foxfile_key', password)
+			  		_this.setState({
+			  			needsKey: false,
+			  			hasKey: true,
+			  			step: 2,
+			  			error: null
+			  		}, () => {
+			  			_this.load();
+			  		});
+	  			},
+	  			error(err) {
+	  				_this.setState({
+	  					error: err
+	  				})
+	  			}
+	  		});
+	  	} else {
+
+	  		const res = await Crypto.verify(this.props.user.signed, HMAC_TEST_STRING, password);
+
+	  		if (!res) {
+	  			this.setState({
+	  				error: 'Incorrect password'
+	  			})
+	  			return;
+	  		}
+  		
+	  		localStorage.setItem('foxfile_key', password)
+	  		this.setState({
+	  			needsKey: false,
+	  			hasKey: true,
+	  			error: null,
+	  			step: 2,
+	  		}, () => {
+	  			_this.load();
+	  		});
+	  	}
   	}
 	getSteps(state) {
 		let steps = [];
@@ -177,10 +253,15 @@ class Preloader extends React.Component {
 		const steps = this.getSteps(this.props.readyState);
 		return (
 			<div className={"preloader flex-container fc-center" + (this.state.step === 4 ? ' done' : '')}>
-				<form className={'keybox' + (this.state.needsKey ? ' active' : '') + (this.state.keyWorking ? ' working' : '')}>
-					<label>{this.state.hasKey ? 'Enter your master key' : 'Set a master encryption key'}</label>
+				<form
+				 	className={'keybox' + (this.state.needsKey ? ' active' : '') + (this.state.keyWorking ? ' working' : '')}
+				 	onSubmit={this.setMasterKey}>
+					<label><h1>{this.state.hasKey ? 'Enter your master key' : 'Set a master encryption key'}</h1></label>
+					<p>It is important that you do not forget this key. Without it, you will not be able to recover your files.</p>
+					{this.state.error && <span className="error">{this.state.error}</span>}
 					<div className="input-container">
-						<input type="password" name="password"></input>
+						<input type="password" name="password" required value={this.state.password} onChange={this.onPasswordChange}></input>
+						<span className="input-placeholder">Master key</span>
 						<button className="btn">{this.state.hasKey ? 'Unlock' : 'Set'}</button>
 					</div>
 					<span className="error">{this.state.keyError}</span>

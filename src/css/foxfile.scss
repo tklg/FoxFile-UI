@@ -15,19 +15,92 @@
 	transition: all 0.3s $transition;
 
 	.keybox {
+		width: 400px;
+		padding-left: 35px;
+		margin-bottom: 10px;
+		max-height: 0;
+		overflow: hidden;
+		transition: max-height 0.4s $transition;
 
+		&.active {
+			max-height: 235px;
+		}
+		label {
+			h1 {
+				font-weight: normal;
+				font-size: 1.2rem;
+			}
+		}
+		.error {
+			color: $color-red;
+			display: inline-block;
+			padding: 0 0 6px 0;
+		}
+		p {
+			color: $black-2;
+		}
+		.input-container {
+			position: relative;
+
+			input {
+				height: 40px;
+				width: 100%;
+				padding: 0;
+				margin: 0;
+				text-indent: 6px;
+				font-size: 1.2rem;
+				margin-bottom: 5px;
+				border: 1px solid $black-4;
+			}
+			.input-placeholder {
+				display: inline-block;
+				position: absolute;
+				top: 10px;
+				left: 6px;
+				color: $black-3;
+				pointer-events: none;
+			}
+			input:valid ~ .input-placeholder,
+			input:focus ~ .input-placeholder {
+				display: none;
+			}
+			button {
+				height: 40px;
+				min-width: 40px;
+				width: 100%;
+				text-align: center;
+				border: 1px solid $black-4;
+				background: $black-6;
+				text-transform: uppercase;
+				color: $black-3;
+				transition: background 0.2s $transition,
+							border 0.2s $transition,
+							color 0.2s $transition;
+			}
+			input:valid ~ button {
+				border: 1px solid $accent-1;
+				background: $accent-1;
+				color: white;
+				cursor: pointer;
+			}
+		}
+	}
+	.keybox.active + .steps {
+		border-top: 1px solid $black-4;
 	}
 	.steps {
-		// width: 300px;
+		width: 240px;
 		// height: 200px;
 		list-style: none;
 		margin: 0;
-		padding: 0;
+		padding: 14px 0;
+		border-top: none;
+		transition: border-top 0.4s $transition;
 
 		li {
 			height: 30px;
 			line-height: 30px;
-			font-size: 20px;
+			font-size: 1.2rem;
 			transition: 0.3s color $transition;
 
 			&.done {
@@ -139,7 +212,6 @@
 		height: 100%;
 		display: inline-block;
 		position: absolute;
-		will-change: left, background;
 		transition: left .5s $transition,
 					background .5s $transition;
 		
@@ -200,7 +272,6 @@
 		// position: relative;
 		position: absolute;
 		pointer-events: initial;
-		will-change: left, background;
 		transition: left .5s $transition,
 					background .5s $transition;
 
@@ -302,7 +373,6 @@
 				padding: 0 10px;
 				line-height: 40px;
 				border-bottom: 1px solid $black-5;
-				will-change: background;
 				cursor: default;
 				user-select: none;
 

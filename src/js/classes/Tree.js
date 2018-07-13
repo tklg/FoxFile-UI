@@ -47,14 +47,22 @@ class Tree {
 
 		return this.root;
 	}
+	add(parentUuid, subTree) {
+		if (!(subTree instanceof Node)) throw new Error('subTree must be a Tree::Node');
+		const parent = this.root.get(parentUuid);
+		parent.addChild(subTree);
+	}
 	async map(func) {
 		await this.root.map(func);
 	}
 	find(func) {
 		return this.root.find(func);
 	}
-	has(uuid) {
+	get(uuid) {
 		return this.root.find(node => node.uuid === uuid);
+	}
+	has(uuid) {
+		return !!this.get(uuid);
 	}
 }
 
@@ -76,6 +84,7 @@ class Node {
 		this.parentNode = null;
 	}
 	addChild(node) {
+		if (!(node instanceof Node)) throw new Error('node must be a Tree::Node');
 		this.children.push(node);
 	}
 	async map(func) {
