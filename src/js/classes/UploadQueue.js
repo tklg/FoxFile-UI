@@ -34,22 +34,22 @@ class UploadQueue {
 		const file = this._files.shift();
 		try {
 			this.emit('encrypt', {
-				id: file.id,
+				id: file.uuid,
 				parent: file.parent
 			});
 
-			const {encryptedFilename, encryptedFile, keyString} = await Crypto.encrypt(file.file, null);
+			const {encryptedFilename, encryptedFile, keyString} = await Crypto.encrypt(file, null);
 
 			const xhr = new XMLHttpRequest();
 			xhr.upload.addEventListener('progress', function(e) {
 				_this.emit('progress', {
-					id: file.id,
+					id: file.uuid,
 					parent: file.parent,
 					loaded: e.loaded,
 					total: e.total,
 				});
 			}, false);
-			console.log('uploading ' + file.file.name);
+			console.log('uploading ' + file.name);
 			Ajax.post({
 				url: 'api/files',
 				xhr: xhr,
@@ -62,6 +62,11 @@ class UploadQueue {
 				},
 				success(resp, xhr) {
 					_this._working--;
+					for (let i = 0; i < _this._files.length; i++) {
+						if (_this._files[i].parent === file.uuid) {
+							_this._files[i].parent = JSON.parse(resp).uuid;
+						}
+					}
 					_this.emit('upload', resp);
 					if (!_this._files.length && !_this._working) {
 						_this.emit('done', _this._uploads);
@@ -78,7 +83,7 @@ class UploadQueue {
 		} catch (e) {
 			console.error(e)
 			this.emit('error', {
-				id: file.id,
+				id: file.uuid,
 				error: e,
 			});
 		}

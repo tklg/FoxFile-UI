@@ -32,20 +32,13 @@ class FolderItem extends React.Component {
         this.props.dispatch(dragLeave(this.props.id, 'file'));
     }
     onDrop(e) {
-    	console.log(e)
     	e.preventDefault();
     	e.stopPropagation();
-        var nFiles = (e.dataTransfer || {}).files || e.target.files;
-        var files = [];
-        for (var i = 0; i < nFiles.length; i++) {
-            files.push(nFiles.item(i));
-        }
-        this.props.dispatch(dragDrop(this.props.id, files));
+        this.props.dispatch(dragDrop(this.props.id, e));
     }
 	render() {
 		const {id, item, style, selected, onClick, dragging} = this.props;
 		const isDragging = item.type === 'folder' && dragging.id === id && dragging.type === 'file';
-
 		return (<div 
 			className={"file" + (selected ? ' selected' : '') + (isDragging ? ' dragging' : '')}
 			style={style}

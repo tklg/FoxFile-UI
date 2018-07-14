@@ -20,13 +20,14 @@ async function DEFAULT_KEY() {
 		return _defk;
 	}
 }
-async function encrypt(file, key) {
+async function encrypt(data, key) {
 	try {
+		const {file, name} = data;
 		const parentKey = key || await DEFAULT_KEY() // should be raw key of parent folder
 		const fileKeyString = rv();
 		const fileKey = await fc.importPassword(fileKeyString);
 		let encryptedFile;
-		if (/\./g.test(file.name)) { // temporary
+		if (file) {
 			// encrypt file with file key
 			const encryptedFileData = await fc.encrypt(fileKey, file);
 			encryptedFile = fc.ab2file(fc.mergeIvAndData(encryptedFileData.iv.buffer, encryptedFileData.result));
@@ -37,7 +38,7 @@ async function encrypt(file, key) {
 
 		return {
 			encryptedFile: encryptedFile,
-			encryptedFilename: await AES.encrypt(file.name, fileKey),
+			encryptedFilename: await AES.encrypt(name, fileKey),
 			keyString: keyString,
 		};
 	} catch (e) {

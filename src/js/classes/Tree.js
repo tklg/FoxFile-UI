@@ -47,6 +47,25 @@ class Tree {
 
 		return this.root;
 	}
+	importDropped(files, parent) {
+		parent = this.get(parent);
+		for (const file of files) {
+			const node = new Node(file.uuid, file.name);
+			node.data.status = 'upload';
+			node.data.encrypted = false;
+			node.data.parent = parent.id;
+			node.parentNode = parent;
+			if (file.file) {
+				node.data.file = file.file;
+				node.data.size = file.file.size;
+				node.data.folder = false;
+			} else {
+				node.data.folder = true;
+			}
+			parent.addChild(node);
+			if (!file.file) this.importDropped(file.children, file.uuid);
+		}
+	}
 	add(parentUuid, subTree) {
 		if (!(subTree instanceof Node)) throw new Error('subTree must be a Tree::Node');
 		const parent = this.root.get(parentUuid);
@@ -64,6 +83,13 @@ class Tree {
 	has(uuid) {
 		return !!this.get(uuid);
 	}
+	static flatten(children, res = []) {
+	    for (const item of children) {
+	    	res.push(item.data);
+	        if (item.children && item.children.length) Tree.flatten(item.children, res);
+	    }
+	    return res;
+	}
 }
 
 class Node {
@@ -72,7 +98,8 @@ class Node {
 		this.data.uuid = uuid;
 		this.data.name = name;
 		this.data.encrypted = true;
-		const k = ['created', 'folder', 'key', 'lastmod', 'parent', 'shared', 'size', 'trashed'];
+		this.data.status = '';
+		const k = ['created', 'file', 'folder', 'key', 'lastmod', 'parent', 'shared', 'size', 'trashed'];
 		for (const key of k) {
 			this.data[key] = null;
 		}
@@ -118,6 +145,9 @@ class Node {
 	}
 	get id() {
 		return this.data ? this.data.uuid : '';
+	}
+	set id(id) {
+		if (this.data) this.data.uuid = id;
 	}
 	get name() {
 		return this.data ? this.data.name : '';

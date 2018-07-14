@@ -19,7 +19,6 @@ const actionHandler = (state = {}, action) => {
 		case Actions.LOAD_USER:
 			let user = action.data;
 			return {
-				...state,
 				readyState: {
 					...state.readyState,
 					user: user ? 'done' : 'working',
@@ -29,13 +28,11 @@ const actionHandler = (state = {}, action) => {
 			};
 		case Actions.CHECK_KEY:
 			return {
-				...state,
 				baseKey: action.data,
 			};
 		case Actions.LOAD_TREE:
 			let tree = action.data;
 			return {
-				...state,
 				readyState: {
 					...state.readyState,
 					files: tree ? 'done' : 'working'
@@ -45,7 +42,6 @@ const actionHandler = (state = {}, action) => {
 		case Actions.DECRYPT_TREE:
 			let decryptedTree = action.data;
 			return {
-				...state,
 				readyState: {
 					...state.readyState,
 					decrypt: decryptedTree ? 'done' : 'working'
@@ -54,33 +50,29 @@ const actionHandler = (state = {}, action) => {
 			};
 		case Actions.PRELOAD_DONE:
 			return {
-				...state,
 			};
 
 // DRAGDROP ===============
 		case Actions.DRAG_ENTER:
-			if (state.dragging.id) return state;
-			if (state.dragging.id === id && state.dragging.type === elemType) return state;
+			if (state.dragging.id) return {};
+			if (state.dragging.id === id && state.dragging.type === elemType) return {};
 			return {
-				...state,
 				dragging: {
 					type: elemType,
 					id
 				},
 			};
 		case Actions.DRAG_LEAVE:
-			if (!state.dragging.id) return state;
+			if (!state.dragging.id) return {};
 			return {
-				...state,
 				dragging: {
 					type: null,
 					id: null,
 				},
 			};
 		case Actions.DRAG_DROP:
-			if (!state.dragging.id) return state;
+			if (!state.dragging.id) return {};
 			return {
-				...state,
 				uploads: files,
 				dragging: {
 					type: null,
@@ -91,9 +83,8 @@ const actionHandler = (state = {}, action) => {
 // SCROLLING ========================
 
 		case Actions.SCROLL_LEFT:
-			if (!state.path.length) return state;
+			if (!state.path.length) return {};
 			return {
-				...state,
 				path: state.path.slice(0, state.path.length -1),
 				scrolling: {
 					direction: 'remove',
@@ -104,7 +95,6 @@ const actionHandler = (state = {}, action) => {
 		case Actions.SCROLL_TO:
 			path = action.path;
 			return {
-				...state,
 				path,
 				scrolling: true,
 			}
@@ -132,19 +122,17 @@ const actionHandler = (state = {}, action) => {
 			}
 			//console.log(path);
 			return {
-				...state,
 				path,
 				scrolling: dir,
 			};
 		case Actions.SCROLL_END:
 			//console.log(state.path);
 			return {
-				...state,
 				scrolling: {
 					diff: 0,
 				},
 			}
-		default: return state;
+		default: return {};
 	}
 }
 

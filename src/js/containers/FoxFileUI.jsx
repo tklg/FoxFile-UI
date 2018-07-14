@@ -31,7 +31,7 @@ function createFolderChain(tree, path) {
 class FoxFileUI extends React.Component {
 	constructor() {
 		super();
-		this.state = reducer({
+		this.state = {
 			readyState: {
 				user: 'waiting', // log in
 				files: 'waiting', // download file list
@@ -49,22 +49,25 @@ class FoxFileUI extends React.Component {
 				type: null
 			},
 			activePanel: 0, // 0, 1, 2, etc (0 is files)
-		}, {});
+		};
 
 		this.dispatch = this.dispatch.bind(this);
 	}
 	dispatch(action) {
 		if (!action) throw new Error('missing action');
 		if (action instanceof Function) {
-			action(this.dispatch);
+			action(this.dispatch, () => this.state);
 		} else {
-			this.setState(prevState => reducer(prevState, action));
+			const changes = reducer(this.state, action);
+			if (!changes || !Object.keys(changes).length) return;
+			this.setState({
+				...changes
+			});
 		}
 	}
 	render() {
 		let openFolders = [];
 		if (this.state.readyState.decrypt === 'done') openFolders = createFolderChain(this.state.tree, this.state.path);
-		// console.log(openFolders)
 		return (<div className="root flex-container fc-vertical">
 			<Header />
 			<Breadcrumbs 

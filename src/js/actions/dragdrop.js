@@ -1,5 +1,7 @@
 import queue from '../classes/UploadQueue';
 import uuid from 'uuid/v4';
+import {fileDragDrop} from '../classes/DirectoryScan';
+import Tree from '../classes/Tree';
 
 export const dragdrop = {
 	DRAG_ENTER: 'drag_enter',
@@ -56,19 +58,17 @@ export const uploadDone = data => {
 		type: dragdrop.UPLOAD_DONE,
 	}
 }
-export const dragDrop = (id, files) => {
+export const dragDrop = (id, e) => {
+	return async (dispatch, getState) => {
 
-	files = files.map(file => {
-		return {
-			id: uuid(), // temporary id, assigned final id by server
-			parent: id,
-			file,
-		}
-	})
-	files.sort((a, b) => a.isFile - b.isFile);
+		const files = await fileDragDrop(e, id);
+		console.log(files)
+		const tree = getState().tree;
+		tree.importDropped(files, id);
+		const flat = Tree.flatten(tree.get(id).files.filter(x => x.data.status === 'upload'));
+		console.log(flat)
 
-	const fn = (dispatch, getState) => {
-		dispatch(uploadStart(id, files));
+		dispatch(uploadStart(id, flat));
 
 		queue.offAll('done');
 		queue.offAll('upload');
@@ -88,7 +88,6 @@ export const dragDrop = (id, files) => {
 			dispatch(uploadDone(data));
 		});
 
-		queue.add(files);
+		queue.add(flat);
 	};
-	return fn;
 }

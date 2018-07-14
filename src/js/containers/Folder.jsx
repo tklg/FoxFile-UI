@@ -62,12 +62,7 @@ class Folder extends React.Component {
     onDrop(e) {
     	e.preventDefault();
     	e.stopPropagation();
-        var nFiles = (e.dataTransfer || {}).files || e.target.files;
-        var files = [];
-        for (var i = 0; i < nFiles.length; i++) {
-            files.push(nFiles.item(i));
-        }
-        this.props.dispatch(dragDrop(this.props.id, files));
+        this.props.dispatch(dragDrop(this.props.id, e));
     }
 	render() {
 		const {id, name, position, files, activeIndex, onBackClick, onHeaderClick, numShown, isLeftmost, isLast, dragging} = this.props;
