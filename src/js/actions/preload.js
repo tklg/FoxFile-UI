@@ -4,6 +4,7 @@ export const preload = {
 	DECRYPT_TREE: 'decrypt_tree',
 	PRELOAD_DONE: 'preload_done',
 	CHECK_KEY: 'check_key',
+	SET_KEY: 'set_key',
 };
 
 export const loadUser = (user) => ({
@@ -28,4 +29,9 @@ export const decryptTree = (tree) => ({
 
 export const preloadDone = () => ({
 	type: preload.PRELOAD_DONE
+});
+
+export const setBaseKey = key => ({
+	type: preload.SET_KEY,
+	data: key
 });

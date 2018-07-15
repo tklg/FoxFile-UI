@@ -3,7 +3,7 @@ import Ajax from '../classes/Ajax.js';
 import Tree from '../classes/Tree';
 import Crypto from '../classes/Crypto';
 import Util from '../classes/Util';
-import {loadUser, loadTree, decryptTree, preloadDone} from '../actions/preload.js';
+import {loadUser, loadTree, decryptTree, preloadDone, setBaseKey} from '../actions/preload.js';
 
 const stepDetails = {
 	user: 'Fetching user info',
@@ -93,20 +93,28 @@ class Preloader extends React.Component {
 				//console.log('decrypt');
 				dispatch(decryptTree());
 				// build tree from list of folders and files
-				const tree = new Tree(_this.props.user.uuid);
+				const tree = new Tree(_this.props.user.uuid, _this.props.user.baseKey);
 				tree.import(_this.state.data);
 				// decrypt file and folder names
 				tree.map(async (node) => {
 					if (node.encrypted) {
-						const data = {
-							fileName: node.name,
-							file: null,
-							fileKey: node.key,
-						};
-						const res = await Crypto.decrypt(data, null);
-						if (res.fileName) node.name = res.fileName;
-						else node.file = res.file;
-						node.encrypted = false;
+						try {
+							const data = {
+								fileName: node.name,
+								file: null,
+								fileKey: node.key,
+							};
+							// console.log('dec: ' + node.parent.key)
+							const res = await Crypto.decrypt(data, node.parent.key);
+							// console.log(res)
+							if (res.fileName) {
+								node.name = res.fileName;
+								node.key = res.key;
+							} else node.file = res.file;
+							node.encrypted = false;
+						} catch (e) {
+							console.error('[preloader] ' + e.toString());
+						}
 						return node;
 					} else {
 						return node;
@@ -152,7 +160,8 @@ class Preloader extends React.Component {
 			return;
 		}
 		// validate key by hashing and comparing to server copy
-
+		
+		this.props.dispatch(setBaseKey(basekey));
 		this.setState({
 			hasKey: true,
 			needsKey: false,
@@ -197,14 +206,15 @@ class Preloader extends React.Component {
 	  			},
 	  			success(data) {
 	  				localStorage.setItem('foxfile_key', password)
+	  				_this.props.dispatch(setBaseKey(password));
 			  		_this.setState({
 			  			needsKey: false,
 			  			hasKey: true,
-			  			step: 2,
+			  			// step: 2,
 			  			error: null
 			  		}, () => {
-			  			_this.load();
 			  		});
+			  		_this.load();
 	  			},
 	  			error(err) {
 	  				_this.setState({

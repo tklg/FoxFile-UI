@@ -50,6 +50,14 @@ const actionHandler = (state = {}, action) => {
 			};
 		case Actions.PRELOAD_DONE:
 			return {
+				
+			};
+		case Actions.SET_KEY:
+			return {
+				user: {
+					...state.user,
+					baseKey: action.data
+				}
 			};
 
 // DRAGDROP ===============

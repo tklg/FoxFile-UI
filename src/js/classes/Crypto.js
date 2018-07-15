@@ -20,11 +20,12 @@ async function DEFAULT_KEY() {
 		return _defk;
 	}
 }
-async function encrypt(data, key) {
+
+async function encrypt(data, fileKeyString, key) {
 	try {
 		const {file, name} = data;
-		const parentKey = key || await DEFAULT_KEY() // should be raw key of parent folder
-		const fileKeyString = rv();
+		const parentKey = key ? await fc.importPassword(key) : await DEFAULT_KEY() // should be raw key of parent folder
+		// fileKeyString = rv();
 		const fileKey = await fc.importPassword(fileKeyString);
 		let encryptedFile;
 		if (file) {
@@ -49,7 +50,7 @@ async function encrypt(data, key) {
 async function decrypt({fileName, file, fileKey}, key) {
 	// https://developer.mozilla.org/en-US/docs/Web/API/WindowBase64/Base64_encoding_and_decoding#Solution_2_%E2%80%93_rewrite_the_DOMs_atob()_and_btoa()_using_JavaScript's_TypedArrays_and_UTF-8
 	try {
-		const parentKey = key || await DEFAULT_KEY(); // should be raw key of parent folder
+		const parentKey = key ? await fc.importPassword(key) : await DEFAULT_KEY(); // should be raw key of parent folder
 		//console.log(fileKey)
 		const keyString = await AES.decrypt(fileKey, parentKey);
 		const decryptingKey = await fc.importPassword(keyString);
@@ -62,9 +63,10 @@ async function decrypt({fileName, file, fileKey}, key) {
 		} else {
 			const fileNamePlain = await AES.decrypt(fileName, decryptingKey);
 			// const fileNamePlain = decoder.decode(decryptedName);
-			console.log(fileNamePlain);
+			// console.log(fileNamePlain);
 			return {
 				fileName: fileNamePlain,
+				key: keyString
 			};
 		}
 	} catch (e) {
@@ -97,6 +99,7 @@ async function verify(str, orig, pass) {
 }
 
 export default {
+	rv,
 	encrypt,
 	decrypt,
 	sign,

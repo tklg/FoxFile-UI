@@ -1,9 +1,18 @@
+import Crypto from './Crypto';
+
 class Tree {
-	constructor(root) {
+	constructor(root, key = "") {
 		this.data;
 		this.root = new Node(root, 'My files');
 		this.root.data.encrypted = false;
 		this.root.data.folder = true;
+		this.root.data.key = key;
+		this.root.data.parent = {
+			data: {
+				uuid: root,
+				key: key,
+			}
+		}
 	}
 	import(data) {
 		if (!(data instanceof Array)) throw new Error('Imported tree data must be an array');
@@ -24,7 +33,8 @@ class Tree {
 				existing.data.folder = !!+item.folder;	
 			} else { // create a new lookup point
 				existing = new Node(item.uuid, item.name);
-				existing.data.parent = item.parent_uuid;
+				existing.data.parent.uuid = item.parent_uuid;
+				// existing.data.parent.key = data.find(x => x.uuid === item.parent_uuid).key;
 				existing.data.key = item.key;
 				existing.data.size = +item.size;
 				existing.data.created = new Date(item.created);
@@ -41,6 +51,7 @@ class Tree {
 				lookup.push(parent);
 			} else {
 				parent.addChild(existing);
+				existing.data.parent = parent.data;
 				existing.parentNode = parent;
 			}
 		}
@@ -49,11 +60,13 @@ class Tree {
 	}
 	importDropped(files, parent) {
 		parent = this.get(parent);
+		console.log(parent)
 		for (const file of files) {
 			const node = new Node(file.uuid, file.name);
 			node.data.status = 'upload';
 			node.data.encrypted = false;
-			node.data.parent = parent.id;
+			node.data.key = Crypto.rv();
+			node.data.parent = parent.data;
 			node.parentNode = parent;
 			if (file.file) {
 				node.data.file = file.file;
@@ -103,6 +116,7 @@ class Node {
 		for (const key of k) {
 			this.data[key] = null;
 		}
+		this.data.parent = {};
 		const j = ['position', 'isLast'];
 		for (const key of j) {
 			this.data[key] = null;

@@ -37,14 +37,17 @@ class UploadQueue {
 				id: file.uuid,
 				parent: file.parent
 			});
-
-			const {encryptedFilename, encryptedFile, keyString} = await Crypto.encrypt(file, null);
+			// console.log(file.parent)
+			const parentKey = file.parent.key;
+			// console.log('enc: ' + file.key)
+			// console.log('enc2: ' + parentKey)
+			const {encryptedFilename, encryptedFile, keyString} = await Crypto.encrypt(file, file.key, parentKey);
 
 			const xhr = new XMLHttpRequest();
 			xhr.upload.addEventListener('progress', function(e) {
 				_this.emit('progress', {
 					id: file.uuid,
-					parent: file.parent,
+					parent: file.parent.uuid,
 					loaded: e.loaded,
 					total: e.total,
 				});
@@ -55,7 +58,7 @@ class UploadQueue {
 				xhr: xhr,
 				data: {
 					name: encryptedFilename,
-					parent: file.parent,
+					parent: file.parent.uuid,
 					key: keyString,
 					file: encryptedFile ? encryptedFile : undefined,
 					folder: encryptedFile ? false : true,
@@ -63,10 +66,13 @@ class UploadQueue {
 				success(resp, xhr) {
 					_this._working--;
 					for (let i = 0; i < _this._files.length; i++) {
-						if (_this._files[i].parent === file.uuid) {
-							_this._files[i].parent = JSON.parse(resp).uuid;
+						if (_this._files[i].parent.uuid === file.uuid) {
+							_this._files[i].parent.uuid = JSON.parse(resp).uuid;
 						}
 					}
+					// file.encrypted = true;
+					// file.key = keyString;
+					file.status = '';
 					_this.emit('upload', resp);
 					if (!_this._files.length && !_this._working) {
 						_this.emit('done', _this._uploads);
